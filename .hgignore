@@ -1,0 +1,11 @@
+syntax: glob
+*~
+*.orig
+*.pvd
+*.pyc
+*.pyo
+*.vtu
+cbc/twist/sandbox/*
+
+syntax: regexp
+.*\#.*\#$
