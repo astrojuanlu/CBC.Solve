@@ -1,8 +1,13 @@
-__author__ = "???"
-__copyright__ = "Copyright (C) 2009 ???"
+__author__ = "Anders Logg"
+__copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU LGPL Version 3 or any later version"
 
-# Last changed: 2009-10-28
+# Last changed: 2009-11-05
+
+from dolfin import error
 
 class CBCProblem:
-    pass
+    "Base class for all problems"
+
+    def __str__():
+        error("__str__ not implemented by problem.")
