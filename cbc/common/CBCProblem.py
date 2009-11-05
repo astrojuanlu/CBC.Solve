@@ -1,6 +1,6 @@
 __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
-__license__  = "GNU LGPL Version 3 or any later version"
+__license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2009-11-05
 
