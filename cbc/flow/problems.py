@@ -4,6 +4,8 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2009-11-06
 
+__all__ = ["StaticNavierStokesProblem", "NavierStokesProblem"]
+
 from dolfin import Constant, error
 from cbc.common import CBCProblem
 from cbc.flow.solvers import StaticNavierStokesSolver, NavierStokesSolver
@@ -15,6 +17,12 @@ class StaticNavierStokesProblem(CBCProblem):
         "Solve and return computed solution (u, p)"
         solver = StaticNavierStokesSolver()
         return solver.solve(self)
+
+    #--- Functions that must be overloaded by subclasses ---
+
+    def mesh(self):
+        "Return mesh"
+        missing_function("mesh")
 
     #--- Functions that may optionally be overloaded by subclasses ---
 

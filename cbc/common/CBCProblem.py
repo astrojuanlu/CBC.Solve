@@ -4,10 +4,10 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2009-11-06
 
-from dolfin import error
+from cbc.common.utils import missing_function
 
 class CBCProblem:
     "Base class for all problems"
 
     def __str__():
-        error("__str__ not implemented by problem.")
+        missing_function("__str__")
