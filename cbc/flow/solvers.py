@@ -1,4 +1,4 @@
-__author__ = "Anders Logg and Kristian Valen-Sendstad"
+__author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
