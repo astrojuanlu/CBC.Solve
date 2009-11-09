@@ -2,15 +2,17 @@
 
 from cbc.flow import *
 from cbc.twist import *
-from fsi_problems import FluidProblem
-from fsi_problems import StructureProblem
+from fsi_problems import *
 
-# Create fluid solver
+# Create fluid problem (single time-step)
 fluid_problem = FluidProblem() 
 
-# Solve fluid problem
-fluid_problem.solve()
-# Edit the Static NS solver!!!!
+dt = 0.05
+t = dt
 
-# Create structure solver
-structure_problem = StructureProblem()
+# Solve fluid problem
+for j in range(10):
+    u1, p1 = fluid_problem.solve()
+    plot(u1)
+    plot(p1)
+    t = t + dt
