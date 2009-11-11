@@ -3,10 +3,6 @@
 from cbc.flow import *
 from cbc.twist import *
 
-#######################################################################################
-# MESH AND BOUNDARY DEFINITION
-#######################################################################################
-
 # FIXME: Use variables for width and height etc
 
 # Define structure sub domain
@@ -41,10 +37,6 @@ def outflow(x):
 # Define noslip boundary
 def noslip(x, on_boundary):
      return on_boundary and not inflow(x) and not outflow(x)
-
-#######################################################################################
-# SOLVERS
-#######################################################################################
 
 
 # Define fluid solver
@@ -91,15 +83,18 @@ class StructureProblem(StaticHyperelasticityProblem):
           pass
 
 
+fluid = FluidProblem()
 
-fluid = 
+t = 0
+T = 1
+dt = 0.05
 
-# Create fluid solver
-fluid_problem = FluidProblem() 
+while t < T:
 
-# Solve fluid problem
-fluid_problem.solve()
-# Edit the Static NS solver!!!!
+     u1, p1 = fluid.step(dt)
+     plot(u1, p1)
 
-# Create structure solver
-structure_problem = StructureProblem()
+     fluid.update()
+     t += dt
+
+interactive()

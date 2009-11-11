@@ -13,10 +13,13 @@ from cbc.flow.solvers import StaticNavierStokesSolver, NavierStokesSolver
 class StaticNavierStokesProblem(CBCProblem):
     "Base class for all static Navier-Stokes problems"
 
+    def __init__(self):
+        "Create static Navier-Stokes problem"
+        self.solver = StaticNavierStokesSolver(self)
+
     def solve(self):
         "Solve and return computed solution (u, p)"
-        solver = StaticNavierStokesSolver(self)
-        return solver.solve()
+        return self.solver.solve()
 
     #--- Functions that must be overloaded by subclasses ---
 
@@ -46,10 +49,21 @@ class StaticNavierStokesProblem(CBCProblem):
 class NavierStokesProblem(StaticNavierStokesProblem):
     "Base class for all (dynamic) Navier-Stokes problems"
 
+    def __init__(self):
+        "Create Navier-Stokes problem"
+        self.solver = NavierStokesSolver(self)
+
     def solve(self):
         "Solve and return computed solution (u, p)"
-        solver = NavierStokesSolver(self)
-        return solver.solve()
+        return self.solver.solve()
+
+    def step(self, dt):
+        "Make a time step of size dt"
+        return self.solver.step(dt)
+
+    def update(self):
+        "Propagate values to next time step"
+        return self.solver.update()
 
     #--- Functions that may optionally be overloaded by subclasses ---
 

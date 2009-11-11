@@ -95,15 +95,17 @@ class NavierStokesSolver(CBCSolver):
         for t in self.t_range:
 
             # Solve for current time step
-            self.step()
+            self.step(dt)
 
             # Update
             self.update()
 
         return self.u1, self.p1
 
-    def step(self):
+    def step(self, dt):
         
+        # FIXME: Check if time step has changed and if so reassemble
+
         # Compute tentative velocity step
         b = assemble(self.L1)
         [bc.apply(self.A1, b) for bc in self.bcu]
