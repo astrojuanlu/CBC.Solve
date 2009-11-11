@@ -7,7 +7,6 @@
 ** Figure out why the Gent-Thomas material model does not converge
 ** Fix returning of fields after the solver completes the solve. Currently, attempting to plot the returned field crashes.
 *** Remove plotting from within the solver
-** Figure out easy specification of Neumann boundaries.
 ** Figure out consistent, dynamic time-stepping.
 ** Figure out how to specify material models in terms of principal stretches.
 *** This might require UFL hacking to handle trigonometric functions (and derivatives) of functions.

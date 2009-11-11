@@ -28,9 +28,9 @@ class UniaxialTension(HyperelasticityProblem):
         return [left]
 
     def neumann_conditions(self, vector):
-        T2 = Expression(("force*t", "0.0", "0.0"), V = vector)
-        T2.force = 1.0
-        return [T2]
+        pull = Expression(("force*t", "0.0", "0.0"), V = vector)
+        pull.force = 2.0
+        return [pull]
 
     def neumann_boundaries(self):
         right = "x[0] == 1.0"
