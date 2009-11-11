@@ -23,10 +23,23 @@ class StaticHyperelasticityProblem(CBCProblem):
         B = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
         return B
 
-    def surface_force(self, vector):
-        """Return the surface tractions, T"""
+    def dirichlet_conditions(self, vector):
+        """"Return Dirichlet boundary conditions for the displacment
+        field"""
+        return []
+
+    def dirichlet_boundaries(self):
+        """Return boundaries over which Dirichlet conditions act"""
+        return []
+
+    def neumann_conditions(self, vector):
+        """"Return Neumann boundary conditions for the stress field"""
         T = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
         return T
+
+    def neumann_boundaries(self):
+        """Return boundaries over which Neumann conditions act"""
+        return []
 
     def material_model(self):
         pass
@@ -40,11 +53,6 @@ class StaticHyperelasticityProblem(CBCProblem):
         """Return the second Piola-Kirchhoff stress tensor, S, given a
         displacement field, u"""
         return self.material_model().SecondPiolaKirchhoffStress(u)
-
-    def boundary_conditions(self, vector):
-        """"Return Dirichlet boundary conditions for the displacment
-        field"""
-        return []
 
     def functional(self, u):
         """Return value of goal functional"""

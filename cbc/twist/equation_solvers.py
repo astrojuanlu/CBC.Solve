@@ -21,7 +21,18 @@ class StaticMomentumBalanceSolver(CBCSolver):
         vector = VectorFunctionSpace(mesh, "CG", 1)
 
         # Get Dirichlet boundary conditions on the displacement field
-        bcu = problem.boundary_conditions(vector)
+        bcu = []
+
+        dirichlet_conditions = problem.dirichlet_conditions(vector)
+        dirichlet_boundaries = problem.dirichlet_boundaries()
+
+        if len(dirichlet_conditions) != len(problem.dirichlet_boundaries()):
+            print "Please make sure the number of your Dirichlet conditions match the number of your Dirichlet boundaries"
+            exit(2)
+
+        for (i, dirichlet_condition) in enumerate(dirichlet_conditions):
+            bcu.append(DirichletBC(vector, dirichlet_condition, \
+            compile_subdomains(dirichlet_boundaries[i])))
 
         # Define fields
         # Test and trial functions
@@ -38,7 +49,22 @@ class StaticMomentumBalanceSolver(CBCSolver):
         P  = problem.first_pk_stress(u)
 
         # The variational form corresponding to hyperelasticity
-        L = inner(P, Grad(v))*dx - inner(B, v)*dx - inner(T, v)*ds
+        L = inner(P, Grad(v))*dx - inner(B, v)*dx
+
+        # Add contributions to the form from the Neumann boundary
+        # conditions
+
+        # Get Neumann boundary conditions on the stress
+        neumann_conditions = problem.neumann_conditions(vector)
+        neumann_boundaries = problem.neumann_boundaries()
+
+        sub_domains = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
+
+        for (i, neumann_boundary) in enumerate(neumann_boundaries):
+            compiled_boundary = compile_subdomains(neumann_boundary)
+            compiled_boundary.mark(sub_domains, i)
+            L = L - inner(neumann_conditions[i], v)*ds(i)
+
         a = derivative(L, u, du)
 
         # Setup and solve the problem
@@ -67,11 +93,9 @@ class MomentumBalanceSolver(CBCSolver):
         # Get initial conditions
         u0, v0 = problem.initial_conditions(vector)
         
-        # Get time-dependent boundary conditions and driving
-        # forces
+        # Get Dirichlet boundary conditions on the displacement field
         bcu = []
 
-        # Get Dirichlet boundary conditions on the displacement field
         dirichlet_conditions = problem.dirichlet_conditions(vector)
         dirichlet_boundaries = problem.dirichlet_boundaries()
 

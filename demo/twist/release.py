@@ -31,11 +31,13 @@ class Release(HyperelasticityProblem):
         v0 = Expression(("0.0", "0.0", "0.0"), V = vector)
         return u0, v0
 
-    def boundary_conditions(self, vector):
+    def dirichlet_conditions(self, vector):
         clamp = Expression(("0.0", "0.0", "0.0"), V = vector)
-        left = compile_subdomains(["(fabs(x[0]) < DOLFIN_EPS) && on_boundary"])
-        bcu0 = DirichletBC(vector, clamp, left)
-        return [bcu0]
+        return [clamp]
+
+    def dirichlet_boundaries(self):
+        left = "x[0] == 0.0"
+        return [left]
 
     def material_model(self):
         mu    = 3.8461

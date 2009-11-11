@@ -10,17 +10,18 @@ class Twist(StaticHyperelasticityProblem):
         n = 8
         return UnitCube(n, n, n)
 
-    def boundary_conditions(self, vector):
+    def dirichlet_conditions(self, vector):
         clamp = Expression(("0.0", "0.0", "0.0"), V = vector)
         twist = Expression(("0.0",
                             "y0 + (x[1] - y0) * cos(theta) - (x[2] - z0) * sin(theta) - x[1]",
                             "z0 + (x[1] - y0) * sin(theta) + (x[2] - z0) * cos(theta) - x[2]"),
                            defaults = dict(y0 = 0.5, z0 = 0.5, theta = pi / 3), V = vector)
-        left, right = compile_subdomains(["(fabs(x[0]) < DOLFIN_EPS) && on_boundary",
-                                          "(fabs(x[0] - 1.0) < DOLFIN_EPS) && on_boundary"]) 
-        bcu0 = DirichletBC(vector, clamp, left)
-        bcu1 = DirichletBC(vector, twist, right)
-        return [bcu0, bcu1]
+        return [clamp, twist]
+
+    def dirichlet_boundaries(self):
+        left = "x[0] == 0.0"
+        right = "x[0] == 1.0"
+        return [left, right]
 
     def body_force(self, vector):
         B = Expression(("0.0", "0.0", "0.0"), V = vector)
