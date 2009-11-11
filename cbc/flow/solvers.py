@@ -21,8 +21,7 @@ class StaticNavierStokesSolver(CBCSolver):
 class NavierStokesSolver(CBCSolver):
     "Navier-Stokes solver (dynamic)"
 
-    def solve(self, problem):
-        "Solve problem and return computed solution (u, p)"
+    def __init__(self, problem):
 
         # Get mesh and time step range
         mesh = problem.mesh()
@@ -44,9 +43,9 @@ class NavierStokesSolver(CBCSolver):
 
         # Functions
         u0 = interpolate(u0, V)
-        u1 = Function(V)
+        u1 = interpolate(u0, V)
         p0 = interpolate(p0, Q)
-        p1 = Function(Q)
+        p1 = interpolate(p0, Q)
 
         # Coefficients
         nu = Constant(mesh, problem.viscosity())
@@ -74,42 +73,70 @@ class NavierStokesSolver(CBCSolver):
         A2 = assemble(a2)
         A3 = assemble(a3)
 
+        # Store variables needed for time-stepping
+        self.t_range = t_range
+        self.bcu = bcu
+        self.bcp = bcp
+        self.u0 = u0
+        self.u1 = u1
+        self.p0 = p0
+        self.p1 = p1
+        self.L1 = L1
+        self.L2 = L2
+        self.L3 = L3
+        self.A1 = A1
+        self.A2 = A2
+        self.A3 = A3
+        
+    def solve(self):
+        "Solve problem and return computed solution (u, p)"
+
         # Time loop
-        for t in t_range:
+        for t in self.t_range:
 
-            # Compute tentative velocity step
-            b = assemble(L1)
-            [bc.apply(A1, b) for bc in bcu]
-            solve(A1, u1.vector(), b, "gmres", "ilu")
-
-            # Pressure correction
-            b = assemble(L2)
-            if len(bcp) == 0 or is_periodic(bcp): normalize(b)
-            [bc.apply(A2, b) for bc in bcp]
-            if is_periodic(bcp):
-                solve(A2, p1.vector(), b)
-            else:
-                solve(A2, p1.vector(), b, 'gmres', 'amg_hypre')
-            if len(bcp) == 0 or is_periodic(bcp): normalize(p1.vector())
-
-            # Velocity correction
-            b = assemble(L3)
-            [bc.apply(A3, b) for bc in bcu]
-            solve(A3, u1.vector(), b, "gmres", "ilu")
+            # Solve for current time step
+            self.step()
 
             # Update
-            self.update(problem, t, u1, p1)
-            u0.assign(u1)
-            p0.assign(p1)
+            self.update()
 
-        return u1, p1
+        return self.u1, self.p1
 
-    def update(self, problem, t, u, p):
-        "Update problem at time t"
+    def step(self):
+        
+        # Compute tentative velocity step
+        b = assemble(self.L1)
+        [bc.apply(self.A1, b) for bc in self.bcu]
+        solve(self.A1, self.u1.vector(), b, "gmres", "ilu")
+
+        # Pressure correction
+        b = assemble(self.L2)
+        if len(self.bcp) == 0 or is_periodic(self.bcp): normalize(b)
+        [bc.apply(self.A2, b) for bc in self.bcp]
+        if is_periodic(self.bcp):
+            solve(self.A2, self.p1.vector(), b)
+        else:
+            solve(self.A2, self.p1.vector(), b, 'gmres', 'amg_hypre')
+        if len(self.bcp) == 0 or is_periodic(self.bcp): normalize(self.p1.vector())
+
+        # Velocity correction
+        b = assemble(self.L3)
+        [bc.apply(self.A3, b) for bc in self.bcu]
+        solve(self.A3, self.u1.vector(), b, "gmres", "ilu")
+
+        return self.u1, self.p1
+
+    def update(self):
+
+        # Propagate values
+        self.u0.assign(self.u1)
+        self.p0.assign(self.p1)
 
         # Plot solution
-        plot(u, title="Velocity", rescale=True)
-        plot(p, title="Pressure", rescale=True)
+        #plot(self.u1, title="Velocity", rescale=True)
+        #plot(self.p1, title="Pressure", rescale=True)
+
+        return self.u1, self.p1        
 
 def timestep_range(problem, mesh):
     "Return time step and time step range for given problem"

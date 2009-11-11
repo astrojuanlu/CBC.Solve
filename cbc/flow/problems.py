@@ -15,8 +15,8 @@ class StaticNavierStokesProblem(CBCProblem):
 
     def solve(self):
         "Solve and return computed solution (u, p)"
-        solver = StaticNavierStokesSolver()
-        return solver.solve(self)
+        solver = StaticNavierStokesSolver(self)
+        return solver.solve()
 
     #--- Functions that must be overloaded by subclasses ---
 
@@ -48,8 +48,8 @@ class NavierStokesProblem(StaticNavierStokesProblem):
 
     def solve(self):
         "Solve and return computed solution (u, p)"
-        solver = NavierStokesSolver()
-        return solver.solve(self)
+        solver = NavierStokesSolver(self)
+        return solver.solve()
 
     #--- Functions that may optionally be overloaded by subclasses ---
 
