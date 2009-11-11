@@ -45,11 +45,11 @@ class Release(HyperelasticityProblem):
         material = StVenantKirchhoff([mu, lmbda])
         return material
 
-    def info(self):
+    def __str__(self):
         return "A prestrained hyperelastic cube being let go"
 
 # Setup and solve problem
 problem = Release()
-print problem.info()
+print problem
 problem.solve()
 interactive()

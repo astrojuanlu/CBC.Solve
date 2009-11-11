@@ -46,11 +46,11 @@ class UniaxialTension(HyperelasticityProblem):
         material = StVenantKirchhoff([mu, lmbda])
         return material
 
-    def info(self):
+    def __str__(self):
         return "A hyperelastic cube being pulled in one direction"
 
 # Setup and solve problem
 problem = UniaxialTension()
-print problem.info()
+print problem
 problem.solve()
 interactive()

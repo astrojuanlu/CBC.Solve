@@ -49,11 +49,11 @@ class Twist(StaticHyperelasticityProblem):
 
         return material
 
-    def info(self):
+    def __str__(self):
         return "A hyperelastic cube twisted by 60 degrees"
 
 # Setup and solve problem
 twist = Twist()
-print twist.info()
+print twist
 u = twist.solve()
 interactive()
