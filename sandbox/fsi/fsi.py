@@ -4,6 +4,8 @@ from cbc.flow import *
 from cbc.twist import *
 
 # FIXME: Use variables for width and height etc
+channel_length = 3.0
+channel_height = 1.0
 
 # Define structure sub domain
 class Structure(SubDomain):
@@ -11,7 +13,7 @@ class Structure(SubDomain):
           return x[0] >= 1.4 and x[0] <= 1.6 and x[1] <= 0.5
 
 # Create mesh 
-mesh = Rectangle(0.0, 0.0, 3.0, 1.0, 60, 20)
+mesh = Rectangle(0.0, 0.0, channel_length, channel_height, 60, 20)
     
 # Create sub domain markers, 0 for fluid, 1 for structure
 sub_domains = MeshFunction("uint", mesh, mesh.topology().dim())
@@ -28,11 +30,11 @@ structure_to_fluid = compute_vertex_map(structure_mesh, fluid_mesh)
 
 # Define inflow boundary
 def inflow(x):
-     return x[0] < DOLFIN_EPS
+     return x[0] < DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
 
 # Define outflow boundary
 def outflow(x):
-     return x[0] > 3.0 - DOLFIN_EPS
+     return x[0] > channel_length - DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
 
 # Define noslip boundary
 def noslip(x, on_boundary):
@@ -92,7 +94,8 @@ dt = 0.05
 while t < T:
 
      u1, p1 = fluid.step(dt)
-     plot(u1, p1)
+     plot(u1)
+     plot(p1)
 
      fluid.update()
      t += dt
