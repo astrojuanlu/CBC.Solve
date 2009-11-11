@@ -67,18 +67,26 @@ outflow_boundary = OutflowBoundary()
 
 
 # Define fluid solver
-class FluidProblem(NavierStokesProblemStep):
-
-     def intial_conditions(self, V, Q):
-         "Return initial conditions for velocity and pressure"
-         self.u0 = Constant(fluid_mesh, (0, 0))
-         self.p0 = Expression("1 - x[0]", V = Q)
-
+class FluidProblem(NavierStokesProblem):
+                 
      def mesh(self):
           return fluid_mesh
 
+     def structure_mesh(self):
+          return self.structure_mesh()
+
      def viscosity(self):
           return 1.0 / 8.0
+
+     def end_time(self):
+          return 0.5
+
+     def initial_conditions(self, V, Q):
+          u0 = Constant(V.mesh(), (0, 0))
+          p0 = Expression("1 - x[0]", V=Q)
+
+          return u0, p0
+
 
      def boundary_conditions(self, V, Q):
           
@@ -91,18 +99,19 @@ class FluidProblem(NavierStokesProblemStep):
 
           return [bcu], [bcp0, bcp1]
 
-     def time_step(self):
-          return 0.05
-
+    
      def info(self):
           return "Pressure driven channel (2D) with an obstructure"
+
+     def time_step(self):
+          return 0.05
 
 
 # Define struture solver
 class StructureProblem(StaticHyperelasticityProblem):
      
      def __init__(self):
-          print "Structure solver not implemented yet..."
+          print "not implemented yet..."
           pass
 
 
