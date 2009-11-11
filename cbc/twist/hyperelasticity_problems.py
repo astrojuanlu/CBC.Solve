@@ -64,12 +64,11 @@ class HyperelasticityProblem(StaticHyperelasticityProblem):
 
     def __init__(self):
         """Create the hyperelasticity problem"""
-        pass
+        self.solver = MomentumBalanceSolver(self)
 
     def solve(self):
         """Solve for and return the computed displacement field, u"""
-        solver = MomentumBalanceSolver()
-        return solver.solve(self)
+        return self.solver.solve()
 
     def end_time(self):
         """Return the end time of the computation"""
@@ -95,18 +94,3 @@ class HyperelasticityProblem(StaticHyperelasticityProblem):
         u0 = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
         v0 = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
         return u0, v0
-
-    def body_force(self, t, vector):
-        """Return body force, B, at time t"""
-        B = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
-        return B
-
-    def surface_force(self, t, vector):
-        """Return the surface tractions, T, at time t"""
-        T = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
-        return T
-
-    def boundary_conditions(self, t, vector):
-        """"Return Dirichlet boundary conditions for the displacment
-        field, u, at time t"""
-        return []

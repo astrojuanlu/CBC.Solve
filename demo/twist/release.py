@@ -5,7 +5,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from cbc.twist import *
 from numpy import array, loadtxt
 
-class UniaxialTension(HyperelasticityProblem):
+class Release(HyperelasticityProblem):
 
     def mesh(self):
         n = 8
@@ -31,22 +31,22 @@ class UniaxialTension(HyperelasticityProblem):
         v0 = Expression(("0.0", "0.0", "0.0"), V = vector)
         return u0, v0
 
-    def boundary_conditions(self, t, vector):
+    def boundary_conditions(self, vector):
         clamp = Expression(("0.0", "0.0", "0.0"), V = vector)
         left = compile_subdomains(["(fabs(x[0]) < DOLFIN_EPS) && on_boundary"])
         bcu0 = DirichletBC(vector, clamp, left)
         return [bcu0]
 
-    def body_force(self, t, vector):
-        B = Expression(("0.0", "0.0", "0.0"), V = vector)
-        B.t = t
-        return B
+#     def body_force(self, t, vector):
+#         B = Expression(("0.0", "0.0", "0.0"), V = vector)
+#         B.t = t
+#         return B
 
-    def surface_force(self, t, vector):
-        # Need to specify Neumann boundary somewhere
-        T = Expression(("0.0", "0.0", "0.0"), V = vector)
-        T.t = t
-        return T
+#     def surface_force(self, t, vector):
+#         # Need to specify Neumann boundary somewhere
+#         T = Expression(("0.0", "0.0", "0.0"), V = vector)
+#         T.t = t
+#         return T
 
     def material_model(self):
         mu    = 3.8461
@@ -58,7 +58,7 @@ class UniaxialTension(HyperelasticityProblem):
         return "A prestrained hyperelastic cube being let go"
 
 # Setup and solve problem
-problem = UniaxialTension()
+problem = Release()
 print problem.info()
 problem.solve()
 interactive()

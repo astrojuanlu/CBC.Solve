@@ -51,17 +51,13 @@ class StaticMomentumBalanceSolver(CBCSolver):
 class MomentumBalanceSolver(CBCSolver):
     "Solves the quasistatic/dynamic balance of linear momentum"
 
-    def solve(self, problem):
-        """Solve the mechanics problem and return the computed
-        displacement field"""
+    def __init__(self, problem):
+        """Initialise the momentum balance solver"""
 
         # Get problem parameters
         mesh      = problem.mesh()
         dt        = problem.time_step()
         end_time  = problem.end_time()
-
-        # Set initial time
-        t = 0
 
         # Define function spaces
         scalar = FunctionSpace(mesh, "CG", 1)
@@ -69,102 +65,129 @@ class MomentumBalanceSolver(CBCSolver):
 
         # Get initial conditions
         u0, v0 = problem.initial_conditions(vector)
-
-        # Get reference density
-        rho0 = problem.reference_density(scalar)
-        density_type = str(rho0.__class__)
-        if not ("dolfin" in density_type):
-            print "Converting given density to a DOLFIN Constant"
-            rho0 = Constant(mesh, rho0)
-
+        
         # Get time-dependent boundary conditions and driving
         # forces
-        bcu = problem.boundary_conditions(t, vector)
-        B  = problem.body_force(t, vector)
-        T  = problem.surface_force(t, vector)
-
+        bcu = problem.boundary_conditions(vector)
+        B  = problem.body_force(vector)
+        T  = problem.surface_force(vector)
+        
         # Define fields
         # Test and trial functions
         v  = TestFunction(vector)
         u1 = Function(vector)
-        v1 = Function(vector)
-        a1 = Function(vector)
         du = TrialFunction(vector)
-
+        
         # Initial displacement and velocity
         u0 = interpolate(u0, vector)
         v0 = interpolate(v0, vector)
 
-        # Determine initial acceleration
-        a0 = TrialFunction(vector)
-        P = problem.first_pk_stress(u0)
-        a_accn = inner(a0, v)*dx
-        L_accn = - inner(P, Grad(v))*dx + inner(B, v)*dx \
-                 + inner(T, v)*ds
-        problem_accn = VariationalProblem(a_accn, L_accn)
-        a0 = problem_accn.solve()
-
-        # Time step size
-        k  = Constant(mesh, dt)
+        # Initial acceleration
         
         # Piola-Kirchhoff stress tensor based on the material model
         P = problem.first_pk_stress(u1)
 
-        # FIXME: A general version of the trick below is what should
-        # be used instead. The commentend-out lines only work well for
-        # quadratically nonlinear models, e.g. St. Venant Kirchhoff.
-        
-        # S0 = problem.second_pk_stress(u0)
-        # S1 = problem.second_pk_stress(u1)
-        # Sm = 0.5*(S0 + S1)
-        # Fm = DeformationGradient(0.5*(u0 + u1))
-        # P  = Fm*Sm
-
-        # Parameters pertinent to (HHT) time integration
-        # alpha = 1.0
-        beta = 0.25
-        gamma = 0.5
-
-        a1 = a0*(1.0 - 1.0/(2*beta)) - (u0 - u1 + k*v0)/(beta*k**2)
-
         # The variational form corresponding to hyperelasticity
-        L = int(problem.is_dynamic())*rho0*inner(a1, v)*dx \
-        + inner(P, Grad(v))*dx - inner(T, v)*ds \
-        - inner(B, v)*dx 
+        L = inner(P, Grad(v))*dx - inner(T, v)*ds \
+            - inner(B, v)*dx 
         a = derivative(L, u1, du)
 
-        # Set initial solve time
-        t = dt
+        # Store variables needed for time-stepping
+        self.dt = dt
+        self.end_time = end_time
+        self.a = a
+        self.L = L
+        self.bcu = bcu
+        self.u0 = u0
+        self.u1 = u1
+
+        #FIXME: Figure out why I am needed
+        self.mesh = mesh
+
+    def solve(self):
+        """Solve the mechanics problem and return the computed
+        displacement field"""
+
+        # Set initial time
+        self.t = self.dt
 
         # Time loop
-        while t <= end_time:
+        while self.t <= self.end_time:
 
-            print "Solving the problem at time t = " + str(t)
+#            print "Solving the problem at time t = " + str(self.t)
+            self.step(self.dt)
+            self.update()
 
-            # Get time-dependent boundary conditions and driving
-            # forces
-            bcu = problem.boundary_conditions(t, vector)
-            B  = problem.body_force(t, vector)
-            T  = problem.surface_force(t, vector)
+    def step(self, dt): 
+        """Setup and solve the problem at the current time step"""
 
-            # Setup and solve the problem at the current time step
-            equation = VariationalProblem(a, L, bcu, nonlinear = True)
-            equation.solve(u1)
+        equation = VariationalProblem(self.a, self.L, self.bcu, nonlinear = True)
+        equation.solve(self.u1)
+
+    def update(self):
+        """Update problem at time t"""
+        self.t = self.t + self.dt
+        self.u0.assign(self.u1)
+        plot(self.u0, title="Displacement", rescale=True)
+
+        
+
+        # v1 = Function(vector)
+        # a1 = Function(vector)
 
             # Update
-            self.update(problem, t, u1)
-            a1 = a0*(1.0 - 1.0/(2*beta)) - (u0 - u1 + k*v0)/(beta*k**2)
-            a1 = project(a1, vector)
-            v1 = v0 + k*((1 - gamma)*a1 + gamma*a0)
-            v1 = project(v1, vector)
+#             a1 = a0*(1.0 - 1.0/(2*beta)) - (u0 - u1 + k*v0)/(beta*k**2)
+#             a1 = project(a1, vector)
+#             v1 = v0 + k*((1 - gamma)*a1 + gamma*a0)
+#             v1 = project(v1, vector)
 
-            u0.assign(u1)
-            v0.assign(v1)
-            a0.assign(a1)
+#             v0.assign(v1)
+#             a0.assign(a1)
 
-            t = t + dt
 
-    def update(self, problem, t, u):
-        """Update problem at time t"""
+#         # Get reference density
+#         rho0 = problem.reference_density(scalar)
+#         density_type = str(rho0.__class__)
+#         if not ("dolfin" in density_type):
+#             print "Converting given density to a DOLFIN Constant"
+#             rho0 = Constant(mesh, rho0)
 
-        plot(u, title="Displacement", rescale=True)
+
+#         # Determine initial acceleration
+#         a0 = TrialFunction(vector)
+#         P = problem.first_pk_stress(u0)
+#         a_accn = inner(a0, v)*dx
+#         L_accn = - inner(P, Grad(v))*dx + inner(B, v)*dx \
+#                  + inner(T, v)*ds
+#         problem_accn = VariationalProblem(a_accn, L_accn)
+#         a0 = problem_accn.solve()
+
+#         # Time step size
+#         k  = Constant(mesh, dt)
+        
+#         # FIXME: A general version of the trick below is what should
+#         # be used instead. The commentend-out lines only work well for
+#         # quadratically nonlinear models, e.g. St. Venant Kirchhoff.
+        
+#         # S0 = problem.second_pk_stress(u0)
+#         # S1 = problem.second_pk_stress(u1)
+#         # Sm = 0.5*(S0 + S1)
+#         # Fm = DeformationGradient(0.5*(u0 + u1))
+#         # P  = Fm*Sm
+
+#         # Parameters pertinent to (HHT) time integration
+#         # alpha = 1.0
+#         beta = 0.25
+#         gamma = 0.5
+
+#         a1 = a0*(1.0 - 1.0/(2*beta)) - (u0 - u1 + k*v0)/(beta*k**2)
+
+
+#         L = int(problem.is_dynamic())*rho0*inner(a1, v)*dx \
+#         + inner(P, Grad(v))*dx - inner(T, v)*ds \
+#         - inner(B, v)*dx
+
+
+
+
+
