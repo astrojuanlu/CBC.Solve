@@ -45,7 +45,7 @@ class StaticMomentumBalanceSolver(CBCSolver):
         equation = VariationalProblem(a, L, bcu, nonlinear = True)
         equation.solve(u)
 
-        plot(u, interactive = True)
+        plot(u, title = "Displacement", mode = "displacement", rescale = True)
 
         return u
 
@@ -73,18 +73,17 @@ class MomentumBalanceSolver(CBCSolver):
 
         # Get Dirichlet boundary conditions on the displacement field
         dirichlet_conditions = problem.dirichlet_conditions(vector)
-        dirichlet_boundary   = compile_subdomains(problem.dirichlet_boundary())
+        dirichlet_boundaries = problem.dirichlet_boundaries()
 
-        if len(dirichlet_conditions) != len(dirichlet_boundary):
+        if len(dirichlet_conditions) != len(problem.dirichlet_boundaries()):
             print "Please make sure the number of your Dirichlet conditions match the number of your Dirichlet boundaries"
             exit(2)
-        
-        for i in range(len(dirichlet_conditions)):
-            bcu.append(DirichletBC(vector, dirichlet_conditions[i], \
-            dirichlet_boundary[i]))
+
+        for (i, dirichlet_condition) in enumerate(dirichlet_conditions):
+            bcu.append(DirichletBC(vector, dirichlet_condition, \
+            compile_subdomains(dirichlet_boundaries[i])))
 
         B  = problem.body_force(vector)
-        T  = problem.surface_force(vector)
         
         # Define fields
         # Test and trial functions
@@ -108,8 +107,22 @@ class MomentumBalanceSolver(CBCSolver):
         a0 = TrialFunction(vector)
         P0 = problem.first_pk_stress(u0)
         a_accn = inner(a0, v)*dx
-        L_accn = - inner(P0, Grad(v))*dx + inner(B, v)*dx \
-                 + inner(T, v)*ds
+        L_accn = - inner(P0, Grad(v))*dx + inner(B, v)*dx
+
+        # Add contributions to the form from the Neumann boundary
+        # conditions
+
+        # Get Neumann boundary conditions on the stress
+        neumann_conditions = problem.neumann_conditions(vector)
+        neumann_boundaries = problem.neumann_boundaries()
+
+        sub_domains = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
+
+        for (i, neumann_boundary) in enumerate(neumann_boundaries):
+            compiled_boundary = compile_subdomains(neumann_boundary)
+            compiled_boundary.mark(sub_domains, i)
+            L_accn = L_accn + inner(neumann_conditions[i], v)*ds(i)
+
         problem_accn = VariationalProblem(a_accn, L_accn)
         a0 = problem_accn.solve()
 
@@ -138,8 +151,22 @@ class MomentumBalanceSolver(CBCSolver):
 
         # The variational form corresponding to hyperelasticity
         L = int(problem.is_dynamic())*rho0*inner(a1, v)*dx \
-        + inner(P, Grad(v))*dx - inner(T, v)*ds \
-        - inner(B, v)*dx
+        + inner(P, Grad(v))*dx - inner(B, v)*dx
+
+        # Add contributions to the form from the Neumann boundary
+        # conditions
+
+        # Get Neumann boundary conditions on the stress
+        neumann_conditions = problem.neumann_conditions(vector)
+        neumann_boundaries = problem.neumann_boundaries()
+
+        sub_domains = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
+
+        for (i, neumann_boundary) in enumerate(neumann_boundaries):
+            compiled_boundary = compile_subdomains(neumann_boundary)
+            compiled_boundary.mark(sub_domains, i)
+            L = L - inner(neumann_conditions[i], v)*ds(i)
+            
         a = derivative(L, u1, du)
 
         # Store variables needed for time-stepping
@@ -158,9 +185,9 @@ class MomentumBalanceSolver(CBCSolver):
         self.beta = beta
         self.gamma = gamma
         self.vector = vector
-        self.T = T
         self.B = B
         self.dirichlet_conditions = dirichlet_conditions
+        self.neumann_conditions = neumann_conditions
 
         #FIXME: Figure out why I am needed
         self.mesh = mesh
@@ -207,7 +234,8 @@ class MomentumBalanceSolver(CBCSolver):
         # Inform time-dependent functions of new time
         for bc in self.dirichlet_conditions:
             bc.t = self.t
-        self.T.t = self.t
+        for bc in self.neumann_conditions:
+            bc.t = self.t
         self.B.t = self.t
 
-        plot(self.u0, title="Displacement", rescale=True)
+        plot(self.u0, title = "Displacement", mode = "displacement", rescale = True)

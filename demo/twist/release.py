@@ -37,21 +37,10 @@ class Release(HyperelasticityProblem):
         bcu0 = DirichletBC(vector, clamp, left)
         return [bcu0]
 
-#     def body_force(self, t, vector):
-#         B = Expression(("0.0", "0.0", "0.0"), V = vector)
-#         B.t = t
-#         return B
-
-#     def surface_force(self, t, vector):
-#         # Need to specify Neumann boundary somewhere
-#         T = Expression(("0.0", "0.0", "0.0"), V = vector)
-#         T.t = t
-#         return T
-
     def material_model(self):
         mu    = 3.8461
         lmbda = 5.76
-        material = LinearElastic([mu, lmbda])
+        material = StVenantKirchhoff([mu, lmbda])
         return material
 
     def info(self):

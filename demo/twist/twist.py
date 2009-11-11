@@ -52,5 +52,7 @@ class Twist(StaticHyperelasticityProblem):
         return "A hyperelastic cube twisted by 60 degrees"
 
 # Setup and solve problem
-problem = Twist()
-u = problem.solve()
+twist = Twist()
+print twist.info()
+u = twist.solve()
+interactive()

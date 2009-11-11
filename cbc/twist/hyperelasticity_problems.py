@@ -100,15 +100,15 @@ class HyperelasticityProblem(StaticHyperelasticityProblem):
         field"""
         return []
 
-    def dirichlet_boundary(self):
+    def dirichlet_boundaries(self):
         """Return boundaries over which Dirichlet conditions act"""
         return []
 
-    def dirichlet_neumann_conditions(self, vector):
-        """"Return Neumann boundary conditions for the displacment
-        field"""
-        return []
+    def neumann_conditions(self, vector):
+        """"Return Neumann boundary conditions for the stress field"""
+        T = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
+        return T
 
-    def neumann_boundary(self):
+    def neumann_boundaries(self):
         """Return boundaries over which Neumann conditions act"""
         return []
