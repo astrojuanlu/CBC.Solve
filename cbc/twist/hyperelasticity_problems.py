@@ -94,3 +94,21 @@ class HyperelasticityProblem(StaticHyperelasticityProblem):
         u0 = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
         v0 = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
         return u0, v0
+
+    def dirichlet_conditions(self, vector):
+        """"Return Dirichlet boundary conditions for the displacment
+        field"""
+        return []
+
+    def dirichlet_boundary(self):
+        """Return boundaries over which Dirichlet conditions act"""
+        return []
+
+    def dirichlet_neumann_conditions(self, vector):
+        """"Return Neumann boundary conditions for the displacment
+        field"""
+        return []
+
+    def neumann_boundary(self):
+        """Return boundaries over which Neumann conditions act"""
+        return []

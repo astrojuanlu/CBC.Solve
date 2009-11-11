@@ -5,6 +5,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from dolfin import *
 from cbc.common import CBCSolver
 from cbc.twist.kinematics import Grad, DeformationGradient
+from sys import exit
 
 class StaticMomentumBalanceSolver(CBCSolver):
     "Solves the static balance of linear momentum"
@@ -68,7 +69,20 @@ class MomentumBalanceSolver(CBCSolver):
         
         # Get time-dependent boundary conditions and driving
         # forces
-        bcu = problem.boundary_conditions(vector)
+        bcu = []
+
+        # Get Dirichlet boundary conditions on the displacement field
+        dirichlet_conditions = problem.dirichlet_conditions(vector)
+        dirichlet_boundary   = compile_subdomains(problem.dirichlet_boundary())
+
+        if len(dirichlet_conditions) != len(dirichlet_boundary):
+            print "Please make sure the number of your Dirichlet conditions match the number of your Dirichlet boundaries"
+            exit(2)
+        
+        for i in range(len(dirichlet_conditions)):
+            bcu.append(DirichletBC(vector, dirichlet_conditions[i], \
+            dirichlet_boundary[i]))
+
         B  = problem.body_force(vector)
         T  = problem.surface_force(vector)
         
@@ -146,6 +160,7 @@ class MomentumBalanceSolver(CBCSolver):
         self.vector = vector
         self.T = T
         self.B = B
+        self.dirichlet_conditions = dirichlet_conditions
 
         #FIXME: Figure out why I am needed
         self.mesh = mesh
@@ -190,7 +205,7 @@ class MomentumBalanceSolver(CBCSolver):
         self.t = self.t + self.dt
 
         # Inform time-dependent functions of new time
-        for bc in self.bcu:
+        for bc in self.dirichlet_conditions:
             bc.t = self.t
         self.T.t = self.t
         self.B.t = self.t

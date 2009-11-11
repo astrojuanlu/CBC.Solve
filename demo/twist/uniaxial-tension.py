@@ -19,27 +19,42 @@ class UniaxialTension(HyperelasticityProblem):
     def is_dynamic(self):
         return False
 
-    def boundary_conditions(self, t, vector):
+    def dirichlet_conditions(self, vector):
         clamp = Expression(("0.0", "0.0", "0.0"), V = vector)
-        pull  = Expression(("ex*t", "0.0", "0.0"), V = vector)
+        pull = Expression(("ex*t", "0.0", "0.0"), V = vector)
         pull.ex = 0.5
-        pull.t = t
-        left, right = compile_subdomains(["(fabs(x[0]) < DOLFIN_EPS) && on_boundary",
-                                          "(fabs(x[0] - 1.0) < DOLFIN_EPS) && on_boundary"]) 
-        bcu0 = DirichletBC(vector, clamp, left)
-        bcu1 = DirichletBC(vector, pull, right)
-        return [bcu0, bcu1]
 
-    def body_force(self, t, vector):
-        B = Expression(("0.0", "0.0", "0.0"), V = vector)
-        B.t = t
-        return B
+        return [clamp, pull]
 
-    def surface_force(self, t, vector):
-        # Need to specify Neumann boundary somewhere
-        T = Expression(("0.0", "0.0", "0.0"), V = vector)
-        T.t = t
-        return T
+    def dirichlet_boundary(self):
+        left, right = ["x[0] < DOLFIN_EPS",
+                       "x[0] > 1.0 - DOLFIN_EPS"]
+        return [left, right]
+
+#     def neumann_boundary_conditions(self, vector):
+#         T = Expression(("force*t", "0.0", "0.0"), V = vector)
+#         T.force = 1.0
+#         return T
+
+#     def neumann_boundary(self):
+#         right = "x[0] > 1.0 - DOLFIN_EPS"
+#         return [right]
+
+#     def body_force(self, vector):
+#         B = Expression(("0.0", "0.0", "0.0"), V = vector)
+#         return B
+
+#     def surface_force(self, vector):
+#         # Need to specify Neumann boundary somewhere
+        
+# #         s = sigma(uf, pf)
+# #         P = det(1 + Grad(us))*sigma(uf, pf)*inv((1+Grad(us)).T)
+# #         P = inverse_piola_transform(s)
+# #         N = facetnormal(self.mesh)
+# #         f = P*N
+# #         T.fx = f[0]
+# #         T.fy = f[1]
+# #         T.fz = f[2]
 
     def material_model(self):
         c1 = 0.162
