@@ -57,7 +57,6 @@ class MomentumBalanceSolver(CBCSolver):
         # Get problem parameters
         mesh      = problem.mesh()
         dt        = problem.time_step()
-
         end_time  = problem.end_time()
 
         # Define function spaces
@@ -145,6 +144,8 @@ class MomentumBalanceSolver(CBCSolver):
         self.beta = beta
         self.gamma = gamma
         self.vector = vector
+        self.T = T
+        self.B = B
 
         #FIXME: Figure out why I am needed
         self.mesh = mesh
@@ -172,15 +173,26 @@ class MomentumBalanceSolver(CBCSolver):
     def update(self):
         """Update problem at time t"""
 
-        a1 = self.a0*(1.0 - 1.0/(2*self.beta)) - (self.u0 - self.u1 + self.k*self.v0)/(self.beta*self.k**2)
+        # Compute new accelerations and velocities based on new
+        # displacement
+        a1 = self.a0*(1.0 - 1.0/(2*self.beta)) \
+            - (self.u0 - self.u1 + self.k*self.v0)/(self.beta*self.k**2)
         self.a1 = project(a1, self.vector)
         v1 = self.v0 + self.k*((1 - self.gamma)*self.a1 + self.gamma*self.a0)
         self.v1 = project(v1, self.vector)
 
-        self.t = self.t + self.dt
-
+        # Propogate the displacements, velocities and accelerations
         self.u0.assign(self.u1)
         self.v0.assign(self.v1)
         self.a0.assign(self.a1)
+
+        # Move to next time step
+        self.t = self.t + self.dt
+
+        # Inform time-dependent functions of new time
+        for bc in self.bcu:
+            bc.t = self.t
+        self.T.t = self.t
+        self.B.t = self.t
 
         plot(self.u0, title="Displacement", rescale=True)
