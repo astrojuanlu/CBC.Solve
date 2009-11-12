@@ -15,6 +15,7 @@ class NavierStokesSolver(CBCSolver):
     "Navier-Stokes solver (dynamic)"
 
     def __init__(self, problem):
+        CBCSolver.__init__(self)
 
         # Get mesh and time step range
         mesh = problem.mesh()
@@ -93,6 +94,7 @@ class NavierStokesSolver(CBCSolver):
 
             # Update
             self.update()
+            self._end_time_step(t, self.t_range[-1])
 
         return self.u1, self.p1
 
@@ -101,11 +103,14 @@ class NavierStokesSolver(CBCSolver):
         # FIXME: Check if time step has changed and if so reassemble
 
         # Compute tentative velocity step
+        begin("Computing tentative velocity")
         b = assemble(self.L1)
         [bc.apply(self.A1, b) for bc in self.bcu]
         solve(self.A1, self.u1.vector(), b, "gmres", "ilu")
+        end()
 
         # Pressure correction
+        begin("Computing pressure correction")
         b = assemble(self.L2)
         if len(self.bcp) == 0 or is_periodic(self.bcp): normalize(b)
         [bc.apply(self.A2, b) for bc in self.bcp]
@@ -114,11 +119,14 @@ class NavierStokesSolver(CBCSolver):
         else:
             solve(self.A2, self.p1.vector(), b, 'gmres', 'amg_hypre')
         if len(self.bcp) == 0 or is_periodic(self.bcp): normalize(self.p1.vector())
+        end()
 
         # Velocity correction
+        begin("Computing velocity correction")
         b = assemble(self.L3)
         [bc.apply(self.A3, b) for bc in self.bcu]
         solve(self.A3, self.u1.vector(), b, "gmres", "ilu")
+        end()
 
         return self.u1, self.p1
 
