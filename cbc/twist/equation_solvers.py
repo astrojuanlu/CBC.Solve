@@ -42,7 +42,6 @@ class StaticMomentumBalanceSolver(CBCSolver):
         
         # Driving forces
         B = problem.body_force(vector)
-        T = problem.surface_force(vector)
 
         # First Piola-Kirchhoff stress tensor based on the material
         # model
@@ -215,6 +214,7 @@ class MomentumBalanceSolver(CBCSolver):
 
         #FIXME: Figure out why I am needed
         self.mesh = mesh
+        self.t = 0
 
     def solve(self):
         """Solve the mechanics problem and return the computed
@@ -235,6 +235,7 @@ class MomentumBalanceSolver(CBCSolver):
 
         equation = VariationalProblem(self.a, self.L, self.bcu, nonlinear = True)
         equation.solve(self.u1)
+        return self.u1
 
     def update(self):
         """Update problem at time t"""

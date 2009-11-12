@@ -78,6 +78,14 @@ class HyperelasticityProblem(StaticHyperelasticityProblem):
         """Solve for and return the computed displacement field, u"""
         return self.solver.solve()
 
+    def step(self, dt):
+        "Take a time step of size dt"
+        return self.solver.step(dt)
+
+    def update(self):
+        "Propagate values to next time step"
+        return self.solver.update()
+
     def end_time(self):
         """Return the end time of the computation"""
         pass
@@ -89,7 +97,7 @@ class HyperelasticityProblem(StaticHyperelasticityProblem):
     def is_dynamic(self):
         """Return True if the inertia term is to be considered, or
         False if it is to be neglected (quasi-static)"""
-        pass
+        return False
 
     def reference_density(self, scalar):
         """Return the reference density of the material"""

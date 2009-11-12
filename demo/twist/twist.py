@@ -27,11 +27,6 @@ class Twist(StaticHyperelasticityProblem):
         B = Expression(("0.0", "0.0", "0.0"), V = vector)
         return B
 
-    def surface_force(self, vector):
-        # Need to specify Neumann boundary somewhere
-        T = Expression(("0.0", "0.0", "0.0"), V = vector)
-        return T
-
     def material_model(self):
         # Material parameters can either be numbers or spatially
         # varying fields. For example,
