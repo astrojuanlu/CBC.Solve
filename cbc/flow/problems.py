@@ -9,6 +9,7 @@ __all__ = ["StaticNavierStokesProblem", "NavierStokesProblem"]
 from dolfin import Constant, error
 from cbc.common import CBCProblem
 from cbc.flow.solvers import StaticNavierStokesSolver, NavierStokesSolver
+from ufl import grad, Identity
 
 class StaticNavierStokesProblem(CBCProblem):
     "Base class for all static Navier-Stokes problems"
@@ -64,6 +65,12 @@ class NavierStokesProblem(StaticNavierStokesProblem):
     def update(self):
         "Propagate values to next time step"
         return self.solver.update()
+
+    def cauchy_stress(self, u, p):
+        epsilon = 0.5*(grad(u) + grad(u).T)
+        nu = self.viscosity()
+        sigma = 2.0*nu*epsilon - p*Identity(u.cell().d)
+        return sigma
 
     #--- Functions that may optionally be overloaded by subclasses ---
 

@@ -81,6 +81,10 @@ class FluidProblem(NavierStokesProblem):
 
 # Define struture problem
 class StructureProblem(HyperelasticityProblem):
+
+    def __init__(self):
+        self.T_f = [0.0, 0.0]
+        HyperelasticityProblem.__init__(self)
         
     def mesh(self):
         return structure_mesh
@@ -95,10 +99,15 @@ class StructureProblem(HyperelasticityProblem):
         bottom = "x[1] == 0.0 && x[0] >= 1.4 && x[0] <= 1.6"
         return [bottom]
 
+    def load(self, P_f):
+        self.N = FacetNormal(self.mesh())
+        self.T_f = P_f*self.N
+
     def neumann_conditions(self, vector):
-        pull = Expression(("force*t", "0.0"), V = vector)
-        pull.force = 0.02
-        return [pull]
+        fluid_load = Expression(("T_f0", "T_f1"), V = vector)
+        fluid_load.T_f0 = self.T_f[0]
+        fluid_load.T_f1 = self.T_f[1]
+        return [fluid_load]
 
     def neumann_boundaries(self):
         # Return the entire structure boundary as the Neumann
@@ -125,6 +134,10 @@ t = 0
 T = 1
 dt = 0.05
 
+# Set the initial displacement to 0.
+# FIXME: Make the following prettier
+w = interpolate(Constant(structure.mesh(), (0,)*structure.mesh().geometry().dim()), VectorFunctionSpace(structure.mesh(), "CG", 1))
+    
 while t < T:
 
     print "Solving the problem at t = ", str(t)
@@ -134,6 +147,11 @@ while t < T:
     plot(p)
     fluid.update()
 
+    sigma_f = fluid.cauchy_stress(u, p)
+    P_f = PiolaTransform(sigma_f, w)
+    
+    structure.load(P_f)
+    # FIXME: Somewhere here the fluid-to-structure map should be used?
     w = structure.step(dt)
     structure.update()
 
