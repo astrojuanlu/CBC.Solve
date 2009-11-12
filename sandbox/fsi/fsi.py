@@ -128,13 +128,14 @@ dt = 0.05
 while t < T:
 
     print "Solving the problem at t = ", str(t)
+    
+    u, p = fluid.step(dt)
+    plot(u)
+    plot(p)
+    fluid.update()
 
- #     u1, p1 = fluid.step(dt)
-#      plot(u1)
-#      plot(p1)
-
-#      fluid.update()
-    t += dt
-    us = structure.step(dt)
+    w = structure.step(dt)
     structure.update()
+
+    t += dt
 interactive()

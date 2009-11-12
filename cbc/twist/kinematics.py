@@ -84,3 +84,20 @@ def IsochoricCauchyGreenInvariants(u):
     Cbar = IsochoricRightCauchyGreen(u)
     [I1bar, I2bar, I3bar] = Invariants(Cbar)
     return [variable(I1bar), variable(I2bar)]
+
+# Pull-back of a two-tensor from the current to the reference
+# configuration
+def PiolaTransform(A, u):
+    J = Jacobian(u)
+    F = DeformationGradient(u)
+    B = J*A*inv(F).T
+    return B
+
+# Push-forward of a two-tensor from the reference to the current
+# configuration
+def InversePiolaTransform(A, u):
+    J = Jacobian(u)
+    F = DeformationGradient(u)
+    B = (1/J)*A*F.T
+    return B
+
