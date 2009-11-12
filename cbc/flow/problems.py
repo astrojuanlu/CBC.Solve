@@ -53,6 +53,11 @@ class NavierStokes(CBCProblem):
         f = Constant(V.mesh(), (0,)*V.mesh().geometry().dim())
         return f
 
+    def mesh_velocity(self, V):
+        "Return mesh velocity (for ALE formulations)"
+        f = Constant(V.mesh(), (0,)*V.mesh().geometry().dim())
+        return f
+
     def boundary_conditions(self, V, Q):
         "Return boundary conditions for velocity and pressure"
         return [], []

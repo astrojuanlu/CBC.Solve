@@ -22,6 +22,7 @@ class NavierStokesSolver(CBCSolver):
         dt, t_range = timestep_range(problem, mesh)
 
         # Function spaces
+        V1 = VectorFunctionSpace(mesh, "CG", 1)
         V = VectorFunctionSpace(mesh, "CG", 2)
         Q = FunctionSpace(mesh, "CG", 1)
 
@@ -44,11 +45,12 @@ class NavierStokesSolver(CBCSolver):
         # Coefficients
         nu = Constant(mesh, problem.viscosity())
         k = Constant(mesh, dt)
-        f = problem.body_force(V)
+        f = problem.body_force(V1)
+        w = problem.mesh_velocity(V1)
 
         # Tentative velocity step
         U = 0.5*(u0 + u)
-        F1 = (1/k)*inner(v, u - u0)*dx + inner(v, grad(u0)*u0)*dx \
+        F1 = (1/k)*inner(v, u - u0)*dx + inner(v, grad(u0)*(u0 - w))*dx \
             + nu*inner(grad(v), grad(U))*dx + inner(v, grad(p0))*dx \
             - inner(v, f)*dx
         a1 = lhs(F1)
