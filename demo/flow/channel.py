@@ -2,7 +2,7 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2009-11-06
+# Last changed: 2009-11-12
 
 from cbc.flow import *
 
@@ -15,7 +15,7 @@ def inflow_boundary(x):
 def outflow_boundary(x):
     return x[0] > 1 - DOLFIN_EPS
 
-class Channel(NavierStokesProblem):
+class Channel(NavierStokes):
 
     def mesh(self):
         return UnitSquare(16, 16)

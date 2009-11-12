@@ -2,53 +2,17 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2009-11-06
+# Last changed: 2009-11-12
 
-__all__ = ["StaticNavierStokesProblem", "NavierStokesProblem"]
+__all__ = ["NavierStokes"]
 
 from dolfin import Constant, error
 from cbc.common import CBCProblem
-from cbc.flow.solvers import StaticNavierStokesSolver, NavierStokesSolver
+from cbc.flow.solvers import NavierStokesSolver
 from ufl import grad, Identity
 
-class StaticNavierStokesProblem(CBCProblem):
-    "Base class for all static Navier-Stokes problems"
-
-    def __init__(self):
-        "Create static Navier-Stokes problem"
-        self.solver = StaticNavierStokesSolver(self)
-
-    def solve(self):
-        "Solve and return computed solution (u, p)"
-        return self.solver.solve()
-
-    #--- Functions that must be overloaded by subclasses ---
-
-    def mesh(self):
-        "Return mesh"
-        missing_function("mesh")
-
-    #--- Functions that may optionally be overloaded by subclasses ---
-
-    def viscosity(self):
-        "Return viscosity"
-        return 1.0
-
-    def body_force(self, V):
-        "Return body force f"
-        f = Constant(V.mesh(), (0,)*V.mesh().geometry().dim())
-        return f
-
-    def boundary_conditions(self, V, Q):
-        "Return boundary conditions for velocity and pressure"
-        return [], []
-
-    def __str__(self):
-        "Return a short description of the problem"
-        return "Navier-Stokes problem (static)"
-
-class NavierStokesProblem(StaticNavierStokesProblem):
-    "Base class for all (dynamic) Navier-Stokes problems"
+class NavierStokes(CBCProblem):
+    "Base class for all Navier-Stokes problems"
 
     def __init__(self):
         "Create Navier-Stokes problem"
@@ -72,7 +36,26 @@ class NavierStokesProblem(StaticNavierStokesProblem):
         sigma = 2.0*nu*epsilon - p*Identity(u.cell().d)
         return sigma
 
+    #--- Functions that must be overloaded by subclasses ---
+
+    def mesh(self):
+        "Return mesh"
+        missing_function("mesh")
+
     #--- Functions that may optionally be overloaded by subclasses ---
+
+    def viscosity(self):
+        "Return viscosity"
+        return 1.0
+
+    def body_force(self, V):
+        "Return body force f"
+        f = Constant(V.mesh(), (0,)*V.mesh().geometry().dim())
+        return f
+
+    def boundary_conditions(self, V, Q):
+        "Return boundary conditions for velocity and pressure"
+        return [], []
 
     def initial_conditions(self, V, Q):
         "Return initial conditions for velocity and pressure"
@@ -94,4 +77,4 @@ class NavierStokesProblem(StaticNavierStokesProblem):
 
     def __str__(self):
         "Return a short description of the problem"
-        return "Navier-Stokes problem (dynamic)"
+        return "Navier-Stokes problem"

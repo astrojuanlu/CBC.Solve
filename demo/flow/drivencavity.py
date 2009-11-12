@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2009-11-06
+# Last changed: 2009-11-12
 
 from cbc.flow import *
 
@@ -15,7 +15,7 @@ class BoundaryValue(Expression):
             values[0] = 0.0
             values[1] = 0.0
 
-class DrivenCavity(NavierStokesProblem):
+class DrivenCavity(NavierStokes):
 
     def mesh(self):
         return UnitSquare(32, 32)

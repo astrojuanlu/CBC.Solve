@@ -2,21 +2,14 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2009-11-06
+# Last changed: 2009-11-12
 
-__all__ = ["StaticNavierStokesSolver", "NavierStokesSolver"]
+__all__ = ["NavierStokesSolver"]
 
 from dolfin import *
 from numpy import linspace
 from cbc.common.utils import *
 from cbc.common import CBCSolver
-
-class StaticNavierStokesSolver(CBCSolver):
-    "Navier-Stokes solver (static)"
-
-    def solve(self):
-        "Solve problem and return computed solution (u, p)"
-        error("Static Navier-Stokes solver not implemented.")
 
 class NavierStokesSolver(CBCSolver):
     "Navier-Stokes solver (dynamic)"
@@ -74,6 +67,7 @@ class NavierStokesSolver(CBCSolver):
         A3 = assemble(a3)
 
         # Store variables needed for time-stepping
+        self.dt = dt
         self.t_range = t_range
         self.bcu = bcu
         self.bcp = bcp
@@ -87,7 +81,7 @@ class NavierStokesSolver(CBCSolver):
         self.A1 = A1
         self.A2 = A2
         self.A3 = A3
-        
+
     def solve(self):
         "Solve problem and return computed solution (u, p)"
 
@@ -95,7 +89,7 @@ class NavierStokesSolver(CBCSolver):
         for t in self.t_range:
 
             # Solve for current time step
-            self.step(dt)
+            self.step(self.dt)
 
             # Update
             self.update()
@@ -103,7 +97,7 @@ class NavierStokesSolver(CBCSolver):
         return self.u1, self.p1
 
     def step(self, dt):
-        
+
         # FIXME: Check if time step has changed and if so reassemble
 
         # Compute tentative velocity step
@@ -138,7 +132,7 @@ class NavierStokesSolver(CBCSolver):
         #plot(self.u1, title="Velocity", rescale=True)
         #plot(self.p1, title="Pressure", rescale=True)
 
-        return self.u1, self.p1        
+        return self.u1, self.p1
 
 def timestep_range(problem, mesh):
     "Return time step and time step range for given problem"
