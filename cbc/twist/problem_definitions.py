@@ -4,9 +4,9 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 from cbc.common import CBCProblem
-from cbc.twist.equation_solvers import StaticMomentumBalanceSolver, MomentumBalanceSolver
+from cbc.twist.solution_algorithms import StaticMomentumBalanceSolver, MomentumBalanceSolver
 
-class StaticHyperelasticityProblem(CBCProblem):
+class StaticHyperelasticity(CBCProblem):
     """Base class for all static hyperelasticity problems"""
 
     def __init__(self):
@@ -66,7 +66,7 @@ class StaticHyperelasticityProblem(CBCProblem):
         """Return a short description of the problem"""
         return "Static hyperelasticity problem"
 
-class HyperelasticityProblem(StaticHyperelasticityProblem):
+class Hyperelasticity(StaticHyperelasticity):
     """Base class for all quasistatic/dynamic hyperelasticity
     problems"""
 

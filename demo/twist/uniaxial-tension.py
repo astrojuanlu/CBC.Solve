@@ -4,7 +4,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from cbc.twist import *
 
-class UniaxialTension(HyperelasticityProblem):
+class UniaxialTension(Hyperelasticity):
 
     def mesh(self):
         n = 8

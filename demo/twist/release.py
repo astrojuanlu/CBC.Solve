@@ -5,7 +5,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from cbc.twist import *
 from numpy import array, loadtxt
 
-class Release(HyperelasticityProblem):
+class Release(Hyperelasticity):
 
     def mesh(self):
         n = 8
