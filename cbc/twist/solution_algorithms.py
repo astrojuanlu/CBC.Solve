@@ -57,17 +57,18 @@ class StaticMomentumBalanceSolver(CBCSolver):
         neumann_conditions = problem.neumann_conditions(vector)
         neumann_boundaries = problem.neumann_boundaries()
 
-        sub_domains = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
+        boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
+        boundary.set_all(len(neumann_boundaries) + 1)
 
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
             compiled_boundary = compile_subdomains(neumann_boundary)
-            compiled_boundary.mark(sub_domains, i)
+            compiled_boundary.mark(boundary, i)
             L = L - inner(neumann_conditions[i], v)*ds(i)
 
         a = derivative(L, u, du)
 
         # Setup and solve the problem
-        equation = VariationalProblem(a, L, bcu, nonlinear = True)
+        equation = VariationalProblem(a, L, bcu, exterior_facet_domains = boundary, nonlinear = True)
         equation.solve(u)
 
         plot(u, title = "Displacement", mode = "displacement", rescale = True)
@@ -139,14 +140,15 @@ class MomentumBalanceSolver(CBCSolver):
         neumann_conditions = problem.neumann_conditions(vector)
         neumann_boundaries = problem.neumann_boundaries()
 
-        sub_domains = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
+        boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
+        boundary.set_all(len(neumann_boundaries) + 1)
 
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
             compiled_boundary = compile_subdomains(neumann_boundary)
-            compiled_boundary.mark(sub_domains, i)
+            compiled_boundary.mark(boundary, i)
             L_accn = L_accn + inner(neumann_conditions[i], v)*ds(i)
 
-        problem_accn = VariationalProblem(a_accn, L_accn)
+        problem_accn = VariationalProblem(a_accn, L_accn, exterior_facet_domains = boundary)
         a0 = problem_accn.solve()
 
         k = Constant(mesh, dt)
@@ -183,11 +185,12 @@ class MomentumBalanceSolver(CBCSolver):
         neumann_conditions = problem.neumann_conditions(vector)
         neumann_boundaries = problem.neumann_boundaries()
 
-        sub_domains = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
+        boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
+        boundary.set_all(len(neumann_boundaries) + 1)
 
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
             compiled_boundary = compile_subdomains(neumann_boundary)
-            compiled_boundary.mark(sub_domains, i)
+            compiled_boundary.mark(boundary, i)
             L = L - inner(neumann_conditions[i], v)*ds(i)
             
         a = derivative(L, u1, du)
@@ -211,6 +214,7 @@ class MomentumBalanceSolver(CBCSolver):
         self.B = B
         self.dirichlet_conditions = dirichlet_conditions
         self.neumann_conditions = neumann_conditions
+        self.boundary = boundary
 
         #FIXME: Figure out why I am needed
         self.mesh = mesh
@@ -233,7 +237,7 @@ class MomentumBalanceSolver(CBCSolver):
     def step(self, dt): 
         """Setup and solve the problem at the current time step"""
 
-        equation = VariationalProblem(self.a, self.L, self.bcu, nonlinear = True)
+        equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
         equation.solve(self.u1)
         return self.u1
 

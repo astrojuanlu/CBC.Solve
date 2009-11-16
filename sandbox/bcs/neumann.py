@@ -43,7 +43,7 @@ for (i, neumann_boundary) in enumerate(neumann_boundaries):
     compiled_boundary.mark(boundaries, i)
 
     a = v*u*dx
-    L = v*ds(i)
+    L = v*one*ds(i)
 
     problem = VariationalProblem(a, L, exterior_facet_domains = boundaries)
     u1 = problem.solve()

@@ -8,6 +8,8 @@ class UniaxialTension(Hyperelasticity):
 
     def mesh(self):
         n = 8
+        self.left  = "x[0] == 0.0"
+        self.right = "x[0] == 1.0"
         return UnitCube(n, n, n)
 
     def end_time(self):
@@ -17,28 +19,17 @@ class UniaxialTension(Hyperelasticity):
         return 0.1
 
     def is_dynamic(self):
-        return False
-
-    def dirichlet_conditions(self, vector):
-        clamp = Expression(("0.0", "0.0", "0.0"), V = vector)
-        return [clamp]
-
-    def dirichlet_boundaries(self):
-        left = "x[0] == 0.0"
-        return [left]
+        return True
 
     def neumann_conditions(self, vector):
-        pull = Expression(("force*t", "0.0", "0.0"), V = vector)
-        pull.force = 2.0
-        return [pull]
+        pull_left   = Expression(("force*t", "0.0", "0.0"), V = vector)
+        pull_left.force  = -2.0
+        pull_right  = Expression(("force*t", "0.0", "0.0"), V = vector)
+        pull_right.force =  2.0
+        return [pull_right, pull_left]
 
     def neumann_boundaries(self):
-        right = "x[0] == 1.0"
-        return [right]
-
-    def body_force(self, vector):
-        B = Expression(("0.0", "0.0", "0.0"), V = vector)
-        return B
+        return [self.right, self.left]
 
     def material_model(self):
         mu    = 3.8461
@@ -47,7 +38,7 @@ class UniaxialTension(Hyperelasticity):
         return material
 
     def __str__(self):
-        return "A hyperelastic cube being pulled in one direction"
+        return "A hyperelastic cube being pulled from both sides"
 
 # Setup and solve problem
 problem = UniaxialTension()

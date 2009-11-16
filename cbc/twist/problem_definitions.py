@@ -35,7 +35,7 @@ class StaticHyperelasticity(CBCProblem):
     def neumann_conditions(self, vector):
         """"Return Neumann boundary conditions for the stress field"""
         T = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
-        return T
+        return [T]
 
     def neumann_boundaries(self):
         """Return boundaries over which Neumann conditions act"""
@@ -123,7 +123,7 @@ class Hyperelasticity(StaticHyperelasticity):
     def neumann_conditions(self, vector):
         """"Return Neumann boundary conditions for the stress field"""
         T = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
-        return T
+        return [T]
 
     def neumann_boundaries(self):
         """Return boundaries over which Neumann conditions act"""
