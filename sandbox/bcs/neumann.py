@@ -1,14 +1,14 @@
 from dolfin import *
 
 # Test mesh
-n = 9
+n = 99
 mesh = UnitSquare(n, n)
 
 # Boundaries
-left    = "x[0] == 0.0"
-right   = "x[0] == 1.0"
-top     = "x[1] == 0.0"
-bottom  = "x[1] == 1.0"
+left   = "x[0] <= 0.0 + DOLFIN_EPS && on_boundary"
+right  = "x[0] >= 1.0 - DOLFIN_EPS && on_boundary"
+bottom = "x[1] <= 0.0 + DOLFIN_EPS && on_boundary"
+top    = "x[1] >= 1.0 - DOLFIN_EPS && on_boundary"
 
 # Specifying Neumann boundary conditions in two parts
 # The condition itself
@@ -21,19 +21,17 @@ def neumann_conditions(vector):
 
 # The boundary where it acts
 def neumann_boundaries():
-    return [left, right]
+    return [left, right, top, bottom]
 
 # Function spaces
-scalar   = FunctionSpace(mesh, "CG", 1)
-vector   = VectorFunctionSpace(mesh, "CG", 1)
 scalarDG = FunctionSpace(mesh, "DG", 0)
 vectorDG = VectorFunctionSpace(mesh, "DG", 0)
 
-neumann_conditions = neumann_conditions(vector)
+#neumann_conditions = neumann_conditions(vector)
 neumann_boundaries = neumann_boundaries()
 
-u = TrialFunction(scalar)
-v = TestFunction(scalar)
+u = TrialFunction(scalarDG)
+v = TestFunction(scalarDG)
 one = Constant(mesh, 1.0)
 
 boundaries = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
@@ -45,9 +43,9 @@ for (i, neumann_boundary) in enumerate(neumann_boundaries):
     compiled_boundary.mark(boundaries, i)
 
     a = v*u*dx
-    L = v*one*ds(i)
+    L = v*ds(i)
 
-    problem = VariationalProblem(a, L)
+    problem = VariationalProblem(a, L, exterior_facet_domains = boundaries)
     u1 = problem.solve()
 
     plot(u1, interactive = True)
