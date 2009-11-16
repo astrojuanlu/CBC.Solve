@@ -49,7 +49,7 @@ def noslip(x, on_boundary):
     return on_boundary and not inflow(x) and not outflow(x)
 
 # Define fluid problem
-class FluidProblem(NavierStokesProblem):
+class FluidProblem(NavierStokes):
     
     def mesh(self):
         return fluid_mesh
@@ -72,19 +72,19 @@ class FluidProblem(NavierStokesProblem):
         bcp1 = DirichletBC(Q, Constant(Q.mesh(), 0), outflow)
 
         return [bcu], [bcp0, bcp1]
-    
-    def info(self):
-        return "Pressure driven channel (2D) with an obstructure"
 
     def time_step(self):
         return 0.05
 
+    def __str__(self):
+        return "Pressure driven channel (2D) with an obstructure"
+
 # Define struture problem
-class StructureProblem(HyperelasticityProblem):
+class StructureProblem(Hyperelasticity):
 
     def __init__(self):
         self.T_f = [0.0, 0.0]
-        HyperelasticityProblem.__init__(self)
+        Hyperelasticity.__init__(self)
         
     def mesh(self):
         return structure_mesh
@@ -101,6 +101,7 @@ class StructureProblem(HyperelasticityProblem):
 
     def load(self, P_f):
         self.N = FacetNormal(self.mesh())
+        # FIXME: Somewhere here the fluid-to-structure map should be used?
         self.T_f = P_f*self.N
 
     def neumann_conditions(self, vector):
@@ -151,7 +152,6 @@ while t < T:
     P_f = PiolaTransform(sigma_f, w)
     
     structure.load(P_f)
-    # FIXME: Somewhere here the fluid-to-structure map should be used?
     w = structure.step(dt)
     structure.update()
 
