@@ -4,14 +4,14 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from cbc.twist import *
 
-class UniaxialTension(Hyperelasticity):
+class FishyFlow(Hyperelasticity):
 
     def mesh(self):
-        n = 8
-        return UnitCube(n, n, n)
+        mesh = Mesh("dolfin.xml.gz")
+        return mesh
 
     def end_time(self):
-        return 1.0
+        return 10.0
 
     def time_step(self):
         return 0.1
@@ -20,28 +20,25 @@ class UniaxialTension(Hyperelasticity):
         return True
 
     def neumann_conditions(self, vector):
-        pull_left   = Expression(("force*t", "0.0", "0.0"), V = vector)
-        pull_left.force  = -5.0
-        pull_right  = Expression(("force*t", "0.0", "0.0"), V = vector)
-        pull_right.force =  5.0
-        return [pull_right, pull_left]
+        flow_push = Expression(("force", "0.0"), V = vector)
+        flow_push.force = 0.1
+        return [flow_push]
 
     def neumann_boundaries(self):
-        left  = "x[0] == 0.0"
-        right = "x[0] == 1.0"
-        return [right, left]
+        everywhere = "on_boundary"
+        return [everywhere]
 
     def material_model(self):
-        mu    = 3.8461
-        lmbda = 5.76
+        mu    = 30.8461/5.0
+        lmbda = 50.76/5.0
         material = StVenantKirchhoff([mu, lmbda])
         return material
 
     def __str__(self):
-        return "A hyperelastic cube being pulled from both sides"
+        return "A hyperelastic fish being pushed by a flow to the right :)"
 
 # Setup and solve problem
-problem = UniaxialTension()
+problem = FishyFlow()
 print problem
 problem.solve()
 interactive()
