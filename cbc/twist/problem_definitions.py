@@ -102,7 +102,7 @@ class Hyperelasticity(StaticHyperelasticity):
     def reference_density(self, scalar):
         """Return the reference density of the material"""
         rho0 = Constant(scalar.mesh(), 1.0)
-        return rho0        
+        return rho0
 
     def initial_conditions(self, vector):
         """Return initial conditions for displacement field, u0, and

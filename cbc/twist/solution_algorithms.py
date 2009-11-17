@@ -69,6 +69,9 @@ class StaticMomentumBalanceSolver(CBCSolver):
 
         # Setup and solve the problem
         equation = VariationalProblem(a, L, bcu, exterior_facet_domains = boundary, nonlinear = True)
+        equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-15
+        equation.parameters["newton_solver"]["relative_tolerance"] = 1e-16
+        equation.parameters["newton_solver"]["maximum_iterations"] = 100
         equation.solve(u)
 
         plot(u, title = "Displacement", mode = "displacement", rescale = True)
@@ -238,6 +241,9 @@ class MomentumBalanceSolver(CBCSolver):
         """Setup and solve the problem at the current time step"""
 
         equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
+        equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-14
+        equation.parameters["newton_solver"]["relative_tolerance"] = 1e-14
+        equation.parameters["newton_solver"]["maximum_iterations"] = 100
         equation.solve(self.u1)
         return self.u1
 
