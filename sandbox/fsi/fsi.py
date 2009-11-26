@@ -112,12 +112,6 @@ class FluidProblem(NavierStokes):
         self.w = Function(V)
         return self.w
 
-    def update_mesh(self):
-        # Do something with self.w
-        # Change w.vector()
-        print "Calling update_mesh but doing nothing"
-        pass
-        
     def boundary_conditions(self, V, Q):
         
         # Create no-slip boundary condition for velocity
@@ -133,6 +127,39 @@ class FluidProblem(NavierStokes):
 
     def time_step(self):
         return dt
+
+    def update_mesh_displacement(self, U_M):
+        
+        # We would like to do something like this
+        #omega_F1.move(U_M)
+        
+        # But that doesn't work so we do it manually
+        X  = Omega_F.coordinates()
+        x0 = omega_F0.coordinates()
+        x1 = omega_F1.coordinates()
+        dofs = U_M.vector().array()
+        dim = omega_F1.geometry().dim()
+        N = omega_F1.num_vertices()
+        for i in range(N):
+            for j in range(dim):
+                x1[i][j] = X[i][j] + dofs[j*N + i]
+
+        # Update mesh velocity
+        wx = self.w.vector().array()
+        for i in range(N):
+            for j in range(dim):
+                wx[j*N + i] = (x1[i][j] - x0[i][j]) / dt
+        self.w.vector()[:] = wx
+                
+        # Plot mesh velocity
+        plot(self.w, title="Mesh velocity")
+    
+    def update_extra(self):
+
+        # FIXME: The solver should call this function automatically
+
+        # Copy mesh coordinates
+        omega_F0.coordinates()[:] = omega_F1.coordinates()[:]
 
     def __str__(self):
         return "Pressure driven channel (2D) with an obstructure"
@@ -278,17 +305,15 @@ while t < T:
 
         # Solve mesh equation
         U_M = M.solve()
-        
-        # Update fluid mesh
-        F.update_mesh()
 
+        # Update mesh displacement for fluid problem
+        F.update_mesh_displacement(U_M)
+        
         # Plot solutions
         if plot_solution:
             plot(u_F, title="Fluid velocity")
             plot(U_S, title="Structure displacement", mode="displacement")
             plot(U_M, title="Mesh displacement", mode="displacement")
-
-        interactive()
 
         # Compute residual
         r = tol / 2 # norm(U_S) something
@@ -297,6 +322,11 @@ while t < T:
     F.update()
     S.update()
 
+    # FIXME: This should be done automatically by the solver
+    F.update_extra()
+
+    interactive()
+    
     t += dt
 
 # Hold plot
