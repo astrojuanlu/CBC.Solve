@@ -21,6 +21,9 @@ class NavierStokesSolver(CBCSolver):
         mesh = problem.mesh()
         dt, t_range = timestep_range(problem, mesh)
 
+        print "Using time step dt =", dt
+
+
         # Function spaces
         V1 = VectorFunctionSpace(mesh, "CG", 1)
         V = VectorFunctionSpace(mesh, "CG", 2)
@@ -134,10 +137,12 @@ class NavierStokesSolver(CBCSolver):
 
     def update(self):
 
+        print "Updating fluid, copying u0 = u1"
+
         # Propagate values
         self.u0.assign(self.u1)
         self.p0.assign(self.p1)
-
+        
         # Plot solution
         #plot(self.u1, title="Velocity", rescale=True)
         #plot(self.p1, title="Pressure", rescale=True)
@@ -152,6 +157,9 @@ def timestep_range(problem, mesh):
     dt = problem.time_step()
     nu = problem.viscosity()
     U = problem.max_velocity()
+
+    print "In timestep_range: dt =", dt
+
 
     # Use time step specified in problem if available
     if not dt is None:

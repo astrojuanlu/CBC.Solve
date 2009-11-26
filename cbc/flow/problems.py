@@ -36,6 +36,17 @@ class NavierStokes(CBCProblem):
         sigma = 2.0*nu*epsilon - p*Identity(u.cell().d)
         return sigma
 
+    def viscous_stress(self, u):
+        epsilon = 0.5*(grad(u) + grad(u).T)
+        nu = self.viscosity()
+        fluid_stress_u = 2.0*nu*epsilon 
+        return fluid_stress_u
+        
+    def pressure_stress(self, u, p):
+        fluid_stress_p = - p*Identity(u.cell().d)
+        return fluid_stress_p
+
+
     #--- Functions that must be overloaded by subclasses ---
 
     def mesh(self):
@@ -54,9 +65,9 @@ class NavierStokes(CBCProblem):
         return f
 
     def mesh_velocity(self, V):
-        "Return mesh velocity (for ALE formulations)"
-        f = Constant(V.mesh(), (0,)*V.mesh().geometry().dim())
-        return f
+         "Return mesh velocity (for ALE formulations)"
+         w = Constant(V.mesh(), (0,)*V.mesh().geometry().dim())
+         return w
 
     def boundary_conditions(self, V, Q):
         "Return boundary conditions for velocity and pressure"

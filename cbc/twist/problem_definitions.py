@@ -13,6 +13,10 @@ class StaticHyperelasticity(CBCProblem):
         """Create the static hyperelasticity problem"""
         pass
 
+    def init(self, scalar, vector):
+        """Initialize problem with function spaces"""
+        pass
+
     def solve(self):
         """Solve for and return the computed displacement field, u"""
         solver = StaticMomentumBalanceSolver()

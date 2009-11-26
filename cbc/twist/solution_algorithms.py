@@ -64,9 +64,10 @@ class StaticMomentumBalanceSolver(CBCSolver):
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
             L = L - inner(neumann_conditions[i], v)*ds(i)
+            
 
         a = derivative(L, u, du)
-
+        
         # Setup and solve the problem
         equation = VariationalProblem(a, L, bcu, exterior_facet_domains = boundary, nonlinear = True)
         equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-15
@@ -74,7 +75,7 @@ class StaticMomentumBalanceSolver(CBCSolver):
         equation.parameters["newton_solver"]["maximum_iterations"] = 100
         equation.solve(u)
 
-        plot(u, title = "Displacement", mode = "displacement", rescale = True)
+        #plot(u, title = "Displacement", mode = "displacement", rescale = True)
 
         return u
 
@@ -92,6 +93,9 @@ class MomentumBalanceSolver(CBCSolver):
         # Define function spaces
         scalar = FunctionSpace(mesh, "CG", 1)
         vector = VectorFunctionSpace(mesh, "CG", 1)
+
+        # Initialize problem with function spaces
+        problem.init(scalar, vector)
 
         # Get initial conditions
         u0, v0 = problem.initial_conditions(vector)
@@ -240,7 +244,8 @@ class MomentumBalanceSolver(CBCSolver):
     def step(self, dt): 
         """Setup and solve the problem at the current time step"""
 
-        equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
+        #equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
+        equation = VariationalProblem(self.a, self.L, self.bcu, nonlinear = True)
         equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-14
         equation.parameters["newton_solver"]["relative_tolerance"] = 1e-14
         equation.parameters["newton_solver"]["maximum_iterations"] = 100
@@ -273,4 +278,4 @@ class MomentumBalanceSolver(CBCSolver):
             bc.t = self.t
         self.B.t = self.t
 
-        plot(self.u0, title = "Displacement", mode = "displacement", rescale = True)
+        #plot(self.u0, title = "Displacement", mode = "displacement", rescale = True)

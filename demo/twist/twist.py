@@ -37,10 +37,10 @@ class Twist(StaticHyperelasticity):
         # It is also easy to switch material models. Uncomment one of
         # the following lines to see a particular material's response.
         #material = MooneyRivlin([mu/2, mu/2])
-        #material = StVenantKirchhoff([mu, lmbda])
+        material = StVenantKirchhoff([mu, lmbda])
         #material = neoHookean([mu])
         #material = Isihara([C10, C01, C20])
-        material = Biderman([C10, C01, C20, C30])
+        #material = Biderman([C10, C01, C20, C30])
 
         return material
 
