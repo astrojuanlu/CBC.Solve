@@ -5,7 +5,7 @@
 
 from cbc.flow import *
 from cbc.twist import *
-from numpy import array
+from numpy import array, append
 
 plot_solution = True
 
@@ -43,8 +43,28 @@ omega_F1 = Mesh(Omega_F)
 structure_to_fluid = compute_vertex_map(Omega_S, Omega_F)
 
 # Extract matching indices for fluid and structure
-structure_indices = array([i for i in structure_to_fluid.iterkeys()])
 fluid_indices = array([i for i in structure_to_fluid.itervalues()])
+structure_indices = array([i for i in structure_to_fluid.iterkeys()])
+
+# Extract matching dofs for fluid and structure
+fdofs = append(fluid_indices, fluid_indices + Omega_F.num_vertices())
+sdofs = append(structure_indices, structure_indices + Omega_S.num_vertices())
+
+# Functions for adding vectors between domains
+
+def fsi_add_f2s(xs, xf):
+    "Compute xs += xf for corresponding indices"
+    xs_array = xs.array()
+    xf_array = xf.array()
+    xs_array[sdofs] += xf_array[fdofs]
+    xs[:] = xs_array
+
+def fsi_add_s2f(xf, xs):
+    "Compute xs += xf for corresponding indices"
+    xf_array = xf.array()
+    xs_array = xs.array()
+    xf_array[fdofs] += xs_array[sdofs]
+    xf[:] = xf_array
 
 # Define inflow boundary
 def inflow(x):
@@ -135,9 +155,6 @@ class StructureProblem(Hyperelasticity):
     def mesh(self):
         return Omega_S
 
-    def v_F(self):
-        return TestFunction(self.fluid_mesh(), "CG", 1)
-
     def dirichlet_conditions(self, vector):
         fix = Expression(("0.0", "0.0"), V = vector)
         return [fix]
@@ -148,7 +165,7 @@ class StructureProblem(Hyperelasticity):
         bottom = "x[1] == 0.0 && x[0] >= 1.4 && x[0] <= 1.6"
         return [bottom]
 
-    def update_fluid_load(self, Sigma_F):
+    def update_fluid_stress(self, Sigma_F):
 
         # Assemble traction on fluid domain
         print "Assembling traction on fluid domain"
@@ -160,14 +177,11 @@ class StructureProblem(Hyperelasticity):
         
         # Add contribution from fluid vector to structure 
         B_S = Vector(self.vector.dim())
-        B_S_array = B_S.array()
-        B_F_array = B_F.array()
-        B_S_array[structure_indices] += B_F_array[fluid_indices]
-        B_S[:] = B_S_array
+        fsi_add_f2s(B_S, B_F)
 
         # This is not how it should be done. It's completely crazy
         # but it gives an effect in the right direction...
-        self.fluid_load.vector()[:] = -B_S_array
+        self.fluid_load.vector()[:] = -B_S.array()
 
         # What we should really do is send B_S to Harish!
         
@@ -182,10 +196,11 @@ class StructureProblem(Hyperelasticity):
         return["on_boundary"]
 
     def material_model(self):
-        mu       = 3.8461
-        lmbda    = 5.76
-        material = StVenantKirchhoff([mu, lmbda])
-        return material
+        #mu       = 3.8461
+        #lmbda    = 5.76
+        mu       = 1.1
+        lmbda    = 1.5
+        return StVenantKirchhoff([mu, lmbda])
 
     def time_step(self):
         return dt
@@ -193,11 +208,45 @@ class StructureProblem(Hyperelasticity):
     def __str__(self):
         return "The structure problem"
 
-fluid = FluidProblem()
-structure = StructureProblem()
+# Define mesh problem
+class MeshProblem(StaticHyperelasticity):
 
-U_M = Function(structure.V_F)
+    def __init__(self):
+        StaticHyperelasticity.__init__(self)
 
+    def mesh(self):
+        return Omega_F
+
+    def dirichlet_conditions(self, vector):
+        self.displacement = Function(vector)
+        return [self.displacement]
+ 
+    def dirichlet_boundaries(self):
+        return ["on_boundary"]
+
+    def material_model(self):
+        mu = 3
+        lmbda = 5
+        return LinearElastic([mu, lmbda])
+        #mu       = 3.8461
+        #lmbda    = 5.76
+        #return StVenantKirchhoff([mu, lmbda])
+
+    def update_structure_displacement(self, U_S):
+        self.displacement.vector().zero()
+        fsi_add_s2f(self.displacement.vector(), U_S.vector())
+        self.displacement.vector().array()
+
+    def __str__(self):
+        return "The mesh problem"
+
+# Define the three problems
+F = FluidProblem()
+S = StructureProblem()
+M = MeshProblem()
+
+# Solve mesh equation (will give zero vector first time)
+U_M = M.solve()
 
 # FIXME: Time step used by solver might not be dt!!!
 
@@ -212,35 +261,41 @@ while t < T:
     while r > tol:
         
         # Solve fluid equation
-        u_F, p_F = fluid.step(dt)
+        u_F, p_F = F.step(dt)
        
         # Compute fluid stress tensor
-        sigma_F = fluid.cauchy_stress(u_F, p_F)
+        sigma_F = F.cauchy_stress(u_F, p_F)
         Sigma_F = PiolaTransform(sigma_F, U_M)
         
-        # Update fluid stress on structure
-        structure.update_fluid_load(Sigma_F)
+        # Update fluid stress for structure problem
+        S.update_fluid_stress(Sigma_F)
         
         # Solve structure equation
-        U_S = structure.step(dt)
+        U_S = S.step(dt)
         
+        # Update structure displacement for mesh problem
+        M.update_structure_displacement(U_S)
+
         # Solve mesh equation
-        #fluid_mesh.move(U_S, harmonic)
+        U_M = M.solve()
         
         # Update fluid mesh
-        fluid.update_mesh()
+        F.update_mesh()
 
         # Plot solutions
         if plot_solution:
             plot(u_F, title="Fluid velocity")
-            plot(U_S, title="Structure displacement")
+            plot(U_S, title="Structure displacement", mode="displacement")
+            plot(U_M, title="Mesh displacement", mode="displacement")
+
+        interactive()
 
         # Compute residual
         r = tol / 2 # norm(U_S) something
 
     # Move to next time step
-    fluid.update()
-    structure.update()
+    F.update()
+    S.update()
 
     t += dt
 
