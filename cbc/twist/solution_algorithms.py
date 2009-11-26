@@ -10,15 +10,17 @@ from sys import exit
 class StaticMomentumBalanceSolver(CBCSolver):
     "Solves the static balance of linear momentum"
 
-    def solve(self, problem):
-        """Solve the mechanics problem and return the computed
-        displacement field"""
+    def __init__(self, problem):
+        """Initialise the static momentum balance solver"""
 
         # Get problem parameters
         mesh = problem.mesh()
 
         # Define function spaces
         vector = VectorFunctionSpace(mesh, "CG", 1)
+
+        # Initialize problem with function spaces
+        problem.init(vector)
 
         # Get Dirichlet boundary conditions on the displacement field
         bcu = []
@@ -68,16 +70,26 @@ class StaticMomentumBalanceSolver(CBCSolver):
 
         a = derivative(L, u, du)
         
-        # Setup and solve the problem
+        # Setup problem
         equation = VariationalProblem(a, L, bcu, exterior_facet_domains = boundary, nonlinear = True)
         equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-15
         equation.parameters["newton_solver"]["relative_tolerance"] = 1e-16
         equation.parameters["newton_solver"]["maximum_iterations"] = 100
-        equation.solve(u)
+
+        # Store variables needed for time-stepping
+        self.equation = equation
+        self.u = u
+
+    def solve(self):
+        """Solve the mechanics problem and return the computed
+        displacement field"""
+
+        # Solve problem
+        self.equation.solve(self.u)
 
         #plot(u, title = "Displacement", mode = "displacement", rescale = True)
 
-        return u
+        return self.u
 
 class MomentumBalanceSolver(CBCSolver):
     "Solves the quasistatic/dynamic balance of linear momentum"
@@ -243,6 +255,8 @@ class MomentumBalanceSolver(CBCSolver):
 
     def step(self, dt): 
         """Setup and solve the problem at the current time step"""
+
+        # FIXME: Setup all stuff in the constructor and call assemble instead of VariationalProblem
 
         #equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
         equation = VariationalProblem(self.a, self.L, self.bcu, nonlinear = True)
