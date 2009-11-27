@@ -72,7 +72,7 @@ class StaticMomentumBalanceSolver(CBCSolver):
         
         # Setup problem
         equation = VariationalProblem(a, L, bcu, exterior_facet_domains = boundary, nonlinear = True)
-        equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-15
+        equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-12 
         equation.parameters["newton_solver"]["relative_tolerance"] = 1e-16
         equation.parameters["newton_solver"]["maximum_iterations"] = 100
 

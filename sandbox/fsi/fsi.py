@@ -15,8 +15,8 @@ channel_height  = 1.0
 structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
-nx = 60
-ny = 20
+nx = 60*2
+ny = 20*2
     
 # Create the complete mesh
 mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
@@ -81,7 +81,7 @@ def noslip(x, on_boundary):
 # Parameters
 t = 0
 T = 10.0
-dt = 0.0025
+dt = 0.05
 tol = 1e-3
 
 P1F = VectorFunctionSpace(Omega_F, "CG", 1)
@@ -93,20 +93,7 @@ class FluidProblem(NavierStokes):
         return omega_F1
 
     def viscosity(self):
-        return 0.005
-    
-#     def end_time(self):
-#         return 0.5
-    
-#    def mesh_displacement(self):
-#        self.X0  =  MeshCoordinates(mesh)
-#        self.X1  =  MeshCoordinates(mesh)
-#        self.m_d =  X0 - X1
-#        return self.m_d
-        
-#    def update_mesh_displacement(self, X1):
-#         self.X0.assign(self.X1)
-#         return self.X1
+        return 0.0005
 
     def mesh_velocity(self, V):
         self.w = Function(V)
@@ -151,9 +138,6 @@ class FluidProblem(NavierStokes):
                 wx[j*N + i] = (x1[i][j] - x0[i][j]) / dt
         self.w.vector()[:] = wx
                 
-        # Plot mesh velocity
-        plot(self.w, title="Mesh velocity")
-    
     def update_extra(self):
 
         # FIXME: The solver should call this function automatically
@@ -213,7 +197,7 @@ class StructureProblem(Hyperelasticity):
         # What we should really do is send B_S to Harish!
         
     def neumann_conditions(self, vector):
-        self.fluid_load = Function(vector)#0
+        self.fluid_load = Function(vector)
         return [self.fluid_load]
 
     def neumann_boundaries(self):
@@ -277,6 +261,19 @@ U_M = M.solve()
 
 # FIXME: Time step used by solver might not be dt!!!
 
+
+# Create files for storing solution
+file_u_F = File("u_F.pvd")
+file_p_F = File("p_F.pvd")
+file_U_S = File("U_S.pvd")
+file_U_M = File("U_M.pvd")
+
+# Crazy thing that may be correct
+V = VectorFunctionSpace(Omega_F, "CG", 2)
+Q = FunctionSpace(Omega_F, "CG", 1)
+U_F = Function(V)
+P_F = Function(Q)
+
 # Time-stepping
 while t < T:
 
@@ -291,9 +288,15 @@ while t < T:
         u_F, p_F = F.step(dt)
        
         # Compute fluid stress tensor
-        sigma_F = F.cauchy_stress(u_F, p_F)
-        Sigma_F = PiolaTransform(sigma_F, U_M)
+        #sigma_F = F.cauchy_stress(u_F, p_F)
+        #Sigma_F = PiolaTransform(sigma_F, U_M)
         
+        # Crazy thing that may be correct
+        U_F.vector()[:] = u_F.vector()[:]
+        P_F.vector()[:] = p_F.vector()[:]
+        sigma_F = F.cauchy_stress(U_F, P_F)
+        Sigma_F = PiolaTransform(sigma_F, U_M)
+
         # Update fluid stress for structure problem
         S.update_fluid_stress(Sigma_F)
         
@@ -314,6 +317,7 @@ while t < T:
             plot(u_F, title="Fluid velocity")
             plot(U_S, title="Structure displacement", mode="displacement")
             plot(U_M, title="Mesh displacement", mode="displacement")
+            plot(F.w, title="Mesh velocity")
 
         # Compute residual
         r = tol / 2 # norm(U_S) something
@@ -322,11 +326,16 @@ while t < T:
     F.update()
     S.update()
 
+
     # FIXME: This should be done automatically by the solver
     F.update_extra()
 
-    interactive()
-    
+    # Store solutions 
+    file_u_F << u_F
+    file_p_F << p_F
+    file_U_S << U_S
+    file_U_M << U_M
+  
     t += dt
 
 # Hold plot
