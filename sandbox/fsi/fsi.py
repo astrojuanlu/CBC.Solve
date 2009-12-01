@@ -2,12 +2,12 @@
 # Navier-Stokes flow field. Lessons learnt from this exercise will be
 # used to construct an FSI class in the future.
 
-
 from cbc.flow import *
 from cbc.twist import *
+from cbc.common.utils import *
 from numpy import array, append
 
-plot_solution = True
+plot_solution = 1
 
 # Constants related to the geometry of the channel and the obstruction
 channel_length  = 3.0
@@ -15,8 +15,8 @@ channel_height  = 1.0
 structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
-nx = 60*2
-ny = 20*2
+nx = 60
+ny = 20
     
 # Create the complete mesh
 mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
@@ -80,20 +80,25 @@ def noslip(x, on_boundary):
 
 # Parameters
 t = 0
-T = 10.0
-dt = 0.05
-tol = 1e-3
-
-P1F = VectorFunctionSpace(Omega_F, "CG", 1)
+T = 5.0
+dt = 0.025
+tol = 1e-6
 
 # Define fluid problem
 class FluidProblem(NavierStokes):
     
+    def __init__(self):
+        NavierStokes.__init__(self)
+        self.V = VectorFunctionSpace(Omega_F, "CG", 2)
+        self.Q = FunctionSpace(Omega_F, "CG", 1)
+        self.U_F = Function(self.V)
+        self.P_F = Function(self.Q)
+
     def mesh(self):
         return omega_F1
 
     def viscosity(self):
-        return 0.0005
+        return 0.01
 
     def mesh_velocity(self, V):
         self.w = Function(V)
@@ -109,11 +114,34 @@ class FluidProblem(NavierStokes):
         # Create inflow and outflow boundary conditions for pressure
         bcp0 = DirichletBC(Q, Constant(Q.mesh(), 1), inflow)
         bcp1 = DirichletBC(Q, Constant(Q.mesh(), 0), outflow)
-
+        
         return [bcu], [bcp0, bcp1]
-
+   
     def time_step(self):
         return dt
+    
+    def compute_fluid_stress(self, u_F, p_F, U_M):
+
+        # Map u and p back to reference domain
+        self.U_F.vector()[:] = u_F.vector()[:]
+        self.P_F.vector()[:] = p_F.vector()[:]
+
+        # Compute mesh deformation gradient 
+        F = DeformationGradient(U_M)
+        F_inv = inv(F)
+        F_inv_T = F_inv.T 
+
+        # Compute mapped stress (sigma_F \circ Phi) (here, grad "=" Grad)
+        # FIXME: Add fluid viscosity 
+        # FIXME: Check if it this is the correct def. of UFL grad
+        nu = self.viscosity()
+        sigma_F = nu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T \
+                  - self.P_F*Identity(self.U_F.cell().d))
+
+        # Map to physical stress
+        Sigma_F = PiolaTransform(sigma_F, U_M)
+
+        return Sigma_F
 
     def update_mesh_displacement(self, U_M):
         
@@ -130,14 +158,23 @@ class FluidProblem(NavierStokes):
         for i in range(N):
             for j in range(dim):
                 x1[i][j] = X[i][j] + dofs[j*N + i]
+               
+        # Update mesh
+        omega_F1.coordinates()[:] = x1
+#         plot(omega_F1, title="F1")
+#         plot(omega_F0, title="F0")
 
-        # Update mesh velocity
+        # Update mesh velocity 
         wx = self.w.vector().array()
         for i in range(N):
             for j in range(dim):
                 wx[j*N + i] = (x1[i][j] - x0[i][j]) / dt
+        
         self.w.vector()[:] = wx
-                
+
+        # Reassemble matrices
+        self.solver.reassemble()
+
     def update_extra(self):
 
         # FIXME: The solver should call this function automatically
@@ -154,11 +191,12 @@ class StructureProblem(Hyperelasticity):
     def __init__(self):
         Hyperelasticity.__init__(self)
         
-        # Define basis function for transfer of stress
+        # Define functions and function spaces for transfer the fluid stress
+        # FIXME: change name on function spaces
         self.V_F = VectorFunctionSpace(Omega_F, "CG", 1)
         self.v_F = TestFunction(self.V_F)
         self.N_F = FacetNormal(Omega_F)
-    
+             
     def init(self, scalar, vector):
         self.scalar = scalar
         self.vector = vector
@@ -236,8 +274,8 @@ class MeshProblem(StaticHyperelasticity):
         return ["on_boundary"]
 
     def material_model(self):
-        mu = 3
-        lmbda = 5
+        mu = 3.8461
+        lmbda = 5.76
         return LinearElastic([mu, lmbda])
         #mu       = 3.8461
         #lmbda    = 5.76
@@ -256,23 +294,22 @@ F = FluidProblem()
 S = StructureProblem()
 M = MeshProblem()
 
-# Solve mesh equation (will give zero vector first time)
+# Solve mesh equation (will give zero vector first time which corresponds to
+# identity map between the current domain and the reference domain)
 U_M = M.solve()
 
-# FIXME: Time step used by solver might not be dt!!!
+# Create inital displacement vector
+V0 = VectorFunctionSpace(Omega_S, "CG", 1)
+v0 = Function(V0)
+U_S_vector_old  = v0.vector()
 
+# FIXME: Time step used by solver might not be dt!!!
 
 # Create files for storing solution
 file_u_F = File("u_F.pvd")
 file_p_F = File("p_F.pvd")
 file_U_S = File("U_S.pvd")
 file_U_M = File("U_M.pvd")
-
-# Crazy thing that may be correct
-V = VectorFunctionSpace(Omega_F, "CG", 2)
-Q = FunctionSpace(Omega_F, "CG", 1)
-U_F = Function(V)
-P_F = Function(Q)
 
 # Time-stepping
 while t < T:
@@ -287,17 +324,8 @@ while t < T:
         # Solve fluid equation
         u_F, p_F = F.step(dt)
        
-        # Compute fluid stress tensor
-        #sigma_F = F.cauchy_stress(u_F, p_F)
-        #Sigma_F = PiolaTransform(sigma_F, U_M)
-        
-        # Crazy thing that may be correct
-        U_F.vector()[:] = u_F.vector()[:]
-        P_F.vector()[:] = p_F.vector()[:]
-        sigma_F = F.cauchy_stress(U_F, P_F)
-        Sigma_F = PiolaTransform(sigma_F, U_M)
-
         # Update fluid stress for structure problem
+        Sigma_F = F.compute_fluid_stress(u_F, p_F, U_M)
         S.update_fluid_stress(Sigma_F)
         
         # Solve structure equation
@@ -309,7 +337,7 @@ while t < T:
         # Solve mesh equation
         U_M = M.solve()
 
-        # Update mesh displacement for fluid problem
+        # Update mesh displcament and mesh velocity
         F.update_mesh_displacement(U_M)
         
         # Plot solutions
@@ -318,14 +346,28 @@ while t < T:
             plot(U_S, title="Structure displacement", mode="displacement")
             plot(U_M, title="Mesh displacement", mode="displacement")
             plot(F.w, title="Mesh velocity")
-
+            
         # Compute residual
-        r = tol / 2 # norm(U_S) something
-
+        U_S_vector_old.axpy(-1, U_S.vector())
+        r = norm(U_S_vector_old)
+        U_S_vector_old[:] = U_S.vector()[:]
+        
+        
+        print "*******************************************"
+        print "Solving the problem at t = ", str(t)
+        print "" 
+        print ""
+        print "norm(r)", str(r)
+        print ""
+        print "*******************************************"
+                
+        # Check convergence
+        if r < tol:
+            break 
+                
     # Move to next time step
     F.update()
     S.update()
-
 
     # FIXME: This should be done automatically by the solver
     F.update_extra()

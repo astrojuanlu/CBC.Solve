@@ -23,7 +23,6 @@ class NavierStokesSolver(CBCSolver):
 
         print "Using time step dt =", dt
 
-
         # Function spaces
         V1 = VectorFunctionSpace(mesh, "CG", 1)
         V = VectorFunctionSpace(mesh, "CG", 2)
@@ -67,11 +66,6 @@ class NavierStokesSolver(CBCSolver):
         a3 = inner(v, u)*dx
         L3 = inner(v, u1)*dx + inner(v, k*grad(p0 - p1))*dx
 
-        # Assemble matrices
-        A1 = assemble(a1)
-        A2 = assemble(a2)
-        A3 = assemble(a3)
-
         # Store variables needed for time-stepping
         self.dt = dt
         self.t_range = t_range
@@ -84,9 +78,12 @@ class NavierStokesSolver(CBCSolver):
         self.L1 = L1
         self.L2 = L2
         self.L3 = L3
-        self.A1 = A1
-        self.A2 = A2
-        self.A3 = A3
+        self.a1 = a1
+        self.a2 = a2
+        self.a3 = a3
+
+        # Assemble matrices
+        self.reassemble()
 
     def solve(self):
         "Solve problem and return computed solution (u, p)"
@@ -148,6 +145,16 @@ class NavierStokesSolver(CBCSolver):
         #plot(self.p1, title="Pressure", rescale=True)
 
         return self.u1, self.p1
+
+    def reassemble(self):
+        "Reassemble matrices, needed when mesh or time step has changed"
+        print "(Re)assembling matrices"
+        self.A1 = assemble(self.a1)
+        self.A2 = assemble(self.a2)
+        self.A3 = assemble(self.a3)
+        self.b1 = assemble(self.L1)
+        self.b2 = assemble(self.L2)
+        self.b3 = assemble(self.L3)
 
 def timestep_range(problem, mesh):
     "Return time step and time step range for given problem"
