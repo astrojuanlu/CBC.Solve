@@ -36,7 +36,7 @@ class MaterialModel():
                 parameters.append(self.parameters[i])
             else:
                 print "Converting given numerical parameter to DOLFIN Constant"
-                parameters.append(Constant(u.function_space().mesh(), self.parameters[i]))
+                parameters.append(Constant(self.parameters[i]))
         return parameters
     
     def _construct_local_kinematics(self, u):

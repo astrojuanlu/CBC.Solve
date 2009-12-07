@@ -170,7 +170,7 @@ class MomentumBalanceSolver(CBCSolver):
         problem_accn = VariationalProblem(a_accn, L_accn, exterior_facet_domains = boundary)
         a0 = problem_accn.solve()
 
-        k = Constant(mesh, dt)
+        k = Constant(dt)
         a1 = a0*(1.0 - 1.0/(2*beta)) - (u0 - u1 + k*v0)/(beta*k**2)
 
         # Get reference density
@@ -178,7 +178,7 @@ class MomentumBalanceSolver(CBCSolver):
         density_type = str(rho0.__class__)
         if not ("dolfin" in density_type):
             print "Converting given density to a DOLFIN Constant"
-            rho0 = Constant(mesh, rho0)
+            rho0 = Constant(rho0)
 
         # Piola-Kirchhoff stress tensor based on the material model
         P = problem.first_pk_stress(u1)

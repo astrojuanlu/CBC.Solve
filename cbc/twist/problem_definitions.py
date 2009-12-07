@@ -23,7 +23,7 @@ class StaticHyperelasticity(CBCProblem):
 
     def body_force(self, vector):
         """Return body force, B"""
-        B = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
+        B = Constant((0,)*vector.mesh().geometry().dim())
         return B
 
     def dirichlet_conditions(self, vector):
@@ -37,7 +37,7 @@ class StaticHyperelasticity(CBCProblem):
 
     def neumann_conditions(self, vector):
         """"Return Neumann boundary conditions for the stress field"""
-        T = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
+        T = Constant((0,)*vector.mesh().geometry().dim())
         return [T]
 
     def neumann_boundaries(self):
@@ -108,14 +108,14 @@ class Hyperelasticity(StaticHyperelasticity):
 
     def reference_density(self, scalar):
         """Return the reference density of the material"""
-        rho0 = Constant(scalar.mesh(), 1.0)
+        rho0 = Constant(1.0)
         return rho0
 
     def initial_conditions(self, vector):
         """Return initial conditions for displacement field, u0, and
         velocity field, v0""" 
-        u0 = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
-        v0 = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
+        u0 = Constant((0,)*vector.mesh().geometry().dim())
+        v0 = Constant((0,)*vector.mesh().geometry().dim())
         return u0, v0
 
     def dirichlet_conditions(self, vector):
@@ -129,7 +129,7 @@ class Hyperelasticity(StaticHyperelasticity):
 
     def neumann_conditions(self, vector):
         """"Return Neumann boundary conditions for the stress field"""
-        T = Constant(vector.mesh(), (0,)*vector.mesh().geometry().dim())
+        T = Constant((0,)*vector.mesh().geometry().dim())
         return [T]
 
     def neumann_boundaries(self):
