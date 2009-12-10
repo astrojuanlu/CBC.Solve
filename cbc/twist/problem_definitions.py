@@ -27,7 +27,7 @@ class StaticHyperelasticity(CBCProblem):
         return B
 
     def dirichlet_conditions(self, vector):
-        """"Return Dirichlet boundary conditions for the displacment
+        """Return Dirichlet boundary conditions for the displacment
         field"""
         return []
 
@@ -36,7 +36,7 @@ class StaticHyperelasticity(CBCProblem):
         return []
 
     def neumann_conditions(self, vector):
-        """"Return Neumann boundary conditions for the stress field"""
+        """Return Neumann boundary conditions for the stress field"""
         T = Constant((0,)*vector.mesh().geometry().dim())
         return [T]
 
@@ -62,7 +62,7 @@ class StaticHyperelasticity(CBCProblem):
         return None
 
     def reference(self):
-        """"Return reference value for the goal functional"""
+        """Return reference value for the goal functional"""
         return None
 
     def __str__(self):
@@ -119,7 +119,7 @@ class Hyperelasticity(StaticHyperelasticity):
         return u0, v0
 
     def dirichlet_conditions(self, vector):
-        """"Return Dirichlet boundary conditions for the displacment
+        """Return Dirichlet boundary conditions for the displacment
         field"""
         return []
 
@@ -128,7 +128,7 @@ class Hyperelasticity(StaticHyperelasticity):
         return []
 
     def neumann_conditions(self, vector):
-        """"Return Neumann boundary conditions for the stress field"""
+        """Return Neumann boundary conditions for the stress field"""
         T = Constant((0,)*vector.mesh().geometry().dim())
         return [T]
 
