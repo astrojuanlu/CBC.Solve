@@ -14,8 +14,10 @@ class Twist(StaticHyperelasticity):
         clamp = Expression(("0.0", "0.0", "0.0"))
         twist = Expression(("0.0",
                             "y0 + (x[1] - y0) * cos(theta) - (x[2] - z0) * sin(theta) - x[1]",
-                            "z0 + (x[1] - y0) * sin(theta) + (x[2] - z0) * cos(theta) - x[2]"),
-                           defaults = dict(y0 = 0.5, z0 = 0.5, theta = pi / 3))
+                            "z0 + (x[1] - y0) * sin(theta) + (x[2] - z0) * cos(theta) - x[2]"))
+        twist.y0 = 0.5
+        twist.z0 = 0.5
+        twist.theta = pi/3
         return [clamp, twist]
 
     def dirichlet_boundaries(self):

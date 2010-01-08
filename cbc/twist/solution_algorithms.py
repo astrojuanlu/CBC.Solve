@@ -77,6 +77,8 @@ class StaticMomentumBalanceSolver(CBCSolver):
         equation.parameters["newton_solver"]["maximum_iterations"] = 100
 
         # Store variables needed for time-stepping
+        # FIXME: Figure out why I am needed
+        self.mesh = mesh
         self.equation = equation
         self.u = u
 
@@ -87,8 +89,9 @@ class StaticMomentumBalanceSolver(CBCSolver):
         # Solve problem
         self.equation.solve(self.u)
 
-        plot(u, title = "Displacement", mode = "displacement", rescale = True)
-
+        # Plot solution
+        # FIXME: Plotting should happen outside
+        plot(self.u, title = "Displacement", mode = "displacement", rescale = True)
         return self.u
 
 class MomentumBalanceSolver(CBCSolver):
@@ -235,7 +238,7 @@ class MomentumBalanceSolver(CBCSolver):
         self.neumann_conditions = neumann_conditions
         self.boundary = boundary
 
-        #FIXME: Figure out why I am needed
+        # FIXME: Figure out why I am needed
         self.mesh = mesh
         self.t = 0
 
