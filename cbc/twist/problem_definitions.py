@@ -13,20 +13,15 @@ class StaticHyperelasticity(CBCProblem):
         """Create the static hyperelasticity problem"""
         self.solver = StaticMomentumBalanceSolver(self)
 
-    def init(self, vector):
-        """Initialize problem with function spaces"""
-        pass
-
     def solve(self):
         """Solve for and return the computed displacement field, u"""
         return self.solver.solve()
 
-    def body_force(self, vector):
+    def body_force(self):
         """Return body force, B"""
-        B = Constant((0,)*vector.mesh().geometry().dim())
-        return B
+        return []
 
-    def dirichlet_conditions(self, vector):
+    def dirichlet_conditions(self):
         """Return Dirichlet boundary conditions for the displacment
         field"""
         return []
@@ -35,10 +30,9 @@ class StaticHyperelasticity(CBCProblem):
         """Return boundaries over which Dirichlet conditions act"""
         return []
 
-    def neumann_conditions(self, vector):
+    def neumann_conditions(self):
         """Return Neumann boundary conditions for the stress field"""
-        T = Constant((0,)*vector.mesh().geometry().dim())
-        return [T]
+        return []
 
     def neumann_boundaries(self):
         """Return boundaries over which Neumann conditions act"""

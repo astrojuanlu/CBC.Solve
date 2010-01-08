@@ -19,13 +19,10 @@ class StaticMomentumBalanceSolver(CBCSolver):
         # Define function spaces
         vector = VectorFunctionSpace(mesh, "CG", 1)
 
-        # Initialize problem with function spaces
-        problem.init(vector)
-
         # Get Dirichlet boundary conditions on the displacement field
         bcu = []
 
-        dirichlet_conditions = problem.dirichlet_conditions(vector)
+        dirichlet_conditions = problem.dirichlet_conditions()
         dirichlet_boundaries = problem.dirichlet_boundaries()
 
         if len(dirichlet_conditions) != len(problem.dirichlet_boundaries()):
@@ -43,7 +40,11 @@ class StaticMomentumBalanceSolver(CBCSolver):
         du = TrialFunction(vector)
         
         # Driving forces
-        B = problem.body_force(vector)
+        B = problem.body_force()
+
+        # If no body forces are specified, assume it is 0
+        if B == []:
+            B = Constant((0,)*vector.mesh().geometry().dim())
 
         # First Piola-Kirchhoff stress tensor based on the material
         # model
@@ -56,7 +57,11 @@ class StaticMomentumBalanceSolver(CBCSolver):
         # conditions
 
         # Get Neumann boundary conditions on the stress
-        neumann_conditions = problem.neumann_conditions(vector)
+        neumann_conditions = problem.neumann_conditions()
+
+        # If no Neumann conditions are specified, assume it is 0
+        if neumann_conditions == []:
+            neumann_conditions = Constant((0,)*vector.mesh().geometry().dim())
         neumann_boundaries = problem.neumann_boundaries()
 
         boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
