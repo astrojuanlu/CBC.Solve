@@ -53,4 +53,4 @@ class Twist(StaticHyperelasticity):
 twist = Twist()
 print twist
 u = twist.solve()
-interactive()
+plot(u, title = "Displacement", mode = "displacement", rescale = True, interactive = True)

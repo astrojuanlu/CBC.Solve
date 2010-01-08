@@ -88,10 +88,6 @@ class StaticMomentumBalanceSolver(CBCSolver):
 
         # Solve problem
         self.equation.solve(self.u)
-
-        # Plot solution
-        # FIXME: Plotting should happen outside
-        plot(self.u, title = "Displacement", mode = "displacement", rescale = True)
         return self.u
 
 class MomentumBalanceSolver(CBCSolver):
