@@ -19,7 +19,7 @@ class UniaxialTension(Hyperelasticity):
     def is_dynamic(self):
         return True
 
-    def neumann_conditions(self, vector):
+    def neumann_conditions(self):
         pull_left   = Expression(("force*t", "0.0", "0.0"))
         pull_left.force  = -1.0
         pull_right  = Expression(("force*t", "0.0", "0.0"))
@@ -43,5 +43,6 @@ class UniaxialTension(Hyperelasticity):
 # Setup and solve problem
 problem = UniaxialTension()
 print problem
-problem.solve()
+u = problem.solve()
+plot(u)
 interactive()

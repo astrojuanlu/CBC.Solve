@@ -62,6 +62,7 @@ class StaticMomentumBalanceSolver(CBCSolver):
         # If no Neumann conditions are specified, assume it is 0
         if neumann_conditions == []:
             neumann_conditions = Constant((0,)*vector.mesh().geometry().dim())
+
         neumann_boundaries = problem.neumann_boundaries()
 
         boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
@@ -110,16 +111,19 @@ class MomentumBalanceSolver(CBCSolver):
         scalar = FunctionSpace(mesh, "CG", 1)
         vector = VectorFunctionSpace(mesh, "CG", 1)
 
-        # Initialize problem with function spaces
-        problem.init(scalar, vector)
-
         # Get initial conditions
-        u0, v0 = problem.initial_conditions(vector)
+        u0, v0 = problem.initial_conditions()
+
+        # If no initial conditions are specified, assume they are 0
+        if u0 == []:
+            u0 = Constant((0,)*vector.mesh().geometry().dim())
+        if v0 == []:
+            v0 = Constant((0,)*vector.mesh().geometry().dim())
         
         # Get Dirichlet boundary conditions on the displacement field
         bcu = []
 
-        dirichlet_conditions = problem.dirichlet_conditions(vector)
+        dirichlet_conditions = problem.dirichlet_conditions()
         dirichlet_boundaries = problem.dirichlet_boundaries()
 
         if len(dirichlet_conditions) != len(problem.dirichlet_boundaries()):
@@ -130,7 +134,12 @@ class MomentumBalanceSolver(CBCSolver):
             bcu.append(DirichletBC(vector, dirichlet_condition, \
             compile_subdomains(dirichlet_boundaries[i])))
 
-        B  = problem.body_force(vector)
+        # Driving forces
+        B  = problem.body_force()
+
+        # If no body forces are specified, assume it is 0
+        if B == []:
+            B = Constant((0,)*vector.mesh().geometry().dim())
         
         # Define fields
         # Test and trial functions
@@ -154,13 +163,18 @@ class MomentumBalanceSolver(CBCSolver):
         a0 = TrialFunction(vector)
         P0 = problem.first_pk_stress(u0)
         a_accn = inner(a0, v)*dx
-        L_accn = - inner(P0, Grad(v))*dx + inner(B, v)*dx
+        L_accn = - inner(P0, Grad(v))*dx# + inner(B, v)*dx
 
         # Add contributions to the form from the Neumann boundary
         # conditions
 
         # Get Neumann boundary conditions on the stress
-        neumann_conditions = problem.neumann_conditions(vector)
+        neumann_conditions = problem.neumann_conditions()
+
+        # If no Neumann conditions are specified, assume it is 0
+        if neumann_conditions == []:
+            neumann_conditions = Constant((0,)*vector.mesh().geometry().dim())
+
         neumann_boundaries = problem.neumann_boundaries()
 
         boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
@@ -178,7 +192,12 @@ class MomentumBalanceSolver(CBCSolver):
         a1 = a0*(1.0 - 1.0/(2*beta)) - (u0 - u1 + k*v0)/(beta*k**2)
 
         # Get reference density
-        rho0 = problem.reference_density(scalar)
+        rho0 = problem.reference_density()
+
+        # If no reference density is specified, assume it is 1.0
+        if rho0 == []:
+            rho0 = Constant(1.0)
+        
         density_type = str(rho0.__class__)
         if not ("dolfin" in density_type):
             print "Converting given density to a DOLFIN Constant"
@@ -205,7 +224,7 @@ class MomentumBalanceSolver(CBCSolver):
         # conditions
 
         # Get Neumann boundary conditions on the stress
-        neumann_conditions = problem.neumann_conditions(vector)
+        neumann_conditions = problem.neumann_conditions()
         neumann_boundaries = problem.neumann_boundaries()
 
         boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)

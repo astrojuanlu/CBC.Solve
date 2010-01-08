@@ -71,10 +71,6 @@ class Hyperelasticity(StaticHyperelasticity):
         """Create the hyperelasticity problem"""
         self.solver = MomentumBalanceSolver(self)
 
-    def init(self, scalar, vector):
-        """Initialize problem with function spaces"""
-        pass
-
     def solve(self):
         """Solve for and return the computed displacement field, u"""
         return self.solver.solve()
@@ -100,19 +96,16 @@ class Hyperelasticity(StaticHyperelasticity):
         False if it is to be neglected (quasi-static)"""
         return False
 
-    def reference_density(self, scalar):
+    def reference_density(self):
         """Return the reference density of the material"""
-        rho0 = Constant(1.0)
-        return rho0
+        return []
 
-    def initial_conditions(self, vector):
+    def initial_conditions(self):
         """Return initial conditions for displacement field, u0, and
         velocity field, v0""" 
-        u0 = Constant((0,)*vector.mesh().geometry().dim())
-        v0 = Constant((0,)*vector.mesh().geometry().dim())
-        return u0, v0
+        return [], []
 
-    def dirichlet_conditions(self, vector):
+    def dirichlet_conditions(self):
         """Return Dirichlet boundary conditions for the displacment
         field"""
         return []
@@ -121,10 +114,9 @@ class Hyperelasticity(StaticHyperelasticity):
         """Return boundaries over which Dirichlet conditions act"""
         return []
 
-    def neumann_conditions(self, vector):
+    def neumann_conditions(self):
         """Return Neumann boundary conditions for the stress field"""
-        T = Constant((0,)*vector.mesh().geometry().dim())
-        return [T]
+        return []
 
     def neumann_boundaries(self):
         """Return boundaries over which Neumann conditions act"""
