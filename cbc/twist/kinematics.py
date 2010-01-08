@@ -4,13 +4,10 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 
-# Fix for transposed gradient in UFL
-# This should be removed
+# Renaming grad to Grad because it looks nicer in the reference
+# configuration
 from ufl import grad as ufl_grad
 def Grad(v):
-    if v.rank() == 1:
-        return ufl_grad(v).T
-    else:
         return ufl_grad(v)
 
 # Infinitesimal strain tensor

@@ -2,7 +2,6 @@
 
 * CBC::Solve
 ** Create an FSI example showing how the solid and fluid solvers can be linked
-** Figure out what needs to be done about UFL grad, div
 * CBC::Twist
 ** Figure out why the Gent-Thomas material model does not converge
 ** Fix returning of fields after the solver completes the solve. Currently, attempting to plot the returned field crashes.
