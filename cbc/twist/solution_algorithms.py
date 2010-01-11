@@ -72,7 +72,6 @@ class StaticMomentumBalanceSolver(CBCSolver):
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
             L = L - inner(neumann_conditions[i], v)*ds(i)
-            
 
         a = derivative(L, u, du)
         
@@ -100,6 +99,7 @@ class MomentumBalanceSolver(CBCSolver):
     "Solves the quasistatic/dynamic balance of linear momentum"
 
     def __init__(self, problem):
+
         """Initialise the momentum balance solver"""
 
         # Get problem parameters
@@ -131,6 +131,7 @@ class MomentumBalanceSolver(CBCSolver):
             exit(2)
 
         for (i, dirichlet_condition) in enumerate(dirichlet_conditions):
+            print "Applying Neumann boundary condition at", dirichlet_boundaries[i]
             bcu.append(DirichletBC(vector, dirichlet_condition, \
             compile_subdomains(dirichlet_boundaries[i])))
 
@@ -231,6 +232,7 @@ class MomentumBalanceSolver(CBCSolver):
         boundary.set_all(len(neumann_boundaries) + 1)
 
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
+            print "Applying Neumann boundary condition at", neumann_boundary
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
             L = L - inner(neumann_conditions[i], v)*ds(i)
@@ -315,4 +317,4 @@ class MomentumBalanceSolver(CBCSolver):
             bc.t = self.t
         self.B.t = self.t
 
-        plot(self.u0, title = "Displacement", mode = "displacement", rescale = True)
+        plot(self.u0, title = "Displacement", mode = "Displacement", rescale = True)
