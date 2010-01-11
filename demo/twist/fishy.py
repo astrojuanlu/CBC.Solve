@@ -19,8 +19,8 @@ class FishyFlow(Hyperelasticity):
     def is_dynamic(self):
         return True
 
-    def neumann_conditions(self, vector):
-        flow_push = Expression(("force", "force"))
+    def neumann_conditions(self):
+        flow_push = Expression(("force", "0.0"))
         flow_push.force = 0.05
         return [flow_push]
 
