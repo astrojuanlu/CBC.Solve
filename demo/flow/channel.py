@@ -2,7 +2,7 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2009-11-12
+# Last changed: 2010-02-09
 
 from cbc.flow import *
 
@@ -26,17 +26,17 @@ class Channel(NavierStokes):
     def boundary_conditions(self, V, Q):
 
         # Create no-slip boundary condition for velocity
-        bcu = DirichletBC(V, Constant(V.mesh(), (0, 0)), noslip_boundary)
+        bcu = DirichletBC(V, Constant((0, 0)), noslip_boundary)
 
         # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(Q.mesh(), 1), inflow_boundary)
-        bcp1 = DirichletBC(Q, Constant(Q.mesh(), 0), outflow_boundary)
+        bcp0 = DirichletBC(Q, Constant(1), inflow_boundary)
+        bcp1 = DirichletBC(Q, Constant(0), outflow_boundary)
 
         return [bcu], [bcp0, bcp1]
 
     def initial_conditions(self, V, Q):
-        u0 = Constant(V.mesh(), (0, 0))
-        p0 = Expression("1 - x[0]", V=Q)
+        u0 = Constant((0, 0))
+        p0 = Expression("1 - x[0]")
         return u0, p0
 
     def end_time(self):
@@ -61,7 +61,7 @@ class Channel(NavierStokes):
 
 # Solve problem
 problem = Channel()
-u, p = problem.solve()
+u, p = problem.solve({"plot_solution": True})
 
 # Check error
 e = problem.functional(u, p) - problem.reference(0.5)

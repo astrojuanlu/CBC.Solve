@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2009-11-12
+# Last changed: 2010-02-09
 
 __all__ = ["NavierStokes"]
 
@@ -14,12 +14,24 @@ from ufl import grad, Identity
 class NavierStokes(CBCProblem):
     "Base class for all Navier-Stokes problems"
 
-    def __init__(self):
+    def __init__(self, parameters=None):
         "Create Navier-Stokes problem"
+
+        # Create solver
         self.solver = NavierStokesSolver(self)
 
-    def solve(self):
+        # Update solver parameters
+        if parameters is not None:
+            solver.parameters.update(parameters)
+
+    def solve(self, parameters=None):
         "Solve and return computed solution (u, p)"
+
+        # Update solver parameters
+        if parameters is not None:
+            self.solver.parameters.update(parameters)
+
+        # Call solver
         return self.solver.solve()
 
     def step(self, dt):
@@ -39,9 +51,9 @@ class NavierStokes(CBCProblem):
     def viscous_stress(self, u):
         epsilon = 0.5*(grad(u) + grad(u).T)
         nu = self.viscosity()
-        fluid_stress_u = 2.0*nu*epsilon 
+        fluid_stress_u = 2.0*nu*epsilon
         return fluid_stress_u
-        
+
     def pressure_stress(self, u, p):
         fluid_stress_p = - p*Identity(u.cell().d)
         return fluid_stress_p
@@ -61,12 +73,12 @@ class NavierStokes(CBCProblem):
 
     def body_force(self, V):
         "Return body force f"
-        f = Constant(V.mesh(), (0,)*V.mesh().geometry().dim())
+        f = Constant((0,)*V.mesh().geometry().dim())
         return f
 
     def mesh_velocity(self, V):
          "Return mesh velocity (for ALE formulations)"
-         w = Constant(V.mesh(), (0,)*V.mesh().geometry().dim())
+         w = Constant((0,)*V.mesh().geometry().dim())
          return w
 
     def boundary_conditions(self, V, Q):
@@ -75,8 +87,8 @@ class NavierStokes(CBCProblem):
 
     def initial_conditions(self, V, Q):
         "Return initial conditions for velocity and pressure"
-        u0 = Constant(V.mesh(), (0,)*V.mesh().geometry().dim())
-        p0 = Constant(V.mesh(), 0)
+        u0 = Constant((0,)*V.mesh().geometry().dim())
+        p0 = Constant(0)
         return u0, p0
 
     def end_time(self):

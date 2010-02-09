@@ -2,7 +2,7 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2009-11-12
+# Last changed: 2010-02-09
 
 __all__ = ["NavierStokesSolver"]
 
@@ -17,11 +17,14 @@ class NavierStokesSolver(CBCSolver):
     def __init__(self, problem):
         CBCSolver.__init__(self)
 
+        # FIXME: Use DOLFIN parameter system here
+        # Set default solver parameters
+        self.parameters = {"plot_solution": True}
+
         # Get mesh and time step range
         mesh = problem.mesh()
         dt, t_range = timestep_range(problem, mesh)
-
-        print "Using time step dt =", dt
+        info("Using time step dt = %g" % dt)
 
         # Function spaces
         V1 = VectorFunctionSpace(mesh, "CG", 1)
@@ -45,8 +48,8 @@ class NavierStokesSolver(CBCSolver):
         p1 = interpolate(p0, Q)
 
         # Coefficients
-        nu = Constant(mesh, problem.viscosity())
-        k = Constant(mesh, dt)
+        nu = Constant(problem.viscosity())
+        k = Constant(dt)
         f = problem.body_force(V1)
         w = problem.mesh_velocity(V1)
 
@@ -139,10 +142,11 @@ class NavierStokesSolver(CBCSolver):
         # Propagate values
         self.u0.assign(self.u1)
         self.p0.assign(self.p1)
-        
+
         # Plot solution
-        #plot(self.u1, title="Velocity", rescale=True)
-        #plot(self.p1, title="Pressure", rescale=True)
+        if self.parameters["plot_solution"]:
+            plot(self.u1, title="Velocity", rescale=True)
+            plot(self.p1, title="Pressure", rescale=True)
 
         return self.u1, self.p1
 
@@ -164,9 +168,6 @@ def timestep_range(problem, mesh):
     dt = problem.time_step()
     nu = problem.viscosity()
     U = problem.max_velocity()
-
-    print "In timestep_range: dt =", dt
-
 
     # Use time step specified in problem if available
     if not dt is None:
