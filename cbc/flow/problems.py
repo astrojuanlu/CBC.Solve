@@ -6,7 +6,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 __all__ = ["NavierStokes"]
 
-from dolfin import Constant, error
+from dolfin import error, Constant, Parameters
 from cbc.common import CBCProblem
 from cbc.flow.solvers import NavierStokesSolver
 from ufl import grad, Identity
@@ -20,22 +20,26 @@ class NavierStokes(CBCProblem):
         # Create solver
         self.solver = NavierStokesSolver(self)
 
-        # Update solver parameters
-        if parameters is not None:
-            solver.parameters.update(parameters)
+        # Set up parameters
+        self.parameters = Parameters("problem_parameters")
+        self.parameters.add(self.solver.parameters)
 
-    def solve(self, parameters=None):
+    def solve(self):
         "Solve and return computed solution (u, p)"
 
         # Update solver parameters
-        if parameters is not None:
-            self.solver.parameters.update(parameters)
+        self.solver.parameters.update(self.parameters["solver_parameters"])
 
         # Call solver
         return self.solver.solve()
 
     def step(self, dt):
         "Make a time step of size dt"
+
+        # Update solver parameters
+        self.solver.parameters.update(self.parameters["solver_parameters"])
+
+        # Call solver
         return self.solver.step(dt)
 
     def update(self):

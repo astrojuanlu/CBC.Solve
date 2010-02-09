@@ -46,7 +46,8 @@ class DrivenCavity(NavierStokes):
 
 # Solve problem
 problem = DrivenCavity()
-u, p = problem.solve({"plot_solution": True})
+problem.parameters["solver_parameters"]["plot_solution"] = True
+u, p = problem.solve()
 
 # Check error
 e = problem.functional(u, p) - problem.reference(0.5)

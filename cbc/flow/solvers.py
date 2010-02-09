@@ -17,9 +17,9 @@ class NavierStokesSolver(CBCSolver):
     def __init__(self, problem):
         CBCSolver.__init__(self)
 
-        # FIXME: Use DOLFIN parameter system here
-        # Set default solver parameters
-        self.parameters = {"plot_solution": True}
+        # Set up parameters
+        self.parameters = Parameters("solver_parameters")
+        self.parameters.add("plot_solution", True)
 
         # Get mesh and time step range
         mesh = problem.mesh()
@@ -105,8 +105,6 @@ class NavierStokesSolver(CBCSolver):
 
     def step(self, dt):
 
-        # FIXME: Check if time step has changed and if so reassemble
-
         # Compute tentative velocity step
         begin("Computing tentative velocity")
         b = assemble(self.L1)
@@ -136,8 +134,6 @@ class NavierStokesSolver(CBCSolver):
         return self.u1, self.p1
 
     def update(self):
-
-        print "Updating fluid, copying u0 = u1"
 
         # Propagate values
         self.u0.assign(self.u1)
