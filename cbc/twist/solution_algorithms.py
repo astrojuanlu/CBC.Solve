@@ -131,7 +131,7 @@ class MomentumBalanceSolver(CBCSolver):
             exit(2)
 
         for (i, dirichlet_condition) in enumerate(dirichlet_conditions):
-            print "Applying Neumann boundary condition at", dirichlet_boundaries[i]
+            print "Applying Dirichlet boundary condition at", dirichlet_boundaries[i]
             bcu.append(DirichletBC(vector, dirichlet_condition, \
             compile_subdomains(dirichlet_boundaries[i])))
 
@@ -317,4 +317,4 @@ class MomentumBalanceSolver(CBCSolver):
             bc.t = self.t
         self.B.t = self.t
 
-        plot(self.u0, title = "Displacement", mode = "Displacement", rescale = True)
+        #plot(self.u0, title = "Displacement", mode = "Displacement", rescale = True)

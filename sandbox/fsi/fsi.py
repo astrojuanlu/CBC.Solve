@@ -107,14 +107,14 @@ class FluidProblem(NavierStokes):
     def boundary_conditions(self, V, Q):
         
         # Create no-slip boundary condition for velocity
-        bcu = DirichletBC(V, Constant(V.mesh(), (0, 0)), noslip)
+        bcu =  DirichletBC(V, Constant((0,)*V.mesh().geometry().dim()), noslip)        
         
         # FIXME: Anders fix DirichletBC to take int or float instead of Constant
         
         # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(Q.mesh(), 1), inflow)
-        bcp1 = DirichletBC(Q, Constant(Q.mesh(), 0), outflow)
-        
+        bcp0 = DirichletBC(Q, Constant(1.0*Q.mesh().geometry().dim()), inflow)
+        bcp1 = DirichletBC(Q, Constant(0*Q.mesh().geometry().dim()), outflow)
+
         return [bcu], [bcp0, bcp1]
    
     def time_step(self):
@@ -189,29 +189,31 @@ class FluidProblem(NavierStokes):
 class StructureProblem(Hyperelasticity):
 
     def __init__(self):
-        Hyperelasticity.__init__(self)
         
         # Define functions and function spaces for transfer the fluid stress
         # FIXME: change name on function spaces
         self.V_F = VectorFunctionSpace(Omega_F, "CG", 1)
         self.v_F = TestFunction(self.V_F)
         self.N_F = FacetNormal(Omega_F)
+        self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
+        
+    #     def init(self, scalar, vector):
+#             self.scalar = scalar
+#             self.vector = vector
+
+        Hyperelasticity.__init__(self)
              
-    def init(self, scalar, vector):
-        self.scalar = scalar
-        self.vector = vector
-            
     def mesh(self):
         return Omega_S
 
-    def dirichlet_conditions(self, vector):
-        fix = Expression(("0.0", "0.0"), V = vector)
+    def dirichlet_conditions(self):
+        fix = Constant((0,0))
         return [fix]
- 
+
     def dirichlet_boundaries(self):
         #FIXME: Figure out how to use the constants above in the
         #following boundary definitions
-        bottom = "x[1] == 0.0 && x[0] >= 1.4 && x[0] <= 1.6"
+        bottom ="x[1] == 0.0 && x[0] >= 1.4 && x[0] <= 1.6"
         return [bottom]
 
     def update_fluid_stress(self, Sigma_F):
@@ -225,17 +227,20 @@ class StructureProblem(Hyperelasticity):
         print "Transferring values to structure domain"
         
         # Add contribution from fluid vector to structure 
-        B_S = Vector(self.vector.dim())
+        B_S = Vector(self.V_S.dim())
         fsi_add_f2s(B_S, B_F)
 
         # This is not how it should be done. It's completely crazy
         # but it gives an effect in the right direction...
+
+        # In the structure solver the body force is defined on
+        # the LHS...
         self.fluid_load.vector()[:] = -B_S.array()
 
         # What we should really do is send B_S to Harish!
         
-    def neumann_conditions(self, vector):
-        self.fluid_load = Function(vector)
+    def neumann_conditions(self):
+        self.fluid_load = Function(self.V_S)
         return [self.fluid_load]
 
     def neumann_boundaries(self):
@@ -261,13 +266,15 @@ class StructureProblem(Hyperelasticity):
 class MeshProblem(StaticHyperelasticity):
 
     def __init__(self):
+        self.V_M = VectorFunctionSpace(Omega_F, "CG", 1)
+        
         StaticHyperelasticity.__init__(self)
 
     def mesh(self):
         return Omega_F
 
-    def dirichlet_conditions(self, vector):
-        self.displacement = Function(vector)
+    def dirichlet_conditions(self):
+        self.displacement = Function(self.V_M)
         return [self.displacement]
  
     def dirichlet_boundaries(self):
