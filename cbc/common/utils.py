@@ -14,10 +14,3 @@ def is_periodic(bcs):
 def missing_function(function):
     "Write an informative error message when function has not been overloaded"
     error("The function %s() has not been specified. Please provide a specification of this function.")
-
-def grad(v):
-    "Gradient operator fix for transpose in UFL definition"
-    if v.rank() == 1:
-        return ufl_grad(v).T
-    else:
-        return ufl_grad(v)
