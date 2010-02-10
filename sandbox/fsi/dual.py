@@ -2,7 +2,6 @@
 # As a first try we solve a stationary problem
 
 from common import *
-from primal import *
 from numpy import array, append, zeros
 
 # Define function spaces defined on the whole domain
@@ -40,14 +39,10 @@ primal_p_F.retrieve(p_F_subdofs, dt)
 primal_U_M.retrieve(U_M_subdofs, dt)
 primal_U_S.retrieve(U_S_subdofs, dt)
 
-#info(p_F_subdofs, True)
-
 # Create mapping from F,S,M to Omega
 global_vertex_indices_F = Omega_F.data().mesh_function("global vertex indices")
 global_vertex_indices_S = Omega_S.data().mesh_function("global vertex indices")
 global_vertex_indices_M = Omega_F.data().mesh_function("global vertex indices") 
-
-#info(global_vertex_indices_S, True)
 
 # Create lists
 F_global_index = zeros([global_vertex_indices_F.size()], "uint") 
@@ -62,20 +57,22 @@ for j in range(global_vertex_indices_M.size()):
 for j in range(global_vertex_indices_S.size()):
     S_global_index[j] = global_vertex_indices_S[j]
 
+# Initialize edges on fluid sub mesh (needed for P2 elements)
+Omega_F.init(1)
+
 # Define number of vertices and edges
 Nv = Omega.num_vertices()
-Ne = Omega.num_edges()
 Nv_F = Omega_F.num_vertices()
 Ne_F = Omega_F.num_edges()
 
 # Get global dofs 
-U_F_global_dofs = append(F_global_index, F_global_index + Nv + Ne)
+U_F_global_dofs = append(F_global_index, F_global_index + Nv)
 P_F_global_dofs = F_global_index
 U_S_global_dofs = append(S_global_index, S_global_index + Nv)
 U_M_global_dofs = append(M_global_index, M_global_index + Nv)
 
 # Get rid of P2 dofs for u_F and create a P1 function
-u_F_subdofs = append(u_F_subdofs[:Nv_F], u_F_subdofs[Nv_F + Ne_F:Nv_F + Ne_F + Nv_F])
+u_F_subdofs = append(u_F_subdofs[:Nv_F], u_F_subdofs[Nv_F + Ne_F: 2*Nv_F +Ne_F])
 
 # Transfer the stored primal solutions on the dual mesh Omega
 U_F.vector()[U_F_global_dofs] = u_F_subdofs
@@ -83,16 +80,19 @@ P_F.vector()[P_F_global_dofs] = p_F_subdofs
 U_S.vector()[U_S_global_dofs] = U_S_subdofs
 U_M.vector()[U_M_global_dofs] = U_M_subdofs
 
-#print len(U_F_global_dofs)
-print len(u_F_subdofs)
-print len(P_F_global_dofs)
-print len(U_S_global_dofs)
-print len(U_M_global_dofs)
+
+#plot(U_F, title="DUAL U_F", interactive=True)
+plot(U_F, title="DUAL U_S", interactive=True)
 
 
 
 
 
+
+file = File("U_F_dual.pvd")
+file << U_F
+file = File("U_S_dual.pvd")
+file << U_S
 
 # The linearized problem on block form is A'*(v,Z) = M(v):
 #
