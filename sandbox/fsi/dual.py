@@ -161,12 +161,16 @@ def sym_gradient(u):
     return sym_gradient
     
 # Define constants
-# FIXME: should not be defined here!
+# FIXME: should not be defined here! (common.py)
 mu_F = 1
 mu_S = 1
 lamb_S = 1
 mu_M = 1 
 lamb_M = 1
+
+def sigma_M(u):
+    return 2.0*mu_M*sym_gradient(u) + lamb_M*tr(sym_gradient(u))*I(u)
+
 
 # Fluid eq. linearized around fluid variables
 A_FF01 = 0 # time--dependent
@@ -231,16 +235,15 @@ A_SM08 = -inner(Z_US, J(U_M)*dot(dot(P_F*I(U_F),F_invT(U_M)), dot(grad(v_M).T, d
 # Collect A_SM form
 A_SM_sum = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06 + A_SM07 + A_SM08 
 
-
 # Mesh eq. linearized around fluid variables 
 A_MF = 0 # by def. of the problem
 
 # Mesh eq. linearized around structure variable
-# FIXME: Should not be zero with an extension operator
+# FIXME: Should not be zero with an extension operator (Mats)
 A_MS = 0
 
 # Mesh eq. linearized around mesh variable
-A_MM_sum = inner(sym_gradient(v_M),(2*mu_M*sym_gradient(U_M) + lamb_M*grad(U_M)))*dx(0)
+A_MM_sum = inner(sym_gradient(Z_UM), sigma_M(v_M))*dx(0)
 
 # Assemble the non-zero blocks
 A_FF = assemble(A_FF_sum)
@@ -250,11 +253,18 @@ A_FM = assemble(A_FM_sum)
 A_SM = assemble(A_SM_sum)
 A_MM = assemble(A_MM_sum)
 
+# Create block matrix for dual system 
+dual_sys = BlockMatrix(3, 3)
 
-# # Create block matrix for dual system 
-# dual_sys = BlockMatrix(3, 3)
-# dual_sys[0,0] = A_FF
+# Insert the compiled blocks
+dual_sys[0,0] = A_FF
+dual_sys[0,1] = A_SF
+#dual_sys[0,2] = A_MF # FIXME: Should we add a block of zeros???
 
-# print "I was here"
-# test = assemble(A_MM_sum)
-# print "and here to"
+#dual_sys[1,0] = A_FS # FIXME: Should we add a block of zeros???
+dual_sys[1,1] = A_SS
+#dual_sys[1,2] = A_MS # FIXME: Should we add a block of zeros???
+
+dual_sys[2,0] = A_FM
+dual_sys[2,1] = A_SM
+dual_sys[2,2] = A_MM
