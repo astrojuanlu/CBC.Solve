@@ -11,7 +11,6 @@ from common import *
 plot_solution = False
 
 # Functions for adding vectors between domains
-
 def fsi_add_f2s(xs, xf):
     "Compute xs += xf for corresponding indices"
     xs_array = xs.array()

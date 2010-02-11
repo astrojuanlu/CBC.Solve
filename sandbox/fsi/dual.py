@@ -92,34 +92,6 @@ file << U_F
 file = File("U_S_dual.pvd")
 file << U_S
 
-# The linearized problem on block form is A'*(v,Z) = M(v):
-#
-#   | A_FF    A_FS    A_FM |*   |(Z_UF, Z_PF)|
-#   | A_SF    A_SS    A_SM |    |   Z_US     | =  M
-#   | A_MF    A_MS    A_MM |    |   Z_UM     |
-#
-# Note that A_FS, A_MF and A_MS  = 0 by the construction
-# of the problem. If we use Mats idea of an extion operator 
-# for the mesh problem we can obtain a Neumann BC in the mesh problem 
-# such that A_MS \noteq 0.
-#
-# In the forms below, the adjoint * has been applied on the matrix 
-# as well on the test/trial functions, see appendix for details.
-# Each individual sub block is assembled separately and is then 
-# inserted in the adjoint matrix (denoted DUAL_SYS):
-# 
-#               | A_FF    A_SF    A_MF |    
-#  DUAL_SYS  =  | A_FS    A_SS    A_MS | 
-#               | A_FM    A_SM    A_MM |
-# 
-# Finally the boundary conditions is applied to the diagonal blocks 
-# (using bc.zero on the off diagonal terms)
-
-
-# # Second order identity tensor
-# def SecondOrderIdentity(u):
-#     return variable(Identity(u.cell().d))
-
 # Define the Jacobian matrices and determinants
 def F(u):
     I = SecondOrderIdentity(u)
@@ -172,6 +144,29 @@ def sigma_M(u):
     return 2.0*mu_M*sym_gradient(u) + lamb_M*tr(sym_gradient(u))*I(u)
 
 
+# The linearized problem on block form is A'*(v,Z) = M(v):
+#
+#   | A_FF    A_FS    A_FM |*   |(Z_UF, Z_PF)|
+#   | A_SF    A_SS    A_SM |    |   Z_US     | =  M
+#   | A_MF    A_MS    A_MM |    |   Z_UM     |
+#
+# Note that A_FS, A_MF and A_MS  = 0 by the construction
+# of the problem. If we use Mats idea of an extion operator 
+# for the mesh problem we can obtain a Neumann BC in the mesh problem 
+# such that A_MS \noteq 0.
+#
+# In the forms below, the adjoint * has been applied on the matrix 
+# as well on the test/trial functions, see appendix for details.
+# The dual_matrix is then 
+# 
+#                  | A_FF    A_SF    0    |    
+#  dual_matrix  =  | 0       A_SS    0    | 
+#                  | A_FM    A_SM    A_MM |
+# 
+# In order to compile boundary terms,...
+# Sub_domain markers etc. are defined in common.py
+
+
 # Fluid eq. linearized around fluid variables
 A_FF01 = 0 # time--dependent
 A_FF02 = 0 # time--dependent
@@ -184,9 +179,6 @@ A_FF07 =  inner(Z_PF, inner(F_invT(U_M), grad(v_F)))*dx(0)
 
 # Collect A_FF form
 A_FF_sum = A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07
-
-# Fluid eq. linearized around structure 
-A_FS = 0 # by def. of the problem
 
 # Fluid eq. linearized around mesh variable
 A_FM01 = 0 # time--dependent
@@ -221,7 +213,7 @@ A_SS05 = inner(grad(Z_US), 0.5*lamb_S*tr(dot(F(U_S), grad(v_S)))*I(U_S))*dx(1)
 
 # Collect A_SS form
 A_SS_sum = A_SS02 + A_SS02 + A_SS04 + A_SS05
-
+ 
 # Structure eq. linearized around mesh variable
 A_SM01 = -inner(Z_US, DJ(U_M,v_M)*mu_F*dot(dot(grad(U_F), F_inv(U_F)), dot(F_invT(U_M), N_S)))*ds(1)
 A_SM02 = -inner(Z_US, DJ(U_M,v_M)*mu_F*dot(dot(F_invT(U_F), grad(U_F).T), dot(F_invT(U_M), N_S)))*ds(1)
@@ -235,36 +227,14 @@ A_SM08 = -inner(Z_US, J(U_M)*dot(dot(P_F*I(U_F),F_invT(U_M)), dot(grad(v_M).T, d
 # Collect A_SM form
 A_SM_sum = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06 + A_SM07 + A_SM08 
 
-# Mesh eq. linearized around fluid variables 
-A_MF = 0 # by def. of the problem
-
-# Mesh eq. linearized around structure variable
-# FIXME: Should not be zero with an extension operator (Mats)
-A_MS = 0
-
 # Mesh eq. linearized around mesh variable
 A_MM_sum = inner(sym_gradient(Z_UM), sigma_M(v_M))*dx(0)
 
-# Assemble the non-zero blocks
-A_FF = assemble(A_FF_sum)
-A_SF = assemble(A_SF_sum)
-A_SS = assemble(A_SS_sum)
-A_FM = assemble(A_FM_sum)
-A_SM = assemble(A_SM_sum)
-A_MM = assemble(A_MM_sum)
+# Collect the dual matrix
+A_dual = A_FF_sum + A_SF_sum + A_SS_sum + A_FM_sum + A_SM_sum + A_MM_sum
 
-# Create block matrix for dual system 
-dual_sys = BlockMatrix(3, 3)
+# Assemble dual matrix
+dual_matrix = assemble(A_dual, cell_domains = cell_domains)
 
-# Insert the compiled blocks
-dual_sys[0,0] = A_FF
-dual_sys[0,1] = A_SF
-#dual_sys[0,2] = A_MF # FIXME: Should we add a block of zeros???
 
-#dual_sys[1,0] = A_FS # FIXME: Should we add a block of zeros???
-dual_sys[1,1] = A_SS
-#dual_sys[1,2] = A_MS # FIXME: Should we add a block of zeros???
 
-dual_sys[2,0] = A_FM
-dual_sys[2,1] = A_SM
-dual_sys[2,2] = A_MM
