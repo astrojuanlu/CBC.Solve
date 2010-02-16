@@ -183,15 +183,10 @@ class StructureProblem(Hyperelasticity):
         B_S = Vector(self.V_S.dim())
         fsi_add_f2s(B_S, B_F)
 
-        # This is not how it should be done. It's completely crazy
-        # but it gives an effect in the right direction...
-
         # In the structure solver the body force is defined on
         # the LHS...
         self.fluid_load.vector()[:] = -B_S.array()
 
-        # What we should really do is send B_S to Harish!
-        
     def neumann_conditions(self):
         self.fluid_load = Function(self.V_S)
         return [self.fluid_load]

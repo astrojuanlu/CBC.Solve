@@ -45,6 +45,7 @@ primal_U_S.retrieve(U_S_subdofs, dt)
 global_vertex_indices_F = Omega_F.data().mesh_function("global vertex indices")
 global_vertex_indices_S = Omega_S.data().mesh_function("global vertex indices")
 global_vertex_indices_M = Omega_F.data().mesh_function("global vertex indices") 
+#global_edge_indices_test = Omega_S.data().mesh_function("global edge indices")
 
 # Create lists
 F_global_index = zeros([global_vertex_indices_F.size()], "uint") 
@@ -82,10 +83,8 @@ P_F.vector()[P_F_global_dofs] = p_F_subdofs
 U_S.vector()[U_S_global_dofs] = U_S_subdofs
 U_M.vector()[U_M_global_dofs] = U_M_subdofs
 
-
 # plot(U_F, title="DUAL U_F", interactive=True)
 # plot(U_F, title="DUAL U_S", interactive=True)
-
 
 file = File("U_F_dual.pvd")
 file << U_F
@@ -163,9 +162,9 @@ def sigma_M(u):
 #  dual_matrix  =  | 0       A_SS    0    | 
 #                  | A_FM    A_SM    A_MM |
 # 
-# In order to compile boundary terms,...
-# Sub_domain markers etc. are defined in common.py
-
+#
+# Sub_domain markers are defined in common.py. The structure is fluid is marked as 0
+# and the structure as 1 
 
 # Fluid eq. linearized around fluid variables
 A_FF01 = 0 # time--dependent
@@ -196,10 +195,16 @@ A_FM_sum = A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08
 # Define FSI normal
 N_S = FacetNormal(Omega_S)
 
+# # UNCHANGED!!!
+# # Structure eq. linearized around the fluid variables
+# A_SF01 = -inner(Z_US, mu_F*J(U_M)*dot(dot(grad(v_M), F_inv(U_M)), dot(F_invT(U_M), N_S)))*dS(1)
+# A_SF02 = -inner(Z_US, mu_F*J(U_M)*dot(dot(F_invT(U_M), grad(v_M).T), dot(F_invT(U_M), N_S)))*dS(1)
+# A_SF03 =  inner(Z_US, mu_F*J(U_M)*q_F*dot(I(U_M), dot(F_invT(U_M), N_S)))*dS(1)
+
 # Structure eq. linearized around the fluid variables
-A_SF01 = -inner(Z_US, mu_F*J(U_M)*dot(dot(grad(v_M), F_inv(U_M)), dot(F_invT(U_M), N_S)))*ds(1)
-A_SF02 = -inner(Z_US, mu_F*J(U_M)*dot(dot(F_invT(U_M), grad(v_M).T), dot(F_invT(U_M), N_S)))*ds(1)
-A_SF03 =  inner(Z_US, mu_F*J(U_M)*q_F*dot(I(U_M), dot(F_invT(U_M), N_S)))*ds(1)
+A_SF01 = -inner(Z_US('+'), mu_F*J(U_M)('+')*dot(dot(grad(v_M('+')), F_inv(U_M)('+')), dot(F_invT(U_M)('+'), N_S('+'))))*dS(1)
+A_SF02 = -inner(Z_US('+'), mu_F*J(U_M)('+')*dot(dot(F_invT(U_M)('+'), grad(v_M('+')).T), dot(F_invT(U_M)('+'), N_S('+'))))*dS(1)
+A_SF03 =  inner(Z_US('+'), mu_F*J(U_M)('+')*q_F('+')*dot(I(U_M)('+'), dot(F_invT(U_M)('+'), N_S('+'))))*dS(1)
 
 # Collect A_SF form
 A_SF_sum = A_SF01 + A_SF02 + A_SF03 
@@ -213,16 +218,27 @@ A_SS05 = inner(grad(Z_US), 0.5*lamb_S*tr(dot(F(U_S), grad(v_S)))*I(U_S))*dx(1)
 
 # Collect A_SS form
 A_SS_sum = A_SS02 + A_SS02 + A_SS04 + A_SS05
- 
+
+# # UNCHANGED!!! 
+# # Structure eq. linearized around mesh variable
+# A_SM01 = -inner(Z_US, DJ(U_M,v_M)*mu_F*dot(dot(grad(U_F), F_inv(U_F)), dot(F_invT(U_M), N_S)))*ds(1)
+# A_SM02 = -inner(Z_US, DJ(U_M,v_M)*mu_F*dot(dot(F_invT(U_F), grad(U_F).T), dot(F_invT(U_M), N_S)))*ds(1)
+# A_SM03 =  inner(Z_US, DJ(U_M,v_M)*dot(P_F*I(U_F), dot(F_invT(U_M),N_S)))*dS(1)
+# A_SM04 =  inner(Z_US, J(U_M)*mu_F*dot(dot(grad(U_F), dot(F_inv(U_M),grad(v_M))), dot(F_inv(U_M), dot(F_invT(U_M), N_S))))*ds(1) 
+# A_SM05 =  inner(Z_US, J(U_M)*mu_F*dot(dot(grad(U_F).T, dot(F_invT(U_M), grad(v_M).T)), dot(F_invT(U_M), dot(F_invT(U_M),N_S))))*ds(1)
+# A_SM06 =  inner(Z_US, J(U_M)*mu_F*dot(dot(grad(U_F),F_inv(U_M)),dot(F_invT(U_M), dot(grad(v_M).T, dot(F_invT(U_M),N_S)))))*ds(1)
+# A_SM07 =  inner(Z_US, J(U_M)*mu_F*dot(dot(F_invT(U_M),grad(U_M).T),dot(F_invT(U_M), dot(grad(v_M).T, dot(F_invT(U_M),N_S)))))*ds(1)
+# A_SM08 = -inner(Z_US, J(U_M)*dot(dot(P_F*I(U_F),F_invT(U_M)), dot(grad(v_M).T, dot(F_invT(U_M), N_S))))*ds(1)
+
 # Structure eq. linearized around mesh variable
-A_SM01 = -inner(Z_US, DJ(U_M,v_M)*mu_F*dot(dot(grad(U_F), F_inv(U_F)), dot(F_invT(U_M), N_S)))*ds(1)
-A_SM02 = -inner(Z_US, DJ(U_M,v_M)*mu_F*dot(dot(F_invT(U_F), grad(U_F).T), dot(F_invT(U_M), N_S)))*ds(1)
-A_SM03 =  inner(Z_US, DJ(U_M,v_M)*dot(P_F*I(U_F), dot(F_invT(U_M),N_S)))*ds(1)
-A_SM04 =  inner(Z_US, J(U_M)*mu_F*dot(dot(grad(U_F), dot(F_inv(U_M),grad(v_M))), dot(F_inv(U_M), dot(F_invT(U_M), N_S))))*ds(1) 
-A_SM05 =  inner(Z_US, J(U_M)*mu_F*dot(dot(grad(U_F).T, dot(F_invT(U_M), grad(v_M).T)), dot(F_invT(U_M), dot(F_invT(U_M),N_S))))*ds(1)
-A_SM06 =  inner(Z_US, J(U_M)*mu_F*dot(dot(grad(U_F),F_inv(U_M)),dot(F_invT(U_M), dot(grad(v_M).T, dot(F_invT(U_M),N_S)))))*ds(1)
-A_SM07 =  inner(Z_US, J(U_M)*mu_F*dot(dot(F_invT(U_M),grad(U_M).T),dot(F_invT(U_M), dot(grad(v_M).T, dot(F_invT(U_M),N_S)))))*ds(1)
-A_SM08 = -inner(Z_US, J(U_M)*dot(dot(P_F*I(U_F),F_invT(U_M)), dot(grad(v_M).T, dot(F_invT(U_M), N_S))))*ds(1)
+A_SM01 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(grad(U_F('+')), F_inv(U_F)('+')), dot(F_invT(U_M)('+'), N_S('+'))))*dS(1)
+A_SM02 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(F_invT(U_F)('+'), grad(U_F('+')).T), dot(F_invT(U_M)('+'), N_S('+'))))*dS(1)
+A_SM03 =  inner(Z_US('+'), DJ(U_M,v_M)('+')*dot(P_F('+')*I(U_F)('+'), dot(F_invT(U_M)('+'),N_S('+'))))*dS(1)
+A_SM04 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')), dot(F_inv(U_M)('+'),grad(v_M('+')))), dot(F_inv(U_M)('+'), dot(F_invT(U_M)('+'), N_S('+')))))*dS(1) 
+A_SM05 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')).T, dot(F_invT(U_M)('+'), grad(v_M('+')).T)), dot(F_invT(U_M)('+'), dot(F_invT(U_M)('+'),N_S('+')))))*dS(1)
+A_SM06 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')),F_inv(U_M)('+')),dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'),N_S('+'))))))*dS(1)
+A_SM07 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'),grad(U_M('+')).T),dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'),N_S('+'))))))*dS(1)
+A_SM08 = -inner(Z_US('+'), J(U_M)('+')*dot(dot(P_F('+')*I(U_F)('+'),F_invT(U_M)('+')), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'), N_S('+')))))*dS(1)
 
 # Collect A_SM form
 A_SM_sum = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06 + A_SM07 + A_SM08 
@@ -234,7 +250,9 @@ A_MM_sum = inner(sym_gradient(Z_UM), sigma_M(v_M))*dx(0)
 A_dual = A_FF_sum + A_SF_sum + A_SS_sum + A_FM_sum + A_SM_sum + A_MM_sum
 
 # Assemble dual matrix
-dual_matrix = assemble(A_dual, cell_domains = cell_domains)
+dual_matrix = assemble(A_dual, cell_domains = cell_domains, interior_facet_domains=interior_facet_domains)
 
 
+# Add "ordinary" DirchletBC...
+# Add "not-ordinary" DirchletBC to avoid a singular system....
 

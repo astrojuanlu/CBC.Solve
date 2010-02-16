@@ -22,25 +22,15 @@ class Structure(SubDomain):
 # Create structure subdomain
 structure = Structure()
     
-# Create subdomain markers (0: fluid 1: structure)
+# Create subdomain markers (0=fluid,  1=structure)
 sub_domains = MeshFunction("uint", mesh, mesh.topology().dim())
 sub_domains.set_all(0)
-structure = Structure()
 structure.mark(sub_domains, 1)
-plot(sub_domains, interactive=True)
 
-# Create cell_domain markers (0: fluid 1: structure)
+# Create cell_domain markers (0=fluid,  1=structure)
 cell_domains = MeshFunction("uint", mesh, mesh.topology().dim())
 cell_domains.set_all(0)
 structure.mark(cell_domains, 1)
-
-# Create interior_facet_domains
-interior_facet_domains = MeshFunction("uint", mesh, mesh.topology().dim()-1)
-interior_facet_domains.set_all(0)
-structure.mark(interior_facet_domains, 1)
-
-#info(interior_facet_domains, True)
-#plot(cell_domains, interactive=True)
 
 # Extract submeshes for fluid and structure
 Omega = mesh
@@ -59,6 +49,15 @@ structure_indices = array([i for i in structure_to_fluid.iterkeys()])
 # Extract matching dofs for fluid and structure
 fdofs = append(fluid_indices, fluid_indices + Omega_F.num_vertices())
 sdofs = append(structure_indices, structure_indices + Omega_S.num_vertices())
+
+# Create fsi boundary for the dual problem
+fsi_boundary = BoundaryMesh(Omega_S)
+
+# Create facet marker for fsi boundary  (0=fluid, 1=structure)
+interior_facet_domains = MeshFunction("uint", fsi_boundary, fsi_boundary.topology().dim())
+interior_facet_domains.set_all(0)
+structure.mark(interior_facet_domains, 1)
+#plot(interior_facet_domains,title="Facets",interactive=True)
 
 # Create time series for storing primal
 primal_u_F = TimeSeries("primal_u_F")
