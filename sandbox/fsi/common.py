@@ -13,6 +13,12 @@ ny = 10
 # Create the complete mesh
 mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 
+# Define dimension of mesh
+D = mesh.topology().dim()
+
+# Initialize mesh conectivity 
+mesh.init(D-1, D)
+
 # Define structure subdomain
 class Structure(SubDomain):
     def inside(self, x, on_boundary):
@@ -23,12 +29,12 @@ class Structure(SubDomain):
 structure = Structure()
     
 # Create subdomain markers (0=fluid,  1=structure)
-sub_domains = MeshFunction("uint", mesh, mesh.topology().dim())
+sub_domains = MeshFunction("uint", mesh, D)
 sub_domains.set_all(0)
 structure.mark(sub_domains, 1)
 
 # Create cell_domain markers (0=fluid,  1=structure)
-cell_domains = MeshFunction("uint", mesh, mesh.topology().dim())
+cell_domains = MeshFunction("uint", mesh, D)
 cell_domains.set_all(0)
 structure.mark(cell_domains, 1)
 
@@ -50,14 +56,46 @@ structure_indices = array([i for i in structure_to_fluid.iterkeys()])
 fdofs = append(fluid_indices, fluid_indices + Omega_F.num_vertices())
 sdofs = append(structure_indices, structure_indices + Omega_S.num_vertices())
 
-# Create fsi boundary for the dual problem
-fsi_boundary = BoundaryMesh(Omega_S)
-
-# Create facet marker for fsi boundary  (0=fluid, 1=structure)
-interior_facet_domains = MeshFunction("uint", fsi_boundary, fsi_boundary.topology().dim())
+# Create facet marker for the entire mesh
+interior_facet_domains = MeshFunction("uint", Omega, D-1)
 interior_facet_domains.set_all(0)
-structure.mark(interior_facet_domains, 1)
-#plot(interior_facet_domains,title="Facets",interactive=True)
+
+# Create facet orientation for the entire mesh
+facet_orientation = mesh.data().create_mesh_function("facet orientation", D - 1)
+facet_orientation.set_all(0)
+
+# Mark facet orientation for the fsi boundary
+for facet in facets(mesh):
+
+    # Skip facets on the non-boundary
+    if facet.num_entities(D) == 1:
+        continue
+
+    # Get the two cell indices
+    c0, c1 = facet.entities(D)
+
+    # Create the two cells
+    cell0 = Cell(mesh, c0)
+    cell1 = Cell(mesh, c1)
+
+    # Get the two midpoints
+    p0 = cell0.midpoint()
+    p1 = cell1.midpoint()
+
+    # Check if the points are inside
+    p0_inside = structure.inside(p0, False)
+    p1_inside = structure.inside(p1, False)
+
+    # Look for points where exactly one is inside the structure
+    if p0_inside and not p1_inside:
+        interior_facet_domains[facet.index()] = 1
+        facet_orientation[facet.index()] = c1
+    elif p1_inside and not p0_inside:
+        interior_facet_domains[facet.index()] = 1
+        facet_orientation[facet.index()] = c0
+
+#info(interior_facet_domains, True)
+#info(facet_orientation, True)
 
 # Create time series for storing primal
 primal_u_F = TimeSeries("primal_u_F")
@@ -70,3 +108,4 @@ t = 0
 T = 0.25
 dt = 0.25
 tol = 1e-2
+

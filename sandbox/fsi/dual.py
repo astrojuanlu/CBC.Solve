@@ -1,5 +1,6 @@
 # A simple dual solver for the FSI problem
 # As a first try we solve a stationary problem
+# See info at the bottom 
 
 from common import *
 from cbc.common import CBCSolver
@@ -45,7 +46,6 @@ primal_U_S.retrieve(U_S_subdofs, dt)
 global_vertex_indices_F = Omega_F.data().mesh_function("global vertex indices")
 global_vertex_indices_S = Omega_S.data().mesh_function("global vertex indices")
 global_vertex_indices_M = Omega_F.data().mesh_function("global vertex indices") 
-#global_edge_indices_test = Omega_S.data().mesh_function("global edge indices")
 
 # Create lists
 F_global_index = zeros([global_vertex_indices_F.size()], "uint") 
@@ -132,7 +132,6 @@ def sym_gradient(u):
     return sym_gradient
     
 # Define constants
-# FIXME: should not be defined here! (common.py)
 mu_F = 1
 mu_S = 1
 lamb_S = 1
@@ -141,30 +140,6 @@ lamb_M = 1
 
 def sigma_M(u):
     return 2.0*mu_M*sym_gradient(u) + lamb_M*tr(sym_gradient(u))*I(u)
-
-
-# The linearized problem on block form is A'*(v,Z) = M(v):
-#
-#   | A_FF    A_FS    A_FM |*   |(Z_UF, Z_PF)|
-#   | A_SF    A_SS    A_SM |    |   Z_US     | =  M
-#   | A_MF    A_MS    A_MM |    |   Z_UM     |
-#
-# Note that A_FS, A_MF and A_MS  = 0 by the construction
-# of the problem. If we use Mats idea of an extion operator 
-# for the mesh problem we can obtain a Neumann BC in the mesh problem 
-# such that A_MS \noteq 0.
-#
-# In the forms below, the adjoint * has been applied on the matrix 
-# as well on the test/trial functions, see appendix for details.
-# The dual_matrix is then 
-# 
-#                  | A_FF    A_SF    0    |    
-#  dual_matrix  =  | 0       A_SS    0    | 
-#                  | A_FM    A_SM    A_MM |
-# 
-#
-# Sub_domain markers are defined in common.py. The structure is fluid is marked as 0
-# and the structure as 1 
 
 # Fluid eq. linearized around fluid variables
 A_FF01 = 0 # time--dependent
@@ -192,8 +167,9 @@ A_FM08 = -inner(Z_PF, inner( dot(F_invT(U_M), grad(v_M).T)  , dot( I(U_M), grad(
 # Collect A_FM form
 A_FM_sum = A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08
 
-# Define FSI normal
-N_S = FacetNormal(Omega_S)
+# Define FSI normal FIXME: Change!!!!
+N_S =  FacetNormal(Omega_S)
+N = - N_S('+')
 
 # # UNCHANGED!!!
 # # Structure eq. linearized around the fluid variables
@@ -202,9 +178,9 @@ N_S = FacetNormal(Omega_S)
 # A_SF03 =  inner(Z_US, mu_F*J(U_M)*q_F*dot(I(U_M), dot(F_invT(U_M), N_S)))*dS(1)
 
 # Structure eq. linearized around the fluid variables
-A_SF01 = -inner(Z_US('+'), mu_F*J(U_M)('+')*dot(dot(grad(v_M('+')), F_inv(U_M)('+')), dot(F_invT(U_M)('+'), N_S('+'))))*dS(1)
-A_SF02 = -inner(Z_US('+'), mu_F*J(U_M)('+')*dot(dot(F_invT(U_M)('+'), grad(v_M('+')).T), dot(F_invT(U_M)('+'), N_S('+'))))*dS(1)
-A_SF03 =  inner(Z_US('+'), mu_F*J(U_M)('+')*q_F('+')*dot(I(U_M)('+'), dot(F_invT(U_M)('+'), N_S('+'))))*dS(1)
+A_SF01 = -inner(Z_US('+'), mu_F*J(U_M)('+')*dot(dot(grad(v_M('+')), F_inv(U_M)('+')), dot(F_invT(U_M)('+'), N)))*dS(1)
+A_SF02 = -inner(Z_US('+'), mu_F*J(U_M)('+')*dot(dot(F_invT(U_M)('+'), grad(v_M('+')).T), dot(F_invT(U_M)('+'), N)))*dS(1)
+A_SF03 =  inner(Z_US('+'), mu_F*J(U_M)('+')*q_F('+')*dot(I(U_M)('+'), dot(F_invT(U_M)('+'), N)))*dS(1)
 
 # Collect A_SF form
 A_SF_sum = A_SF01 + A_SF02 + A_SF03 
@@ -230,15 +206,16 @@ A_SS_sum = A_SS02 + A_SS02 + A_SS04 + A_SS05
 # A_SM07 =  inner(Z_US, J(U_M)*mu_F*dot(dot(F_invT(U_M),grad(U_M).T),dot(F_invT(U_M), dot(grad(v_M).T, dot(F_invT(U_M),N_S)))))*ds(1)
 # A_SM08 = -inner(Z_US, J(U_M)*dot(dot(P_F*I(U_F),F_invT(U_M)), dot(grad(v_M).T, dot(F_invT(U_M), N_S))))*ds(1)
 
+
 # Structure eq. linearized around mesh variable
-A_SM01 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(grad(U_F('+')), F_inv(U_F)('+')), dot(F_invT(U_M)('+'), N_S('+'))))*dS(1)
-A_SM02 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(F_invT(U_F)('+'), grad(U_F('+')).T), dot(F_invT(U_M)('+'), N_S('+'))))*dS(1)
-A_SM03 =  inner(Z_US('+'), DJ(U_M,v_M)('+')*dot(P_F('+')*I(U_F)('+'), dot(F_invT(U_M)('+'),N_S('+'))))*dS(1)
-A_SM04 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')), dot(F_inv(U_M)('+'),grad(v_M('+')))), dot(F_inv(U_M)('+'), dot(F_invT(U_M)('+'), N_S('+')))))*dS(1) 
-A_SM05 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')).T, dot(F_invT(U_M)('+'), grad(v_M('+')).T)), dot(F_invT(U_M)('+'), dot(F_invT(U_M)('+'),N_S('+')))))*dS(1)
-A_SM06 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')),F_inv(U_M)('+')),dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'),N_S('+'))))))*dS(1)
-A_SM07 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'),grad(U_M('+')).T),dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'),N_S('+'))))))*dS(1)
-A_SM08 = -inner(Z_US('+'), J(U_M)('+')*dot(dot(P_F('+')*I(U_F)('+'),F_invT(U_M)('+')), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'), N_S('+')))))*dS(1)
+A_SM01 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(grad(U_F('+')), F_inv(U_F)('+')), dot(F_invT(U_M)('+'), N)))*dS(1)
+A_SM02 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(F_invT(U_F)('+'), grad(U_F('+')).T), dot(F_invT(U_M)('+'), N)))*dS(1)
+A_SM03 =  inner(Z_US('+'), DJ(U_M,v_M)('+')*dot(P_F('+')*I(U_F)('+'), dot(F_invT(U_M)('+'),N)))*dS(1)
+A_SM04 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')), dot(F_inv(U_M)('+'),grad(v_M('+')))), dot(F_inv(U_M)('+'), dot(F_invT(U_M)('+'), N))))*dS(1) 
+A_SM05 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')).T, dot(F_invT(U_M)('+'), grad(v_M('+')).T)), dot(F_invT(U_M)('+'), dot(F_invT(U_M)('+'),N))))*dS(1)
+A_SM06 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')),F_inv(U_M)('+')),dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'),N)))))*dS(1)
+A_SM07 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'),grad(U_M('+')).T),dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'),N)))))*dS(1)
+A_SM08 = -inner(Z_US('+'), J(U_M)('+')*dot(dot(P_F('+')*I(U_F)('+'),F_invT(U_M)('+')), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'), N))))*dS(1)
 
 # Collect A_SM form
 A_SM_sum = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06 + A_SM07 + A_SM08 
@@ -250,9 +227,58 @@ A_MM_sum = inner(sym_gradient(Z_UM), sigma_M(v_M))*dx(0)
 A_dual = A_FF_sum + A_SF_sum + A_SS_sum + A_FM_sum + A_SM_sum + A_MM_sum
 
 # Assemble dual matrix
-dual_matrix = assemble(A_dual, cell_domains = cell_domains, interior_facet_domains=interior_facet_domains)
+#dual_matrix = assemble(A_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)
+
+# Define goal functional
+#goal_MS = 
+
+# Remove "unused" dofs
+#remove_P_F_dofs = DirichletBC(W.sub(1), Constant(0,0), sub_domains, 1)
+# remove_P_F_dofs = DirichletBC(W.sub(1), Constant(0,0), sub_domains, 1)
+# remove_U_S_dofs = DirichletBC(W.sub(2), Constant(0,0), sub_domains, 1)
+# remove_U_M_dofs = DirichletBC(W.sub(3), Constant(0,0), sub_domains, 0)
+
+# Remove singularites...
+# Dirchlet BC...
+# Extention for M--S equation...
+# 
 
 
-# Add "ordinary" DirchletBC...
-# Add "not-ordinary" DirchletBC to avoid a singular system....
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# The linearized problem on block form is A'*(v,Z) = M(v):
+#
+#   | A_FF    A_FS    A_FM |*   |(Z_UF, Z_PF)|
+#   | A_SF    A_SS    A_SM |    |   Z_US     | =  M
+#   | A_MF    A_MS    A_MM |    |   Z_UM     |
+#
+# Note that A_FS, A_MF and A_MS  = 0 by the construction
+# of the problem. If we use Mats idea of an extion operator 
+# for the mesh problem we can obtain a Neumann BC in the mesh problem 
+# such that A_MS \noteq 0.
+#
+# In the forms above, the adjoint * has been applied on the matrix 
+# as well on the test/trial functions, see appendix for details.
+# The dual_matrix is then 
+# 
+#                  | A_FF    A_SF    0    |    
+#  dual_matrix  =  | 0       A_SS    0    | 
+#                  | A_FM    A_SM    A_MM |
+# 
+#
+# Sub_domain markers are defined in common.py. The structure is fluid is marked as 0
+# and the structure as 1 
 
