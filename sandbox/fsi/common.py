@@ -64,6 +64,32 @@ interior_facet_domains.set_all(0)
 facet_orientation = mesh.data().create_mesh_function("facet orientation", D - 1)
 facet_orientation.set_all(0)
 
+
+# Define inflow boundary
+def inflow(x):
+    return x[0] < DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
+
+# Define outflow boundary
+def outflow(x):
+    return x[0] > channel_length - DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
+
+# Define noslip boundary
+def noslip(x, on_boundary):
+    return on_boundary and not inflow(x) and not outflow(x)
+
+# Structure BCs 
+def dirichlet_conditions(self):
+    fix = Constant((0,0))
+    return [fix]
+
+def dirichlet_boundaries(self):
+    #FIXME: Figure out how to use the constants above in the
+    #following boundary definitions
+    bottom ="x[1] == 0.0 && x[0] >= 1.4 && x[0] <= 1.6"
+    return [bottom]
+
+
+
 # Mark facet orientation for the fsi boundary
 for facet in facets(mesh):
 
@@ -105,7 +131,7 @@ primal_U_M = TimeSeries("primal_U_M")
 
 # Parameters
 t = 0
-T = 0.25
-dt = 0.25
+T = 0.5
+dt = 0.025
 tol = 1e-2
 

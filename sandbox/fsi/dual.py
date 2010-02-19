@@ -37,10 +37,10 @@ U_M_subdofs = Vector()
 U_S_subdofs = Vector()
 
 # Get primal data
-primal_u_F.retrieve(u_F_subdofs, dt)
-primal_p_F.retrieve(p_F_subdofs, dt)
-primal_U_M.retrieve(U_M_subdofs, dt)
-primal_U_S.retrieve(U_S_subdofs, dt)
+primal_u_F.retrieve(u_F_subdofs, T)
+primal_p_F.retrieve(p_F_subdofs, T)
+primal_U_M.retrieve(U_M_subdofs, T)
+primal_U_S.retrieve(U_S_subdofs, T)
 
 # Create mapping from F,S,M to Omega
 global_vertex_indices_F = Omega_F.data().mesh_function("global vertex indices")
@@ -77,14 +77,26 @@ U_M_global_dofs = append(M_global_index, M_global_index + Nv)
 # Get rid of P2 dofs for u_F and create a P1 function
 u_F_subdofs = append(u_F_subdofs[:Nv_F], u_F_subdofs[Nv_F + Ne_F: 2*Nv_F + Ne_F])
 
+# Get inactive dofs for global system
+active_dofs = set()
+active_dofs.update(tuple(U_F_global_dofs))
+active_dofs.update(tuple(P_F_global_dofs + 2*Nv))
+active_dofs.update(tuple(U_S_global_dofs + 2*Nv + Nv))
+active_dofs.update(tuple(U_M_global_dofs + 2*Nv + Nv + 2*Nv))
+inactive_dofs = set(range(W.dim()))-active_dofs
+inactive_dofs = array(tuple(inactive_dofs), dtype="I")
+
+
 # Transfer the stored primal solutions on the dual mesh Omega
 U_F.vector()[U_F_global_dofs] = u_F_subdofs
 P_F.vector()[P_F_global_dofs] = p_F_subdofs
 U_S.vector()[U_S_global_dofs] = U_S_subdofs
 U_M.vector()[U_M_global_dofs] = U_M_subdofs
 
+
+
 # plot(U_F, title="DUAL U_F", interactive=True)
-# plot(U_F, title="DUAL U_S", interactive=True)
+# plot(P_F, title="DUAL P_F", interactive=True)
 
 file = File("U_F_dual.pvd")
 file << U_F
@@ -226,17 +238,45 @@ A_MM_sum = inner(sym_gradient(Z_UM), sigma_M(v_M))*dx(0)
 # Collect the dual matrix
 A_dual = A_FF_sum + A_SF_sum + A_SS_sum + A_FM_sum + A_SM_sum + A_MM_sum
 
-# Assemble dual matrix
-#dual_matrix = assemble(A_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)
-
 # Define goal functional
-#goal_MS = 
+goal_MS = v_S[0]*dx(1) - v_F[0]*ds  
+L_dual = goal_MS
 
-# Remove "unused" dofs
-#remove_P_F_dofs = DirichletBC(W.sub(1), Constant(0,0), sub_domains, 1)
-# remove_P_F_dofs = DirichletBC(W.sub(1), Constant(0,0), sub_domains, 1)
-# remove_U_S_dofs = DirichletBC(W.sub(2), Constant(0,0), sub_domains, 1)
-# remove_U_M_dofs = DirichletBC(W.sub(3), Constant(0,0), sub_domains, 0)
+# Assemble dual matrix
+dual_matrix = assemble(A_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)
+dual_vector = assemble(L_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)
+
+
+# Define BCs
+bcuF = DirichletBC(W.sub(0), Constant((0,0)), noslip)
+bcp0 = DirichletBC(W.sub(1), Constant(0), inflow)
+bcp1 = DirichletBC(W.sub(1), Constant(0.0), outflow)
+bcuS = DirichletBC(W.sub(2), Constant((0,0)), dirichlet_boundaries)
+bcuM1 = DirichletBC(W.sub(3), Constant((0,0)), DomainBoundary())
+bcuM2 = DirichletBC(W.sub(3), Constant((0,0)), interior_facet_domains, 1)
+
+# Collect BCs
+bcs = [bcuF, bcp0, bcp1, bcuS, bcuM1, bcuM2]
+
+# Apply bcs
+for bc in bcs:
+    bc.apply(dual_matrix, dual_vector)
+
+# Fix inactive dofsx
+dual_matrix.ident(inactive_dofs)
+
+
+# Compute dual solution
+Z = Function(W)
+solve(dual_matrix, Z.vector(), dual_vector)
+
+(Z_UF, Z_PF, Z_S, Z_M) = Z.split()
+
+plot(Z_UF, title="Dual velocity")
+plot(Z_PF, title="Dual pressure")
+plot(Z_S,  title="Dual displacement")
+plot(Z_M,  title="Dual mesh")
+interactive()
 
 # Remove singularites...
 # Dirchlet BC...
