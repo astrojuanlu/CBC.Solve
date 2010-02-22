@@ -69,7 +69,7 @@ Nv_F = Omega_F.num_vertices()
 Ne_F = Omega_F.num_edges()
 
 # Get global dofs 
-U_F_global_dofs = append(F_global_index, F_global_index + Nv)
+U_F_global_dofs = append(F_global_index, F_global_index + Nv)# FIXME: change to P2!!!
 P_F_global_dofs = F_global_index
 U_S_global_dofs = append(S_global_index, S_global_index + Nv)
 U_M_global_dofs = append(M_global_index, M_global_index + Nv)
@@ -86,17 +86,12 @@ active_dofs.update(tuple(U_M_global_dofs + 2*Nv + Nv + 2*Nv))
 inactive_dofs = set(range(W.dim()))-active_dofs
 inactive_dofs = array(tuple(inactive_dofs), dtype="I")
 
-
 # Transfer the stored primal solutions on the dual mesh Omega
 U_F.vector()[U_F_global_dofs] = u_F_subdofs
 P_F.vector()[P_F_global_dofs] = p_F_subdofs
 U_S.vector()[U_S_global_dofs] = U_S_subdofs
 U_M.vector()[U_M_global_dofs] = U_M_subdofs
 
-
-
-# plot(U_F, title="DUAL U_F", interactive=True)
-# plot(P_F, title="DUAL P_F", interactive=True)
 
 file = File("U_F_dual.pvd")
 file << U_F
@@ -161,7 +156,7 @@ A_FF04 =  inner(grad(Z_UF), mu_F*dot(grad(v_F) , dot(F_inv(U_M), F_invT(U_M))))*
 A_FF05 =  inner(grad(Z_UF), mu_F*dot(F_invT(U_M) , dot(grad(v_F).T, F_invT(U_M))))*dx(0)
 #A_FF06 =  -inner(grad(Z_UF), (q_F*dot(I(U_M), F_invT(U_M))))*dx # FIXME: Which one should we use?
 A_FF06 =  -inner(grad(Z_UF), q_F*F_invT(U_M))*dx(0)
-A_FF07 =  inner(Z_PF, inner(F_invT(U_M), grad(v_F)))*dx(0)
+A_FF07 =  inner(Z_PF, inner(F_invT(U_M), grad(v_F)))*dx(0) 
 
 # Collect A_FF form
 A_FF_sum = A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07
@@ -181,13 +176,7 @@ A_FM_sum = A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08
 
 # Define FSI normal FIXME: Change!!!!
 N_S =  FacetNormal(Omega_S)
-N = - N_S('+')
-
-# # UNCHANGED!!!
-# # Structure eq. linearized around the fluid variables
-# A_SF01 = -inner(Z_US, mu_F*J(U_M)*dot(dot(grad(v_M), F_inv(U_M)), dot(F_invT(U_M), N_S)))*dS(1)
-# A_SF02 = -inner(Z_US, mu_F*J(U_M)*dot(dot(F_invT(U_M), grad(v_M).T), dot(F_invT(U_M), N_S)))*dS(1)
-# A_SF03 =  inner(Z_US, mu_F*J(U_M)*q_F*dot(I(U_M), dot(F_invT(U_M), N_S)))*dS(1)
+N =  N_S('+')
 
 # Structure eq. linearized around the fluid variables
 A_SF01 = -inner(Z_US('+'), mu_F*J(U_M)('+')*dot(dot(grad(v_M('+')), F_inv(U_M)('+')), dot(F_invT(U_M)('+'), N)))*dS(1)
@@ -206,18 +195,6 @@ A_SS05 = inner(grad(Z_US), 0.5*lamb_S*tr(dot(F(U_S), grad(v_S)))*I(U_S))*dx(1)
 
 # Collect A_SS form
 A_SS_sum = A_SS02 + A_SS02 + A_SS04 + A_SS05
-
-# # UNCHANGED!!! 
-# # Structure eq. linearized around mesh variable
-# A_SM01 = -inner(Z_US, DJ(U_M,v_M)*mu_F*dot(dot(grad(U_F), F_inv(U_F)), dot(F_invT(U_M), N_S)))*ds(1)
-# A_SM02 = -inner(Z_US, DJ(U_M,v_M)*mu_F*dot(dot(F_invT(U_F), grad(U_F).T), dot(F_invT(U_M), N_S)))*ds(1)
-# A_SM03 =  inner(Z_US, DJ(U_M,v_M)*dot(P_F*I(U_F), dot(F_invT(U_M),N_S)))*dS(1)
-# A_SM04 =  inner(Z_US, J(U_M)*mu_F*dot(dot(grad(U_F), dot(F_inv(U_M),grad(v_M))), dot(F_inv(U_M), dot(F_invT(U_M), N_S))))*ds(1) 
-# A_SM05 =  inner(Z_US, J(U_M)*mu_F*dot(dot(grad(U_F).T, dot(F_invT(U_M), grad(v_M).T)), dot(F_invT(U_M), dot(F_invT(U_M),N_S))))*ds(1)
-# A_SM06 =  inner(Z_US, J(U_M)*mu_F*dot(dot(grad(U_F),F_inv(U_M)),dot(F_invT(U_M), dot(grad(v_M).T, dot(F_invT(U_M),N_S)))))*ds(1)
-# A_SM07 =  inner(Z_US, J(U_M)*mu_F*dot(dot(F_invT(U_M),grad(U_M).T),dot(F_invT(U_M), dot(grad(v_M).T, dot(F_invT(U_M),N_S)))))*ds(1)
-# A_SM08 = -inner(Z_US, J(U_M)*dot(dot(P_F*I(U_F),F_invT(U_M)), dot(grad(v_M).T, dot(F_invT(U_M), N_S))))*ds(1)
-
 
 # Structure eq. linearized around mesh variable
 A_SM01 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(grad(U_F('+')), F_inv(U_F)('+')), dot(F_invT(U_M)('+'), N)))*dS(1)
@@ -238,14 +215,42 @@ A_MM_sum = inner(sym_gradient(Z_UM), sigma_M(v_M))*dx(0)
 # Collect the dual matrix
 A_dual = A_FF_sum + A_SF_sum + A_SS_sum + A_FM_sum + A_SM_sum + A_MM_sum
 
-# Define goal functional
-goal_MS = v_S[0]*dx(1) - v_F[0]*ds  
-L_dual = goal_MS
+
+# Define goal functionals
+
+# Define facet normal
+n_temp = FacetNormal(Omega_S)
+n = n_temp('+')
+
+# Define epsilon
+def epsilon(v):
+    return 0.5*(grad(v) + (grad(v).T))
+    
+# Define sigma
+def sigma(v,q):
+    return 2.0*mu_F*epsilon(v) - dot(q, I(v))
+
+# Define the tangent vector
+def t(n):
+    return [n[1], -n[0]]
+
+#sn = dot(sigma(v_F, q_F), n)
+#     L_dual = cutoff*dot(sn, t(n))*ds  # Optimise for shear component
+# #    L_dual = cutoff*dot(sn, n)*ds    # Optimise for normal component
+
+#cut_off = Cutoff(V_F)
+
+goal_MF = inner(v_F('+'), dot(grad(U_F('+')), N))*dS(1) + inner(v_F('+'), dot(grad(U_F('+')).T, N))*dS(1) - P_F('+')*inner(v_F('+'), dot(I(v_F)('+'), N))*dS(1)
+#goal_MF  = inner(sigma(v_F('+'), q_F('+')), N)[0]*dS(1)
+
+#goal_MS = inner(v_S('+'), N)*dS(1)
+
+#  M_F = inner(sigma(v_F('+'), v_P('+')), N)[0]*dS(1)
+L_dual = goal_MF 
 
 # Assemble dual matrix
 dual_matrix = assemble(A_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)
 dual_vector = assemble(L_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)
-
 
 # Define BCs
 bcuF = DirichletBC(W.sub(0), Constant((0,0)), noslip)
@@ -265,37 +270,24 @@ for bc in bcs:
 # Fix inactive dofsx
 dual_matrix.ident(inactive_dofs)
 
-
 # Compute dual solution
 Z = Function(W)
 solve(dual_matrix, Z.vector(), dual_vector)
 
 (Z_UF, Z_PF, Z_S, Z_M) = Z.split()
 
+
+file_Z_UF = File("Z_UF.pvd")
+file_Z_UF << Z_UF
+
+file_Z_M = File("Z_M.pvd")
+file_Z_M << Z_M
+
 plot(Z_UF, title="Dual velocity")
 plot(Z_PF, title="Dual pressure")
 plot(Z_S,  title="Dual displacement")
 plot(Z_M,  title="Dual mesh")
 interactive()
-
-# Remove singularites...
-# Dirchlet BC...
-# Extention for M--S equation...
-# 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -322,3 +314,18 @@ interactive()
 # Sub_domain markers are defined in common.py. The structure is fluid is marked as 0
 # and the structure as 1 
 
+# Define goal functionals
+# # Define epsilon
+# def epsilon(v):
+#     return 0.5*(grad(v) + (grad(v).T))
+    
+# # Define sigma
+# def sigma(v,q):
+#     return 2.0*mu_F*epsilon(v) - dot(q, I(v))
+
+# n_prick_t= [[0, 0], [1, 0]]
+# cut_off = Cutoff(V_F)
+
+# goal_MF = cut_off*dot(sigma(v_F,q_F), n_prick_t)*dx
+
+# F = Cutoff(V_F)

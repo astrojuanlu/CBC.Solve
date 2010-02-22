@@ -27,7 +27,15 @@ class Structure(SubDomain):
 
 # Create structure subdomain
 structure = Structure()
-    
+
+# Cut-off function for dual source term
+class Cutoff(Function):
+    def inside(self, values, x):
+        if (x[1] == structure_top) & (x[0] >=structure_left) & (x[0] <= structure_right):
+            values[0] = 1.0
+        else:
+            values[0] = 0.0  
+        
 # Create subdomain markers (0=fluid,  1=structure)
 sub_domains = MeshFunction("uint", mesh, D)
 sub_domains.set_all(0)
@@ -88,8 +96,6 @@ def dirichlet_boundaries(self):
     bottom ="x[1] == 0.0 && x[0] >= 1.4 && x[0] <= 1.6"
     return [bottom]
 
-
-
 # Mark facet orientation for the fsi boundary
 for facet in facets(mesh):
 
@@ -132,6 +138,8 @@ primal_U_M = TimeSeries("primal_U_M")
 # Parameters
 t = 0
 T = 0.5
-dt = 0.025
+dt = 0.001
 tol = 1e-2
+
+
 
