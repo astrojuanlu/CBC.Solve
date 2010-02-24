@@ -72,7 +72,6 @@ interior_facet_domains.set_all(0)
 facet_orientation = mesh.data().create_mesh_function("facet orientation", D - 1)
 facet_orientation.set_all(0)
 
-
 # Define inflow boundary
 def inflow(x):
     return x[0] < DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
@@ -137,8 +136,8 @@ primal_U_M = TimeSeries("primal_U_M")
 
 # Parameters
 t = 0
-T = 0.5
-dt = 0.001
+T = 0.25
+dt = 0.25
 tol = 1e-2
 
 

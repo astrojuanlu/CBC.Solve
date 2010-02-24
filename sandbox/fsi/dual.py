@@ -1,6 +1,28 @@
 # A simple dual solver for the FSI problem
 # As a first try we solve a stationary problem
-# See info at the bottom 
+#
+# The linearized problem on block form is A'*(v,Z) = M(v):
+#
+#   | A_FF    A_FS    A_FM |*   |(Z_UF, Z_PF)|
+#   | A_SF    A_SS    A_SM |    |   Z_US     | =  M
+#   | A_MF    A_MS    A_MM |    |   Z_UM     |
+#
+# Note that A_FS, A_MF and A_MS  = 0 by the construction
+# of the problem. If we use Mats idea of an extion operator 
+# for the mesh problem we can obtain a Neumann BC in the mesh problem 
+# such that A_MS \noteq 0.
+#
+# In the forms above, the adjoint * has been applied on the matrix 
+# as well on the test/trial functions, see appendix for details.
+# The dual_matrix is then 
+# 
+#                  | A_FF    A_SF    0    |    
+#  dual_matrix  =  | 0       A_SS    0    | 
+#                  | A_FM    A_SM    A_MM |
+# 
+#
+# Sub_domain markers are defined in common.py. The structure is fluid is marked as 0
+# and the structure as 1 
 
 from common import *
 from cbc.common import CBCSolver
@@ -8,13 +30,14 @@ from cbc.twist.kinematics import SecondOrderIdentity
 from numpy import array, append, zeros
 
 # Define function spaces defined on the whole domain
-V_F = VectorFunctionSpace(Omega, "CG", 1)
-Q_F = FunctionSpace(Omega, "CG", 1)
-V_S = VectorFunctionSpace(Omega, "CG", 1)
-V_M = VectorFunctionSpace(Omega, "CG", 1) 
+V_F1 = VectorFunctionSpace(Omega, "CG", 1)
+V_F2 = VectorFunctionSpace(Omega, "CG", 2)
+Q_F  = FunctionSpace(Omega, "CG", 1)
+V_S  = VectorFunctionSpace(Omega, "CG", 1)
+V_M  = VectorFunctionSpace(Omega, "CG", 1) 
 
 # Create mixed function space
-mixed_space = (V_F, Q_F, V_S,  V_M)
+mixed_space = (V_F2, Q_F, V_S,  V_M)
 W = MixedFunctionSpace(mixed_space)
 
 # Define test functions
@@ -25,7 +48,7 @@ W = MixedFunctionSpace(mixed_space)
 
 # Create dual functions
 # Note that V_F etc are defined on the whole domain
-U_F = Function(V_F)
+U_F = Function(V_F1)
 P_F = Function(Q_F)
 U_S = Function(V_S)
 U_M = Function(V_M)
@@ -42,24 +65,31 @@ primal_p_F.retrieve(p_F_subdofs, T)
 primal_U_M.retrieve(U_M_subdofs, T)
 primal_U_S.retrieve(U_S_subdofs, T)
 
-# Create mapping from F,S,M to Omega
+# Initialize mesh convectivity
+Omega.init(1,2)
+Omega_F.init(1,2)
+
+# Create mapping from Omega_(F,S,M) to Omega (i.e extend by zero)
+global_edge_indices_F = Omega_F.data().create_mesh_function("global edge indices", 1)
 global_vertex_indices_F = Omega_F.data().mesh_function("global vertex indices")
 global_vertex_indices_S = Omega_S.data().mesh_function("global vertex indices")
 global_vertex_indices_M = Omega_F.data().mesh_function("global vertex indices") 
 
 # Create lists
 F_global_index = zeros([global_vertex_indices_F.size()], "uint") 
+F_global_edge_index = zeros([global_edge_indices_F.size()], "uint")
+F_global_index = zeros([global_vertex_indices_F.size()], "uint") 
 M_global_index = zeros([global_vertex_indices_M.size()], "uint")
 S_global_index = zeros([global_vertex_indices_S.size()], "uint") 
 
 # Extract global vertices
 for j in range(global_vertex_indices_F.size()):
-    F_global_index[j] = global_vertex_indices_F[j]
+   F_global_index[j] = global_vertex_indices_F[j]
 for j in range(global_vertex_indices_M.size()):
     M_global_index[j] = global_vertex_indices_M[j]
 for j in range(global_vertex_indices_S.size()):
     S_global_index[j] = global_vertex_indices_S[j]
-
+                
 # Initialize edges on fluid sub mesh (needed for P2 elements)
 Omega_F.init(1)
 
@@ -69,7 +99,7 @@ Nv_F = Omega_F.num_vertices()
 Ne_F = Omega_F.num_edges()
 
 # Get global dofs 
-U_F_global_dofs = append(F_global_index, F_global_index + Nv)# FIXME: change to P2!!!
+U_F_global_dofs = append(F_global_index, F_global_index + Nv)
 P_F_global_dofs = F_global_index
 U_S_global_dofs = append(S_global_index, S_global_index + Nv)
 U_M_global_dofs = append(M_global_index, M_global_index + Nv)
@@ -92,6 +122,7 @@ P_F.vector()[P_F_global_dofs] = p_F_subdofs
 U_S.vector()[U_S_global_dofs] = U_S_subdofs
 U_M.vector()[U_M_global_dofs] = U_M_subdofs
 
+#plot(U_F, interactive=True)
 
 file = File("U_F_dual.pvd")
 file << U_F
@@ -154,7 +185,7 @@ A_FF02 = 0 # time--dependent
 A_FF03 =  inner(Z_UF, dot(grad(U_F) , dot(F(U_M), v_F)))*dx(0)
 A_FF04 =  inner(grad(Z_UF), mu_F*dot(grad(v_F) , dot(F_inv(U_M), F_invT(U_M))))*dx(0)
 A_FF05 =  inner(grad(Z_UF), mu_F*dot(F_invT(U_M) , dot(grad(v_F).T, F_invT(U_M))))*dx(0)
-#A_FF06 =  -inner(grad(Z_UF), (q_F*dot(I(U_M), F_invT(U_M))))*dx # FIXME: Which one should we use?
+A_FF06 =  -inner(grad(Z_UF), (q_F*dot(I(U_M), F_invT(U_M))))*dx # FIXME: Which one should we use?
 A_FF06 =  -inner(grad(Z_UF), q_F*F_invT(U_M))*dx(0)
 A_FF07 =  inner(Z_PF, inner(F_invT(U_M), grad(v_F)))*dx(0) 
 
@@ -234,11 +265,6 @@ def sigma(v,q):
 def t(n):
     return [n[1], -n[0]]
 
-#sn = dot(sigma(v_F, q_F), n)
-#     L_dual = cutoff*dot(sn, t(n))*ds  # Optimise for shear component
-# #    L_dual = cutoff*dot(sn, n)*ds    # Optimise for normal component
-
-#cut_off = Cutoff(V_F)
 
 goal_MF = inner(v_F('+'), dot(grad(U_F('+')), N))*dS(1) + inner(v_F('+'), dot(grad(U_F('+')).T, N))*dS(1) - P_F('+')*inner(v_F('+'), dot(I(v_F)('+'), N))*dS(1)
 #goal_MF  = inner(sigma(v_F('+'), q_F('+')), N)[0]*dS(1)
@@ -251,6 +277,11 @@ L_dual = goal_MF
 # Assemble dual matrix
 dual_matrix = assemble(A_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)
 dual_vector = assemble(L_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)
+
+mfile = File("matrix.m")
+mfile << dual_matrix
+# import sys
+# sys.exit(1)
 
 # Define BCs
 bcuF = DirichletBC(W.sub(0), Constant((0,0)), noslip)
@@ -268,7 +299,8 @@ for bc in bcs:
     bc.apply(dual_matrix, dual_vector)
 
 # Fix inactive dofsx
-dual_matrix.ident(inactive_dofs)
+#dual_matrix.ident(inactive_dofs)
+dual_matrix.ident_zeros()
 
 # Compute dual solution
 Z = Function(W)
@@ -279,9 +311,12 @@ solve(dual_matrix, Z.vector(), dual_vector)
 
 file_Z_UF = File("Z_UF.pvd")
 file_Z_UF << Z_UF
-
+file_Z_PF = File("Z_PF.pvd")
+file_Z_PF << Z_PF
 file_Z_M = File("Z_M.pvd")
 file_Z_M << Z_M
+file_Z_S = File("Z_S.pvd")
+file_Z_S << Z_S
 
 plot(Z_UF, title="Dual velocity")
 plot(Z_PF, title="Dual pressure")
@@ -291,28 +326,26 @@ interactive()
 
 
 
-# The linearized problem on block form is A'*(v,Z) = M(v):
-#
-#   | A_FF    A_FS    A_FM |*   |(Z_UF, Z_PF)|
-#   | A_SF    A_SS    A_SM |    |   Z_US     | =  M
-#   | A_MF    A_MS    A_MM |    |   Z_UM     |
-#
-# Note that A_FS, A_MF and A_MS  = 0 by the construction
-# of the problem. If we use Mats idea of an extion operator 
-# for the mesh problem we can obtain a Neumann BC in the mesh problem 
-# such that A_MS \noteq 0.
-#
-# In the forms above, the adjoint * has been applied on the matrix 
-# as well on the test/trial functions, see appendix for details.
-# The dual_matrix is then 
-# 
-#                  | A_FF    A_SF    0    |    
-#  dual_matrix  =  | 0       A_SS    0    | 
-#                  | A_FM    A_SM    A_MM |
-# 
-#
-# Sub_domain markers are defined in common.py. The structure is fluid is marked as 0
-# and the structure as 1 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Define goal functionals
 # # Define epsilon
