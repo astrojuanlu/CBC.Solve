@@ -35,16 +35,17 @@ V_F2 = VectorFunctionSpace(Omega, "CG", 2)
 Q_F  = FunctionSpace(Omega, "CG", 1)
 V_S  = VectorFunctionSpace(Omega, "CG", 1)
 V_M  = VectorFunctionSpace(Omega, "CG", 1) 
+V_PM = VectorFunctionSpace(Omega, "CG", 1) 
 
 # Create mixed function space
-mixed_space = (V_F2, Q_F, V_S,  V_M)
+mixed_space = (V_F2, Q_F, V_S, V_M, V_PM)
 W = MixedFunctionSpace(mixed_space)
 
 # Define test functions
-(v_F, q_F, v_S, v_M) = TestFunctions(W)
+(v_F, q_F, v_S, v_M, q_M) = TestFunctions(W)
 
 # Define trial functions
-(Z_UF, Z_PF, Z_US, Z_UM) = TrialFunctions(W)
+(Z_UF, Z_PF, Z_US, Z_UM, Z_PM) = TrialFunctions(W)
 
 # Create dual functions
 # Note that V_F etc are defined on the whole domain
@@ -122,7 +123,7 @@ P_F.vector()[P_F_global_dofs] = p_F_subdofs
 U_S.vector()[U_S_global_dofs] = U_S_subdofs
 U_M.vector()[U_M_global_dofs] = U_M_subdofs
 
-#plot(U_F, interactive=True)
+#plot(P_F, interactive=True)
 
 file = File("U_F_dual.pvd")
 file << U_F
@@ -241,11 +242,14 @@ A_SM08 = -inner(Z_US('+'), J(U_M)('+')*dot(dot(P_F('+')*I(U_F)('+'),F_invT(U_M)(
 A_SM_sum = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06 + A_SM07 + A_SM08 
 
 # Mesh eq. linearized around mesh variable
-A_MM_sum = inner(sym_gradient(Z_UM), sigma_M(v_M))*dx(0)
+A_MM_sum = inner(sym_gradient(Z_UM), sigma_M(v_M))*dx(0) + inner(Z_UM('+'),q_M('+'))*dS(1) + inner(Z_PM('+'),v_M('+'))*dS(1)
+
+# Mesh eq. linearized around strucure variable
+A_MS_sum = - inner(Z_PM('+'), v_S('+'))*dS(1)\
+
 
 # Collect the dual matrix
-A_dual = A_FF_sum + A_SF_sum + A_SS_sum + A_FM_sum + A_SM_sum + A_MM_sum
-
+A_dual = A_FF_sum + A_SF_sum + A_SS_sum + A_FM_sum + A_SM_sum + A_MM_sum + A_MS_sum
 
 # Define goal functionals
 
@@ -285,14 +289,16 @@ mfile << dual_matrix
 
 # Define BCs
 bcuF = DirichletBC(W.sub(0), Constant((0,0)), noslip)
-bcp0 = DirichletBC(W.sub(1), Constant(0), inflow)
+bcp0 = DirichletBC(W.sub(1), Constant(0.0), inflow)
 bcp1 = DirichletBC(W.sub(1), Constant(0.0), outflow)
 bcuS = DirichletBC(W.sub(2), Constant((0,0)), dirichlet_boundaries)
 bcuM1 = DirichletBC(W.sub(3), Constant((0,0)), DomainBoundary())
 bcuM2 = DirichletBC(W.sub(3), Constant((0,0)), interior_facet_domains, 1)
+bcuPM1 = DirichletBC(W.sub(4), Constant((0,0)), DomainBoundary())
+bcuPM2 = DirichletBC(W.sub(4), Constant((0,0)), interior_facet_domains, 1)
 
 # Collect BCs
-bcs = [bcuF, bcp0, bcp1, bcuS, bcuM1, bcuM2]
+bcs = [bcuF, bcp0, bcp1, bcuS, bcuM1, bcuM2, bcuPM1, bcuPM2]
 
 # Apply bcs
 for bc in bcs:
@@ -306,22 +312,26 @@ dual_matrix.ident_zeros()
 Z = Function(W)
 solve(dual_matrix, Z.vector(), dual_vector)
 
-(Z_UF, Z_PF, Z_S, Z_M) = Z.split()
+(Z_UF, Z_PF, Z_S, Z_UM, Z_PM) = Z.split()
 
 
 file_Z_UF = File("Z_UF.pvd")
 file_Z_UF << Z_UF
 file_Z_PF = File("Z_PF.pvd")
 file_Z_PF << Z_PF
-file_Z_M = File("Z_M.pvd")
-file_Z_M << Z_M
 file_Z_S = File("Z_S.pvd")
 file_Z_S << Z_S
+file_Z_UM = File("Z_UM.pvd")
+file_Z_UM << Z_UM
+file_Z_PM = File("Z_PM.pvd")
+file_Z_PM << Z_PM
+
 
 plot(Z_UF, title="Dual velocity")
 plot(Z_PF, title="Dual pressure")
 plot(Z_S,  title="Dual displacement")
-plot(Z_M,  title="Dual mesh")
+plot(Z_UM,  title="Dual mesh displacement")
+plot(Z_PM,  title="Dual mesh Lagrange Multiplier")
 interactive()
 
 
