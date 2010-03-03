@@ -19,6 +19,7 @@ D = mesh.topology().dim()
 # Initialize mesh conectivity 
 mesh.init(D-1, D)
 
+
 # Define structure subdomain
 class Structure(SubDomain):
     def inside(self, x, on_boundary):
@@ -28,13 +29,13 @@ class Structure(SubDomain):
 # Create structure subdomain
 structure = Structure()
 
-# Cut-off function for dual source term
-class Cutoff(Function):
-    def inside(self, values, x):
-        if (x[1] == structure_top) & (x[0] >=structure_left) & (x[0] <= structure_right):
-            values[0] = 1.0
-        else:
-            values[0] = 0.0  
+# # Cut-off function for dual source term
+# class Cutoff(Function):
+#     def inside(self, values, x):
+#         if (x[1] == structure_top) & (x[0] >=structure_left) & (x[0] <= structure_right):
+#             values[0] = 1.0
+#         else:
+#             values[0] = 0.0  
         
 # Create subdomain markers (0=fluid,  1=structure)
 sub_domains = MeshFunction("uint", mesh, D)
@@ -95,6 +96,22 @@ def dirichlet_boundaries(self):
     bottom ="x[1] == 0.0 && x[0] >= 1.4 && x[0] <= 1.6"
     return [bottom]
 
+# Functions for adding vectors between domains
+def fsi_add_f2s(xs, xf):
+    "Compute xs += xf for corresponding indices"
+    xs_array = xs.array()
+    xf_array = xf.array()
+    xs_array[sdofs] += xf_array[fdofs]
+    xs[:] = xs_array
+
+def fsi_add_s2f(xf, xs):
+    "Compute xs += xf for corresponding indices"
+    xf_array = xf.array()
+    xs_array = xs.array()
+    xf_array[fdofs] += xs_array[sdofs]
+    xf[:] = xf_array
+
+
 # Mark facet orientation for the fsi boundary
 for facet in facets(mesh):
 
@@ -135,10 +152,10 @@ primal_U_S = TimeSeries("primal_U_S")
 primal_U_M = TimeSeries("primal_U_M")
 
 # Parameters
-t = 0
-T = 0.25
-dt = 0.25
-tol = 1e-2
+t = 0.0
+T = 1.2
+dt = 0.05
+tol = 1e-5
 
 
 

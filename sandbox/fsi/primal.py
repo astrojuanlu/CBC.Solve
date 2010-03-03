@@ -10,32 +10,32 @@ from common import *
 
 plot_solution = False
 
-# Functions for adding vectors between domains
-def fsi_add_f2s(xs, xf):
-    "Compute xs += xf for corresponding indices"
-    xs_array = xs.array()
-    xf_array = xf.array()
-    xs_array[sdofs] += xf_array[fdofs]
-    xs[:] = xs_array
+# # Functions for adding vectors between domains
+# def fsi_add_f2s(xs, xf):
+#     "Compute xs += xf for corresponding indices"
+#     xs_array = xs.array()
+#     xf_array = xf.array()
+#     xs_array[sdofs] += xf_array[fdofs]
+#     xs[:] = xs_array
 
-def fsi_add_s2f(xf, xs):
-    "Compute xs += xf for corresponding indices"
-    xf_array = xf.array()
-    xs_array = xs.array()
-    xf_array[fdofs] += xs_array[sdofs]
-    xf[:] = xf_array
+# def fsi_add_s2f(xf, xs):
+#     "Compute xs += xf for corresponding indices"
+#     xf_array = xf.array()
+#     xs_array = xs.array()
+#     xf_array[fdofs] += xs_array[sdofs]
+#     xf[:] = xf_array
 
-# Define inflow boundary
-def inflow(x):
-    return x[0] < DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
+# # Define inflow boundary
+# def inflow(x):
+#     return x[0] < DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
 
-# Define outflow boundary
-def outflow(x):
-    return x[0] > channel_length - DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
+# # Define outflow boundary
+# def outflow(x):
+#     return x[0] > channel_length - DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
 
-# Define noslip boundary
-def noslip(x, on_boundary):
-    return on_boundary and not inflow(x) and not outflow(x)
+# # Define noslip boundary
+# def noslip(x, on_boundary):
+#     return on_boundary and not inflow(x) and not outflow(x)
 
 # Define fluid problem
 class FluidProblem(NavierStokes):
