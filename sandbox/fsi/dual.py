@@ -29,6 +29,9 @@ from cbc.common import CBCSolver
 from cbc.twist.kinematics import SecondOrderIdentity
 from numpy import array, append, zeros
 
+parameters["form_compiler"]["cpp_optimize"] = True
+parameters["form_compiler"]["optimize"] = True
+
 # Define function spaces defined on the whole domain
 V_F1 = VectorFunctionSpace(Omega, "CG", 1)
 V_F2 = VectorFunctionSpace(Omega, "CG", 2)
