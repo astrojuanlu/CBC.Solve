@@ -1,11 +1,9 @@
-syntax: glob
 *~
+*.bin
 *.orig
 *.pvd
 *.pyc
 *.pyo
 *.vtu
 cbc/twist/sandbox/*
-
-syntax: regexp
-.*\#.*\#$
+RE:.*\#.*\#$
