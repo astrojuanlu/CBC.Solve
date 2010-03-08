@@ -29,8 +29,8 @@ from cbc.common import CBCSolver
 from cbc.twist.kinematics import SecondOrderIdentity
 from numpy import array, append, zeros
 
-parameters["form_compiler"]["cpp_optimize"] = True
-parameters["form_compiler"]["optimize"] = True
+# parameters["form_compiler"]["cpp_optimize"] = True
+# parameters["form_compiler"]["optimize"] = True
 
 # Define function spaces defined on the whole domain
 V_F1 = VectorFunctionSpace(Omega, "CG", 1)
@@ -255,31 +255,13 @@ A_MS_sum = - inner(Z_PM('+'), v_S('+'))*dS(1)\
 A_dual = A_FF_sum + A_SF_sum + A_SS_sum + A_FM_sum + A_SM_sum + A_MM_sum + A_MS_sum
 
 # Define goal functionals
-
-# Define facet normal
-n_temp = FacetNormal(Omega_S)
-n = n_temp('+')
-
-# Define epsilon
-def epsilon(v):
-    return 0.5*(grad(v) + (grad(v).T))
-    
-# Define sigma
-def sigma(v,q):
-    return 2.0*mu_F*epsilon(v) - dot(q, I(v))
-
-# Define the tangent vector
-def t(n):
-    return [n[1], -n[0]]
-
-
 goal_MF = inner(v_F('+'), dot(grad(U_F('+')), N))*dS(1) + inner(v_F('+'), dot(grad(U_F('+')).T, N))*dS(1) - P_F('+')*inner(v_F('+'), dot(I(v_F)('+'), N))*dS(1)
-#goal_MF  = inner(sigma(v_F('+'), q_F('+')), N)[0]*dS(1)
-
-#goal_MS = inner(v_S('+'), N)*dS(1)
+#goal_MS  = inner(sigma(v_F('+'), q_F('+')), N)[0]*dS(1)
+#MS_hat  = Constant((1.0, 0.0)) # FIXME: Make smoother
+#goal_MS = inner(v_S, U_S)*dx(1)
 
 #  M_F = inner(sigma(v_F('+'), v_P('+')), N)[0]*dS(1)
-L_dual = goal_MF 
+L_dual = goal_MF
 
 # Assemble dual matrix
 dual_matrix = assemble(A_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)

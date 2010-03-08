@@ -47,6 +47,7 @@ def sym_gradient(u):
 # Define constants FIXME: Move !!!
 rho_F = 1
 mu_F = 1
+rho_S = 1
 mu_S = 1
 lamb_S = 1
 mu_M = 1 
