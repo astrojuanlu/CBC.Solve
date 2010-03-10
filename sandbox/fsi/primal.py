@@ -10,33 +10,6 @@ from common import *
 
 plot_solution = False
 
-# # Functions for adding vectors between domains
-# def fsi_add_f2s(xs, xf):
-#     "Compute xs += xf for corresponding indices"
-#     xs_array = xs.array()
-#     xf_array = xf.array()
-#     xs_array[sdofs] += xf_array[fdofs]
-#     xs[:] = xs_array
-
-# def fsi_add_s2f(xf, xs):
-#     "Compute xs += xf for corresponding indices"
-#     xf_array = xf.array()
-#     xs_array = xs.array()
-#     xf_array[fdofs] += xs_array[sdofs]
-#     xf[:] = xf_array
-
-# # Define inflow boundary
-# def inflow(x):
-#     return x[0] < DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
-
-# # Define outflow boundary
-# def outflow(x):
-#     return x[0] > channel_length - DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
-
-# # Define noslip boundary
-# def noslip(x, on_boundary):
-#     return on_boundary and not inflow(x) and not outflow(x)
-
 # Define fluid problem
 class FluidProblem(NavierStokes):
     
@@ -85,8 +58,6 @@ class FluidProblem(NavierStokes):
         F_inv_T = F_inv.T 
 
         # Compute mapped stress (sigma_F \circ Phi) (here, grad "=" Grad)
-        # FIXME: Add fluid viscosity 
-        # FIXME: Check if it this is the correct def. of UFL grad
         nu = self.viscosity()
         sigma_F = nu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T \
                   - self.P_F*Identity(self.U_F.cell().d))
@@ -150,10 +121,6 @@ class StructureProblem(Hyperelasticity):
         self.N_F = FacetNormal(Omega_F)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
         
-    #     def init(self, scalar, vector):
-#             self.scalar = scalar
-#             self.vector = vector
-
         Hyperelasticity.__init__(self)
              
     def mesh(self):
@@ -185,7 +152,7 @@ class StructureProblem(Hyperelasticity):
 
         # In the structure solver the body force is defined on
         # the LHS...
-        self.fluid_load.vector()[:] = -B_S.array()
+        self.fluid_load.vector()[:] = - B_S.array()
 
     def neumann_conditions(self):
         self.fluid_load = Function(self.V_S)
@@ -198,8 +165,6 @@ class StructureProblem(Hyperelasticity):
         return["on_boundary"]
 
     def material_model(self):
-        #mu       = 3.8461
-        #lmbda    = 5.76
         mu       = 1.1
         lmbda    = 1.5
         return StVenantKirchhoff([mu, lmbda])
@@ -215,7 +180,7 @@ class MeshProblem(StaticHyperelasticity):
 
     def __init__(self):
         self.V_M = VectorFunctionSpace(Omega_F, "CG", 1)
-        
+
         StaticHyperelasticity.__init__(self)
 
     def mesh(self):
@@ -232,9 +197,6 @@ class MeshProblem(StaticHyperelasticity):
         mu = 3.8461
         lmbda = 5.76
         return LinearElastic([mu, lmbda])
-        #mu       = 3.8461
-        #lmbda    = 5.76
-        #return StVenantKirchhoff([mu, lmbda])
 
     def update_structure_displacement(self, U_S):
         self.displacement.vector().zero()
