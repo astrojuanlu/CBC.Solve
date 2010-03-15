@@ -23,6 +23,10 @@ u0, v0 = split(U0)
 _u0 = loadtxt("twisty.txt")[:]
 U0.vector()[0:len(_u0)] = _u0[:]
 
+clamp = Constant((0.0, 0.0, 0.0))
+left = compile_subdomains("x[0] == 0")
+bcl = DirichletBC(mixed_element.sub(0), clamp, left)
+
 u_mid = 0.5*(u0 + u)
 v_mid = 0.5*(v0 + v)
 
@@ -48,18 +52,18 @@ L = rho0*inner(v - v0, xi)*dx + dt*inner(P, grad(xi))*dx \
 a = derivative(L, U, dU)
 
 t = 0.0
-T = 1.0
+T = 2.0
 
-file = File("displacement.pvd");
+problem = VariationalProblem(a, L, bcl, nonlinear = True)
 
-problem = VariationalProblem(a, L, nonlinear = True)
+file = File("displacement.pvd")
 
 while t < T:
+
     t = t + float(dt)
 
     problem.solve(U)
-    plot(u0, mode="displacement")
+    u, v = U.split()
+    file << u
 
     U0.assign(U)
-
-interactive()
