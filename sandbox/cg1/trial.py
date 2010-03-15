@@ -1,23 +1,27 @@
 from dolfin import *
+from numpy import array, loadtxt
 
 parameters["form_compiler"]["cpp_optimize"] = True
 # parameters["form_compiler"]["optimize"] = True
 
 mesh = UnitCube(8, 8, 8)
-V = VectorFunctionSpace(mesh, "CG", 1)
+vector = VectorFunctionSpace(mesh, "CG", 1)
 
 B  = Expression(("0.0", "0.0", "0.0"))
-T  = Expression(("0.1", "0.0", "0.0"))
+T  = Expression(("0.0", "0.0", "0.0"))
 
-ME = MixedFunctionSpace([V, V])
-V = TestFunction(ME)
-dU = TrialFunction(ME)
-U = Function(ME)
-U0 = Function(ME)
+mixed_element = MixedFunctionSpace([vector, vector])
+V = TestFunction(mixed_element)
+dU = TrialFunction(mixed_element)
+U = Function(mixed_element)
+U0 = Function(mixed_element)
 
 xi, eta = split(V)
 u, v = split(U)
 u0, v0 = split(U0)
+
+_u0 = loadtxt("twisty.txt")[:]
+U0.vector()[0:len(_u0)] = _u0[:]
 
 u_mid = 0.5*(u0 + u)
 v_mid = 0.5*(v0 + v)
@@ -54,7 +58,7 @@ while t < T:
     t = t + float(dt)
 
     problem.solve(U)
-    plot(u0)
+    plot(u0, mode="displacement")
 
     U0.assign(U)
 
