@@ -64,10 +64,10 @@ U_M_subdofs = Vector()
 U_S_subdofs = Vector()
 
 # Get primal data
-primal_u_F.retrieve(u_F_subdofs, T)
-primal_p_F.retrieve(p_F_subdofs, T)
-primal_U_M.retrieve(U_M_subdofs, T)
-primal_U_S.retrieve(U_S_subdofs, T)
+primal_u_F.retrieve(u_F_subdofs, T - t)
+primal_p_F.retrieve(p_F_subdofs, T - t)
+primal_U_M.retrieve(U_M_subdofs, T - t)
+primal_U_S.retrieve(U_S_subdofs, T - t)
 
 # Initialize mesh convectivity
 Omega.init(1,2)
@@ -255,13 +255,17 @@ A_MS_sum = - inner(Z_PM('+'), v_S('+'))*dS(1)\
 A_dual = A_FF_sum + A_SF_sum + A_SS_sum + A_FM_sum + A_SM_sum + A_MM_sum + A_MS_sum
 
 # Define goal functionals
-goal_MF = inner(v_F('+'), dot(grad(U_F('+')), N))*dS(1) + inner(v_F('+'), dot(grad(U_F('+')).T, N))*dS(1) - P_F('+')*inner(v_F('+'), dot(I(v_F)('+'), N))*dS(1)
+#goal_MF = inner(v_F('+'), dot(grad(U_F('+')), N))*dS(1) + inner(v_F('+'), dot(grad(U_F('+')).T, N))*dS(1) - P_F('+')*inner(v_F('+'), dot(I(v_F)('+'), N))*dS(1)
 #goal_MS  = inner(sigma(v_F('+'), q_F('+')), N)[0]*dS(1)
 #MS_hat  = Constant((1.0, 0.0)) # FIXME: Make smoother
 #goal_MS = inner(v_S, U_S)*dx(1)
+jada = Constant((1.0, 0.0))
+goal_F = -inner(jada, v_F)*ds(0)
+GOAL = goal_F
+
 
 #  M_F = inner(sigma(v_F('+'), v_P('+')), N)[0]*dS(1)
-L_dual = goal_MF
+L_dual = GOAL
 
 # Assemble dual matrix
 dual_matrix = assemble(A_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)

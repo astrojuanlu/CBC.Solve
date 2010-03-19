@@ -36,6 +36,10 @@ def DJ(u,w):
         -w[1].dx(0)*u[0].dx(1) + w[1].dx(1)*(1 + u[0].dx(0))
     return DJ
 
+def J(u):
+    return det(F(u))
+
+
 def I(u):
     I = SecondOrderIdentity(u)
     return I
@@ -52,6 +56,9 @@ mu_S = 1
 lamb_S = 1
 mu_M = 1 
 lamb_M = 1
+
+# def sigma_F(u,p):
+#     return 2.0*mu_F*sym_gradient(u) + I(u)*p 
 
 def sigma_M(u):
     return 2.0*mu_M*sym_gradient(u) + lamb_M*tr(sym_gradient(u))*I(u)

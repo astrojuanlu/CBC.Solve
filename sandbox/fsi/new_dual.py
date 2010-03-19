@@ -31,6 +31,9 @@ U_M = Function(V_M)
 #P_M = Function(Q_M) FIXME: Check for sure that Im not needed!
 #P_S = Function(V_S) FIXME: Check for sure that Im not needed! 
 
+# Optimize form compiler
+parameters["form_compiler"]["cpp_optimize"] = True
+
 # Create functions for time-stepping
 Z_UF0 = Function(V_F2)
 Z_PF0 = Function(Q_F)
@@ -49,8 +52,7 @@ Z_UM_cg1 = 0.5*(Z_UM + Z_UM0)
 Z_PM_cg1 = 0.5*(Z_PM + Z_PM0)
 
 # Define time-step
-#kn = dt
-kn = 0.001
+kn = dt
 
 # Define FSI normal 
 N_S =  FacetNormal(Omega_S)
@@ -116,7 +118,7 @@ def get_primal_data(t):
     return U_F, P_F, U_S, U_M
 
 # Fluid eq. linearized around fluid variables
-A_FF01 = -(1/kn)*inner((Z_UF - Z_UF0), rho_F*v_F)*dx(0)                                   #time-dependent                             
+A_FF01 = -(1/kn)*inner((Z_UF - Z_UF0), rho_F*v_F)*dx(0)                                       #time-dependent                             
 A_FF02 =  (1/kn)*inner(Z_UF_cg1, dot(dot(grad(v_F),F_inv(U_M)), (U_F - (U_M - U_M0))))*dx(0)  #time-dependent
 A_FF03 =  inner(Z_UF_cg1, dot(grad(U_F) , dot(F(U_M), v_F)))*dx(0)
 A_FF04 =  inner(grad(Z_UF_cg1), mu_F*dot(grad(v_F) , dot(F_inv(U_M), F_invT(U_M))))*dx(0)
@@ -215,16 +217,16 @@ A_MS_rhs =   0.5*inner(Z_PM0('+'), v_S('+'))*dS(1)
 
 # Define goal funtionals
 #goal_F = inner(v_F('+'), dot(grad(U_F('+')), N))*dS(1) + inner(v_F('+'), dot(grad(U_F('+')).T, N))*dS(1) - P_F('+')*inner(v_F('+'), dot(I(v_F)('+'), N))*dS(1)
-jada = Constant((1.0, 0.0))
-goal_F = inner(jada, v_F)*dx(0) 
-goal_S = inner(jada, v_S)*dx(1)
-goal_M = inner(grad(v_M), grad(U_M))*dx(0)
-GOAL = goal_F + goal_S #+ goal_M
+# jada = Constant((1.0, 0.0))
+goal_F = -inner(v_F, U_F)*dx(0) 
+# goal_S = inner(jada, v_S)*dx(1)
+# goal_M = inner(grad(v_M), grad(U_M))*dx(0)
+# GOAL = goal_F + goal_S #+ goal_M
 
 # Define the dual rhs and lhs
 A_dual = A_FF_lhs + A_FM_lhs + A_SS_lhs + A_SF_lhs + A_SM_lhs + A_MM_lhs + A_MS_lhs 
-L_dual = A_FF_rhs + A_FM_rhs + A_SS_rhs + A_SF_rhs + A_SM_rhs + A_MM_rhs + A_MS_rhs + goal_S
-   
+L_dual = A_FF_rhs + A_FM_rhs + A_SS_rhs + A_SF_rhs + A_SM_rhs + A_MM_rhs + A_MS_rhs + goal_F
+
 # Define BCs
 bc_U_F   = DirichletBC(W.sub(0), Constant((0,0)), noslip)
 bc_P_F0  = DirichletBC(W.sub(1), Constant(0.0), inflow)
@@ -235,9 +237,6 @@ bc_U_M1  = DirichletBC(W.sub(4), Constant((0,0)), DomainBoundary())
 bc_U_M2  = DirichletBC(W.sub(4), Constant((0,0)), interior_facet_domains, 1)
 bc_U_PM1 = DirichletBC(W.sub(5), Constant((0,0)), DomainBoundary())
 bc_U_PM2 = DirichletBC(W.sub(5), Constant((0,0)), interior_facet_domains, 1)
-
-# Define goal functional
-# Add M(T) = M(0) ...
 
 # Collect BCs
 bcs = [bc_U_F, bc_P_F0, bc_P_F1, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_U_PM1, bc_U_PM2]
@@ -251,7 +250,7 @@ file_Z_PM = File("Z_PM.pvd")
 
 # Time stepping
 while t < T :
-   
+    
    print "*******************************************"
    print "-------------------------------------------"
    print "Solving the DUAL problem at t = ", str(t)
