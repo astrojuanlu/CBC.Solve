@@ -4,7 +4,7 @@ parameters["form_compiler"]["cpp_optimize"] = True
 
 mesh = UnitSquare(32, 32)
 n = FacetNormal(mesh)
-vector = VectorFunctionSpace(mesh, "CG", 1)
+vector = VectorFunctionSpace(mesh, "CG", 2)
 scalar = FunctionSpace(mesh, "CG", 1)
 
 b = Expression(("0.0", "0.0"))
