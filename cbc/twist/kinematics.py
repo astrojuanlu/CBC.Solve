@@ -85,6 +85,7 @@ def IsochoricCauchyGreenInvariants(u):
 # Principal stretches
 def PrincipalStretches(u):
     C = RightCauchyGreen(u)
+    S = FunctionSpace(u.function_space().mesh(), "CG", 1)
     if (u.cell().d == 2):
         D = sqrt(tr(C)*tr(C) - 4.0*det(C))
 	eig1 = sqrt(0.5*(tr(C) + D))
@@ -95,13 +96,19 @@ def PrincipalStretches(u):
 	D = C - c*SecondOrderIdentity(u)
 	q = (1.0/2.0)*det(D)
 	p = (1.0/6.0)*inner(D, D)
-	phi = (1.0/3.0)*atan(sqrt(p**3.0 - q**2.0)/q)
-	if (phi < 0.0):
-            phi = phi + DOLFIN_PI/3.0
-	end
-	eig1 = sqrt(c + 2*sqrt(p)*cos(phi))
-	eig2 = sqrt(c - sqrt(p)*(cos(phi) + sqrt(3)*sin(phi)))
-        eig3 = sqrt(c - sqrt(p)*(cos(phi) - sqrt(3)*sin(phi)))
+	ph = project(p, S)
+	if (norm(ph) < DOLFIN_EPS):
+            eig1 = sqrt(c)
+	    eig2 = sqrt(c)
+	    eig3 = sqrt(c)
+        else:
+	    phi = (1.0/3.0)*atan(sqrt(p**3.0 - q**2.0)/q)
+	    if (phi < 0.0):
+                phi = phi + DOLFIN_PI/3.0
+	    end
+	    eig1 = sqrt(c + 2*sqrt(p)*cos(phi))
+	    eig2 = sqrt(c - sqrt(p)*(cos(phi) + sqrt(3)*sin(phi)))
+	    eig3 = sqrt(c - sqrt(p)*(cos(phi) - sqrt(3)*sin(phi)))
         return [variable(eig1), variable(eig2), variable(eig3)]
 
 # Pull-back of a two-tensor from the current to the reference
