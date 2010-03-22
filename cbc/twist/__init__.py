@@ -4,4 +4,5 @@ from material_models import LinearElastic, StVenantKirchhoff, MooneyRivlin, neoH
 from problem_definitions import StaticHyperelasticity, Hyperelasticity
 
 # Optimise compilation of forms
-parameters.optimize = True
+parameters["form_compiler"]["cpp_optimize"] = True
+# parameters["form_compiler"]["optimize"] = True
