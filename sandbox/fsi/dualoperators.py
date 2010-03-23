@@ -31,6 +31,7 @@ def J(u):
     return J
 
 # DJ(u,w) is J(u) linearized around w (w = test function)
+# (u is always U_M)
 def DJ(u,w):
     DJ = w[0].dx(0)*(1 - u[1].dx(1)) - w[0].dx(1)*u[1].dx(0) \
         -w[1].dx(0)*u[0].dx(1) + w[1].dx(1)*(1 + u[0].dx(0))
@@ -39,7 +40,6 @@ def DJ(u,w):
 def J(u):
     return det(F(u))
 
-
 def I(u):
     I = SecondOrderIdentity(u)
     return I
@@ -47,7 +47,11 @@ def I(u):
 def sym_gradient(u):
     sym_gradient = 0.5*(grad(u)+ grad(u).T)
     return sym_gradient
-    
+   
+# Define fluid stress sigma_F
+def Sigma_F(u,p,v):
+    return  mu_F*(grad(u)*F_inv(v) + F_invT(v)*grad(u).T) - p*I(u)  
+ 
 # Define constants FIXME: Move !!!
 rho_F = 1
 mu_F = 1

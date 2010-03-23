@@ -153,7 +153,7 @@ primal_U_M = TimeSeries("primal_U_M")
 
 # Parameters
 t = 0.0
-T = 1.2
+T = 1.0
 dt = 0.05
 tol = 1e-5
 
