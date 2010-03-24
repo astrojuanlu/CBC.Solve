@@ -36,31 +36,40 @@ U_M = Function(V_M)
 #P_S = Function(V_S) FIXME: Check for sure that Im not needed! 
 
 # Create functions for time-stepping
+
+# Dual varibles
 Z_UF0 = Function(V_F2)
 Z_PF0 = Function(Q_F)
 Z_US0 = Function(V_S)
 Z_PS0 = Function(Q_S)
 Z_UM0 = Function(V_M)
 Z_PM0 = Function(Q_M)
+
+# Primal varibles
 U_M0  = Function(V_M) # FIXME: should be taken care of when retrieve the primal data
 U_F0  = Function(V_F1)                      # or no?t
 U_S0  = Function(V_S)
 
-# # Define cG(1) evaluation of non-time derivatives (mid-point)
-# Z_UF_ip = 0.5*(Z_UF + Z_UF0)
-# Z_PF_ip = 0.5*(Z_PF + Z_PF0)
-# Z_US_ip = 0.5*(Z_US + Z_US0)
-# Z_PS_ip = 0.5*(Z_PS + Z_PS0)
-# Z_UM_ip = 0.5*(Z_UM + Z_UM0) # FIXME: should be taken care of when retrieve the primal data
-# Z_PM_ip = 0.5*(Z_PM + Z_PM0) # or not?
+# Define time evaluation (cG1 or dG0)
+cG1 = 0
 
-# Define dG(0) (aka Backward Euler) evaluation of non-time derivatives
-Z_UF_ip = Z_UF 
-Z_PF_ip = Z_PF
-Z_US_ip = Z_US
-Z_PS_ip = Z_PS 
-Z_UM_ip = Z_UM 
-Z_PM_ip = Z_PM
+if cG1 == True:
+    # Define cG(1) evaluation of non-time derivatives (mid-point)
+    Z_UF_ip = 0.5*(Z_UF + Z_UF0)
+    Z_PF_ip = 0.5*(Z_PF + Z_PF0)
+    Z_US_ip = 0.5*(Z_US + Z_US0)
+    Z_PS_ip = 0.5*(Z_PS + Z_PS0)
+    Z_UM_ip = 0.5*(Z_UM + Z_UM0) # FIXME: should be taken care of when retrieve the primal data
+    Z_PM_ip = 0.5*(Z_PM + Z_PM0) # or not?
+
+else:
+    # Define dG(0) evaluation of non-time derivatives
+    Z_UF_ip = Z_UF 
+    Z_PF_ip = Z_PF
+    Z_US_ip = Z_US
+    Z_PS_ip = Z_PS 
+    Z_UM_ip = Z_UM 
+    Z_PM_ip = Z_PM
 
 # Define time-step
 kn = dt
@@ -169,7 +178,7 @@ A_SF = A_SF01 + A_SF02 + A_SF03
 # Structure eq. linearized around the structure variable
 # Note that we solve the srtucture as a first order system in time
 # FIXME: for this to be consistent, we need to change the PRIMAL solver as well
-# FIXME: Add A_SS08 term
+# FIXME: Add A_SS08 term 
 A_SS01 = -(1/kn)*inner((Z_PS - Z_PS0), rho_S*v_S)*dx(1) 
 A_SS02 =  inner(grad(Z_US_ip), mu_S*dot(grad(v_S), dot(F_T(U_S), F(U_S)) - I(U_S)))*dx(1)
 A_SS03 =  inner(grad(Z_US_ip), mu_S*dot(F(U_S), dot(grad(v_S).T, F(U_S)) - I(U_S)))*dx(1)
@@ -207,15 +216,14 @@ A_MM = A_MM01 + A_MM02 + A_MM03
 A_MS = - inner(Z_PM_ip('+'), v_S('+'))*dS(1)
 
 # Define goal funtionals
-
 psi_S_t = Constant((1.0, 0.0))
 goal_S = inner(v_S, psi_S_t)*dx(1)
 GOAL = goal_S  
 
 # Define the dual rhs and lhs
 A_dual = lhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
-L_dual = rhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
-L_dual = L_dual + GOAL
+L = rhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
+L_dual = L + GOAL
 
 # Define BCs
 bc_U_F   = DirichletBC(W.sub(0), Constant((0,0)), noslip)
@@ -230,7 +238,6 @@ bc_U_PM2 = DirichletBC(W.sub(5), Constant((0,0)), interior_facet_domains, 1)
 
 # Collect 
 bcs = [bc_U_F, bc_P_F0, bc_P_F1, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_U_PM1, bc_U_PM2]
-
 
 # Create files 
 file_Z_UF = File("Z_UF.pvd")
@@ -270,13 +277,18 @@ while t < T :
    solve(dual_matrix, Z.vector(), dual_vector)
 
    # Copy solution from previous interval
+   
+   # Dual varibles
    Z_UF0.assign(Z_UF)
    Z_PF0.assign(Z_PF)
    Z_US0.assign(Z_US)
    Z_PS0.assign(Z_PS)
    Z_UM0.assign(Z_UM)
    Z_PM0.assign(Z_PM)
+   
+   # Primal varibles
    U_M0.assign(U_M)  # FIXME: Should be done when we get the primal data
+   U_F0.assign(U_F)  # FIXME: Should be done when we get the primal data
    
    # Save solutions
    file_Z_UF << Z_UF
