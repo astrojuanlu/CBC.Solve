@@ -7,8 +7,8 @@ channel_height  = 1.0
 structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
-nx = 30
-ny = 10
+nx = 60#30
+ny = 20#10
 
 # Create the complete mesh
 mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
@@ -86,15 +86,16 @@ def noslip(x, on_boundary):
     return on_boundary and not inflow(x) and not outflow(x)
 
 # Structure BCs 
-def dirichlet_conditions(self):
-    fix = Constant((0,0))
-    return [fix]
+#def dirichlet_conditions(self):
+#    fix = Constant((0,0))
+#    return [fix]
 
-def dirichlet_boundaries(self):
+def dirichlet_boundaries(x):
     #FIXME: Figure out how to use the constants above in the
     #following boundary definitions
-    bottom ="x[1] == 0.0 && x[0] >= 1.4 && x[0] <= 1.6"
-    return [bottom]
+    #bottom ="x[1] == 0.0 && x[0] >= 1.4 && x[0] <= 1.6"
+    #return [bottom]
+    return x[1] < DOLFIN_EPS and x[0] >= structure_left and x[0] <= structure_right
 
 # Functions for adding vectors between domains
 def fsi_add_f2s(xs, xf):
@@ -153,7 +154,7 @@ primal_U_M = TimeSeries("primal_U_M")
 
 # Parameters
 t = 0.0
-T = 1.0
+T = 1.5
 dt = 0.05
 tol = 1e-5
 
