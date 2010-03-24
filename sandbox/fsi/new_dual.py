@@ -153,7 +153,7 @@ A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07
 # Fluid eq. linearized around mesh variable
 A_FM01 =  (1/kn)*inner(Z_UF_ip, rho_F*DJ(U_M, v_M)*(U_F - U_F0))*dx(0)
 A_FM02 =  (1/kn)*inner(Z_UF_ip, rho_F*DJ(U_M, v_M)*dot(grad(U_F), dot(F_inv(U_M), (U_M - U_M0))))*dx(0) 
-A_FM03 = -(1/kn)*inner(Z_UF,  rho_F*J(U_M)*dot((dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M),F_inv(U_M))))),(U_F - (U_M - U_M0))))*dx(0) 
+A_FM03 = -inner(Z_UF,  rho_F*J(U_M)*dot((dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M),F_inv(U_M))))),(U_F - (U_M - U_M0)/kn)))*dx(0) 
 A_FM04 =  (1/kn)*inner((Z_UF - Z_UF0), rho_F*J(U_M)*dot(grad(U_F), dot(F_inv(U_M) ,v_M )))*dx(0)
 A_FM05 =  inner(grad(Z_UF_ip), DJ(U_M, v_M)*dot(Sigma_F(U_F, P_F, U_M),F_invT(U_M)))*dx(0)
 A_FM06 = -inner(grad(Z_UF_ip), J(U_M)*dot(mu_F*(dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M).T, F_inv(U_M))))), F_invT(U_M)))*dx(0)
@@ -299,7 +299,7 @@ while t < T :
 
    # Plot solutions
   # plot(Z_PS, title="Dual structure velocity")
-   plot(Z_PF, title="Dual pressure")
+  # plot(Z_PF, title="Dual pressure")
    plot(Z_UM, title="Dual mesh displacement")
    plot(Z_UF, title="Dual velocity")
    plot(Z_US, title="Dual displacement")
