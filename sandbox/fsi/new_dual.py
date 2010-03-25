@@ -53,7 +53,7 @@ U_S0  = Function(V_S)
 # Define time evaluation (cG1 or dG0)
 cG1 = 0
 
-if cG1 == True:
+if cG1 == True: # FIXME: doesn't work
     # Define cG(1) evaluation of non-time derivatives (mid-point)
     Z_UF_ip = 0.5*(Z_UF + Z_UF0)
     Z_PF_ip = 0.5*(Z_PF + Z_PF0)
@@ -217,26 +217,31 @@ A_MS = - inner(Z_PM_ip('+'), v_S('+'))*dS(1)
 
 # Define goal funtionals
 psi_S_t = Constant((1.0, 0.0))
-goal_S = inner(v_S, psi_S_t)*dx(1)
-GOAL = goal_S  
+goal_S = (1/T)*inner(v_S, psi_S_t)*dx(1)
+n_F = FacetNormal(Omega_F)
+goal_F = inner(v_F, n_F)*ds(2)
+goal_functionals =  goal_F + goal_S
 
 # Define the dual rhs and lhs
 A_dual = lhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
 L = rhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
-L_dual = L + GOAL
+L_dual = L + goal_functionals
 
-# Define BCs
-bc_U_F   = DirichletBC(W.sub(0), Constant((0,0)), noslip)
-bc_P_F0  = DirichletBC(W.sub(1), Constant(0.0), inflow)
-bc_P_F1  = DirichletBC(W.sub(1), Constant(0.0), outflow)
+# Define BCs (i.e. define the dual trial space = homo. Dirichlet BCs)
+bc_U_F   = DirichletBC(W.sub(0), Constant((0,0)), noslip) 
+bc_P_F0  = DirichletBC(W.sub(1), Constant(0.0), inflow) # FIME: Make sure it goes to zero in both P/D
+bc_P_F1  = DirichletBC(W.sub(1), Constant(0.0), outflow)# FIME: Make sure it goes to zero in both P/D
 bc_U_S   = DirichletBC(W.sub(2), Constant((0,0)), dirichlet_boundaries)
 bc_P_S   = DirichletBC(W.sub(3), Constant((0,0)), DomainBoundary())            # FIXME: Correct BC?
 bc_U_M1  = DirichletBC(W.sub(4), Constant((0,0)), DomainBoundary())
 bc_U_M2  = DirichletBC(W.sub(4), Constant((0,0)), interior_facet_domains, 1)
-bc_U_PM1 = DirichletBC(W.sub(5), Constant((0,0)), DomainBoundary())
-bc_U_PM2 = DirichletBC(W.sub(5), Constant((0,0)), interior_facet_domains, 1)
+bc_U_PM1 = DirichletBC(W.sub(5), Constant((0,0)), DomainBoundary())            # FIXME: Correct BC?
+bc_U_PM2 = DirichletBC(W.sub(5), Constant((0,0)), interior_facet_domains, 1)   # FIXME: Correct BC? 
 
-# Collect 
+# Define dual initial conditions (i.e. Z_T = <v, psi_T> etc.
+bc_ZF_T = DirichletBC(W.sub(0), Constant((DOLFIN_EPS, 0.0)), outflow)
+
+# Collect bcs
 bcs = [bc_U_F, bc_P_F0, bc_P_F1, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_U_PM1, bc_U_PM2]
 
 # Create files 
@@ -251,7 +256,7 @@ Z = Function(W)
 (Z_UF, Z_PF, Z_US, Z_PS, Z_UM, Z_PM) = Z.split()
 
 # Time stepping
-while t < T :
+while t < T:
     
    print "*******************************************"
    print "-------------------------------------------"
@@ -263,8 +268,8 @@ while t < T :
    get_primal_data(t)
 
    # Assemble 
-   dual_matrix = assemble(A_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)
-   dual_vector = assemble(L_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)
+   dual_matrix = assemble(A_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains, exterior_facet_domains = exterior_boundary)
+   dual_vector = assemble(L_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains, exterior_facet_domains = exterior_boundary)
 
    # Apply bcs
    for bc in bcs:
@@ -287,7 +292,7 @@ while t < T :
    Z_PM0.assign(Z_PM)
    
    # Primal varibles
-   U_M0.assign(U_M)  # FIXME: Should be done when we get the primal data
+   U_M0.assign(U_M)  # FIXME: Should be done when we get the primal data 
    U_F0.assign(U_F)  # FIXME: Should be done when we get the primal data
    
    # Save solutions
@@ -299,10 +304,10 @@ while t < T :
 
    # Plot solutions
   # plot(Z_PS, title="Dual structure velocity")
-  # plot(Z_PF, title="Dual pressure")
-   plot(Z_UM, title="Dual mesh displacement")
-   plot(Z_UF, title="Dual velocity")
-   plot(Z_US, title="Dual displacement")
+   plot(Z_PF, title="Dual pressure")
+  # plot(Z_UM, title="Dual mesh displacement")
+  # plot(Z_UF, title="Dual velocity")
+  # plot(Z_US, title="Dual displacement")
   # plot(Z_PM, title="Dual mesh Lagrange Multiplier")
   # interactive()
 

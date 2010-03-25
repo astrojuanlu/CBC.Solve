@@ -69,6 +69,11 @@ sdofs = append(structure_indices, structure_indices + Omega_S.num_vertices())
 interior_facet_domains = MeshFunction("uint", Omega, D-1)
 interior_facet_domains.set_all(0)
 
+# Create facet marker for outflow
+right = compile_subdomains("x[0] == 3.0")
+exterior_boundary = MeshFunction("uint", Omega, D-1)
+right.mark(exterior_boundary, 2)
+
 # Create facet orientation for the entire mesh
 facet_orientation = mesh.data().create_mesh_function("facet orientation", D - 1)
 facet_orientation.set_all(0)
