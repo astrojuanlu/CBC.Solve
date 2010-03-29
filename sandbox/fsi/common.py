@@ -2,13 +2,13 @@ from dolfin import *
 from numpy import array, append, zeros
 
 # Constants related to the geometry of the channel and the obstruction
-channel_length  = 3.0
+channel_length  = 4.0
 channel_height  = 1.0
 structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
-nx = 30
-ny = 10
+nx = 40# 20 # 40
+ny = 20 #5 # 10
 
 # Create the complete mesh
 mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
@@ -159,9 +159,9 @@ primal_U_M = TimeSeries("primal_U_M")
 
 # Parameters
 t = 0.0
-T = 1.0
-dt = Constant(0.05)
-tol = 1e-5
+dt = 0.25 #FIXME: Change to Constant()
+T = 2.0*dt
+tol = 1e-4
 
 
 

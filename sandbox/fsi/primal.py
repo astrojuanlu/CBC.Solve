@@ -281,7 +281,7 @@ while t < T:
         # Check convergence
         if r < tol:
             break 
-                
+    
     # Move to next time step
     F.update()
     S.update()
@@ -300,9 +300,33 @@ while t < T:
     primal_p_F.store(p_F.vector(), t)
     primal_U_S.store(U_S.vector(), t)
     primal_U_M.store(U_M.vector(), t)
-
+    
     # Move on to the next time level
     t += dt
 
 # Hold plot
-interactive()
+#interactive()
+
+# Define convergence indicator for flow (flux out of the domain)
+out_flux = compile_subdomains("x[0] ==channel_length ")
+flux_boundary = MeshFunction("uint", u_F.function_space().mesh(), D-1)
+out_flux.mark(flux_boundary, 3)
+n = FacetNormal(u_F.function_space().mesh())
+flux_functional = dot(u_F, -n)*ds(3)
+flux = assemble(flux_functional,mesh = u_F.function_space().mesh(), exterior_facet_domains = flux_boundary)
+
+# Define convergence indicator for structure (max displacement in x1-direction)
+us_X,us_Y = U_S.split(True)
+displacement = max(us_X.vector().array())
+
+# Print convergence indicators
+print "*******************************************"
+print "Mesh size nx x ny: %g %g"%  (nx, ny)
+print "Time step kn: %g"% dt
+print "End time T: %g"% T
+print " "
+print " "
+print "Flux: %g" % flux 
+print "Displacement %g"% displacement
+print "*******************************************"
+
