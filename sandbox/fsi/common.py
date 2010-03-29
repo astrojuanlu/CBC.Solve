@@ -7,8 +7,8 @@ channel_height  = 1.0
 structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
-nx = 60#30
-ny = 20#10
+nx = 30
+ny = 10
 
 # Create the complete mesh
 mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
@@ -159,8 +159,8 @@ primal_U_M = TimeSeries("primal_U_M")
 
 # Parameters
 t = 0.0
-T = 1.5
-dt = 0.05
+T = 1.0
+dt = Constant(0.05)
 tol = 1e-5
 
 

@@ -51,7 +51,7 @@ U_F0  = Function(V_F1)                      # or no?t
 U_S0  = Function(V_S)
 
 # Define time evaluation (cG1 or dG0)
-cG1 = 0
+cG1 = False
 
 if cG1 == True: # FIXME: doesn't work
     # Define cG(1) evaluation of non-time derivatives (mid-point)
@@ -61,7 +61,11 @@ if cG1 == True: # FIXME: doesn't work
     Z_PS_ip = 0.5*(Z_PS + Z_PS0)
     Z_UM_ip = 0.5*(Z_UM + Z_UM0) # FIXME: should be taken care of when retrieve the primal data
     Z_PM_ip = 0.5*(Z_PM + Z_PM0) # or not?
-
+#     # Stupid fix for the cG(1) "FSI-boundary" forms FIXME: Can this be done in another way?
+#     Z_UM_cg1 = 0.5*(Z_UM('+') + Z_UM0('+'))
+#     Z_US_cg1 = 0.5*(Z_US('+') + Z_US0('+'))
+#     Z_PM_cgi = 0.5*(Z_PM('+') + Z_PM0('+'))
+    
 else:
     # Define dG(0) evaluation of non-time derivatives
     Z_UF_ip = Z_UF 
@@ -178,7 +182,7 @@ A_SF = A_SF01 + A_SF02 + A_SF03
 # Structure eq. linearized around the structure variable
 # Note that we solve the srtucture as a first order system in time
 # FIXME: for this to be consistent, we need to change the PRIMAL solver as well
-# FIXME: Add A_SS08 term 
+# FIXME: Add A_SS08 term (or A_SS09...)
 A_SS01 = -(1/kn)*inner((Z_PS - Z_PS0), rho_S*v_S)*dx(1) 
 A_SS02 =  inner(grad(Z_US_ip), mu_S*dot(grad(v_S), dot(F_T(U_S), F(U_S)) - I(U_S)))*dx(1)
 A_SS03 =  inner(grad(Z_US_ip), mu_S*dot(F(U_S), dot(grad(v_S).T, F(U_S)) - I(U_S)))*dx(1)
@@ -189,7 +193,7 @@ A_SS07 =  inner(grad(Z_US_ip), 0.5*lamb_S*dot(F(U_S), tr(dot(F(U_S), grad(v_S).T
 A_SS08 =  inner(Z_PS_ip, q_S)*dx(1)  
 
 # Collect A_SS form
-A_SS =  A_SS02 + A_SS02 + A_SS04 + A_SS05 + A_SS06 + A_SS07 + A_SS08
+A_SS =  A_SS02 + A_SS02 + A_SS04 + A_SS05 + A_SS06 + A_SS07 + A_SS08 
 
 # Structure eq. linearized around mesh variable
 A_SM01 = -inner(Z_US_ip('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(grad(U_F('+')), F_inv(U_F)('+')), dot(F_invT(U_M)('+'), N)))*dS(1) # FIXME: Replace with Sigma_F
@@ -220,7 +224,7 @@ psi_S_t = Constant((1.0, 0.0))
 goal_S = (1/T)*inner(v_S, psi_S_t)*dx(1)
 n_F = FacetNormal(Omega_F)
 goal_F = inner(v_F, n_F)*ds(2)
-goal_functionals =  goal_F + goal_S
+goal_functionals =  goal_S + goal_F
 
 # Define the dual rhs and lhs
 A_dual = lhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
@@ -242,7 +246,7 @@ bc_U_PM2 = DirichletBC(W.sub(5), Constant((0,0)), interior_facet_domains, 1)   #
 bc_ZF_T = DirichletBC(W.sub(0), Constant((DOLFIN_EPS, 0.0)), outflow)
 
 # Collect bcs
-bcs = [bc_U_F, bc_P_F0, bc_P_F1, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_U_PM1, bc_U_PM2]
+bcs = [bc_U_F, bc_P_F0, bc_P_F1, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_U_PM1, bc_U_PM2, bc_ZF_T]
 
 # Create files 
 file_Z_UF = File("Z_UF.pvd")
@@ -305,14 +309,14 @@ while t < T:
    # Plot solutions
   # plot(Z_PS, title="Dual structure velocity")
    plot(Z_PF, title="Dual pressure")
-  # plot(Z_UM, title="Dual mesh displacement")
-  # plot(Z_UF, title="Dual velocity")
-  # plot(Z_US, title="Dual displacement")
+   plot(Z_UM, title="Dual mesh displacement")
+   plot(Z_UF, title="Dual velocity")
+   plot(Z_US, title="Dual displacement")
   # plot(Z_PM, title="Dual mesh Lagrange Multiplier")
   # interactive()
 
    # Move to next time interval
-   t += kn
+   t += float(kn)
       
 
 
