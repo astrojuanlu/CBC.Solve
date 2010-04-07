@@ -7,8 +7,15 @@ channel_height  = 1.0
 structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
-nx = 40# 20 # 40
-ny = 20 #5 # 10
+nx =  640#320
+ny =  160#80
+
+# Parameters
+t = 0.0
+dt = 0.00625 #FIXME: Change to Constant()
+T = 0.1 + dt
+end_time = T -dt
+tol = 1e-4
 
 # Create the complete mesh
 mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
@@ -19,7 +26,6 @@ D = mesh.topology().dim()
 # Initialize mesh conectivity 
 mesh.init(D-1, D)
 
-
 # Define structure subdomain
 class Structure(SubDomain):
     def inside(self, x, on_boundary):
@@ -29,14 +35,6 @@ class Structure(SubDomain):
 # Create structure subdomain
 structure = Structure()
 
-# # Cut-off function for dual source term
-# class Cutoff(Function):
-#     def inside(self, values, x):
-#         if (x[1] == structure_top) & (x[0] >=structure_left) & (x[0] <= structure_right):
-#             values[0] = 1.0
-#         else:
-#             values[0] = 0.0  
-        
 # Create subdomain markers (0=fluid,  1=structure)
 sub_domains = MeshFunction("uint", mesh, D)
 sub_domains.set_all(0)
@@ -70,7 +68,7 @@ interior_facet_domains = MeshFunction("uint", Omega, D-1)
 interior_facet_domains.set_all(0)
 
 # Create facet marker for outflow
-right = compile_subdomains("x[0] == 3.0")
+right = compile_subdomains("x[0] == channel_length")
 exterior_boundary = MeshFunction("uint", Omega, D-1)
 right.mark(exterior_boundary, 2)
 
@@ -91,10 +89,6 @@ def noslip(x, on_boundary):
     return on_boundary and not inflow(x) and not outflow(x)
 
 # Structure BCs 
-#def dirichlet_conditions(self):
-#    fix = Constant((0,0))
-#    return [fix]
-
 def dirichlet_boundaries(x):
     #FIXME: Figure out how to use the constants above in the
     #following boundary definitions
@@ -157,11 +151,6 @@ primal_p_F = TimeSeries("primal_p_F")
 primal_U_S = TimeSeries("primal_U_S")
 primal_U_M = TimeSeries("primal_U_M")
 
-# Parameters
-t = 0.0
-dt = 0.25 #FIXME: Change to Constant()
-T = 2.0*dt
-tol = 1e-4
 
 
 

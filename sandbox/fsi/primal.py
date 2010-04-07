@@ -194,8 +194,12 @@ class MeshProblem(StaticHyperelasticity):
         return ["on_boundary"]
 
     def material_model(self):
-        mu = 3.8461
-        lmbda = 5.76
+        E  = 10.0
+        nu = 0.3
+        mu   = E / (2.0*(1.0 + nu))
+        lmbda = E*nu / ((1.0 + nu)*(1.0 - 2.0*nu))
+        #mu = 3.8461
+        #lmbda = 5.76
         return LinearElastic([mu, lmbda])
 
     def update_structure_displacement(self, U_S):
@@ -308,22 +312,24 @@ while t < T:
 #interactive()
 
 # Define convergence indicator for flow (flux out of the domain)
-out_flux = compile_subdomains("x[0] ==channel_length ")
+out_flux = compile_subdomains("x[0] == channel_length ")
 flux_boundary = MeshFunction("uint", u_F.function_space().mesh(), D-1)
 out_flux.mark(flux_boundary, 3)
-n = FacetNormal(u_F.function_space().mesh())
-flux_functional = dot(u_F, -n)*ds(3)
+n_flux = FacetNormal(u_F.function_space().mesh())
+flux_functional = dot(u_F, -n_flux)*ds(3)
 flux = assemble(flux_functional,mesh = u_F.function_space().mesh(), exterior_facet_domains = flux_boundary)
 
-# Define convergence indicator for structure (max displacement in x1-direction)
-us_X,us_Y = U_S.split(True)
-displacement = max(us_X.vector().array())
+# Define convergence indicator for structure (integral over displacement in x1-direction)
+#us_x1, us_x2 = U_S.split(True)
+#displacement = max(us_x1.vector().array())
+displacement = assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 
 # Print convergence indicators
 print "*******************************************"
-print "Mesh size nx x ny: %g %g"%  (nx, ny)
+print "Mesh size: %g "%  mesh.num_cells()
 print "Time step kn: %g"% dt
-print "End time T: %g"% T
+print "End time T: %g"% end_time
+print "TOL %g" % tol
 print " "
 print " "
 print "Flux: %g" % flux 

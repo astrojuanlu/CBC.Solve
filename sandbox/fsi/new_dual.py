@@ -224,8 +224,8 @@ A_MS = - inner(Z_PM_ip('+'), v_S('+'))*dS(1)
 psi_S_t = Constant((1.0, 0.0))
 goal_S = (1/T)*inner(v_S, psi_S_t)*dx(1)
 n_F = FacetNormal(Omega_F)
-goal_F = 0.01*inner(v_F, n_F)*ds(2)
-goal_functionals =  goal_S + goal_F
+goal_F = inner(v_F, n_F)*ds(2)
+goal_functionals =  goal_S #+ goal_F
 
 # Define the dual rhs and lhs
 A_dual = lhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
@@ -247,7 +247,7 @@ bc_U_PM2 = DirichletBC(W.sub(5), Constant((0,0)), interior_facet_domains, 1)   #
 bc_ZF_T = DirichletBC(W.sub(0), Constant((DOLFIN_EPS, 0.0)), outflow)
 
 # Collect bcs
-bcs = [bc_U_F, bc_P_F0, bc_P_F1, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_U_PM1, bc_U_PM2]
+bcs = [bc_U_F, bc_P_F0, bc_P_F1, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_U_PM1, bc_U_PM2, bc_ZF_T]
 
 # Create files 
 file_Z_UF = File("Z_UF.pvd")
