@@ -36,7 +36,7 @@ class CBCSolver:
         self._cpu_time = cpu_time
 
         # Write some useful information
-        s = "Time step %d finished in %g seconds." % (self._time_step, elapsed_time)
+        s = "Time step %d (t = %g) finished in %g seconds." % (self._time_step, t, elapsed_time)
         info("\n" + s + "\n" + len(s)*"-" + "\n")
 
         # Update progress bar

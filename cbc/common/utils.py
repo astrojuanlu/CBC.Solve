@@ -4,6 +4,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
+from math import ceil
 from numpy import linspace
 from dolfin import PeriodicBC, warning
 
@@ -28,7 +29,7 @@ def timestep_range(problem, mesh):
         ds = 0.25*mesh.hmin()
 
     # Compute range
-    n = int(T / ds + 1.0)
+    n = ceil(T / ds)
     t_range = linspace(0, T, n + 1)[1:]
     dt = t_range[0]
 
