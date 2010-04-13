@@ -1,5 +1,6 @@
 from dolfin import *
-from numpy import array, append, zeros
+from numpy import array, append, zeros, linspace
+from math import ceil
 
 # Constants related to the geometry of the channel and the obstruction
 channel_length  = 4.0
@@ -7,14 +8,23 @@ channel_height  = 1.0
 structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
-nx =  640#320
-ny =  160#80
+nx = 40
+ny = nx/4 
 
 # Parameters
 t = 0.0
-dt = 0.00625 #FIXME: Change to Constant()
-T = 0.1 + dt
-end_time = T -dt
+dt = 0.132
+T = 0.20
+num_steps  = int(T / dt + 1)
+
+#dt_temp = 0.13 
+# t_len = linspace(0, T, n + 1)[1:]
+# dt = t_len[0]
+# num_steps = len(t_len)
+
+
+#num_steps =  int(T / dt + 1.0)
+#dt  = T/num_steps
 tol = 1e-4
 
 # Create the complete mesh
