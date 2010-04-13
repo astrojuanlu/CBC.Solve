@@ -4,6 +4,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 from cbc.common import CBCSolver
+from cbc.common.utils import *
 from cbc.twist.kinematics import Grad, DeformationGradient
 from sys import exit
 
@@ -103,9 +104,9 @@ class MomentumBalanceSolver(CBCSolver):
         """Initialise the momentum balance solver"""
 
         # Get problem parameters
-        mesh      = problem.mesh()
-        dt        = problem.time_step()
-        end_time  = problem.end_time()
+        mesh        = problem.mesh()
+        dt, t_range = timestep_range(problem, mesh)
+        end_time    = problem.end_time()
 
         # Define function spaces
         scalar = FunctionSpace(mesh, "CG", 1)
@@ -241,6 +242,7 @@ class MomentumBalanceSolver(CBCSolver):
 
         # Store variables needed for time-stepping
         self.dt = dt
+        self.t_range = t_range
         self.end_time = end_time
         self.a = a
         self.L = L
@@ -268,12 +270,8 @@ class MomentumBalanceSolver(CBCSolver):
         """Solve the mechanics problem and return the computed
         displacement field"""
 
-        # Set initial time
-        self.t = self.dt
-
         # Time loop
-        while self.t <= self.end_time:
-
+        for t in self.t_range:
             print "Solving the problem at time t = " + str(self.t)
             self.step(self.dt)
             self.update()
