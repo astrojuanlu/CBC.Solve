@@ -7,12 +7,11 @@ __license__  = "GNU GPL Version 3 or any later version"
 __all__ = ["NavierStokesSolver"]
 
 from dolfin import *
-from numpy import linspace
 from cbc.common.utils import *
 from cbc.common import CBCSolver
 
 class NavierStokesSolver(CBCSolver):
-    "Navier-Stokes solver (dynamic)"
+    "Navier-Stokes solver"
 
     def __init__(self, problem):
         CBCSolver.__init__(self)
@@ -25,7 +24,7 @@ class NavierStokesSolver(CBCSolver):
         mesh = problem.mesh()
         dt, t_range = timestep_range(problem, mesh)
         info("Using time step dt = %g" % dt)
-
+      
         # Function spaces
         V1 = VectorFunctionSpace(mesh, "CG", 1)
         V = VectorFunctionSpace(mesh, "CG", 2)
@@ -99,7 +98,7 @@ class NavierStokesSolver(CBCSolver):
 
             # Update
             self.update()
-            self._end_time_step(t, self.t_range[-1])
+            self.end_time_step(t, self.t_range[-1])
 
         return self.u1, self.p1
 
@@ -155,27 +154,3 @@ class NavierStokesSolver(CBCSolver):
         self.b1 = assemble(self.L1)
         self.b2 = assemble(self.L2)
         self.b3 = assemble(self.L3)
-
-def timestep_range(problem, mesh):
-    "Return time step and time step range for given problem"
-
-    # Get problem parameters
-    T = problem.end_time()
-    dt = problem.time_step()
-    nu = problem.viscosity()
-    U = problem.max_velocity()
-
-    # Use time step specified in problem if available
-    if not dt is None:
-        n = int(T / dt + 1.0)
-    # Otherwise, base time step on mesh size
-    else:
-        h = mesh.hmin()
-        dt = 0.25*h**2 / (U*(nu + h*U))
-        n = int(T / dt + 1.0)
-
-    # Compute range
-    t_range = linspace(0, T, n + 1)[1:]
-    dt = t_range[0]
-
-    return dt, t_range
