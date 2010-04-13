@@ -19,6 +19,12 @@ class NavierStokesSolver(CBCSolver):
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
         self.parameters.add("plot_solution", True)
+        self.parameters.add("store_solution", True)
+
+        # Create binary files to store solutions
+        if self.parameters["store_solution"]:
+            self.velocity_series = TimeSeries("velocity")
+            self.pressure_series = TimeSeries("pressure")
 
         # Get mesh and time step range
         mesh = problem.mesh()

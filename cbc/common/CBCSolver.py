@@ -46,3 +46,8 @@ class CBCSolver:
 
         # Increase time step counter
         self._time_step += 1
+
+        # Store solution
+        if self.parameters["store_solution"]:
+            self.velocity_series.store(self.u1.vector(), t)
+            self.pressure_series.store(self.p1.vector(), t)
