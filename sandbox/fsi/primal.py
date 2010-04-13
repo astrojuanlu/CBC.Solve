@@ -165,12 +165,21 @@ class StructureProblem(Hyperelasticity):
         return["on_boundary"]
 
     def material_model(self):
-        mu       = 1.1
-        lmbda    = 1.5
-        return StVenantKirchhoff([mu, lmbda])
+        #mu       = 1.1
+        #lmbda    = 1.5
+
+        factor = 0.2
+        mu = factor * 3.8461
+        lmbda = factor * 5.76
+
+        return LinearElastic([mu, lmbda])
+#        return StVenantKirchhoff([mu, lmbda])
 
     def time_step(self):
         return dt
+
+    def end_time(self):
+        return T
 
     def __str__(self):
         return "The structure problem"
@@ -224,24 +233,21 @@ V0 = VectorFunctionSpace(Omega_S, "CG", 1)
 v0 = Function(V0)
 U_S_vector_old  = v0.vector()
 
-# FIXME: Time step used by solver might not be dt!!!
-
 # Create files for storing solution
 file_u_F = File("u_F.pvd")
 file_p_F = File("p_F.pvd")
 file_U_S = File("U_S.pvd")
 file_U_M = File("U_M.pvd")
 
-# Time-stepping
-while t < T:
+# FIXME: Time step used by solver might not be dt!!!
 
-    print "Solving the problem at t = ", str(t)
-    print "--------------------------------"
-    
+# Time-stepping
+for step in range(num_steps):
+#while t < T + dt:
     # Fixed point iteration on FSI problem
     r = 2*tol
     while r > tol:
-        
+ 
         # Solve fluid equation
         u_F, p_F = F.step(dt)
        
@@ -251,7 +257,7 @@ while t < T:
         
         # Solve structure equation
         U_S = S.step(dt)
-        
+
         # Update structure displacement for mesh problem
         M.update_structure_displacement(U_S)
 
@@ -276,10 +282,10 @@ while t < T:
         
         print "*******************************************"
         print "Solving the problem at t = ", str(t)
-        print "" 
+        print "With time step dt =" , str(dt)
         print ""
         print "norm(r)", str(r)
-        print ""
+        print " "
         print "*******************************************"
                 
         # Check convergence
@@ -311,28 +317,34 @@ while t < T:
 # Hold plot
 #interactive()
 
-# Define convergence indicator for flow (flux out of the domain)
-out_flux = compile_subdomains("x[0] == channel_length ")
-flux_boundary = MeshFunction("uint", u_F.function_space().mesh(), D-1)
-out_flux.mark(flux_boundary, 3)
-n_flux = FacetNormal(u_F.function_space().mesh())
-flux_functional = dot(u_F, -n_flux)*ds(3)
-flux = assemble(flux_functional,mesh = u_F.function_space().mesh(), exterior_facet_domains = flux_boundary)
+# # Define convergence indicator for flow (flux out of the domain)
+# out_flux = compile_subdomains("x[0] == channel_length ")
+# flux_boundary = MeshFunction("uint", u_F.function_space().mesh(), D-1)
+# out_flux.mark(flux_boundary, 3)
+# n_flux = FacetNormal(u_F.function_space().mesh())
+# flux_functional = dot(u_F, -n_flux)*ds(3)
+# flux = assemble(flux_functional,mesh = u_F.function_space().mesh(), exterior_facet_domains = flux_boundary)
 
 # Define convergence indicator for structure (integral over displacement in x1-direction)
 #us_x1, us_x2 = U_S.split(True)
 #displacement = max(us_x1.vector().array())
+x = U_S.vector().array()
+x = x[:len(x) / 2]
+#print x
+from numpy import max, mean
+print "max =", max(x)
+print "mean =", mean(x)
 displacement = assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 
 # Print convergence indicators
 print "*******************************************"
 print "Mesh size: %g "%  mesh.num_cells()
-print "Time step kn: %g"% dt
-print "End time T: %g"% end_time
-print "TOL %g" % tol
-print " "
-print " "
-print "Flux: %g" % flux 
+#print "Time step kn: %g"% dt
+# print "End time T: %g"% end_time
+# print "TOL %g" % tol
+# print " "
+# print " "
+#print "Flux: %g" % flux 
 print "Displacement %g"% displacement
 print "*******************************************"
 
