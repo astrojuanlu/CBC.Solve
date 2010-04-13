@@ -98,7 +98,7 @@ class NavierStokesSolver(CBCSolver):
 
             # Update
             self.update()
-            self.end_time_step(t, self.t_range[-1])
+            self._end_time_step(t, self.t_range[-1])
 
         return self.u1, self.p1
 
