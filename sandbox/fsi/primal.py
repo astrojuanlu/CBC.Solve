@@ -7,6 +7,7 @@ from cbc.twist import *
 from cbc.common.utils import *
 from numpy import array, append
 from common import *
+from math import ceil
 
 plot_solution = False
 
@@ -242,15 +243,18 @@ file_p_F = File("p_F.pvd")
 file_U_S = File("U_S.pvd")
 file_U_M = File("U_M.pvd")
 
-# FIXME: Time step used by solver might not be dt!!!
+# Compute time steps and number of time steps
+n = ceil(T / dt)
+t_range = linspace(0, T, n + 1)[1:]
+dt = t_range[0]
 
 # Time-stepping
-for step in range(num_steps):
-#while t < T + dt:
-    # Fixed point iteration on FSI problem
+while t <= T:
+   
+ # Fixed point iteration on FSI problem
     r = 2*tol
     while r > tol:
- 
+        
         # Solve fluid equation
         u_F, p_F = F.step(dt)
        

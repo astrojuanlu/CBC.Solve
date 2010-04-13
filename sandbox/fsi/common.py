@@ -12,19 +12,9 @@ nx = 40
 ny = nx/4 
 
 # Parameters
-t = 0.0
-dt = 0.132
-T = 0.20
-num_steps  = int(T / dt + 1)
-
-#dt_temp = 0.13 
-# t_len = linspace(0, T, n + 1)[1:]
-# dt = t_len[0]
-# num_steps = len(t_len)
-
-
-#num_steps =  int(T / dt + 1.0)
-#dt  = T/num_steps
+t = 0
+dt = 0.0576
+T = 0.15
 tol = 1e-4
 
 # Create the complete mesh
