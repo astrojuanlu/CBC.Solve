@@ -42,6 +42,9 @@ class FluidProblem(NavierStokes):
         bcp1 = DirichletBC(Q, Constant(0*Q.mesh().geometry().dim()), outflow)
 
         return [bcu], [bcp0, bcp1]
+
+    def end_time(self):
+        return T
    
     def time_step(self):
         return dt
