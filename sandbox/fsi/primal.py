@@ -25,8 +25,11 @@ class FluidProblem(NavierStokes):
         return omega_F1
 
     def viscosity(self):
-        return 0.01
-
+        return 1.0
+    
+    def density(self):
+        return 1.0
+    
     def mesh_velocity(self, V):
         self.w = Function(V)
         return self.w
@@ -39,7 +42,7 @@ class FluidProblem(NavierStokes):
         # FIXME: Anders fix DirichletBC to take int or float instead of Constant
         
         # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(1.0), inflow)
+        bcp0 = DirichletBC(Q, Constant(0.5), inflow)
         bcp1 = DirichletBC(Q, Constant(0.0), outflow)
 
         return [bcu], [bcp0, bcp1]
@@ -62,8 +65,8 @@ class FluidProblem(NavierStokes):
         F_inv_T = F_inv.T 
 
         # Compute mapped stress (sigma_F \circ Phi) (here, grad "=" Grad)
-        nu = self.viscosity()
-        sigma_F = nu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T \
+        mu = self.viscosity()
+        sigma_F = mu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T \
                   - self.P_F*Identity(self.U_F.cell().d))
 
         # Map to physical stress
@@ -168,9 +171,12 @@ class StructureProblem(Hyperelasticity):
         # it at the bottom
         return["on_boundary"]
 
+    def reference_density(self):
+        return 1.0
+
     def material_model(self):
-        mu       = 1.1
-        lmbda    = 1.5
+        mu       = 3.841
+        lmbda    = 5.76
         return StVenantKirchhoff([mu, lmbda])
 
     def time_step(self):
@@ -201,12 +207,14 @@ class MeshProblem(StaticHyperelasticity):
         return ["on_boundary"]
 
     def material_model(self):
-        E  = 10.0
+        factor = 0.001
+        E  = 10.0 * factor
         nu = 0.3
         mu   = E / (2.0*(1.0 + nu))
         lmbda = E*nu / ((1.0 + nu)*(1.0 - 2.0*nu))
-        #mu = 3.8461
-        #lmbda = 5.76
+#         factor = 2
+#         mu = 3.8461 * factor
+#         lmbda = 5.76 * factor
         return LinearElastic([mu, lmbda])
 
     def update_structure_displacement(self, U_S):
@@ -243,7 +251,6 @@ n = ceil(T / dt)
 t_range = linspace(0, T, n + 1)[1:]
 dt = t_range[0]
 
-
 # Time-stepping
 t = 0
 while t <= T:
@@ -273,10 +280,10 @@ while t <= T:
         
         # Plot solutions
         if plot_solution:
-            plot(u_F, title="Fluid velocity")
+           # plot(u_F, title="Fluid velocity")
             plot(U_S, title="Structure displacement", mode="displacement")
             plot(U_M, title="Mesh displacement", mode="displacement")
-            plot(F.w, title="Mesh velocity")
+           # plot(F.w, title="Mesh velocity")
             
         # Compute residual
         U_S_vector_old.axpy(-1, U_S.vector())
