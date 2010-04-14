@@ -39,8 +39,8 @@ class FluidProblem(NavierStokes):
         # FIXME: Anders fix DirichletBC to take int or float instead of Constant
         
         # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(1.0*Q.mesh().geometry().dim()), inflow)
-        bcp1 = DirichletBC(Q, Constant(0*Q.mesh().geometry().dim()), outflow)
+        bcp0 = DirichletBC(Q, Constant(1.0), inflow)
+        bcp1 = DirichletBC(Q, Constant(0.0), outflow)
 
         return [bcu], [bcp0, bcp1]
 
