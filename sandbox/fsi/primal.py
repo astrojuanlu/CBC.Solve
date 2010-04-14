@@ -243,7 +243,9 @@ n = ceil(T / dt)
 t_range = linspace(0, T, n + 1)[1:]
 dt = t_range[0]
 
+
 # Time-stepping
+t = 0
 while t <= T:
    
  # Fixed point iteration on FSI problem
@@ -343,7 +345,7 @@ displacement = assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 print "*******************************************"
 print "Mesh size: %g "%  mesh.num_cells()
 print "Time step kn: %g"% dt
-print "End time T: %g"% 
+print "End time T: %g"%T 
 print "TOL %g" % tol
 print " "
 print " "
