@@ -33,10 +33,8 @@ U_S = Function(V_S)
 #P_S = Funtion()     FIXME: Need this from the primal solver that solves the sys. of eq.
 U_M = Function(V_M)
 #P_M = Function(Q_M) FIXME: Check for sure that Im not needed!
-#P_S = Function(V_S) FIXME: Check for sure that Im not needed! 
 
 # Create functions for time-stepping
-
 # Dual varibles
 Z_UF0 = Function(V_F2)
 Z_PF0 = Function(Q_F)
@@ -260,12 +258,17 @@ file_Z_PM = File("Z_PM.pvd")
 Z = Function(W)
 (Z_UF, Z_PF, Z_US, Z_PS, Z_UM, Z_PM) = Z.split()
 
+# Compute time step
+n = ceil(T / dt)
+t_range = linspace(0, T, n + 1)[1:]
+kn = t_range[0]
+
 # Time stepping
-while t < T:
+while t <= T:
     
    print "*******************************************"
    print "-------------------------------------------"
-   print "Solving the DUAL problem at t = ", str(t)
+   print "Solving the DUAL problem at t = ", str(T - t)
    print "-------------------------------------------"
    print "*******************************************"
 
