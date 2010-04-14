@@ -9,7 +9,7 @@ from numpy import array, append
 from common import *
 from math import ceil
 
-plot_solution = False
+plot_solution = True 
 
 # Define fluid problem
 class FluidProblem(NavierStokes):
@@ -169,15 +169,9 @@ class StructureProblem(Hyperelasticity):
         return["on_boundary"]
 
     def material_model(self):
-        #mu       = 1.1
-        #lmbda    = 1.5
-
-        factor = 0.2
-        mu = factor * 3.8461
-        lmbda = factor * 5.76
-
-        return LinearElastic([mu, lmbda])
-#        return StVenantKirchhoff([mu, lmbda])
+        mu       = 1.1
+        lmbda    = 1.5
+        return StVenantKirchhoff([mu, lmbda])
 
     def time_step(self):
         return dt
@@ -243,7 +237,8 @@ file_p_F = File("p_F.pvd")
 file_U_S = File("U_S.pvd")
 file_U_M = File("U_M.pvd")
 
-# Compute time steps and number of time steps
+# Fix time step if needed. Note that this has to be done
+# in oder to save the primal data at the correct time
 n = ceil(T / dt)
 t_range = linspace(0, T, n + 1)[1:]
 dt = t_range[0]
@@ -285,8 +280,7 @@ while t <= T:
         U_S_vector_old.axpy(-1, U_S.vector())
         r = norm(U_S_vector_old)
         U_S_vector_old[:] = U_S.vector()[:]
-        
-        
+                
         print "*******************************************"
         print "Solving the problem at t = ", str(t)
         print "With time step dt =" , str(dt)
@@ -335,22 +329,24 @@ while t <= T:
 # Define convergence indicator for structure (integral over displacement in x1-direction)
 #us_x1, us_x2 = U_S.split(True)
 #displacement = max(us_x1.vector().array())
-x = U_S.vector().array()
-x = x[:len(x) / 2]
-#print x
-from numpy import max, mean
-print "max =", max(x)
-print "mean =", mean(x)
+# x = U_S.vector().array()
+# x = x[:len(x) / 2]
+# #print x
+# from numpy import max, mean
+# print "max =", max(x)
+# print "mean =", mean(x)
+
+# Define convergence indicator for structure (integral over displacement in x1-direction)
 displacement = assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 
 # Print convergence indicators
 print "*******************************************"
 print "Mesh size: %g "%  mesh.num_cells()
-#print "Time step kn: %g"% dt
-# print "End time T: %g"% end_time
-# print "TOL %g" % tol
-# print " "
-# print " "
+print "Time step kn: %g"% dt
+print "End time T: %g"% 
+print "TOL %g" % tol
+print " "
+print " "
 #print "Flux: %g" % flux 
 print "Displacement %g"% displacement
 print "*******************************************"
