@@ -48,13 +48,13 @@ class NavierStokes(CBCProblem):
 
     def cauchy_stress(self, u, p):
         epsilon = 0.5*(grad(u) + grad(u).T)
-        nu = self.viscosity()
-        sigma = 2.0*nu*epsilon - p*Identity(u.cell().d)
+        mu = self.viscosity()
+        sigma = 2.0*mu*epsilon - p*Identity(u.cell().d)
         return sigma
 
     def viscous_stress(self, u):
         epsilon = 0.5*(grad(u) + grad(u).T)
-        nu = self.viscosity()
+        mu = self.viscosity()
         fluid_stress_u = 2.0*nu*epsilon
         return fluid_stress_u
 
@@ -70,6 +70,10 @@ class NavierStokes(CBCProblem):
         missing_function("mesh")
 
     #--- Functions that may optionally be overloaded by subclasses ---
+
+    def density(self):
+        "Return density"
+        return 1.0
 
     def viscosity(self):
         "Return viscosity"

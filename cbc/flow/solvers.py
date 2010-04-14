@@ -53,15 +53,17 @@ class NavierStokesSolver(CBCSolver):
         p1 = interpolate(p0, Q)
 
         # Coefficients
-        nu = Constant(problem.viscosity())
+        #nu = Constant(problem.viscosity()) # Kinimatic viscosity [m^2/s]
+        mu = Constant(problem.viscosity())  # Dynamic viscosity [Ps x s]
+        rho = Constant(problem.density())   # Density [kg/m^3]
         k = Constant(dt)
         f = problem.body_force(V1)
         w = problem.mesh_velocity(V1)
 
         # Tentative velocity step
         U = 0.5*(u0 + u)
-        F1 = (1/k)*inner(v, u - u0)*dx + inner(v, grad(u0)*(u0 - w))*dx \
-            + nu*inner(grad(v), grad(U))*dx + inner(v, grad(p0))*dx \
+        F1 = rho*(1/k)*inner(v, u - u0)*dx + rho*inner(v, grad(u0)*(u0 - w))*dx \
+            + mu*inner(grad(v), grad(U))*dx + inner(v, grad(p0))*dx \
             - inner(v, f)*dx
         a1 = lhs(F1)
         L1 = rhs(F1)
