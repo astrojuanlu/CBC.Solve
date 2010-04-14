@@ -1,6 +1,5 @@
 from dolfin import *
-from numpy import array, append, zeros, linspace
-from math import ceil
+from numpy import array, append, zeros
 
 # Constants related to the geometry of the channel and the obstruction
 channel_length  = 4.0
@@ -12,9 +11,8 @@ nx = 40
 ny = nx/4 
 
 # Parameters
-t = 0
-dt = 0.0576
-T = 0.15
+dt = 0.05
+T = 1.0
 tol = 1e-4
 
 # Create the complete mesh
