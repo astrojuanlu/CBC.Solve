@@ -34,7 +34,7 @@ class FluidProblem(NavierStokes):
     def boundary_conditions(self, V, Q):
         
         # Create no-slip boundary condition for velocity
-        bcu =  DirichletBC(V, Constant((0,)*V.mesh().geometry().dim()), noslip)        
+        bcu =  DirichletBC(V, Constant((0.0, 0.0)), noslip)        
         
         # FIXME: Anders fix DirichletBC to take int or float instead of Constant
         
