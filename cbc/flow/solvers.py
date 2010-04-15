@@ -163,6 +163,14 @@ class NavierStokesSolver(CBCSolver):
         self.b2 = assemble(self.L2)
         self.b3 = assemble(self.L3)
 
+class Cutoff(Expression):
+    def eval(self, values, x):
+        if (x[1] > 1.0 - DOLFIN_EPS and x[0] > 0.0 + DOLFIN_EPS and x[0] < 1.0 - DOLFIN_EPS):
+            values[0] = 1.0
+        else:
+            values[0] = 0.0
+
+
 class NavierStokesDualSolver(CBCSolver):
     "Navier-Stokes dual solver"
     
@@ -212,25 +220,27 @@ class NavierStokesDualSolver(CBCSolver):
         # Functions
         w0 = Function(V)
         r0 = Function(Q)
-        self.u_h = Function(V)
-        self.p_h = Function(Q)
+        u_h = Function(V)
+        p_h = Function(Q)
 
         # Coefficients
         nu = Constant(problem.viscosity())
         k = Constant(dt)
         f = problem.body_force(V1)
-        w = problem.mesh_velocity(V1)
 
         # Dual forms
         sigma = nu*(grad(v) + grad(v).T) - q*Identity(v.cell().d)
-        a_tilde = inner(grad(self.u_h)*v + grad(v)*self.u_h, w)*dx \
-            + div(v)*r*dx \
+        a_tilde = inner(grad(u_h)*v + grad(v)*u_h, w)*dx \
+            + inner(sigma, 0.5*(grad(w) + grad(w).T))*dx \
             - nu*inner((grad(v) + grad(v).T)*n, w)*ds \
-#            + inner(sigma, 0.5*(grad(w) + grad(w).T))*dx FIXME
+            + div(v)*r*dx
 
-        a = inner(v, w)*dx # + k*a_tilde
-        L = inner(v, w1)*dx # FIXME: Add goal functional here
-        # + k*cutoff*inner(sigma(v, q)*n, tgt)*ds # Optimise for shear component
+        # FIXME: Take goal functional from the problem definition
+        cutoff = Cutoff(Q)
+        tgt = Constant((1.0, 0.0))
+
+        a = inner(v, w)*dx + dt*a_tilde
+        L = inner(v, w1)*dx + dt*cutoff*inner(sigma*n, tgt)*ds # Optimise for shear component
 
         # Store variables needed for time-stepping
         self.dt = dt
@@ -243,6 +253,8 @@ class NavierStokesDualSolver(CBCSolver):
         self.r1 = r1
         self.L = L
         self.a = a
+        self.u_h = u_h
+        self.p_h = p_h
 
     def solve(self):
         "Solve problem and return computed solution (u, p)"
@@ -261,20 +273,15 @@ class NavierStokesDualSolver(CBCSolver):
             self.update()
             self._end_time_step(t, self.t_range[-1])
 
-        return self.w1, self.r1
+        return self.w0, self.r0
 
     def step(self, dt):
 
         # Compute dual solution
         begin("Computing dual solution")
-#        [bc.apply(self.A, b) for bc in self.bcw]
-#        self.w1 = self.u_h
-#        self.r1 = self.p_h
-
         bcs = self.bcw + self.bcr
         pde_dual = VariationalProblem(self.a, self.L, bcs)
         (self.w0, self.r0) = pde_dual.solve().split(True)
-#        solve(self.A3, self.u1.vector(), b, "gmres", "ilu")
         end()
 
         return self.w0, self.r0
@@ -282,12 +289,12 @@ class NavierStokesDualSolver(CBCSolver):
     def update(self):
 
         # Propagate values
-        self.w0.assign(self.w1)
-        self.r0.assign(self.r1)
+        self.w1.assign(self.w0)
+        self.r1.assign(self.r0)
 
         # Plot solution
         if self.parameters["plot_solution"]:
-            plot(self.w1, title="Velocity", rescale=True)
-            plot(self.r1, title="Pressure", rescale=True)
+            plot(self.w0, title="Velocity", rescale=True)
+            plot(self.r0, title="Pressure", rescale=True)
 
-        return self.w1, self.r1
+        return self.w0, self.r0
