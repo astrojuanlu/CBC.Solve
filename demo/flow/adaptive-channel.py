@@ -14,6 +14,14 @@ def inflow_boundary(x):
 def outflow_boundary(x):
     return x[0] > 1 - DOLFIN_EPS
 
+class RightBoundary(Expression):
+    def eval(self, values, x):
+        if (x[0] > 1.0 - DOLFIN_EPS):
+            values[0] = 1.0
+        else:
+            values[0] = 0.0
+
+
 # Parameters
 nu = 1.0/8.0
 domain = UnitSquare(16, 16)
@@ -97,8 +105,11 @@ class ChannelDual(NavierStokesDual):
     def end_time(self):
         return T
 
-    def functional(self, u, p):
-        return u((1.0, 0.5))[0]
+    def functional(self, u, p, V, Q, n):
+        right = RightBoundary(Q)
+        tgt = Constant((1.0, 0.0))
+        sigma = nu*(grad(u) + grad(u).T) - p*Identity(u.cell().d)
+        return right*inner(sigma*n, tgt)*ds
 
     def reference(self, t):
         num_terms = 30

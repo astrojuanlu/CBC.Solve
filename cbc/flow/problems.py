@@ -127,3 +127,7 @@ class NavierStokesDual(NavierStokes):
         # Set up parameters
         self.parameters = Parameters("dual_problem_parameters")
         self.parameters.add(self.solver.parameters)
+
+    def functional(self, u, p, V, Q, n):
+        "Return goal functional"
+        missing_function("functional")

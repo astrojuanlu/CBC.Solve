@@ -163,14 +163,6 @@ class NavierStokesSolver(CBCSolver):
         self.b2 = assemble(self.L2)
         self.b3 = assemble(self.L3)
 
-class Cutoff(Expression):
-    def eval(self, values, x):
-        if (x[1] > 1.0 - DOLFIN_EPS and x[0] > 0.0 + DOLFIN_EPS and x[0] < 1.0 - DOLFIN_EPS):
-            values[0] = 1.0
-        else:
-            values[0] = 0.0
-
-
 class NavierStokesDualSolver(CBCSolver):
     "Navier-Stokes dual solver"
     
@@ -225,7 +217,6 @@ class NavierStokesDualSolver(CBCSolver):
 
         # Coefficients
         nu = Constant(problem.viscosity())
-        k = Constant(dt)
         f = problem.body_force(V1)
 
         # Dual forms
@@ -235,12 +226,9 @@ class NavierStokesDualSolver(CBCSolver):
             - nu*inner((grad(v) + grad(v).T)*n, w)*ds \
             + div(v)*r*dx
 
-        # FIXME: Take goal functional from the problem definition
-        cutoff = Cutoff(Q)
-        tgt = Constant((1.0, 0.0))
-
         a = inner(v, w)*dx + dt*a_tilde
-        L = inner(v, w1)*dx + dt*cutoff*inner(sigma*n, tgt)*ds # Optimise for shear component
+        goal = problem.functional(v, q, V, Q, n)
+        L = inner(v, w1)*dx + dt*goal
 
         # Store variables needed for time-stepping
         self.dt = dt
