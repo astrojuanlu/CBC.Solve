@@ -13,7 +13,7 @@ class CBCSolver:
     def __init__(self):
         "Constructor"
 
-        self._time_step = 0
+        self._time_step = 1
         self._progress = None
         self._cpu_time = time()
 

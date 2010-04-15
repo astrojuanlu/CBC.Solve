@@ -62,7 +62,7 @@ class Channel(NavierStokes):
 # Solve problem
 problem = Channel()
 problem.parameters["solver_parameters"]["plot_solution"] = True
-problem.parameters["solver_parameters"]["store_solution"] = False
+problem.parameters["solver_parameters"]["store_solution"] = True
 u, p = problem.solve()
 
 # Check error

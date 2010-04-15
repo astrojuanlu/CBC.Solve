@@ -4,11 +4,11 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2010-02-09
 
-__all__ = ["NavierStokes"]
+__all__ = ["NavierStokes", "NavierStokesDual"]
 
 from dolfin import error, Constant, Parameters
 from cbc.common import CBCProblem
-from cbc.flow.solvers import NavierStokesSolver
+from cbc.flow.solvers import NavierStokesSolver, NavierStokesDualSolver
 from ufl import grad, Identity
 
 class NavierStokes(CBCProblem):
@@ -114,3 +114,16 @@ class NavierStokes(CBCProblem):
     def __str__(self):
         "Return a short description of the problem"
         return "Navier-Stokes problem"
+
+class NavierStokesDual(NavierStokes):
+    "Base class for all Navier-Stokes dual problems"
+
+    def __init__(self, parameters=None):
+        "Create Navier-Stokes dual problem"
+
+        # Create solver
+        self.solver = NavierStokesDualSolver(self)
+
+        # Set up parameters
+        self.parameters = Parameters("dual_problem_parameters")
+        self.parameters.add(self.solver.parameters)
