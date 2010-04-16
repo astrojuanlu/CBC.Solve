@@ -42,7 +42,7 @@ class FluidProblem(NavierStokes):
         # FIXME: Anders fix DirichletBC to take int or float instead of Constant
         
         # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(1.0), inflow)
+        bcp0 = DirichletBC(Q, Constant(0.5), inflow)
         bcp1 = DirichletBC(Q, Constant(0.0), outflow)
 
         return [bcu], [bcp0, bcp1]
@@ -64,7 +64,7 @@ class FluidProblem(NavierStokes):
         F_inv = inv(F)
         F_inv_T = F_inv.T 
 
-        # Compute mapped stress (sigm_F \circ Phi) (here, grad "=" Grad)
+        # Compute mapped stress (sigma_F \circ Phi) (here, grad "=" Grad)
         mu = self.viscosity()
         sigma_F = mu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T \
                   - self.P_F*Identity(self.U_F.cell().d))
@@ -159,7 +159,7 @@ class StructureProblem(Hyperelasticity):
 
         # In the structure solver the body force is defined on
         # the LHS...
-        self.fluid_load.vector()[:] = - B_S.array()*0
+        self.fluid_load.vector()[:] = - B_S.array()
 
     def neumann_conditions(self):
         self.fluid_load = Function(self.V_S)
@@ -175,9 +175,8 @@ class StructureProblem(Hyperelasticity):
         return 1.0
 
     def material_model(self):
-        factor   = 1
-        mu       = 1.1 * factor
-        lmbda    = 1.5 * factor
+        mu       = 3.841
+        lmbda    = 5.76
         return StVenantKirchhoff([mu, lmbda])
 
     def time_step(self):
@@ -208,8 +207,14 @@ class MeshProblem(StaticHyperelasticity):
         return ["on_boundary"]
 
     def material_model(self):
-        mu = 3.8461
-        lmbda = 5.76
+        factor = 0.001
+        E  = 10.0 * factor
+        nu = 0.3
+        mu   = E / (2.0*(1.0 + nu))
+        lmbda = E*nu / ((1.0 + nu)*(1.0 - 2.0*nu))
+#         factor = 2
+#         mu = 3.8461 * factor
+#         lmbda = 5.76 * factor
         return LinearElastic([mu, lmbda])
 
     def update_structure_displacement(self, U_S):
@@ -239,12 +244,6 @@ file_u_F = File("u_F.pvd")
 file_p_F = File("p_F.pvd")
 file_U_S = File("U_S.pvd")
 file_U_M = File("U_M.pvd")
-
-# Create time series for storing primal
-primal_u_F = TimeSeries("primal_u_F")
-primal_p_F = TimeSeries("primal_p_F")
-primal_U_S = TimeSeries("primal_U_S")
-primal_U_M = TimeSeries("primal_U_M")
 
 # Fix time step if needed. Note that this has to be done
 # in oder to save the primal data at the correct time
