@@ -300,8 +300,7 @@ class MomentumBalanceSolver(CBCSolver):
 
         # FIXME: Setup all stuff in the constructor and call assemble instead of VariationalProblem
 
-        #equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
-        equation = VariationalProblem(self.a, self.L, self.bcu, nonlinear = True)
+        equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
         equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-12
         equation.parameters["newton_solver"]["relative_tolerance"] = 1e-12
         equation.parameters["newton_solver"]["maximum_iterations"] = 100
@@ -327,6 +326,185 @@ class MomentumBalanceSolver(CBCSolver):
         # Plot solution
         if self.parameters["plot_solution"]:
             plot(self.u0, title="Displacement", mode="displacement", rescale=True)
+
+        # Move to next time step
+        self.t = self.t + self.dt
+
+        # Inform time-dependent functions of new time
+        for bc in self.dirichlet_conditions:
+            bc.t = self.t
+        for bc in self.neumann_conditions:
+            bc.t = self.t
+        self.B.t = self.t
+
+class CG1MomentumBalanceSolver(CBCSolver):
+    """Solves the dynamic balance of linear momentum using a CG1
+    time-stepping scheme"""
+
+    def __init__(self, problem):
+
+        """Initialise the momentum balance solver"""
+
+        # Set up parameters
+        self.parameters = Parameters("solver_parameters")
+        self.parameters.add("plot_solution", True)
+        self.parameters.add("store_solution", False)
+
+        # Get problem parameters
+        mesh        = problem.mesh()
+        dt, t_range = timestep_range(problem, mesh)
+        end_time    = problem.end_time()
+
+        # Define function spaces
+        scalar = FunctionSpace(mesh, "CG", 1)
+        vector = VectorFunctionSpace(mesh, "CG", 1)
+
+        mixed_element = MixedFunctionSpace([vector, vector])
+        V = TestFunction(mixed_element)
+        dU = TrialFunction(mixed_element)
+        U = Function(mixed_element)
+        U0 = Function(mixed_element)
+
+        # Get initial conditions
+        u0, v0 = problem.initial_conditions()
+
+        # If no initial conditions are specified, assume they are 0
+        if u0 == []:
+            u0 = Constant((0,)*vector.mesh().geometry().dim())
+        if v0 == []:
+            v0 = Constant((0,)*vector.mesh().geometry().dim())
+
+        # If either are text strings, assume those are file names and
+        # load conditions from those files
+        if isinstance(u0, str):
+            print "Loading initial displacement from file"
+            file_name = u0
+            _u0 = loadtxt(file_name)[:]
+            U0.vector()[0:len(_u0)] = _u0[:]
+        if isinstance(v0, str):
+            print "Loading initial velocity from file"
+            file_name = v0
+            _v0 = loadtxt(file_name)[:]
+            U0.vector()[len(_v0) + 1:2*len(_v0) - 1] = _v0[:]
+        
+        # Get Dirichlet boundary conditions on the displacement field
+        bcu = []
+
+        dirichlet_conditions = problem.dirichlet_conditions()
+        dirichlet_boundaries = problem.dirichlet_boundaries()
+
+        if len(dirichlet_conditions) != len(problem.dirichlet_boundaries()):
+            print "Please make sure the number of your Dirichlet conditions match the number of your Dirichlet boundaries"
+            exit(2)
+
+        for (i, dirichlet_condition) in enumerate(dirichlet_conditions):
+            print "Applying Dirichlet boundary condition at", dirichlet_boundaries[i]
+            bcu.append(DirichletBC(vector, dirichlet_condition, \
+            compile_subdomains(dirichlet_boundaries[i])))
+
+        # Driving forces
+        B  = problem.body_force()
+
+        # If no body forces are specified, assume it is 0
+        if B == []:
+            B = Constant((0,)*vector.mesh().geometry().dim())
+
+        # Functions
+        xi, eta = split(V)
+        u, v = split(U)
+        u0, v0 = split(U0)
+
+        # Evaluate displacements and velocities at mid points
+        u_mid = 0.5*(u0 + u)
+        v_mid = 0.5*(v0 + v)
+        
+        # Get reference density
+        rho0 = problem.reference_density()
+
+        # If no reference density is specified, assume it is 1.0
+        if rho0 == []:
+            rho0 = Constant(1.0)
+        
+        density_type = str(rho0.__class__)
+        if not ("dolfin" in density_type):
+            print "Converting given density to a DOLFIN Constant"
+            rho0 = Constant(rho0)
+
+        # Piola-Kirchhoff stress tensor based on the material model
+        P = problem.first_pk_stress(u_mid)
+
+        # The variational form corresponding to hyperelasticity
+        L = rho0*inner(v - v0, xi)*dx + dt*inner(P, grad(xi))*dx \
+            - dt*inner(B, xi)*dx + inner(u - u0, eta)*dx \
+            - dt*inner(v_mid, eta)*dx 
+
+        # Add contributions to the form from the Neumann boundary
+        # conditions
+
+        # Get Neumann boundary conditions on the stress
+        neumann_conditions = problem.neumann_conditions()
+        neumann_boundaries = problem.neumann_boundaries()
+
+        boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
+        boundary.set_all(len(neumann_boundaries) + 1)
+
+        for (i, neumann_boundary) in enumerate(neumann_boundaries):
+            print "Applying Neumann boundary condition at", neumann_boundary
+            compiled_boundary = compile_subdomains(neumann_boundary)
+            compiled_boundary.mark(boundary, i)
+            L = L - inner(neumann_conditions[i], xi)*ds(i)
+
+        a = derivative(L, U, dU)
+
+        # Store variables needed for time-stepping
+        self.dt = dt
+        self.t_range = t_range
+        self.end_time = end_time
+        self.a = a
+        self.L = L
+        self.bcu = bcu
+        self.U0 = U0
+        self.U = U
+        self.B = B
+        self.dirichlet_conditions = dirichlet_conditions
+        self.neumann_conditions = neumann_conditions
+        self.boundary = boundary
+
+        # FIXME: Figure out why I am needed
+        self.mesh = mesh
+        self.t = 0
+
+    def solve(self):
+        """Solve the mechanics problem and return the computed
+        displacement field"""
+
+        # Time loop
+        for t in self.t_range:
+            print "Solving the problem at time t = " + str(self.t)
+            self.step(self.dt)
+            self.update()
+
+    def step(self, dt): 
+        """Setup and solve the problem at the current time step"""
+
+        equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
+        equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-12
+        equation.parameters["newton_solver"]["relative_tolerance"] = 1e-12
+        equation.parameters["newton_solver"]["maximum_iterations"] = 100
+        equation.solve(self.U)
+        return self.U
+
+    def update(self):
+        """Update problem at time t"""
+
+        u, v = self.U.split()
+
+        # Propogate the displacements and velocities 
+        self.U0.assign(self.U)
+
+        # Plot solution
+        if self.parameters["plot_solution"]:
+            plot(u, title="Displacement", mode="displacement", rescale=True)
 
         # Move to next time step
         self.t = self.t + self.dt

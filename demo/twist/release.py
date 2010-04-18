@@ -19,6 +19,9 @@ class Release(Hyperelasticity):
     def is_dynamic(self):
         return True
 
+    def time_stepping(self):
+        return "CG1"
+
     def reference_density(self):
         return 1.0
 

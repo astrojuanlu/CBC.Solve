@@ -4,7 +4,8 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 from cbc.common import CBCProblem
-from cbc.twist.solution_algorithms import StaticMomentumBalanceSolver, MomentumBalanceSolver
+from cbc.twist.solution_algorithms import StaticMomentumBalanceSolver, MomentumBalanceSolver, CG1MomentumBalanceSolver
+from sys import exit
 
 class StaticHyperelasticity(CBCProblem):
     """Base class for all static hyperelasticity problems"""
@@ -68,8 +69,17 @@ class Hyperelasticity(StaticHyperelasticity):
     problems"""
 
     def __init__(self):
+
         """Create the hyperelasticity problem"""
-        self.solver = MomentumBalanceSolver(self)
+        if self.time_stepping() is "CG1":
+            print "Using CG1 time-stepping"
+            self.solver = CG1MomentumBalanceSolver(self)
+        elif self.time_stepping() is "HHT":
+            print "Using HHT time-stepping"
+            self.solver = MomentumBalanceSolver(self)
+        else:
+            print "%s time-stepping scheme not supported" % str(self.time_stepping())
+            exit(2)
 
     def solve(self):
         """Solve for and return the computed displacement field, u"""
@@ -95,6 +105,11 @@ class Hyperelasticity(StaticHyperelasticity):
         """Return True if the inertia term is to be considered, or
         False if it is to be neglected (quasi-static)"""
         return False
+
+    def time_stepping(self):
+        """Set the default time-stepping scheme to
+        Hilber-Hughes-Taylor"""
+        return "HHT"
 
     def reference_density(self):
         """Return the reference density of the material"""
