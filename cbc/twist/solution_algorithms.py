@@ -7,6 +7,7 @@ from cbc.common import CBCSolver
 from cbc.common.utils import *
 from cbc.twist.kinematics import Grad, DeformationGradient
 from sys import exit
+from numpy import array, loadtxt
 
 class StaticMomentumBalanceSolver(CBCSolver):
     "Solves the static balance of linear momentum"
@@ -103,6 +104,11 @@ class MomentumBalanceSolver(CBCSolver):
 
         """Initialise the momentum balance solver"""
 
+        # Set up parameters
+        self.parameters = Parameters("solver_parameters")
+        self.parameters.add("plot_solution", True)
+        self.parameters.add("store_solution", False)
+
         # Get problem parameters
         mesh        = problem.mesh()
         dt, t_range = timestep_range(problem, mesh)
@@ -120,6 +126,19 @@ class MomentumBalanceSolver(CBCSolver):
             u0 = Constant((0,)*vector.mesh().geometry().dim())
         if v0 == []:
             v0 = Constant((0,)*vector.mesh().geometry().dim())
+
+        # If either are text strings, assume those are file names and
+        # load conditions from those files
+        if isinstance(u0, str):
+            print "Loading initial displacement from file"
+            file_name = u0
+            u0 = Function(vector)
+            u0.vector()[:] = loadtxt(file_name)[:]
+        if isinstance(v0, str):
+            print "Loading initial velocity from file"
+            file_name = v0
+            v0 = Function(vector)
+            v0.vector()[:] = loadtxt(file_name)[:]
         
         # Get Dirichlet boundary conditions on the displacement field
         bcu = []
@@ -305,6 +324,10 @@ class MomentumBalanceSolver(CBCSolver):
         self.v0.assign(self.v1)
         self.a0.assign(self.a1)
 
+        # Plot solution
+        if self.parameters["plot_solution"]:
+            plot(self.u0, title="Displacement", mode="displacement", rescale=True)
+
         # Move to next time step
         self.t = self.t + self.dt
 
@@ -315,4 +338,3 @@ class MomentumBalanceSolver(CBCSolver):
             bc.t = self.t
         self.B.t = self.t
 
-        #plot(self.u0, title = "Displacement", mode = "Displacement", rescale = True)
