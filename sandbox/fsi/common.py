@@ -7,12 +7,12 @@ channel_height  = 1.0
 structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
-nx = 80
+nx = 160
 ny = nx/4 
 
 # Parameters
-dt = 0.1
-T = 1.0
+dt = 0.05
+T = 2.0
 tol = 1e-4
 
 # Create the complete mesh

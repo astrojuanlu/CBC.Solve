@@ -94,6 +94,7 @@ class FluidProblem(NavierStokes):
         omega_F1.coordinates()[:] = x1
 #         plot(omega_F1, title="F1")
 #         plot(omega_F0, title="F0")
+        omega_F1.smooth(50)
 
         # Update mesh velocity 
         wx = self.w.vector().array()
