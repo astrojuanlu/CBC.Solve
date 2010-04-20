@@ -106,8 +106,13 @@ class MomentumBalanceSolver(CBCSolver):
 
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", True)
+        self.parameters.add("plot_solution", False)
         self.parameters.add("store_solution", False)
+
+        # Create binary files to store solutions
+        if self.parameters["store_solution"]:
+            self.displacement_series = TimeSeries("displacement")
+            self.velocity_series = TimeSeries("velocity")
 
         # Get problem parameters
         mesh        = problem.mesh()
@@ -293,6 +298,10 @@ class MomentumBalanceSolver(CBCSolver):
         for t in self.t_range:
             print "Solving the problem at time t = " + str(self.t)
             self.step(self.dt)
+            if self.parameters["store_solution"]:
+                self.displacement_series.store(self.u1.vector(), t)
+                self.velocity_series.store(self.v1.vector(), t)
+
             self.update()
 
     def step(self, dt): 
@@ -347,8 +356,12 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", True)
+        self.parameters.add("plot_solution", False)
         self.parameters.add("store_solution", False)
+
+        # Create binary files to store solutions
+        if self.parameters["store_solution"]:
+            self.displacement_velocity_series = TimeSeries("displacement_velocity")
 
         # Get problem parameters
         mesh        = problem.mesh()
@@ -482,6 +495,8 @@ class CG1MomentumBalanceSolver(CBCSolver):
         for t in self.t_range:
             print "Solving the problem at time t = " + str(self.t)
             self.step(self.dt)
+            if self.parameters["store_solution"]:
+                self.displacement_velocity_series.store(self.U.vector(), t)
             self.update()
 
     def step(self, dt): 
