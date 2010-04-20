@@ -9,7 +9,7 @@ from numpy import array, append
 from common import *
 from math import ceil
 
-plot_solution = True 
+plot_solution = False
 
 # Define fluid problem
 class FluidProblem(NavierStokes):
@@ -25,7 +25,7 @@ class FluidProblem(NavierStokes):
         return omega_F1
 
     def viscosity(self):
-        return 1.0
+        return 1e-2
     
     def density(self):
         return 1.0
@@ -175,9 +175,13 @@ class StructureProblem(Hyperelasticity):
         return 1.0
 
     def material_model(self):
-        mu       = 3.841
-        lmbda    = 5.76
+        factor = 1.0
+        mu       = 3.841 * factor
+        lmbda    = 5.76 * factor
         return StVenantKirchhoff([mu, lmbda])
+
+    def time_stepping(self):
+        return "CG1"
 
     def time_step(self):
         return dt
@@ -190,7 +194,7 @@ class StructureProblem(Hyperelasticity):
 
 # Define mesh problem
 class MeshProblem(StaticHyperelasticity):
-
+    
     def __init__(self):
         self.V_M = VectorFunctionSpace(Omega_F, "CG", 1)
 
@@ -207,8 +211,7 @@ class MeshProblem(StaticHyperelasticity):
         return ["on_boundary"]
 
     def material_model(self):
-        factor = 0.001
-        E  = 10.0 * factor
+        E  = 10.0
         nu = 0.3
         mu   = E / (2.0*(1.0 + nu))
         lmbda = E*nu / ((1.0 + nu)*(1.0 - 2.0*nu))
@@ -243,6 +246,7 @@ U_S_vector_old  = v0.vector()
 file_u_F = File("u_F.pvd")
 file_p_F = File("p_F.pvd")
 file_U_S = File("U_S.pvd")
+file_P_S = File("P_S.pvd")
 file_U_M = File("U_M.pvd")
 
 # Fix time step if needed. Note that this has to be done
@@ -267,7 +271,8 @@ while t <= T:
         S.update_fluid_stress(Sigma_F)
         
         # Solve structure equation
-        U_S = S.step(dt)
+        structure_sol = S.step(dt)
+        U_S, P_S = structure_sol.split(True)
 
         # Update structure displacement for mesh problem
         M.update_structure_displacement(U_S)
@@ -280,10 +285,10 @@ while t <= T:
         
         # Plot solutions
         if plot_solution:
-           # plot(u_F, title="Fluid velocity")
-            plot(U_S, title="Structure displacement", mode="displacement")
-            plot(U_M, title="Mesh displacement", mode="displacement")
-           # plot(F.w, title="Mesh velocity")
+           plot(u_F, title="Fluid velocity")
+           plot(U_S, title="Structure displacement", mode="displacement")
+           plot(U_M, title="Mesh displacement", mode="displacement")
+           plot(F.w, title="Mesh velocity")
             
         # Compute residual
         U_S_vector_old.axpy(-1, U_S.vector())
@@ -313,12 +318,14 @@ while t <= T:
     file_u_F << u_F
     file_p_F << p_F
     file_U_S << U_S
+    file_P_S << P_S
     file_U_M << U_M
   
     # Store primal vectors
     primal_u_F.store(u_F.vector(), t)
     primal_p_F.store(p_F.vector(), t)
     primal_U_S.store(U_S.vector(), t)
+    primal_P_S.store(P_S.vector(), t)
     primal_U_M.store(U_M.vector(), t)
     
     # Move on to the next time level

@@ -7,11 +7,11 @@ channel_height  = 1.0
 structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
-nx = 40
+nx = 80
 ny = nx/4 
 
 # Parameters
-dt = 0.05
+dt = 0.1
 T = 1.0
 tol = 1e-4
 
@@ -147,8 +147,8 @@ for facet in facets(mesh):
 primal_u_F = TimeSeries("primal_u_F")
 primal_p_F = TimeSeries("primal_p_F")
 primal_U_S = TimeSeries("primal_U_S")
+primal_P_S = TimeSeries("primal_P_S")
 primal_U_M = TimeSeries("primal_U_M")
-
 
 
 
