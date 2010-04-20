@@ -6,4 +6,5 @@
 *.pyo
 *.vtu
 cbc/twist/sandbox/*
+demo/twist/results*
 RE:.*\#.*\#$
