@@ -118,15 +118,20 @@ psi = lmbda/2*(tr(E)**2) + mu*tr(E*E)
 S = diff(psi, E)
 P = F*S
 
+obstruction_mesh = SubMesh(mesh, sub_domains, 1)
+N = FacetNormal(obstruction_mesh)
+
 rho0 = Constant(1.0)
 dt = Constant(0.1)
 L = rho0*inner(v - v0, xi)*dx(2) + dt*inner(P, grad(xi))*dx(2) \
-    - dt*inner(B, xi)*dx(2) - dt*inner(T('+'), xi('+'))*dS(5) \
+    - dt*inner(B, xi)*dx(2) - dt*inner(T, xi)*dS(5) \
     + inner(u - u0, eta)*dx(2) - dt*inner(v_mid, eta)*dx(2) \
     + rho0*inner(v - v0, xi)*dx(1) + dt*inner(P, grad(xi))*dx(1) \
     - dt*inner(B, xi)*dx(1) \
     + inner(u - u0, eta)*dx(1) - dt*inner(v_mid, eta)*dx(1)
 a = derivative(L, U, dU)
+
+
 
 t = 0.0
 T = 1.0
