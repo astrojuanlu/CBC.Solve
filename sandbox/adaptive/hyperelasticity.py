@@ -59,15 +59,52 @@ plot_file = File("displacement.pvd")
 displacement_series = TimeSeries("displacement")
 velocity_series = TimeSeries("velocity")
 
-while t < T:
+# Primal problem
 
+# while t < T:
+
+#     t = t + float(dt)
+
+#     problem.solve(U)
+#     u, v = U.split(True)
+    
+#     plot_file << u
+#     displacement_series.store(u.vector(), t)
+#     velocity_series.store(v.vector(), t)
+
+#     U0.assign(U)
+
+# Adjoint problem
+
+u_h = Function(vector)
+v_h = Function(vector)
+
+right_boundary = compile_subdomains("x[0] == 1.0")
+exterior_facet_domains = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
+exterior_facet_domains.set_all(0)
+right_boundary.mark(exterior_facet_domains, 1)
+
+a_adjoint = adjoint(a)
+L_adjoint = dt*inner(grad(u_h), grad(xi))*dx
+# FIXME: Replace u with u_h here
+problem_adjoint = VariationalProblem(a_adjoint, L_adjoint, homogenize(bcl), exterior_facet_domains=exterior_facet_domains)
+
+plot_file_adjoint = File("adjoint_displacement.pvd")
+
+while t < T:
     t = t + float(dt)
 
-    problem.solve(U)
+    displacement_series.retrieve(u_h.vector(), t)
+    velocity_series.retrieve(v_h.vector(), t)
+
+    problem_adjoint.solve(U)
     u, v = U.split(True)
-    
-    plot_file << u
-    displacement_series.store(u.vector(), t)
-    velocity_series.store(v.vector(), t)
+
+    plot_file_adjoint << u
 
     U0.assign(U)
+
+#    plot(u, mode='displacement')
+#    plot(v_h)
+
+interactive()
