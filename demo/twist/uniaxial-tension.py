@@ -43,6 +43,5 @@ class UniaxialTension(Hyperelasticity):
 # Setup and solve problem
 problem = UniaxialTension()
 print problem
-u = problem.solve()
-plot(u)
+problem.solve()
 interactive()
