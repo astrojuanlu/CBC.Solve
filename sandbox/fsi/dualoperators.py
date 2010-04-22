@@ -56,10 +56,10 @@ def Sigma_F(u,p,v):
 rho_F = 1
 mu_F = 1
 rho_S = 1
-mu_S = 1
-lamb_S = 1
-mu_M = 1 
-lamb_M = 1
+mu_S =  3.841
+lamb_S = 5.76
+mu_M =  3.8461
+lamb_M =  5.76
 
 # def sigma_F(u,p):
 #     return 2.0*mu_F*sym_gradient(u) + I(u)*p 

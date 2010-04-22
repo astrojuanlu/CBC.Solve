@@ -1,7 +1,8 @@
 from common import *
 from cbc.common import CBCSolver
 from cbc.twist.kinematics import SecondOrderIdentity
-from numpy import array, append, zeros
+from numpy import array, append, zeros, linspace
+from math import ceil
 from dualoperators import *
 
 # Optimize form compiler
@@ -30,7 +31,7 @@ W = MixedFunctionSpace(mixed_space)
 U_F = Function(V_F1)
 P_F = Function(Q_F)
 U_S = Function(V_S)
-#P_S = Funtion()     FIXME: Need this from the primal solver that solves the sys. of eq.
+P_S = Function(Q_S)  
 U_M = Function(V_M)
 #P_M = Function(Q_M) FIXME: Check for sure that Im not needed!
 
@@ -94,16 +95,18 @@ def get_primal_data(t):
     # Create vectors for primal dofs
     u_F_subdofs = Vector()
     p_F_subdofs = Vector()
-    U_M_subdofs = Vector()
     U_S_subdofs = Vector()
+    P_S_subdofs = Vector()
+    U_M_subdofs = Vector()
 
     # Get primal data (note the "dual time shift")
     # FIXME: Should interpolate:  T - (t - kn/2)
     # if we use cG(1)
     primal_u_F.retrieve(u_F_subdofs, T - t)
     primal_p_F.retrieve(p_F_subdofs, T - t)
-    primal_U_M.retrieve(U_M_subdofs, T - t)
     primal_U_S.retrieve(U_S_subdofs, T - t)
+    primal_P_S.retrieve(P_S_subdofs, T - t)
+    primal_U_M.retrieve(U_M_subdofs, T - t)
 
     # Create mapping from Omega_(F,S,M) to Omega (extend primal vectors with zeros)
     global_vertex_indices_F = Omega_F.data().mesh_function("global vertex indices")
@@ -127,6 +130,7 @@ def get_primal_data(t):
     U_F_global_dofs = append(F_global_index, F_global_index + Nv)
     P_F_global_dofs = F_global_index
     U_S_global_dofs = append(S_global_index, S_global_index + Nv)
+    P_S_global_dofs = append(S_global_index, S_global_index + Nv)
     U_M_global_dofs = append(M_global_index, M_global_index + Nv)
 
     # Get rid of P2 dofs for u_F and create a P1 function
@@ -136,10 +140,11 @@ def get_primal_data(t):
     U_F.vector()[U_F_global_dofs] = u_F_subdofs
     P_F.vector()[P_F_global_dofs] = p_F_subdofs
     U_S.vector()[U_S_global_dofs] = U_S_subdofs
+    P_S.vector()[U_S_global_dofs] = P_S_subdofs    
     U_M.vector()[U_M_global_dofs] = U_M_subdofs
 
     # FIXME: Need primal data U(kn), U(kn-1), and U_ip (like for Z_UF_ip etc.)
-    return U_F, P_F, U_S, U_M
+    return U_F, P_F, U_S, P_S, U_M
 
 # Fluid eq. linearized around fluid variables
 A_FF01 = -(1/kn)*inner((Z_UF - Z_UF0), rho_F*J(U_M)*v_F)*dx(0)                           
@@ -235,7 +240,7 @@ bc_U_F   = DirichletBC(W.sub(0), Constant((0,0)), noslip)
 bc_P_F0  = DirichletBC(W.sub(1), Constant(0.0), inflow) # FIME: Make sure it goes to zero in both P/D
 bc_P_F1  = DirichletBC(W.sub(1), Constant(0.0), outflow)# FIME: Make sure it goes to zero in both P/D
 bc_U_S   = DirichletBC(W.sub(2), Constant((0,0)), dirichlet_boundaries)
-bc_P_S   = DirichletBC(W.sub(3), Constant((0,0)), DomainBoundary())            # FIXME: Correct BC?
+bc_P_S   = DirichletBC(W.sub(3), Constant((0,0)), dirichlet_boundaries)            # FIXME: Correct BC?
 bc_U_M1  = DirichletBC(W.sub(4), Constant((0,0)), DomainBoundary())
 bc_U_M2  = DirichletBC(W.sub(4), Constant((0,0)), interior_facet_domains, 1)
 bc_U_PM1 = DirichletBC(W.sub(5), Constant((0,0)), DomainBoundary())            # FIXME: Correct BC?
@@ -245,12 +250,13 @@ bc_U_PM2 = DirichletBC(W.sub(5), Constant((0,0)), interior_facet_domains, 1)   #
 bc_ZF_T = DirichletBC(W.sub(0), Constant((DOLFIN_EPS, 0.0)), outflow)
 
 # Collect bcs
-bcs = [bc_U_F, bc_P_F0, bc_P_F1, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_U_PM1, bc_U_PM2, bc_ZF_T]
+bcs = [bc_U_F, bc_P_F0, bc_P_F1, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_U_PM1, bc_U_PM2]
 
 # Create files 
 file_Z_UF = File("Z_UF.pvd")
 file_Z_PF = File("Z_PF.pvd")
 file_Z_US = File("Z_US.pvd")
+file_Z_PS = File("Z_PS.pvd")
 file_Z_UM = File("Z_UM.pvd")
 file_Z_PM = File("Z_PM.pvd")
 
@@ -264,6 +270,7 @@ t_range = linspace(0, T, n + 1)[1:]
 kn = t_range[0]
 
 # Time stepping
+t=0
 while t <= T:
     
    print "*******************************************"
@@ -307,16 +314,18 @@ while t <= T:
    file_Z_UF << Z_UF
    file_Z_PF << Z_PF
    file_Z_US << Z_US
+   file_Z_PS << Z_PS
    file_Z_UM << Z_UM
    file_Z_PM << Z_PM
 
    # Plot solutions
-  # plot(Z_PS, title="Dual structure velocity")
-   plot(Z_PF, title="Dual pressure")
-   plot(Z_UM, title="Dual mesh displacement")
    plot(Z_UF, title="Dual velocity")
+   plot(Z_PF, title="Dual pressure")  
    plot(Z_US, title="Dual displacement")
-  # plot(Z_PM, title="Dual mesh Lagrange Multiplier")
+   plot(Z_PS, title="Dual structure velocity")
+   plot(Z_UM, title="Dual mesh displacement")
+
+# plot(Z_PM, title="Dual mesh Lagrange Multiplier")
   # interactive()
  
    # Move to next time interval

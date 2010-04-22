@@ -42,7 +42,7 @@ class FluidProblem(NavierStokes):
         # FIXME: Anders fix DirichletBC to take int or float instead of Constant
         
         # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(0.5), inflow)
+        bcp0 = DirichletBC(Q, Constant(0.35), inflow)
         bcp1 = DirichletBC(Q, Constant(0.0), outflow)
 
         return [bcu], [bcp0, bcp1]
@@ -176,13 +176,14 @@ class StructureProblem(Hyperelasticity):
         return 1.0
 
     def material_model(self):
-        factor = 1.0
-        mu       = 3.841 * factor
-        lmbda    = 5.76 * factor
+        mu       = 3.841
+        lmbda    = 5.76 
         return StVenantKirchhoff([mu, lmbda])
+        #return LinearElastic([mu, lmbda])
 
     def time_stepping(self):
         return "CG1"
+#        return "HHT"
 
     def time_step(self):
         return dt
@@ -274,6 +275,7 @@ while t <= T:
         # Solve structure equation
         structure_sol = S.step(dt)
         U_S, P_S = structure_sol.split(True)
+#        U_S  = S.step(dt)
 
         # Update structure displacement for mesh problem
         M.update_structure_displacement(U_S)

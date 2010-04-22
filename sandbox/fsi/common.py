@@ -7,18 +7,18 @@ channel_height  = 1.0
 structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
-nx = 160
+nx = 80
 ny = nx/4 
 
 # Parameters
 dt = 0.05
-T = 2.0
+T = 15.0
 tol = 1e-4
 
 # Create the complete mesh
 mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
-
 # Define dimension of mesh
+
 D = mesh.topology().dim()
 
 # Initialize mesh conectivity 
