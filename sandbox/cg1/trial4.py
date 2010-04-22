@@ -31,10 +31,10 @@ mu    = Constant(3.85)
 lmbda = Constant(5.77)
 
 rho0 = Constant(1.0)
-dt = Constant(0.01)
+dt = Constant(0.1)
 
 def PE(u):
-    return assemble(inner(epsilon(u), sigma(u))*dx, mesh=mesh)
+    return assemble(inner(0.5*epsilon(u), sigma(u))*dx, mesh=mesh)
 
 def KE(v):
     return assemble(0.5*rho0*inner(v, v)*dx, mesh=mesh)
@@ -43,7 +43,7 @@ def TE(u, v):
     return PE(u) + KE(v)
 
 def epsilon(v):
-    return sym(grad(v))
+    return 0.5*(grad(v) + grad(v).T)
 
 def sigma(v):
     return 2.0*mu*epsilon(v) + lmbda*tr(epsilon(v))*Identity(v.cell().d)
@@ -61,7 +61,7 @@ problem = VariationalProblem(a, L, nonlinear = True)
 file = File("displacement.pvd")
 u0, v0 = U0.split(True)
 
-print "Total Energy", TE(u0, v0)
+print "Energies: ", "0.0\t", PE(u0), "\t", KE(v0)
 file << u0
 
 while t < T:
@@ -71,7 +71,7 @@ while t < T:
     problem.solve(U)
     u, v = U.split()
 
-    print "Total Energy", TE(u, v)
+    print "Energies: ", t, "\t", PE(u), "\t", KE(v)
     file << u
 
     U0.assign(U)
