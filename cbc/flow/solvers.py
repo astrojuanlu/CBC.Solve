@@ -30,7 +30,7 @@ class NavierStokesSolver(CBCSolver):
         mesh = problem.mesh()
         dt, t_range = timestep_range(problem, mesh)
         info("Using time step dt = %g" % dt)
-      
+
         # Function spaces
         V1 = VectorFunctionSpace(mesh, "CG", 1)
         V = VectorFunctionSpace(mesh, "CG", 2)
@@ -53,7 +53,7 @@ class NavierStokesSolver(CBCSolver):
         p1 = interpolate(p0, Q)
 
         # Coefficients
-        #nu = Constant(problem.viscosity()) # Kinimatic viscosity [m^2/s]
+        #nu = Constant(problem.viscosity()) # Kinematic viscosity [m^2/s]
         mu = Constant(problem.viscosity())  # Dynamic viscosity [Ps x s]
         rho = Constant(problem.density())   # Density [kg/m^3]
         k = Constant(dt)
