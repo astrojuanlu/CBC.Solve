@@ -367,7 +367,8 @@ class CG1MomentumBalanceSolver(CBCSolver):
         mesh        = problem.mesh()
         dt, t_range = timestep_range(problem, mesh)
         end_time    = problem.end_time()
-
+        info("Using time step dt = %g" % dt)
+        
         # Define function spaces
         scalar = FunctionSpace(mesh, "CG", 1)
         vector = VectorFunctionSpace(mesh, "CG", 1)
