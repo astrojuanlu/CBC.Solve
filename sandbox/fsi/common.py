@@ -1,34 +1,54 @@
 from dolfin import *
 from numpy import array, append, zeros
 
+# Mesh and time stepping parameters
+nx = 80
+ny = nx/4 
+dt = 0.05
+T = 1.5
+tol = 1e-4
+
 # Constants related to the geometry of the channel and the obstruction
 channel_length  = 4.0
 channel_height  = 1.0
 structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
-nx = 80
-ny = nx/4 
-
-# Parameters
-dt = 0.05
-T = 15.0
-tol = 1e-4
 
 # Create the complete mesh
 mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
-# Define dimension of mesh
 
+# Define dimension of mesh
 D = mesh.topology().dim()
 
 # Initialize mesh conectivity 
 mesh.init(D-1, D)
+
+# Define inflow boundary
+def inflow(x):
+    return x[0] < DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
+
+# Define outflow boundary
+def outflow(x):
+    return x[0] > channel_length - DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
+
+# Define noslip boundary
+def noslip(x, on_boundary):
+    return on_boundary and not inflow(x) and not outflow(x)
 
 # Define structure subdomain
 class Structure(SubDomain):
     def inside(self, x, on_boundary):
         return (x[0] >= structure_left) and (x[0] <= structure_right) \
             and (x[1] <= structure_top)
+
+# Structure dirichlet boundaries
+def dirichlet_boundaries(x):
+    #FIXME: Figure out how to use the constants above in the
+    #following boundary definitions
+    #bottom ="x[1] == 0.0 && x[0] >= 1.4 && x[0] <= 1.6"
+    #return [bottom]
+    return x[1] < DOLFIN_EPS and x[0] >= structure_left and x[0] <= structure_right
 
 # Create structure subdomain
 structure = Structure()
@@ -74,26 +94,6 @@ right.mark(exterior_boundary, 2)
 facet_orientation = mesh.data().create_mesh_function("facet orientation", D - 1)
 facet_orientation.set_all(0)
 
-# Define inflow boundary
-def inflow(x):
-    return x[0] < DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
-
-# Define outflow boundary
-def outflow(x):
-    return x[0] > channel_length - DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
-
-# Define noslip boundary
-def noslip(x, on_boundary):
-    return on_boundary and not inflow(x) and not outflow(x)
-
-# Structure BCs 
-def dirichlet_boundaries(x):
-    #FIXME: Figure out how to use the constants above in the
-    #following boundary definitions
-    #bottom ="x[1] == 0.0 && x[0] >= 1.4 && x[0] <= 1.6"
-    #return [bottom]
-    return x[1] < DOLFIN_EPS and x[0] >= structure_left and x[0] <= structure_right
-
 # Functions for adding vectors between domains
 def fsi_add_f2s(xs, xf):
     "Compute xs += xf for corresponding indices"
@@ -108,7 +108,6 @@ def fsi_add_s2f(xf, xs):
     xs_array = xs.array()
     xf_array[fdofs] += xs_array[sdofs]
     xf[:] = xf_array
-
 
 # Mark facet orientation for the fsi boundary
 for facet in facets(mesh):
