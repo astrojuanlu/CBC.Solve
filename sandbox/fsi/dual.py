@@ -20,12 +20,15 @@ Q_M  = VectorFunctionSpace(Omega, "CG", 1)
 # Create mixed function space
 mixed_space = (V_F2, Q_F, V_S, Q_S, V_M, Q_M)
 W = MixedFunctionSpace(mixed_space)
+W_test = TestFunction(W)
+W_trial = TrialFunction(W)
+W_func = Function(W)
 
-# Define test functions
-(v_F, q_F, v_S, q_S, v_M, q_M) = TestFunctions(W)
+# Create test functions
+(v_F, q_F, v_S, q_S, v_M, q_M) = split(W_test)
 
 # Define trial functions
-(Z_UF, Z_PF, Z_US, Z_PS, Z_UM, Z_PM) = TrialFunctions(W)
+(Z_UF, Z_PF, Z_US, Z_PS, Z_UM, Z_PM) = split(W_trial)
 
 # Create primal functions on Omega
 U_F = Function(V_F1)
@@ -33,9 +36,9 @@ P_F = Function(Q_F)
 U_S = Function(V_S)
 P_S = Function(Q_S)  
 U_M = Function(V_M)
-#P_M = Function(Q_M) FIXME: Check for sure that Im not needed!
+P_M = Function(Q_M) #FIXME: Check for sure that Im not needed in the primal!
 
-# Create functions for time-stepping
+# Create functions for time-stepping/initial conditions
 # Dual varibles
 Z_UF0 = Function(V_F2)
 Z_PF0 = Function(Q_F)
@@ -48,6 +51,7 @@ Z_PM0 = Function(Q_M)
 U_M0  = Function(V_M) # FIXME: should be taken care of when retrieve the primal data
 U_F0  = Function(V_F1)                      # or no?t
 U_S0  = Function(V_S)
+P_S0  = Function(Q_S)
 
 # Define time evaluation (cG1 or dG0)
 cG1 = False
@@ -156,7 +160,7 @@ A_FF06 = -inner(grad(Z_UF_ip), J(U_M)*q_F*F_invT(U_M))*dx(0)
 A_FF07 =  inner(Z_PF_ip, div(J(U_M)*dot(F_inv(U_M),v_F)))*dx(0)
 
 # Collect A_FF form
-A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07
+A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 
 
 # Fluid eq. linearized around mesh variable
 A_FM01 =  (1/kn)*inner(Z_UF_ip, rho_F*DJ(U_M, v_M)*(U_F - U_F0))*dx(0)
@@ -225,10 +229,11 @@ A_MS = - inner(Z_PM_ip('+'), v_S('+'))*dS(1)
 
 # Define goal funtionals
 psi_S_t = Constant((1.0, 0.0))
-goal_S = (1/T)*inner(v_S, psi_S_t)*dx(1)
+goal_S = 0.001*(1/T)*inner(v_S, psi_S_t)*dx(1)
 n_F = FacetNormal(Omega_F)
 goal_F = inner(v_F, n_F)*ds(2)
-goal_functionals =  goal_S #+ goal_F
+
+goal_functionals =  goal_S 
 
 # Define the dual rhs and lhs
 A_dual = lhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
@@ -240,7 +245,7 @@ bc_U_F   = DirichletBC(W.sub(0), Constant((0,0)), noslip)
 bc_P_F0  = DirichletBC(W.sub(1), Constant(0.0), inflow) # FIME: Make sure it goes to zero in both P/D
 bc_P_F1  = DirichletBC(W.sub(1), Constant(0.0), outflow)# FIME: Make sure it goes to zero in both P/D
 bc_U_S   = DirichletBC(W.sub(2), Constant((0,0)), dirichlet_boundaries)
-bc_P_S   = DirichletBC(W.sub(3), Constant((0,0)), dirichlet_boundaries)            # FIXME: Correct BC?
+bc_P_S   = DirichletBC(W.sub(3), Constant((0,0)), dirichlet_boundaries)            # FIXME: Correct BC? Initial condintion????
 bc_U_M1  = DirichletBC(W.sub(4), Constant((0,0)), DomainBoundary())
 bc_U_M2  = DirichletBC(W.sub(4), Constant((0,0)), interior_facet_domains, 1)
 bc_U_PM1 = DirichletBC(W.sub(5), Constant((0,0)), DomainBoundary())            # FIXME: Correct BC?
@@ -268,6 +273,12 @@ Z = Function(W)
 n = ceil(T / dt)
 t_range = linspace(0, T, n + 1)[1:]
 kn = t_range[0]
+
+# Set initial condition for dual problem
+#print Z_US0.vector().size
+#print len(U_S_global_dofs)
+#import sys
+#sys.exit(1)
 
 # Time stepping
 t=0
