@@ -22,7 +22,7 @@ class FluidProblem(NavierStokes):
         self.P_F = Function(self.Q)
 
     def mesh(self):
-        return omega_F1
+        return omega_F1 
 
     def viscosity(self):
         return 1e-2
@@ -42,7 +42,7 @@ class FluidProblem(NavierStokes):
         # FIXME: Anders fix DirichletBC to take int or float instead of Constant
         
         # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(0.35), inflow)
+        bcp0 = DirichletBC(Q, Constant(1.0), inflow)
         bcp1 = DirichletBC(Q, Constant(0.0), outflow)
 
         return [bcu], [bcp0, bcp1]
@@ -76,10 +76,7 @@ class FluidProblem(NavierStokes):
 
     def update_mesh_displacement(self, U_M):
         
-        # We would like to do something like this
-        #omega_F1.move(U_M)
-        
-        # But that doesn't work so we do it manually
+        # Update the mesh 
         X  = Omega_F.coordinates()
         x0 = omega_F0.coordinates()
         x1 = omega_F1.coordinates()
@@ -92,8 +89,8 @@ class FluidProblem(NavierStokes):
                
         # Update mesh
         omega_F1.coordinates()[:] = x1
-#         plot(omega_F1, title="F1")
-#         plot(omega_F0, title="F0")
+        
+        # Smooth the mesh 
         omega_F1.smooth(50)
 
         # Update mesh velocity 
@@ -176,10 +173,14 @@ class StructureProblem(Hyperelasticity):
         return 1.0
 
     def material_model(self):
-        mu       = 3.841
-        lmbda    = 5.76 
+        factor =   2.5 #3  is good for v. 1e-2 (endtime = 3)
+        mu       =  3.841 * factor 
+        lmbda    =  5.76  * factor  
         return StVenantKirchhoff([mu, lmbda])
         #return LinearElastic([mu, lmbda])
+
+    def is_dynamic(self):
+        return True
 
     def time_stepping(self):
         return "CG1"
@@ -217,9 +218,6 @@ class MeshProblem(StaticHyperelasticity):
         nu = 0.3
         mu   = E / (2.0*(1.0 + nu))
         lmbda = E*nu / ((1.0 + nu)*(1.0 - 2.0*nu))
-#         factor = 2
-#         mu = 3.8461 * factor
-#         lmbda = 5.76 * factor
         return LinearElastic([mu, lmbda])
 
     def update_structure_displacement(self, U_S):
@@ -323,7 +321,7 @@ while t <= T:
     file_U_S << U_S
     file_P_S << P_S
     file_U_M << U_M
-  
+
     # Store primal vectors
     primal_u_F.store(u_F.vector(), t)
     primal_p_F.store(p_F.vector(), t)
@@ -333,27 +331,6 @@ while t <= T:
     
     # Move on to the next time level
     t += dt
-
-# Hold plot
-#interactive()
-
-# # Define convergence indicator for flow (flux out of the domain)
-# out_flux = compile_subdomains("x[0] == channel_length ")
-# flux_boundary = MeshFunction("uint", u_F.function_space().mesh(), D-1)
-# out_flux.mark(flux_boundary, 3)
-# n_flux = FacetNormal(u_F.function_space().mesh())
-# flux_functional = dot(u_F, -n_flux)*ds(3)
-# flux = assemble(flux_functional,mesh = u_F.function_space().mesh(), exterior_facet_domains = flux_boundary)
-
-# Define convergence indicator for structure (integral over displacement in x1-direction)
-#us_x1, us_x2 = U_S.split(True)
-#displacement = max(us_x1.vector().array())
-# x = U_S.vector().array()
-# x = x[:len(x) / 2]
-# #print x
-# from numpy import max, mean
-# print "max =", max(x)
-# print "mean =", mean(x)
 
 # Define convergence indicator for structure (integral over displacement in x1-direction)
 displacement = assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
