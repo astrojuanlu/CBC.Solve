@@ -25,10 +25,10 @@ W_trial = TrialFunction(W)
 W_func = Function(W)
 
 # Create test functions
-(v_F, q_F, v_S, q_S, v_M, q_M) = split(W_test)
+(v_F, q_F, v_S, q_S, v_M, q_M) = TestFunctions(W)
 
 # Define trial functions
-(Z_UF, Z_PF, Z_US, Z_PS, Z_UM, Z_PM) = split(W_trial)
+(Z_UF, Z_PF, Z_US, Z_PS, Z_UM, Z_PM) = TrialFunctions(W)
 
 # Create primal functions on Omega
 U_F = Function(V_F1)
@@ -160,7 +160,7 @@ A_FF06 = -inner(grad(Z_UF_ip), J(U_M)*q_F*F_invT(U_M))*dx(0)
 A_FF07 =  inner(Z_PF_ip, div(J(U_M)*dot(F_inv(U_M),v_F)))*dx(0)
 
 # Collect A_FF form
-A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 
+A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05  + A_FF06 + A_FF07  # A_FF05 missing!
 
 # Fluid eq. linearized around mesh variable
 A_FM01 =  (1/kn)*inner(Z_UF_ip, rho_F*DJ(U_M, v_M)*(U_F - U_F0))*dx(0)
@@ -177,7 +177,7 @@ A_FM11 =  inner(Z_PF_ip, div(DJ(U_M,v_M)*dot(F_inv(U_M), U_F)))*dx(0)
 A_FM12 = -inner(Z_PF_ip, div(J(U_M)*dot(dot(F_inv(U_M),grad(v_M)), dot(F_inv(U_M) ,U_F))))*dx(0)
 
 # Collect A_FM form
-A_FM =  A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + A_FM11 + A_FM12
+A_FM =  A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + A_FM11 + A_FM12 
 
 # Structure eq. linearized around the fluid variables
 A_SF01 = -inner(Z_US_ip('+'), mu_F*J(U_M)('+')*dot(dot(grad(v_M('+')), F_inv(U_M)('+')), dot(F_invT(U_M)('+'), N)))*dS(1)
@@ -198,10 +198,11 @@ A_SS04 =  inner(grad(Z_US_ip), mu_S*dot(F(U_S), dot(F_T(U_S), grad(v_S)) - I(U_S
 A_SS05 =  inner(grad(Z_US_ip), 0.5*lamb_S*dot(grad(v_S), tr(dot(F(U_S),F_T(U_S)))*I(U_S)))*dx(1)
 A_SS06 =  inner(grad(Z_US_ip), 0.5*lamb_S*dot(F(U_S), tr(dot(grad(v_S),F_T(U_S)))*I(U_S)))*dx(1)
 A_SS07 =  inner(grad(Z_US_ip), 0.5*lamb_S*dot(F(U_S), tr(dot(F(U_S), grad(v_S).T))*I(U_S)))*dx(1)
-A_SS08 =  inner(Z_PS_ip, q_S)*dx(1)  
+A_SS08 =  inner(0.5*(Z_PS('+') + Z_PS0('+')), v_S('+'))*dS(1)
+A_SS09 =  (1/kn)*inner(Z_PS('+') - Z_PS0('+'), q_S('+'))*dS(1)  
 
 # Collect A_SS form
-A_SS =  A_SS02 + A_SS02 + A_SS04 + A_SS05 + A_SS06 + A_SS07 + A_SS08 
+A_SS =  A_SS02 + A_SS02 + A_SS04 + A_SS05 + A_SS06 + A_SS07 + A_SS08 + A_SS09
 
 # Structure eq. linearized around mesh variable
 A_SM01 = -inner(Z_US_ip('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(grad(U_F('+')), F_inv(U_F)('+')), dot(F_invT(U_M)('+'), N)))*dS(1) # FIXME: Replace with Sigma_F
@@ -229,10 +230,9 @@ A_MS = - inner(Z_PM_ip('+'), v_S('+'))*dS(1)
 
 # Define goal funtionals
 psi_S_t = Constant((1.0, 0.0))
-goal_S = 0.001*(1/T)*inner(v_S, psi_S_t)*dx(1)
+goal_S = 0.003*(1/T)*inner(v_S, psi_S_t)*dx(1)
 n_F = FacetNormal(Omega_F)
 goal_F = inner(v_F, n_F)*ds(2)
-
 goal_functionals =  goal_S 
 
 # Define the dual rhs and lhs
