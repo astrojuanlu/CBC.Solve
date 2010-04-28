@@ -151,7 +151,7 @@ N =  N_S('+')
 # Fluid eq. linearized around fluid variables
 A_FF01 = -(1/kn)*inner((Z_UF - Z_UF0), rho_F*J(U_M)*v_F)*dx(0)                           
 A_FF02 =  inner(Z_UF_ip, rho_F*J(U_M)*dot(dot(grad(v_F),F_inv(U_M)), (U_F - (U_M - U_M0)/kn)))*dx(0) # FIXME: Check time-derivative on U_M.
-A_FF03 =  inner(Z_UF_ip, J(U_M)*dot(grad(U_F) , dot(F_inv(U_M), v_F)))*dx(0)
+A_FF03 =  inner(Z_UF_ip, rho_F*J(U_M)*dot(grad(U_F) , dot(F_inv(U_M), v_F)))*dx(0)
 A_FF04 =  inner(grad(Z_UF_ip), J(U_M)*mu_F*dot(grad(v_F) , dot(F_inv(U_M), F_invT(U_M))))*dx(0)
 A_FF05 =  inner(grad(Z_UF_ip), J(U_M)*mu_F*dot(F_invT(U_M) , dot(grad(v_F).T, F_invT(U_M))))*dx(0)
 A_FF06 = -inner(grad(Z_UF_ip), J(U_M)*q_F*F_invT(U_M))*dx(0)
