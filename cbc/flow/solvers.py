@@ -165,7 +165,7 @@ class NavierStokesSolver(CBCSolver):
             if self.velocity_series is None: self.velocity_series = TimeSeries("velocity")
             if self.pressure_series is None: self.pressure_series = TimeSeries("pressure")
             self.velocity_series.store(self.u1, t)
-            self.velocity_series.store(self.p1, t)
+            self.pressure_series.store(self.p1, t)
 
         return self.u1, self.p1
 
