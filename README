@@ -7,7 +7,6 @@ Research Laboratory in Oslo (http://www.simula.no).
 
 The current collection consists of the following three solvers:
 
-  CBC.Beat  - solving the bidomain equations
   CBC.Flow  - solving the Navier-Stokes equations
   CBC.Twist - solving general hyperelastic models
 
@@ -54,6 +53,6 @@ visit
 For other questions, please contact
 
   Anders Logg <logg@simula.no>
-  Ola Skavhaug <skavhaug@simula.no>
+  Harish Narayanan <harish@simula.no>
 
 Oslo, November 2009
