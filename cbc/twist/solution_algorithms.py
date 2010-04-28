@@ -107,12 +107,18 @@ class MomentumBalanceSolver(CBCSolver):
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
         self.parameters.add("plot_solution", False)
-        self.parameters.add("store_solution", False)
+        self.parameters.add("save_solution", False)
+        self.parameters.add("save_plot", False)
 
         # Create binary files to store solutions
-        if self.parameters["store_solution"]:
+        if self.parameters["save_solution"]:
             self.displacement_series = TimeSeries("displacement")
             self.velocity_series = TimeSeries("velocity")
+
+        # Create pvd files to store paraview plots
+        if self.parameters["save_plot"]:
+            self.displacement_plot_file = File("displacement.pvd")
+            self.velocity_plot_file = File("velocity.pvd")
 
         # Get problem parameters
         mesh        = problem.mesh()
@@ -298,10 +304,12 @@ class MomentumBalanceSolver(CBCSolver):
         for t in self.t_range:
             print "Solving the problem at time t = " + str(self.t)
             self.step(self.dt)
-            if self.parameters["store_solution"]:
+            if self.parameters["save_solution"]:
                 self.displacement_series.store(self.u1.vector(), t)
                 self.velocity_series.store(self.v1.vector(), t)
-
+            if self.parameters["save_plot"]:
+                self.displacement_plot_file << self.u1
+                self.velocity_plot_file << self.v1
             self.update()
 
     def step(self, dt): 
@@ -357,11 +365,17 @@ class CG1MomentumBalanceSolver(CBCSolver):
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
         self.parameters.add("plot_solution", False)
-        self.parameters.add("store_solution", False)
+        self.parameters.add("save_solution", False)
+        self.parameters.add("save_plot", False)
 
         # Create binary files to store solutions
-        if self.parameters["store_solution"]:
+        if self.parameters["save_solution"]:
             self.displacement_velocity_series = TimeSeries("displacement_velocity")
+
+        # Create pvd files to store paraview plots
+        if self.parameters["save_plot"]:
+            self.displacement_plot_file = File("displacement.pvd")
+            self.velocity_plot_file = File("velocity.pvd")
 
         # Get problem parameters
         mesh        = problem.mesh()
@@ -496,8 +510,12 @@ class CG1MomentumBalanceSolver(CBCSolver):
         for t in self.t_range:
             print "Solving the problem at time t = " + str(self.t)
             self.step(self.dt)
-            if self.parameters["store_solution"]:
+            if self.parameters["save_solution"]:
                 self.displacement_velocity_series.store(self.U.vector(), t)
+            if self.parameters["save_plot"]:
+                u, v = self.U.split(True)
+                self.displacement_plot_file << u
+                self.velocity_plot_file << v
             self.update()
 
     def step(self, dt): 
