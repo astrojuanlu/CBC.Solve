@@ -173,7 +173,7 @@ class StructureProblem(Hyperelasticity):
         return 1.0
 
     def material_model(self):
-        factor =   2.5 #3  is good for v. 1e-2 (endtime = 3)
+        factor =   7# 2.5 #3  is good for v. 1e-2 (endtime = 3)
         mu       =  3.841 * factor 
         lmbda    =  5.76  * factor  
         return StVenantKirchhoff([mu, lmbda])
@@ -184,8 +184,7 @@ class StructureProblem(Hyperelasticity):
 
     def time_stepping(self):
         return "CG1"
-#        return "HHT"
-
+        #return "HHT"
     def time_step(self):
         return dt
 
@@ -343,6 +342,7 @@ print "End time T: %g"%T
 print "TOL %g" % tol
 print " "
 print " "
+print "mesh h %g"  % mesh.hmin()
 #print "Flux: %g" % flux 
 print "Displacement %g"% displacement
 print "*******************************************"

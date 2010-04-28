@@ -53,11 +53,11 @@ def Sigma_F(u,p,v):
     return  mu_F*(grad(u)*F_inv(v) + F_invT(v)*grad(u).T) - p*I(u)  
  
 # Define constants FIXME: Move !!!
-rho_F = 1
-mu_F = 1
+rho_F = 1.0
+mu_F = 1.0
 rho_S = 1
-mu_S =  3.841
-lamb_S = 5.76
+mu_S =   7*3.841
+lamb_S =  7*5.76
 mu_M =  3.8461
 lamb_M =  5.76
 

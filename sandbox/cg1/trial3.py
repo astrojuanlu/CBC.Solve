@@ -8,10 +8,11 @@ mesh = UnitSquare(8, 8)
 vector = VectorFunctionSpace(mesh, "CG", 1)
 
 B  = Expression(("0.0", "0.0"))
-T  = Expression(("t < tc ? tx*(1-cos(t/n))*0.5 : tx ;", "0.0"))
-T.tx = 1e-3
-T.n = 16
-T.tc = T.n*DOLFIN_PI
+# T  = Expression(("t < tc ? tx*(1-cos(t/n))*0.5 : tx ;", "0.0"))
+# T.tx = 1e-3
+# T.n = 16
+# T.tc = T.n*DOLFIN_PI
+T = Expression(("0.1","0.0"))
 
 mixed_element = MixedFunctionSpace([vector, vector])
 V = TestFunction(mixed_element)
@@ -71,7 +72,7 @@ L = rho0*inner(v - v0, xi)*dx + dt*inner(P, grad(xi))*dx \
 a = derivative(L, U, dU)
 
 t = 0.0
-eT = 100.0
+eT = 30.0
 
 problem = VariationalProblem(a, L, bcl, exterior_facet_domains=boundary, nonlinear = True)
 
