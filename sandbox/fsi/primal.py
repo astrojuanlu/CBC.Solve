@@ -308,7 +308,7 @@ while t <= T:
             break 
     
     # Move to next time step
-    F.update()
+    F.update(t)
     S.update()
 
     # FIXME: This should be done automatically by the solver
