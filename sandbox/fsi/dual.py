@@ -35,20 +35,6 @@ P_S = Function(Q_S)
 U_M = Function(V_M)
 P_M = Function(Q_M) #FIXME: Check for sure that Im not needed in the primal!
 
-# Create functions for time-stepping/initial conditions
-# Dual varibles
-Z_UF0 = Function(V_F2)
-Z_PF0 = Function(Q_F)
-Z_US0 = Function(V_S)
-Z_PS0 = Function(Q_S)
-Z_UM0 = Function(V_M)
-Z_PM0 = Function(Q_M)
-
-# Primal varibles
-U_M0  = Function(V_M) # FIXME: should be taken care of when retrieve the primal data
-U_F0  = Function(V_F1)                      # or no?t
-U_S0  = Function(V_S)
-P_S0  = Function(Q_S)
 
 # Define time evaluation (cG1 or dG0)
 cG1 = False
@@ -74,13 +60,6 @@ else:
     Z_PS_ip = Z_PS 
     Z_UM_ip = Z_UM 
     Z_PM_ip = Z_PM
-
-# Define time-step
-kn = dt
-
-# Define FSI normal 
-N_S =  FacetNormal(Omega_S)
-N =  N_S('+')
 
 # Retrieve primal data 
 def get_primal_data(t):
@@ -147,6 +126,28 @@ def get_primal_data(t):
     # FIXME: Need primal data U(kn), U(kn-1), and U_ip (like for Z_UF_ip etc.)
     return U_F, P_F, U_S, P_S, U_M
 
+# Create functions for time-stepping/initial conditions
+# Dual varibles
+Z_UF0 = Function(V_F2)
+Z_PF0 = Function(Q_F)
+Z_US0 = Function(V_S)
+Z_PS0 = Function(Q_S)
+Z_UM0 = Function(V_M)
+Z_PM0 = Function(Q_M)
+
+# Primal varibles
+U_M0  = Function(V_M) # FIXME: should be taken care of when retrieve the primal data
+U_F0  = Function(V_F1)                      # or no?t
+U_S0  = Function(V_S)
+P_S0  = Function(Q_S)
+
+# Define time-step
+kn = dt
+
+# Define FSI normal 
+N_S =  FacetNormal(Omega_S)
+N =  N_S('+')
+
 # Fluid eq. linearized around fluid variables
 A_FF01 = -(1/kn)*inner((Z_UF - Z_UF0), rho_F*J(U_M)*v_F)*dx(0)                           
 A_FF02 =  inner(Z_UF_ip, J(U_M)*rho_F*dot(dot(grad(v_F),F_inv(U_M)), (U_F - (U_M - U_M0)/kn)))*dx(0) # FIXME: Check time-derivative on U_M.
@@ -157,7 +158,7 @@ A_FF06 = -inner(grad(Z_UF_ip), J(U_M)*q_F*F_invT(U_M))*dx(0)
 A_FF07 =  inner(Z_PF_ip, div(J(U_M)*dot(F_inv(U_M),v_F)))*dx(0)
 
 # Collect A_FF form
-A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04  + A_FF06 + A_FF07  # A_FF05 missing!
+A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04  + A_FF06 + A_FF07  # FIXME:  A_FF05 missing!
 
 # Fluid eq. linearized around mesh variable
 A_FM01 =  (1/kn)*inner(Z_UF_ip, rho_F*DJ(U_M, v_M)*(U_F - U_F0))*dx(0)
