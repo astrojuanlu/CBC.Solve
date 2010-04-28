@@ -110,10 +110,6 @@ class NavierStokesSolver(CBCSolver):
             self.update(t)
             self._end_time_step(t, self.t_range[-1])
 
-        # Hold plots
-        if self.parameters["plot_solution"]:
-            interactive()
-
         return self.u1, self.p1
 
     def step(self, dt):

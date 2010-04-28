@@ -22,7 +22,7 @@ class ChannelWithFlap(NavierStokes):
     def mesh(self):
 
         # Vertical resolution
-        n = 30
+        n = 20
 
         # Define geometry for channel
         channel = Rectangle(0.0, 0.0, 4.0, 1.0, 4*n, n)
@@ -61,7 +61,7 @@ class ChannelWithFlap(NavierStokes):
         return u0, p0
 
     def end_time(self):
-        return 0.5
+        return 1.5
 
     def functional(self, u, p):
         return u((4.0, 0.5))[0]
@@ -79,3 +79,6 @@ u, p = problem.solve()
 # Print value of functional
 ux = problem.functional(u, p)
 print "ux =", ux
+
+# Hold plots
+interactive()
