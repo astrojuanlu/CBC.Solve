@@ -2,8 +2,8 @@ from dolfin import *
 from numpy import array, append, zeros
 
 # Mesh and time stepping parameters
-nx = 80 
-ny = nx/4 
+nx = 80
+ny = nx/4
 dt = 0.025
 T = 2.0
 tol = 1e-6
@@ -21,7 +21,7 @@ mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 # Define dimension of mesh
 D = mesh.topology().dim()
 
-# Initialize mesh conectivity 
+# Initialize mesh conectivity
 mesh.init(D-1, D)
 
 # Define inflow boundary
@@ -68,7 +68,7 @@ Omega = mesh
 Omega_F = SubMesh(mesh, sub_domains, 0)
 Omega_S = SubMesh(mesh, sub_domains, 1)
 omega_F0 = Mesh(Omega_F)
-omega_F1 = Mesh(Omega_F) 
+omega_F1 = Mesh(Omega_F)
 
 # Extract matching indices for fluid and structure
 structure_to_fluid = compute_vertex_map(Omega_S, Omega_F)
@@ -148,6 +148,3 @@ primal_p_F = TimeSeries("primal_p_F")
 primal_U_S = TimeSeries("primal_U_S")
 primal_P_S = TimeSeries("primal_P_S")
 primal_U_M = TimeSeries("primal_U_M")
-
-
-

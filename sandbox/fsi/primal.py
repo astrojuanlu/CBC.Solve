@@ -13,7 +13,7 @@ plot_solution = False
 
 # Define fluid problem
 class FluidProblem(NavierStokes):
-    
+
     def __init__(self):
         NavierStokes.__init__(self)
         self.V = VectorFunctionSpace(Omega_F, "CG", 2)
@@ -22,25 +22,25 @@ class FluidProblem(NavierStokes):
         self.P_F = Function(self.Q)
 
     def mesh(self):
-        return omega_F1 
+        return omega_F1
 
     def viscosity(self):
         return 0.002
-    
+
     def density(self):
         return 1.0
-    
+
     def mesh_velocity(self, V):
         self.w = Function(V)
         return self.w
 
     def boundary_conditions(self, V, Q):
-        
+
         # Create no-slip boundary condition for velocity
-        bcu =  DirichletBC(V, Constant((0.0, 0.0)), noslip)        
-        
+        bcu = DirichletBC(V, Constant((0.0, 0.0)), noslip)
+
         # FIXME: Anders fix DirichletBC to take int or float instead of Constant
-        
+
         # Create inflow and outflow boundary conditions for pressure
         bcp0 = DirichletBC(Q, Constant(1.0), inflow)
         bcp1 = DirichletBC(Q, Constant(0.0), outflow)
@@ -49,20 +49,20 @@ class FluidProblem(NavierStokes):
 
     def end_time(self):
         return T
-   
+
     def time_step(self):
         return dt
-    
+
     def compute_fluid_stress(self, u_F, p_F, U_M):
 
         # Map u and p back to reference domain
         self.U_F.vector()[:] = u_F.vector()[:]
         self.P_F.vector()[:] = p_F.vector()[:]
 
-        # Compute mesh deformation gradient 
+        # Compute mesh deformation gradient
         F = DeformationGradient(U_M)
         F_inv = inv(F)
-        F_inv_T = F_inv.T 
+        F_inv_T = F_inv.T
 
         # Compute mapped stress (sigma_F \circ Phi) (here, grad "=" Grad)
         mu = self.viscosity()
@@ -75,8 +75,8 @@ class FluidProblem(NavierStokes):
         return Sigma_F
 
     def update_mesh_displacement(self, U_M):
-        
-        # Update the mesh 
+
+        # Update the mesh
         X  = Omega_F.coordinates()
         x0 = omega_F0.coordinates()
         x1 = omega_F1.coordinates()
@@ -86,19 +86,19 @@ class FluidProblem(NavierStokes):
         for i in range(N):
             for j in range(dim):
                 x1[i][j] = X[i][j] + dofs[j*N + i]
-               
+
         # Update mesh
         omega_F1.coordinates()[:] = x1
-        
-        # Smooth the mesh 
+
+        # Smooth the mesh
         omega_F1.smooth(50)
 
-        # Update mesh velocity 
+        # Update mesh velocity
         wx = self.w.vector().array()
         for i in range(N):
             for j in range(dim):
                 wx[j*N + i] = (x1[i][j] - x0[i][j]) / dt
-        
+
         self.w.vector()[:] = wx
 
         # Reassemble matrices
@@ -118,16 +118,16 @@ class FluidProblem(NavierStokes):
 class StructureProblem(Hyperelasticity):
 
     def __init__(self):
-        
+
         # Define functions and function spaces for transfer the fluid stress
         # FIXME: change name on function spaces
         self.V_F = VectorFunctionSpace(Omega_F, "CG", 1)
         self.v_F = TestFunction(self.V_F)
         self.N_F = FacetNormal(Omega_F)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
-        
+
         Hyperelasticity.__init__(self)
-             
+
     def mesh(self):
         return Omega_S
 
@@ -147,11 +147,11 @@ class StructureProblem(Hyperelasticity):
         print "Assembling traction on fluid domain"
         L_F = dot(self.v_F, dot(Sigma_F, self.N_F))*ds
         B_F = assemble(L_F)
-        
+
         # Transfer values to structure domain
         print "Transferring values to structure domain"
-        
-        # Add contribution from fluid vector to structure 
+
+        # Add contribution from fluid vector to structure
         B_S = Vector(self.V_S.dim())
         fsi_add_f2s(B_S, B_F)
 
@@ -194,7 +194,7 @@ class StructureProblem(Hyperelasticity):
 
 # Define mesh problem
 class MeshProblem(StaticHyperelasticity):
-    
+
     def __init__(self):
         self.V_M = VectorFunctionSpace(Omega_F, "CG", 1)
 
@@ -206,7 +206,7 @@ class MeshProblem(StaticHyperelasticity):
     def dirichlet_conditions(self):
         self.displacement = Function(self.V_M)
         return [self.displacement]
- 
+
     def dirichlet_boundaries(self):
         return ["on_boundary"]
 
@@ -255,18 +255,18 @@ dt = t_range[0]
 # Time-stepping
 t = 0
 while t <= T:
-   
+
  # Fixed point iteration on FSI problem
     r = 2*tol
     while r > tol:
-        
+
         # Solve fluid equation
         u_F, p_F = F.step(dt)
-       
+
         # Update fluid stress for structure problem
         Sigma_F = F.compute_fluid_stress(u_F, p_F, U_M)
         S.update_fluid_stress(Sigma_F)
-        
+
         # Solve structure equation
         structure_sol = S.step(dt)
         U_S, P_S = structure_sol.split(True)
@@ -279,19 +279,19 @@ while t <= T:
 
         # Update mesh displcament and mesh velocity
         F.update_mesh_displacement(U_M)
-        
+
         # Plot solutions
         if plot_solution:
            plot(u_F, title="Fluid velocity")
            plot(U_S, title="Structure displacement", mode="displacement")
            plot(U_M, title="Mesh displacement", mode="displacement")
            plot(F.w, title="Mesh velocity")
-            
+
         # Compute residual
         U_S_vector_old.axpy(-1, U_S.vector())
         r = norm(U_S_vector_old)
         U_S_vector_old[:] = U_S.vector()[:]
-                
+
         print "*******************************************"
         print "Solving the problem at t = ", str(t)
         print "With time step dt =" , str(dt)
@@ -299,11 +299,11 @@ while t <= T:
         print "norm(r)", str(r)
         print " "
         print "*******************************************"
-                
+
         # Check convergence
         if r < tol:
-            break 
-    
+            break
+
     # Move to next time step
     F.update(t)
     S.update()
@@ -311,7 +311,7 @@ while t <= T:
     # FIXME: This should be done automatically by the solver
     F.update_extra()
 
-    # Store solutions 
+    # Store solutions
     file_u_F << u_F
     file_p_F << p_F
     file_U_S << U_S
@@ -324,7 +324,7 @@ while t <= T:
     primal_U_S.store(U_S.vector(), t)
     primal_P_S.store(P_S.vector(), t)
     primal_U_M.store(U_M.vector(), t)
-    
+
     # Move on to the next time level
     t += dt
 
@@ -336,9 +336,9 @@ print "*******************************************"
 print "Mesh size: %g "%  mesh.num_cells()
 print "mesh h %g"  % mesh.hmin()
 print "Time step kn: %g"% dt
-print "End time T: %g"%T 
+print "End time T: %g"%T
 print "TOL %g" % tol
-#print "Flux: %g" % flux 
+#print "Flux: %g" % flux
 print " "
 print " "
 print "Displacement %g"% displacement
