@@ -22,7 +22,7 @@ class ChannelWithFlap(NavierStokes):
     def mesh(self):
 
         # Vertical resolution
-        n = 60
+        n = 20
 
         # Define geometry for channel
         channel = Rectangle(0.0, 0.0, 4.0, 1.0, 4*n, n)
