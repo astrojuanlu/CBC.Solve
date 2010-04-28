@@ -20,6 +20,8 @@ xi, eta = split(V)
 u, v = split(U)
 u0, v0 = split(U0)
 
+u_plot = v_plot = Function(vector)
+
 # Load initial displacement from file
 _u0 = loadtxt("u0.txt")[:]
 U0.vector()[0:len(_u0)] = _u0[:]
@@ -70,6 +72,10 @@ while t < T:
 
     problem.solve(U)
     u, v = U.split()
+
+    u_plot.assign(u)
+    plot(u_plot, mode='displacement')
+    
 
     print "Energies: ", t, "\t", PE(u), "\t", KE(v)
     file << u
