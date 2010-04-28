@@ -40,8 +40,9 @@ class UniaxialTension(Hyperelasticity):
     def __str__(self):
         return "A hyperelastic cube being pulled from both sides"
 
-# Setup and solve problem
+# Setup the problem
 problem = UniaxialTension()
+
+# Solve the problem
 print problem
 problem.solve()
-interactive()

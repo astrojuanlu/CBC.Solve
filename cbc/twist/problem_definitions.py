@@ -79,9 +79,10 @@ class Hyperelasticity(StaticHyperelasticity):
     """Base class for all quasistatic/dynamic hyperelasticity
     problems"""
 
-    def __init__(self):
-
+    def __init__(self, parameters=None):
         """Create the hyperelasticity problem"""
+
+        # Create solver
         if self.time_stepping() is "CG1":
             print "Using CG1 time-stepping"
             self.solver = CG1MomentumBalanceSolver(self)
@@ -92,12 +93,26 @@ class Hyperelasticity(StaticHyperelasticity):
             print "%s time-stepping scheme not supported" % str(self.time_stepping())
             exit(2)
 
+        # Set up parameters
+        self.parameters = Parameters("problem_parameters")
+        self.parameters.add(self.solver.parameters)
+
     def solve(self):
         """Solve for and return the computed displacement field, u"""
+
+        # Update solver parameters
+        self.solver.parameters.update(self.parameters["solver_parameters"])
+
+        # Call solver
         return self.solver.solve()
 
     def step(self, dt):
         "Take a time step of size dt"
+
+        # Update solver parameters
+        self.solver.parameters.update(self.parameters["solver_parameters"])
+        
+        # Call solver
         return self.solver.step(dt)
 
     def update(self):

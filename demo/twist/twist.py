@@ -51,9 +51,7 @@ class Twist(StaticHyperelasticity):
 
 # Setup the problem
 twist = Twist()
-twist.parameters["solver_parameters"]["plot_solution"] = True
 
 # Solve the problem
 print twist
 u = twist.solve()
-

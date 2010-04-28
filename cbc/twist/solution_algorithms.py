@@ -17,7 +17,9 @@ class StaticMomentumBalanceSolver(CBCSolver):
 
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", False)
+        self.parameters.add("plot_solution", True)
+        self.parameters.add("save_solution", False)
+        self.parameters.add("store_solution_data", False)
 
         # Get problem parameters
         mesh = problem.mesh()
@@ -100,10 +102,20 @@ class StaticMomentumBalanceSolver(CBCSolver):
         # Solve problem
         self.equation.solve(self.u)
 
-        # Plot solution if requested
+        # Plot solution
         if self.parameters["plot_solution"]:
             plot(self.u, title="Displacement", mode="displacement", rescale=True)
             interactive()
+
+        # Store solution (for plotting)
+        if self.parameters["save_solution"]:
+            displacement_file = File("displacement.pvd")
+            displacement_file << self.u
+
+        # Store solution data
+        if self.parameters["store_solution_data"]:
+            displacement_series = TimeSeries("displacement")
+            displacement_series.store(self.u, 0.0)
 
         return self.u
 
@@ -116,19 +128,9 @@ class MomentumBalanceSolver(CBCSolver):
 
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", False)
+        self.parameters.add("plot_solution", True)
         self.parameters.add("save_solution", False)
-        self.parameters.add("save_plot", False)
-
-        # Create binary files to store solutions
-        if self.parameters["save_solution"]:
-            self.displacement_series = TimeSeries("displacement")
-            self.velocity_series = TimeSeries("velocity")
-
-        # Create pvd files to store paraview plots
-        if self.parameters["save_plot"]:
-            self.displacement_plot_file = File("displacement.pvd")
-            self.velocity_plot_file = File("velocity.pvd")
+        self.parameters.add("store_solution_data", False)
 
         # Get problem parameters
         mesh        = problem.mesh()
@@ -205,7 +207,7 @@ class MomentumBalanceSolver(CBCSolver):
         a0 = TrialFunction(vector)
         P0 = problem.first_pk_stress(u0)
         a_accn = inner(a0, v)*dx
-        L_accn = - inner(P0, Grad(v))*dx# + inner(B, v)*dx
+        L_accn = - inner(P0, Grad(v))*dx + inner(B, v)*dx
 
         # Add contributions to the form from the Neumann boundary
         # conditions
@@ -306,6 +308,12 @@ class MomentumBalanceSolver(CBCSolver):
         self.mesh = mesh
         self.t = 0
 
+        # Empty file handlers / time series
+        self.displacement_file = None
+        self.velocity_file = None
+        self.displacement_series = None
+        self.velocity_series = None        
+
     def solve(self):
         """Solve the mechanics problem and return the computed
         displacement field"""
@@ -314,19 +322,15 @@ class MomentumBalanceSolver(CBCSolver):
         for t in self.t_range:
             print "Solving the problem at time t = " + str(self.t)
             self.step(self.dt)
-            if self.parameters["save_solution"]:
-                self.displacement_series.store(self.u1.vector(), t)
-                self.velocity_series.store(self.v1.vector(), t)
-            if self.parameters["save_plot"]:
-                self.displacement_plot_file << self.u1
-                self.velocity_plot_file << self.v1
             self.update()
+
+        if self.parameters["plot_solution"]:
+            interactive()
 
     def step(self, dt):
         """Setup and solve the problem at the current time step"""
 
         # FIXME: Setup all stuff in the constructor and call assemble instead of VariationalProblem
-
         equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
         equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-12
         equation.parameters["newton_solver"]["relative_tolerance"] = 1e-12
@@ -353,6 +357,20 @@ class MomentumBalanceSolver(CBCSolver):
         # Plot solution
         if self.parameters["plot_solution"]:
             plot(self.u0, title="Displacement", mode="displacement", rescale=True)
+
+        # Store solution (for plotting)
+        if self.parameters["save_solution"]:
+            if self.displacement_file is None: self.displacement_file = File("displacement.pvd")
+            if self.velocity_file is None: self.velocity_file = File("velocity.pvd")
+            self.displacement_file << self.u0
+            self.velocity_file << self.v0
+
+        # Store solution data
+        if self.parameters["store_solution_data"]:
+            if self.displacement_series is None: self.displacement_series = TimeSeries("displacement")
+            if self.velocity_series is None: self.velocity_series = TimeSeries("velocity")
+            self.displacement_series.store(self.u0, self.t)
+            self.velocity_series.store(self.v0, self.t)
 
         # Move to next time step
         self.t = self.t + self.dt
