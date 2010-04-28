@@ -4,7 +4,7 @@ from numpy import array, loadtxt
 parameters["form_compiler"]["cpp_optimize"] = True
 parameters["form_compiler"]["optimize"] = True
 
-mesh = UnitSquare(32, 32)
+mesh = UnitSquare(64, 64, "crossed")
 vector = VectorFunctionSpace(mesh, "CG", 1)
 
 B  = Expression(("0.0", "0.0"))
@@ -31,7 +31,7 @@ mu    = Constant(3.85)
 lmbda = Constant(5.77)
 
 rho0 = Constant(1.0)
-dt = Constant(0.1)
+dt = Constant(0.001)
 
 def PE(u):
     return assemble(inner(0.5*epsilon(u), sigma(u))*dx, mesh=mesh)
