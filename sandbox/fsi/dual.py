@@ -137,7 +137,7 @@ Z_PM0 = Function(Q_M)
 
 # Primal varibles
 U_M0  = Function(V_M) # FIXME: should be taken care of when retrieve the primal data
-U_F0  = Function(V_F1)                      # or no?t
+U_F0  = Function(V_F1)                      # or not?
 U_S0  = Function(V_S)
 P_S0  = Function(Q_S)
 
@@ -166,7 +166,7 @@ A_FM02 =  (1/kn)*inner(Z_UF_ip, rho_F*DJ(U_M, v_M)*dot(grad(U_F), dot(F_inv(U_M)
 A_FM03 = -inner(Z_UF,  rho_F*J(U_M)*dot((dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M),F_inv(U_M))))),(U_F - (U_M - U_M0)/kn)))*dx(0) 
 A_FM04 =  (1/kn)*inner((Z_UF - Z_UF0), rho_F*J(U_M)*dot(grad(U_F), dot(F_inv(U_M) ,v_M )))*dx(0)
 A_FM05 =  inner(grad(Z_UF_ip), DJ(U_M, v_M)*dot(Sigma_F(U_F, P_F, U_M),F_invT(U_M)))*dx(0)
-A_FM06 = -inner(grad(Z_UF_ip), J(U_M)*dot(mu_F*(dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M).T, F_inv(U_M))))), F_invT(U_M)))*dx(0)
+A_FM06 = -inner(grad(Z_UF_ip), J(U_M)*dot(mu_F*(dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M), F_inv(U_M))))), F_invT(U_M)))*dx(0)
 A_FM07 = -inner(grad(Z_UF_ip), J(U_M)*dot(mu_F*(dot(F_invT(U_M), dot(grad(v_M).T, dot(F_invT(U_M), grad(U_F).T )))), F_invT(U_M)))*dx(0)
 A_FM08 = -inner(grad(Z_UF_ip), J(U_M)*dot(mu_F*(dot(grad(U_F), dot(F_inv(U_M), dot(F_invT(U_M), grad(v_M).T )))), F_invT(U_M)))*dx(0)
 A_FM09 = -inner(grad(Z_UF_ip), J(U_M)*dot(mu_F*(dot(F_invT(U_M), dot(grad(U_F).T, dot(F_invT(U_M), grad(v_M).T )))), F_invT(U_M)))*dx(0)
