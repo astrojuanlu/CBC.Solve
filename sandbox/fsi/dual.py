@@ -20,9 +20,6 @@ Q_M  = VectorFunctionSpace(Omega, "CG", 1)
 # Create mixed function space
 mixed_space = (V_F2, Q_F, V_S, Q_S, V_M, Q_M)
 W = MixedFunctionSpace(mixed_space)
-W_test = TestFunction(W)
-W_trial = TrialFunction(W)
-W_func = Function(W)
 
 # Create test functions
 (v_F, q_F, v_S, q_S, v_M, q_M) = TestFunctions(W)
@@ -160,7 +157,7 @@ A_FF06 = -inner(grad(Z_UF_ip), J(U_M)*q_F*F_invT(U_M))*dx(0)
 A_FF07 =  inner(Z_PF_ip, div(J(U_M)*dot(F_inv(U_M),v_F)))*dx(0)
 
 # Collect A_FF form
-A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05  + A_FF06 + A_FF07  # A_FF05 missing!
+A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04  + A_FF06 + A_FF07  # A_FF05 missing!
 
 # Fluid eq. linearized around mesh variable
 A_FM01 =  (1/kn)*inner(Z_UF_ip, rho_F*DJ(U_M, v_M)*(U_F - U_F0))*dx(0)
@@ -188,9 +185,6 @@ A_SF03 =  inner(Z_US_ip('+'), mu_F*J(U_M)('+')*q_F('+')*dot(I(U_M)('+'), dot(F_i
 A_SF = A_SF01 + A_SF02 + A_SF03
 
 # Structure eq. linearized around the structure variable
-# Note that we solve the srtucture as a first order system in time
-# FIXME: for this to be consistent, we need to change the PRIMAL solver as well
-# FIXME: Add A_SS08 term (or A_SS09...)
 A_SS01 = -(1/kn)*inner((Z_PS - Z_PS0), rho_S*v_S)*dx(1) 
 A_SS02 =  inner(grad(Z_US_ip), mu_S*dot(grad(v_S), dot(F_T(U_S), F(U_S)) - I(U_S)))*dx(1)
 A_SS03 =  inner(grad(Z_US_ip), mu_S*dot(F(U_S), dot(grad(v_S).T, F(U_S)) - I(U_S)))*dx(1)
@@ -233,7 +227,7 @@ psi_S_t = Constant((1.0, 0.0))
 goal_S = 0.003*(1/T)*inner(v_S, psi_S_t)*dx(1)
 n_F = FacetNormal(Omega_F)
 goal_F = inner(v_F, n_F)*ds(2)
-goal_functionals =  goal_S 
+goal_functionals =  goal_S
 
 # Define the dual rhs and lhs
 A_dual = lhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
@@ -241,15 +235,15 @@ L = rhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
 L_dual = L + goal_functionals
 
 # Define BCs (i.e. define the dual trial space = homo. Dirichlet BCs)
-bc_U_F   = DirichletBC(W.sub(0), Constant((0,0)), noslip) 
+bc_U_F   = DirichletBC(W.sub(0), Constant((0.0, 0.0)), noslip) 
 bc_P_F0  = DirichletBC(W.sub(1), Constant(0.0), inflow) # FIME: Make sure it goes to zero in both P/D
 bc_P_F1  = DirichletBC(W.sub(1), Constant(0.0), outflow)# FIME: Make sure it goes to zero in both P/D
-bc_U_S   = DirichletBC(W.sub(2), Constant((0,0)), dirichlet_boundaries)
-bc_P_S   = DirichletBC(W.sub(3), Constant((0,0)), dirichlet_boundaries)            # FIXME: Correct BC? Initial condintion????
-bc_U_M1  = DirichletBC(W.sub(4), Constant((0,0)), DomainBoundary())
-bc_U_M2  = DirichletBC(W.sub(4), Constant((0,0)), interior_facet_domains, 1)
-bc_U_PM1 = DirichletBC(W.sub(5), Constant((0,0)), DomainBoundary())            # FIXME: Correct BC?
-bc_U_PM2 = DirichletBC(W.sub(5), Constant((0,0)), interior_facet_domains, 1)   # FIXME: Correct BC? 
+bc_U_S   = DirichletBC(W.sub(2), Constant((0.0, 0.0)), dirichlet_boundaries)
+bc_P_S   = DirichletBC(W.sub(3), Constant((0.0, 0.0)), dirichlet_boundaries)            # FIXME: Correct BC? Initial condintion????
+bc_U_M1  = DirichletBC(W.sub(4), Constant((0.0, 0.0)), DomainBoundary())
+bc_U_M2  = DirichletBC(W.sub(4), Constant((0.0, 0.0)), interior_facet_domains, 1)
+bc_U_PM1 = DirichletBC(W.sub(5), Constant((0.0, 0.0)), DomainBoundary())            # FIXME: Correct BC?
+bc_U_PM2 = DirichletBC(W.sub(5), Constant((0.0, 0.0)), interior_facet_domains, 1)   # FIXME: Correct BC? 
 
 # Define dual initial conditions (i.e. Z_T = <v, psi_T> etc.
 bc_ZF_T = DirichletBC(W.sub(0), Constant((DOLFIN_EPS, 0.0)), outflow)
