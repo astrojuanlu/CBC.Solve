@@ -18,7 +18,7 @@ class NavierStokesSolver(CBCSolver):
 
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", False)
+        self.parameters.add("plot_solution", True)
         self.parameters.add("store_solution", True)
 
         # Create binary files to store solutions
