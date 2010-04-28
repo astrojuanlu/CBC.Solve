@@ -10,9 +10,15 @@ from sys import exit
 class StaticHyperelasticity(CBCProblem):
     """Base class for all static hyperelasticity problems"""
 
-    def __init__(self):
+    def __init__(self, parameters=None):
         """Create the static hyperelasticity problem"""
+
+        # Create solver
         self.solver = StaticMomentumBalanceSolver(self)
+
+        # Set up parameters
+        self.parameters = Parameters("problem_parameters")
+        self.parameters.add(self.solver.parameters)
 
     def solve(self):
         """Solve for and return the computed displacement field, u"""
@@ -117,7 +123,7 @@ class Hyperelasticity(StaticHyperelasticity):
 
     def initial_conditions(self):
         """Return initial conditions for displacement field, u0, and
-        velocity field, v0""" 
+        velocity field, v0"""
         return [], []
 
     def dirichlet_conditions(self):

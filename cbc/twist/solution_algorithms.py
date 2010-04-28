@@ -15,6 +15,10 @@ class StaticMomentumBalanceSolver(CBCSolver):
     def __init__(self, problem):
         """Initialise the static momentum balance solver"""
 
+        # Set up parameters
+        self.parameters = Parameters("solver_parameters")
+        # FIXME: Add solver parameters here
+
         # Get problem parameters
         mesh = problem.mesh()
 
@@ -40,7 +44,7 @@ class StaticMomentumBalanceSolver(CBCSolver):
         v = TestFunction(vector)
         u = Function(vector)
         du = TrialFunction(vector)
-        
+
         # Driving forces
         B = problem.body_force()
 
@@ -76,10 +80,10 @@ class StaticMomentumBalanceSolver(CBCSolver):
             L = L - inner(neumann_conditions[i], v)*ds(i)
 
         a = derivative(L, u, du)
-        
+
         # Setup problem
         equation = VariationalProblem(a, L, bcu, exterior_facet_domains = boundary, nonlinear = True)
-        equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-12 
+        equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-12
         equation.parameters["newton_solver"]["relative_tolerance"] = 1e-16
         equation.parameters["newton_solver"]["maximum_iterations"] = 100
 
@@ -150,7 +154,7 @@ class MomentumBalanceSolver(CBCSolver):
             file_name = v0
             v0 = Function(vector)
             v0.vector()[:] = loadtxt(file_name)[:]
-        
+
         # Get Dirichlet boundary conditions on the displacement field
         bcu = []
 
@@ -172,7 +176,7 @@ class MomentumBalanceSolver(CBCSolver):
         # If no body forces are specified, assume it is 0
         if B == []:
             B = Constant((0,)*vector.mesh().geometry().dim())
-        
+
         # Define fields
         # Test and trial functions
         v  = TestFunction(vector)
@@ -180,7 +184,7 @@ class MomentumBalanceSolver(CBCSolver):
         v1 = Function(vector)
         a1 = Function(vector)
         du = TrialFunction(vector)
-        
+
         # Initial displacement and velocity
         u0 = interpolate(u0, vector)
         v0 = interpolate(v0, vector)
@@ -190,7 +194,7 @@ class MomentumBalanceSolver(CBCSolver):
         # alpha = 1.0
         beta = 0.25
         gamma = 0.5
-    
+
         # Determine initial acceleration
         a0 = TrialFunction(vector)
         P0 = problem.first_pk_stress(u0)
@@ -229,7 +233,7 @@ class MomentumBalanceSolver(CBCSolver):
         # If no reference density is specified, assume it is 1.0
         if rho0 == []:
             rho0 = Constant(1.0)
-        
+
         density_type = str(rho0.__class__)
         if not ("dolfin" in density_type):
             print "Converting given density to a DOLFIN Constant"
@@ -241,7 +245,7 @@ class MomentumBalanceSolver(CBCSolver):
 #         # FIXME: A general version of the trick below is what should
 #         # be used instead. The commentend-out lines only work well for
 #         # quadratically nonlinear models, e.g. St. Venant Kirchhoff.
-        
+
 #         # S0 = problem.second_pk_stress(u0)
 #         # S1 = problem.second_pk_stress(u1)
 #         # Sm = 0.5*(S0 + S1)
@@ -267,7 +271,7 @@ class MomentumBalanceSolver(CBCSolver):
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
             L = L - inner(neumann_conditions[i], v)*ds(i)
-            
+
         a = derivative(L, u1, du)
 
         # Store variables needed for time-stepping
@@ -312,7 +316,7 @@ class MomentumBalanceSolver(CBCSolver):
                 self.velocity_plot_file << self.v1
             self.update()
 
-    def step(self, dt): 
+    def step(self, dt):
         """Setup and solve the problem at the current time step"""
 
         # FIXME: Setup all stuff in the constructor and call assemble instead of VariationalProblem
@@ -382,7 +386,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
         dt, t_range = timestep_range(problem, mesh)
         end_time    = problem.end_time()
         info("Using time step dt = %g" % dt)
-        
+
         # Define function spaces
         scalar = FunctionSpace(mesh, "CG", 1)
         vector = VectorFunctionSpace(mesh, "CG", 1)
@@ -414,7 +418,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
             file_name = v0
             _v0 = loadtxt(file_name)[:]
             U0.vector()[len(_v0) + 1:2*len(_v0) - 1] = _v0[:]
-        
+
         # Get Dirichlet boundary conditions on the displacement field
         bcu = []
 
@@ -445,14 +449,14 @@ class CG1MomentumBalanceSolver(CBCSolver):
         # Evaluate displacements and velocities at mid points
         u_mid = 0.5*(u0 + u)
         v_mid = 0.5*(v0 + v)
-        
+
         # Get reference density
         rho0 = problem.reference_density()
 
         # If no reference density is specified, assume it is 1.0
         if rho0 == []:
             rho0 = Constant(1.0)
-        
+
         density_type = str(rho0.__class__)
         if not ("dolfin" in density_type):
             print "Converting given density to a DOLFIN Constant"
@@ -464,7 +468,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
         # The variational form corresponding to hyperelasticity
         L = rho0*inner(v - v0, xi)*dx + dt*inner(P, grad(xi))*dx \
             - dt*inner(B, xi)*dx + inner(u - u0, eta)*dx \
-            - dt*inner(v_mid, eta)*dx 
+            - dt*inner(v_mid, eta)*dx
 
         # Add contributions to the form from the Neumann boundary
         # conditions
@@ -518,7 +522,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
                 self.velocity_plot_file << v
             self.update()
 
-    def step(self, dt): 
+    def step(self, dt):
         """Setup and solve the problem at the current time step"""
 
         equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
@@ -533,7 +537,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
         u, v = self.U.split()
 
-        # Propogate the displacements and velocities 
+        # Propogate the displacements and velocities
         self.U0.assign(self.U)
 
         # Plot solution
