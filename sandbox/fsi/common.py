@@ -4,9 +4,9 @@ from numpy import array, append, zeros
 # Mesh and time stepping parameters
 nx = 80 
 ny = nx/4 
-dt = 0.05
-T = 1.0
-tol = 1e-4
+dt = 0.025
+T = 2.0
+tol = 1e-6
 
 # Constants related to the geometry of the channel and the obstruction
 channel_length  = 4.0
