@@ -465,10 +465,13 @@ class CG1MomentumBalanceSolver(CBCSolver):
         # Piola-Kirchhoff stress tensor based on the material model
         P = problem.first_pk_stress(u_mid)
 
+        # Convert time step to a DOLFIN constant
+        k = Constant(dt)
+
         # The variational form corresponding to hyperelasticity
-        L = rho0*inner(v - v0, xi)*dx + dt*inner(P, grad(xi))*dx \
-            - dt*inner(B, xi)*dx + inner(u - u0, eta)*dx \
-            - dt*inner(v_mid, eta)*dx
+        L = rho0*inner(v - v0, xi)*dx + k*inner(P, grad(xi))*dx \
+            - k*inner(B, xi)*dx + inner(u - u0, eta)*dx \
+            - k*inner(v_mid, eta)*dx 
 
         # Add contributions to the form from the Neumann boundary
         # conditions
@@ -484,7 +487,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
             print "Applying Neumann boundary condition at", neumann_boundary
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
-            L = L - inner(neumann_conditions[i], xi)*ds(i)
+            L = L - dt*inner(neumann_conditions[i], xi)*ds(i)
 
         a = derivative(L, U, dU)
 
