@@ -178,8 +178,8 @@ A_FM12 = -inner(Z_PF_ip, div(J(U_M)*dot(dot(F_inv(U_M),grad(v_M)), dot(F_inv(U_M
 A_FM =  A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + A_FM11 + A_FM12 
 
 # Structure eq. linearized around the fluid variables
-A_SF01 = -inner(Z_US_ip('+'), mu_F*J(U_M)('+')*dot(dot(grad(v_M('+')), F_inv(U_M)('+')), dot(F_invT(U_M)('+'), N)))*dS(1)
-A_SF02 = -inner(Z_US_ip('+'), mu_F*J(U_M)('+')*dot(dot(F_invT(U_M)('+'), grad(v_M('+')).T), dot(F_invT(U_M)('+'), N)))*dS(1)
+A_SF01 = -inner(Z_US_ip('+'), mu_F*J(U_M)('+')*dot(dot(grad(v_F('+')), F_inv(U_M)('+')), dot(F_invT(U_M)('+'), N)))*dS(1)
+A_SF02 = -inner(Z_US_ip('+'), mu_F*J(U_M)('+')*dot(dot(F_invT(U_M)('+'), grad(v_F('+')).T), dot(F_invT(U_M)('+'), N)))*dS(1)
 A_SF03 =  inner(Z_US_ip('+'), mu_F*J(U_M)('+')*q_F('+')*dot(I(U_M)('+'), dot(F_invT(U_M)('+'), N)))*dS(1)
 
 # Collect A_SF form
