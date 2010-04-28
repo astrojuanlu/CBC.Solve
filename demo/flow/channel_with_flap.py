@@ -42,7 +42,7 @@ class ChannelWithFlap(NavierStokes):
         return mesh
 
     def viscosity(self):
-        return 0.1
+        return 0.002
 
     def boundary_conditions(self, V, Q):
 
@@ -61,7 +61,7 @@ class ChannelWithFlap(NavierStokes):
         return u0, p0
 
     def end_time(self):
-        return 1.5
+        return 2.5
 
     def functional(self, u, p):
         return u((4.0, 0.5))[0]
