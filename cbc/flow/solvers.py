@@ -2,7 +2,7 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-02-09
+# Last changed: 2010-04-28
 
 __all__ = ["NavierStokesSolver", "NavierStokesDualSolver"]
 
@@ -108,6 +108,10 @@ class NavierStokesSolver(CBCSolver):
             self.update()
             self._end_time_step(t, self.t_range[-1])
 
+        # Hold plots
+        if self.parameters["plot_solution"]:
+            interactive()
+
         return self.u1, self.p1
 
     def step(self, dt):
@@ -165,10 +169,10 @@ class NavierStokesSolver(CBCSolver):
 
 class NavierStokesDualSolver(CBCSolver):
     "Navier-Stokes dual solver"
-    
+
     def __init__(self, problem):
         CBCSolver.__init__(self)
-        
+
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
         self.parameters.add("plot_solution", True)
