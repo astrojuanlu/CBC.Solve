@@ -22,6 +22,11 @@ class StaticHyperelasticity(CBCProblem):
 
     def solve(self):
         """Solve for and return the computed displacement field, u"""
+
+        # Update solver parameters
+        self.solver.parameters.update(self.parameters["solver_parameters"])
+
+        # Call solver
         return self.solver.solve()
 
     def body_force(self):

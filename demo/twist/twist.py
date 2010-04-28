@@ -49,8 +49,11 @@ class Twist(StaticHyperelasticity):
     def __str__(self):
         return "A hyperelastic cube twisted by 60 degrees"
 
-# Setup and solve problem
+# Setup the problem
 twist = Twist()
+twist.parameters["solver_parameters"]["plot_solution"] = True
+
+# Solve the problem
 print twist
 u = twist.solve()
-plot(u, title = "Displacement", mode = "displacement", rescale = True, interactive = True)
+

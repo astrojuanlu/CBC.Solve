@@ -17,7 +17,7 @@ class StaticMomentumBalanceSolver(CBCSolver):
 
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
-        # FIXME: Add solver parameters here
+        self.parameters.add("plot_solution", False)
 
         # Get problem parameters
         mesh = problem.mesh()
@@ -99,6 +99,12 @@ class StaticMomentumBalanceSolver(CBCSolver):
 
         # Solve problem
         self.equation.solve(self.u)
+
+        # Plot solution if requested
+        if self.parameters["plot_solution"]:
+            plot(self.u, title="Displacement", mode="displacement", rescale=True)
+            interactive()
+
         return self.u
 
 class MomentumBalanceSolver(CBCSolver):
