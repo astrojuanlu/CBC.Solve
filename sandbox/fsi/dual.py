@@ -158,7 +158,7 @@ A_FF06 = -inner(grad(Z_UF_ip), J(U_M)*q_F*F_invT(U_M))*dx(0)
 A_FF07 =  inner(Z_PF_ip, div(J(U_M)*dot(F_inv(U_M),v_F)))*dx(0)
 
 # Collect A_FF form
-A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04  + A_FF06 + A_FF07  # FIXME:  A_FF05 missing!
+A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07  # FIXME:  A_FF05 missing!
 
 # Fluid eq. linearized around mesh variable
 A_FM01 =  (1/kn)*inner(Z_UF_ip, rho_F*DJ(U_M, v_M)*(U_F - U_F0))*dx(0)
@@ -195,7 +195,7 @@ A_SS06 =  inner(grad(Z_US_ip), 0.5*lamb_S*dot(F(U_S), tr(dot(grad(v_S),F_T(U_S))
 A_SS07 =  inner(grad(Z_US_ip), 0.5*lamb_S*dot(F(U_S), tr(dot(F(U_S), grad(v_S).T))*I(U_S)))*dx(1)
 A_SS08 =  inner(0.5*(Z_PS('+') + Z_PS0('+')), v_S('+'))*dS(1)
 A_SS09 =  (1/kn)*inner(Z_PS('+') - Z_PS0('+'), q_S('+'))*dS(1)  
-
+ 
 # Collect A_SS form
 A_SS =  A_SS02 + A_SS02 + A_SS04 + A_SS05 + A_SS06 + A_SS07 + A_SS08 + A_SS09
 

@@ -25,7 +25,7 @@ class FluidProblem(NavierStokes):
         return omega_F1 
 
     def viscosity(self):
-        return 1e-2
+        return 0.002
     
     def density(self):
         return 1.0
@@ -173,18 +173,16 @@ class StructureProblem(Hyperelasticity):
         return 1.0
 
     def material_model(self):
-        factor =   7# 2.5 #3  is good for v. 1e-2 (endtime = 3)
-        mu       =  3.841 * factor 
-        lmbda    =  5.76  * factor  
+        mu    = 0.15
+        lmbda = 0.25
         return StVenantKirchhoff([mu, lmbda])
-        #return LinearElastic([mu, lmbda])
 
     def is_dynamic(self):
         return True
 
     def time_stepping(self):
         return "CG1"
-        #return "HHT"
+
     def time_step(self):
         return dt
 
@@ -272,7 +270,6 @@ while t <= T:
         # Solve structure equation
         structure_sol = S.step(dt)
         U_S, P_S = structure_sol.split(True)
-#        U_S  = S.step(dt)
 
         # Update structure displacement for mesh problem
         M.update_structure_displacement(U_S)
@@ -337,13 +334,13 @@ displacement = assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 # Print convergence indicators
 print "*******************************************"
 print "Mesh size: %g "%  mesh.num_cells()
+print "mesh h %g"  % mesh.hmin()
 print "Time step kn: %g"% dt
 print "End time T: %g"%T 
 print "TOL %g" % tol
-print " "
-print " "
-print "mesh h %g"  % mesh.hmin()
 #print "Flux: %g" % flux 
+print " "
+print " "
 print "Displacement %g"% displacement
 print "*******************************************"
 
