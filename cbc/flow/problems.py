@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-02-09
+# Last changed: 2010-04-28
 
 __all__ = ["NavierStokes", "NavierStokesDual"]
 
@@ -42,9 +42,9 @@ class NavierStokes(CBCProblem):
         # Call solver
         return self.solver.step(dt)
 
-    def update(self):
+    def update(self, t):
         "Propagate values to next time step"
-        return self.solver.update()
+        return self.solver.update(t)
 
     def cauchy_stress(self, u, p):
         epsilon = 0.5*(grad(u) + grad(u).T)
