@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2009-11-12
+# Last changed: 2010-04-28
 
 from time import time
 from dolfin import info, error, Progress
@@ -12,7 +12,6 @@ class CBCSolver:
 
     def __init__(self):
         "Constructor"
-
         self._time_step = 1
         self._progress = None
         self._cpu_time = time()
@@ -47,7 +46,7 @@ class CBCSolver:
         # Increase time step counter
         self._time_step += 1
 
-        # Store solution
-        if self.parameters["store_solution"]:
-            self.velocity_series.store(self.u1.vector(), t)
-            self.pressure_series.store(self.p1.vector(), t)
+        ## Store solution
+        #if self.parameters["save_solution"]:
+        #    self.velocity_series.store(self.u1.vector(), t)
+        #    self.pressure_series.store(self.p1.vector(), t)

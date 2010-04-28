@@ -13,14 +13,19 @@ def outflow_boundary(x):
     return x[0] > 4.0 - DOLFIN_EPS
 
 def noslip_boundary(x, on_boundary):
-    return on_boundary and not inflow_boundary(x) and not outflow_boundary(x)
+    return \
+        (x[1] < DOLFIN_EPS or x[1] > 1.0 - DOLFIN_EPS) or \
+        (on_boundary and abs(x[0] - 1.5) < 0.1 + DOLFIN_EPS)
 
 class ChannelWithFlap(NavierStokes):
 
     def mesh(self):
 
+        # Vertical resolution
+        n = 30
+
         # Define geometry for channel
-        channel = Rectangle(0.0, 0.0, 4.0, 1.0, 80, 20)
+        channel = Rectangle(0.0, 0.0, 4.0, 1.0, 4*n, n)
 
         # Define geometry for flap
         class Flap(SubDomain):
@@ -37,7 +42,7 @@ class ChannelWithFlap(NavierStokes):
         return mesh
 
     def viscosity(self):
-        return 1.0 / 8.0
+        return 0.1
 
     def boundary_conditions(self, V, Q):
 
@@ -68,7 +73,7 @@ class ChannelWithFlap(NavierStokes):
 problem = ChannelWithFlap()
 parameters["form_compiler"]["cpp_optimize"] = True
 problem.parameters["solver_parameters"]["plot_solution"] = True
-problem.parameters["solver_parameters"]["store_solution"] = True
+problem.parameters["solver_parameters"]["save_solution"] = True
 u, p = problem.solve()
 
 # Print value of functional

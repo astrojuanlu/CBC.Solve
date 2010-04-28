@@ -18,13 +18,9 @@ class NavierStokesSolver(CBCSolver):
 
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", True)
-        self.parameters.add("store_solution", True)
-
-        # Create binary files to store solutions
-        if self.parameters["store_solution"]:
-            self.velocity_series = TimeSeries("velocity")
-            self.pressure_series = TimeSeries("pressure")
+        self.parameters.add("plot_solution", True)        # Plot when running
+        self.parameters.add("save_solution", True)       # Store solution for later plotting
+        self.parameters.add("store_solution_data", False) # Store solution data in binary format
 
         # Get mesh and time step range
         mesh = problem.mesh()
@@ -92,6 +88,12 @@ class NavierStokesSolver(CBCSolver):
         self.a2 = a2
         self.a3 = a3
 
+        # Empty file handlers / time series
+        self.velocity_file = None
+        self.pressure_file = None
+        self.velocity_series = None
+        self.pressure_series = None
+
         # Assemble matrices
         self.reassemble()
 
@@ -105,7 +107,7 @@ class NavierStokesSolver(CBCSolver):
             self.step(self.dt)
 
             # Update
-            self.update()
+            self.update(t)
             self._end_time_step(t, self.t_range[-1])
 
         # Hold plots
@@ -144,7 +146,7 @@ class NavierStokesSolver(CBCSolver):
 
         return self.u1, self.p1
 
-    def update(self):
+    def update(self, t):
 
         # Propagate values
         self.u0.assign(self.u1)
@@ -154,6 +156,20 @@ class NavierStokesSolver(CBCSolver):
         if self.parameters["plot_solution"]:
             plot(self.u1, title="Velocity", rescale=True)
             plot(self.p1, title="Pressure", rescale=True)
+
+        # Store solution (for plotting)
+        if self.parameters["save_solution"]:
+            if self.velocity_file is None: self.velocity_file = File("velocity.pvd")
+            if self.pressure_file is None: self.pressure_file = File("pressure.pvd")
+            self.velocity_file << self.u1
+            self.pressure_file << self.p1
+
+        # Store solution data
+        if self.parameters["store_solution_data"]:
+            if self.velocity_series is None: self.velocity_series = TimeSeries("velocity")
+            if self.pressure_series is None: self.pressure_series = TimeSeries("pressure")
+            self.velocity_series.store(self.u1, t)
+            self.velocity_series.store(self.p1, t)
 
         return self.u1, self.p1
 
@@ -175,13 +191,9 @@ class NavierStokesDualSolver(CBCSolver):
 
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", True)
-        self.parameters.add("store_solution", True)
-
-        # Create binary files to store dual solutions
-        if self.parameters["store_solution"]:
-            self.dual_velocity_series = TimeSeries("dual_velocity")
-            self.dual_pressure_series = TimeSeries("dual_pressure")
+        self.parameters.add("plot_solution", True)        # Plot when running
+        self.parameters.add("save_solution", True)        # Store solution for later plotting
+        self.parameters.add("store_solution_data", False) # Store solution data in binary format
 
         # Load primal solutions
         self.velocity_series = TimeSeries("velocity")

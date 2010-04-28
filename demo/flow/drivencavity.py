@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-02-09
+# Last changed: 2010-04-28
 
 from cbc.flow import *
 
@@ -47,7 +47,7 @@ class DrivenCavity(NavierStokes):
 # Solve problem
 problem = DrivenCavity()
 problem.parameters["solver_parameters"]["plot_solution"] = True
-problem.parameters["solver_parameters"]["store_solution"] = False
+problem.parameters["solver_parameters"]["save_solution"] = False
 u, p = problem.solve()
 
 # Check error

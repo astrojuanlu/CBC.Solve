@@ -11,7 +11,7 @@ structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
 nx = 80
-ny = nx/4 
+ny = nx/4
 
 # Parameters
 dt = 0.01
@@ -89,7 +89,7 @@ class Channel(NavierStokes):
 
         return [bcu], [bcp0, bcp1]
 
-   
+
     def time_step(self):
         return dt
 
@@ -157,12 +157,12 @@ class ChannelDual(NavierStokesDual):
 # Solve problem
 # problem = Channel()
 # problem.parameters["solver_parameters"]["plot_solution"] = True
-# problem.parameters["solver_parameters"]["store_solution"] = True
+# problem.parameters["solver_parameters"]["store_solution_data"] = True
 # u, p = problem.solve()
- 
+
 dual_problem = ChannelDual()
-dual_problem.parameters["solver_parameters"]["plot_solution"] = True
-dual_problem.parameters["solver_parameters"]["store_solution"] = False
+dual_problem.parameters["solver_parameters"]["plot_solution_data"] = True
+dual_problem.parameters["solver_parameters"]["store_solution_data"] = False
 w, r = dual_problem.solve()
 
 #interactive()
