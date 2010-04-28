@@ -66,6 +66,11 @@ class ChannelWithFlap(NavierStokes):
     def functional(self, u, p):
         return u((4.0, 0.5))[0]
 
+    def reference():
+        # Value is 0.481057936133 for n = 8, value below obtained by
+        # Richardson extrapolation for n = 10, 20, 30, ..., 80
+        return 0.4810212
+
     def __str__(self):
         return "Pressure-driven flow in channel with a flap (2D)"
 
