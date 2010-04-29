@@ -1,8 +1,15 @@
 -*- mode: org; -*-
 
-* CBC::Solve
-** Create an FSI example showing how the solid and fluid solvers can be linked
-* CBC::Twist
+* cbc.solve
+** Move FSI example into its own class
+** Align the interfaces of cbc.flow and cbc.twist
+*** Make the function names as close as possible
+*** Make the file layout identical
+*** Take useful functions from one to the other
+**** twist -> flow: Automatic conversion of floats to DOLFIN constants
+**** twist -> flow: Easy specification of boundary conditions and boundary
+*** Share mode code via common
+* cbc.twist
 ** Figure out why the Gent-Thomas material model does not converge
 ** Figure out consistent, dynamic time-stepping.
 ** Figure out how to specify material models in terms of principal stretches.

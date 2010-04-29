@@ -11,6 +11,11 @@ For more options, run the command
 
   python setup.py --help
 
+If you'd like to try the demos without installing anything, just add
+the following to your PYTHONPATH before attempting to run them
+
+  export PYTHONPATH=${PYTHONPATH}:../:../../
+
 Dependencies
 ------------
 

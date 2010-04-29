@@ -5,7 +5,7 @@ CBC.Solve is a collection of FEniCS/DOLFIN-based solvers developed
 primarily at the Center for Biomedical Computing hosted by Simula
 Research Laboratory in Oslo (http://www.simula.no).
 
-The current collection consists of the following three solvers:
+The current collection consists of the following solvers:
 
   CBC.Flow  - solving the Navier-Stokes equations
   CBC.Twist - solving general hyperelastic models
