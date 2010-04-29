@@ -1,5 +1,9 @@
-Authors/contributors in alphabetical order:
+Authors/contributors, ordered according to[1]:
 
-  Anders Logg <logg@simula.no>
   Harish Narayanan <harish@simula.no>
+  Anders Logg <logg@simula.no>
   Kristoffer Selim <selim@simula.no>
+
+[1] bzr log -n0 | grep committer | sed -e 's/^.*committer: //g' | \
+    sed -e 's/<.*>//g' | sed -s 's/selim/Kristoffer Selim/g' | \
+    sort | uniq -c | sort -k 2,2n -r | gawk '{print $2" "$3}'
