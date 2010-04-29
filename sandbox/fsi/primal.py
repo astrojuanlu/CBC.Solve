@@ -330,6 +330,7 @@ while t <= T:
 
 # Define convergence indicator for structure (integral over displacement in x1-direction)
 displacement = assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
+functional = u_F((4.0, 0.5))[0]
 
 # Print convergence indicators
 print "*******************************************"
@@ -338,9 +339,9 @@ print "mesh h %g"  % mesh.hmin()
 print "Time step kn: %g"% dt
 print "End time T: %g"%T
 print "TOL %g" % tol
-#print "Flux: %g" % flux
 print " "
 print " "
+print "Functional: %g" % functional
 print "Displacement %g"% displacement
 print "*******************************************"
 
