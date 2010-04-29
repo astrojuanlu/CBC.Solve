@@ -34,8 +34,11 @@ class UniaxialTension(Hyperelasticity):
     def material_model(self):
         mu    = 3.8461
         lmbda = 5.76
-        material = StVenantKirchhoff([mu, lmbda])
+        material = LinearElastic([mu, lmbda])
         return material
+
+    def time_stepping(self):
+        return "HHT"
 
     def __str__(self):
         return "A hyperelastic cube being pulled from both sides"
