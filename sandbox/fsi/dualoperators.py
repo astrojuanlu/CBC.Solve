@@ -54,10 +54,10 @@ def Sigma_F(u,p,v):
  
 # Define constants FIXME: Move !!!
 rho_F = 1.0
-mu_F = 1.0
+mu_F = 0.002
 rho_S = 1
-mu_S =   7*3.841
-lamb_S =  7*5.76
+mu_S =  0.15
+lamb_S =  0.25
 mu_M =  3.8461
 lamb_M =  5.76
 
