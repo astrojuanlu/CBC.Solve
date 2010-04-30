@@ -115,7 +115,7 @@ class StaticMomentumBalanceSolver(CBCSolver):
         # Store solution data
         if self.parameters["store_solution_data"]:
             displacement_series = TimeSeries("displacement")
-            displacement_series.store(self.u, 0.0)
+            displacement_series.store(self.u.vector(), 0.0)
 
         return self.u
 
@@ -312,7 +312,7 @@ class MomentumBalanceSolver(CBCSolver):
         self.displacement_file = None
         self.velocity_file = None
         self.displacement_series = None
-        self.velocity_series = None        
+        self.velocity_series = None
 
     def solve(self):
         """Solve the mechanics problem and return the computed
@@ -349,7 +349,7 @@ class MomentumBalanceSolver(CBCSolver):
         v1 = self.v0 + self.k*((1 - self.gamma)*self.a1 + self.gamma*self.a0)
         self.v1 = project(v1, self.vector)
 
-        # Propogate the displacements, velocities and accelerations
+        # Propagate the displacements, velocities and accelerations
         self.u0.assign(self.u1)
         self.v0.assign(self.v1)
         self.a0.assign(self.a1)
@@ -369,8 +369,8 @@ class MomentumBalanceSolver(CBCSolver):
         if self.parameters["store_solution_data"]:
             if self.displacement_series is None: self.displacement_series = TimeSeries("displacement")
             if self.velocity_series is None: self.velocity_series = TimeSeries("velocity")
-            self.displacement_series.store(self.u0, self.t)
-            self.velocity_series.store(self.v0, self.t)
+            self.displacement_series.store(self.u0.vector(), self.t)
+            self.velocity_series.store(self.v0.vector(), self.t)
 
         # Move to next time step
         self.t = self.t + self.dt
@@ -392,18 +392,9 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", False)
+        self.parameters.add("plot_solution", True)
         self.parameters.add("save_solution", False)
-        self.parameters.add("save_plot", True)
-
-        # Create binary files to store solutions
-        if self.parameters["save_solution"]:
-            self.displacement_velocity_series = TimeSeries("displacement_velocity")
-
-        # Create pvd files to store paraview plots
-        if self.parameters["save_plot"]:
-            self.displacement_plot_file = File("displacement.pvd")
-            self.velocity_plot_file = File("velocity.pvd")
+        self.parameters.add("store_solution_data", False)
 
         # Get problem parameters
         mesh        = problem.mesh()
@@ -533,6 +524,11 @@ class CG1MomentumBalanceSolver(CBCSolver):
         self.mesh = mesh
         self.t = 0
 
+        # Empty file handlers / time series
+        self.displacement_file = None
+        self.velocity_file = None
+        self.displacement_velocity_series = None
+
     def solve(self):
         """Solve the mechanics problem and return the computed
         displacement field"""
@@ -541,13 +537,10 @@ class CG1MomentumBalanceSolver(CBCSolver):
         for t in self.t_range:
             print "Solving the problem at time t = " + str(self.t)
             self.step(self.dt)
-            if self.parameters["save_solution"]:
-                self.displacement_velocity_series.store(self.U.vector(), t)
-            if self.parameters["save_plot"]:
-                u, v = self.U.split(True)
-                self.displacement_plot_file << u
-                self.velocity_plot_file << v
             self.update()
+
+        if self.parameters["plot_solution"]:
+            interactive()
 
     def step(self, dt):
         """Setup and solve the problem at the current time step"""
@@ -564,12 +557,24 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
         u, v = self.U.split()
 
-        # Propogate the displacements and velocities
+        # Propagate the displacements and velocities
         self.U0.assign(self.U)
 
         # Plot solution
         if self.parameters["plot_solution"]:
             plot(u, title="Displacement", mode="displacement", rescale=True)
+
+        # Store solution (for plotting)
+        if self.parameters["save_solution"]:
+            if self.displacement_file is None: self.displacement_file = File("displacement.pvd")
+            if self.velocity_file is None: self.velocity_file = File("velocity.pvd")
+            self.displacement_file << u
+            self.velocity_file << v
+
+        # Store solution data
+        if self.parameters["store_solution_data"]:
+            if self.displacement_velocity_series is None: self.displacement_velocity_series = TimeSeries("displacement_velocity")
+            self.displacement_velocity_series.store(self.U.vector(), self.t)
 
         # Move to next time step
         self.t = self.t + self.dt
