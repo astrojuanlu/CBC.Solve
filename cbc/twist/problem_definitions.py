@@ -5,6 +5,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from dolfin import *
 from cbc.common import CBCProblem
 from cbc.twist.solution_algorithms import StaticMomentumBalanceSolver, MomentumBalanceSolver, CG1MomentumBalanceSolver
+from cbc.twist.kinematics import GreenLagrangeStrain
 from sys import exit
 
 class StaticHyperelasticity(CBCProblem):
@@ -62,6 +63,14 @@ class StaticHyperelasticity(CBCProblem):
         """Return the second Piola-Kirchhoff stress tensor, S, given a
         displacement field, u"""
         return self.material_model().SecondPiolaKirchhoffStress(u)
+
+    def strain_energy(self, u):
+        """Return the strain (potential) energy given a displacement
+        field, u"""
+        S = self.material_model().SecondPiolaKirchhoffStress(u)
+        E = GreenLagrangeStrain(u)
+        psi = assemble(0.5*inner(S, E)*dx, mesh=u.function_space().mesh())
+        return psi
 
     def functional(self, u):
         """Return value of goal functional"""
@@ -162,3 +171,10 @@ class Hyperelasticity(StaticHyperelasticity):
     def neumann_boundaries(self):
         """Return boundaries over which Neumann conditions act"""
         return []
+
+    def kinetic_energy(self, v):
+        """Return the kinetic energy given a velocity field, v"""
+
+        rho0 = self.reference_density()
+        ke = assemble(0.5*rho0*inner(v, v)*dx, mesh=u.function_space().mesh())
+        return ke
