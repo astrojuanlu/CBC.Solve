@@ -460,6 +460,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
         xi, eta = split(V)
         u, v = split(U)
         u0, v0 = split(U0)
+        u_plot = Function(vector)
 
         # Evaluate displacements and velocities at mid points
         u_mid = 0.5*(u0 + u)
@@ -528,6 +529,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
         self.displacement_file = None
         self.velocity_file = None
         self.displacement_velocity_series = None
+        self.u_plot = u_plot
 
     def solve(self):
         """Solve the mechanics problem and return the computed
@@ -562,7 +564,10 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
         # Plot solution
         if self.parameters["plot_solution"]:
-            plot(u, title="Displacement", mode="displacement", rescale=True)
+            # Copy to a fixed function to trick Viper into not opening
+            # up multiple windows
+            self.u_plot.assign(u)
+            plot(self.u_plot, title="Displacement", mode="displacement", rescale=True)
 
         # Store solution (for plotting)
         if self.parameters["save_solution"]:
