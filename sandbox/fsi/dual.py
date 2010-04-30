@@ -185,16 +185,28 @@ A_SF03 =  inner(Z_US_ip('+'), mu_F*J(U_M)('+')*q_F('+')*dot(I(U_M)('+'), dot(F_i
 # Collect A_SF form
 A_SF = A_SF01 + A_SF02 + A_SF03
 
+# # Structure eq. linearized around the structure variable
+# # OLD VERSION
+# A_SS01 = -(1/kn)*inner((Z_PS - Z_PS0), rho_S*v_S)*dx(1)
+# A_SS02 =  inner(grad(Z_US_ip), mu_S*dot(grad(v_S), dot(F_T(U_S), F(U_S)) - I(U_S)))*dx(1)
+# A_SS03 =  inner(grad(Z_US_ip), mu_S*dot(F(U_S), dot(grad(v_S).T, F(U_S)) - I(U_S)))*dx(1)
+# A_SS04 =  inner(grad(Z_US_ip), mu_S*dot(F(U_S), dot(F_T(U_S), grad(v_S)) - I(U_S)))*dx(1)
+# A_SS05 =  inner(grad(Z_US_ip), 0.5*lamb_S*dot(grad(v_S), tr(dot(F(U_S),F_T(U_S)))*I(U_S)))*dx(1)
+# A_SS06 =  inner(grad(Z_US_ip), 0.5*lamb_S*dot(F(U_S), tr(dot(grad(v_S),F_T(U_S)))*I(U_S)))*dx(1)
+# A_SS07 =  inner(grad(Z_US_ip), 0.5*lamb_S*dot(F(U_S), tr(dot(F(U_S), grad(v_S).T))*I(U_S)))*dx(1)
+# A_SS08 =  inner(0.5*(Z_PS('+') + Z_PS0('+')), v_S('+'))*dS(1)
+# A_SS09 =  (1/kn)*inner(Z_PS('+') - Z_PS0('+'), q_S('+'))*dS(1)
+
 # Structure eq. linearized around the structure variable
-A_SS01 = -(1/kn)*inner((Z_PS - Z_PS0), rho_S*v_S)*dx(1)
-A_SS02 =  inner(grad(Z_US_ip), mu_S*dot(grad(v_S), dot(F_T(U_S), F(U_S)) - I(U_S)))*dx(1)
-A_SS03 =  inner(grad(Z_US_ip), mu_S*dot(F(U_S), dot(grad(v_S).T, F(U_S)) - I(U_S)))*dx(1)
-A_SS04 =  inner(grad(Z_US_ip), mu_S*dot(F(U_S), dot(F_T(U_S), grad(v_S)) - I(U_S)))*dx(1)
-A_SS05 =  inner(grad(Z_US_ip), 0.5*lamb_S*dot(grad(v_S), tr(dot(F(U_S),F_T(U_S)))*I(U_S)))*dx(1)
-A_SS06 =  inner(grad(Z_US_ip), 0.5*lamb_S*dot(F(U_S), tr(dot(grad(v_S),F_T(U_S)))*I(U_S)))*dx(1)
-A_SS07 =  inner(grad(Z_US_ip), 0.5*lamb_S*dot(F(U_S), tr(dot(F(U_S), grad(v_S).T))*I(U_S)))*dx(1)
-A_SS08 =  inner(0.5*(Z_PS('+') + Z_PS0('+')), v_S('+'))*dS(1)
-A_SS09 =  (1/kn)*inner(Z_PS('+') - Z_PS0('+'), q_S('+'))*dS(1)
+A_SS01 = -(1/kn)*inner((Z_US - Z_US0), rho_S*v_S)*dx(1)
+A_SS02 =  inner(grad(Z_PS_ip), mu_S*dot(grad(v_S), dot(F_T(U_S), F(U_S)) - I(U_S)))*dx(1)
+A_SS03 =  inner(grad(Z_PS_ip), mu_S*dot(F(U_S), dot(grad(v_S).T, F(U_S)) - I(U_S)))*dx(1)
+A_SS04 =  inner(grad(Z_PS_ip), mu_S*dot(F(U_S), dot(F_T(U_S), grad(v_S)) - I(U_S)))*dx(1)
+A_SS05 =  inner(grad(Z_PS_ip), 0.5*lamb_S*dot(grad(v_S), tr(dot(F(U_S),F_T(U_S)))*I(U_S)))*dx(1)
+A_SS06 =  inner(grad(Z_PS_ip), 0.5*lamb_S*dot(F(U_S), tr(dot(grad(v_S),F_T(U_S)))*I(U_S)))*dx(1)
+A_SS07 =  inner(grad(Z_PS_ip), 0.5*lamb_S*dot(F(U_S), tr(dot(F(U_S), grad(v_S).T))*I(U_S)))*dx(1)
+A_SS08 = -(1/kn)*inner((Z_PS0 -Z_PS), q_S)*dx(1)
+A_SS09 = -inner(Z_US, q_S)*dx(1)
 
 # Collect A_SS form
 A_SS =  A_SS01 + A_SS02 + A_SS03 + A_SS04 + A_SS05 + A_SS06 + A_SS07 + A_SS08 + A_SS09
