@@ -2,10 +2,10 @@ from dolfin import *
 from numpy import array, append, zeros
 
 # Mesh and time stepping parameters
-nx = 80
+nx = 40
 ny = nx/4
-dt = 0.025
-T = 2.0
+dt = 0.1
+T = 0.4
 tol = 1e-6
 
 # Constants related to the geometry of the channel and the obstruction
@@ -14,6 +14,9 @@ channel_height  = 1.0
 structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
+
+# Define area of the structure
+structure_area = (structure_right - structure_left)*structure_top
 
 # Create the complete mesh
 mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
@@ -39,8 +42,10 @@ def noslip(x, on_boundary):
 # Define structure subdomain
 class Structure(SubDomain):
     def inside(self, x, on_boundary):
-        return (x[0] >= structure_left) and (x[0] <= structure_right) \
-            and (x[1] <= structure_top)
+        return \
+            x[0] >= structure_left  - DOLFIN_EPS  and \
+            x[0] <= structure_right + DOLFIN_EPS  and \
+            x[1] <= structure_top   + DOLFIN_EPS
 
 # Structure dirichlet boundaries
 def dirichlet_boundaries(x):
@@ -53,11 +58,6 @@ def dirichlet_boundaries(x):
 # Create structure subdomain
 structure = Structure()
 
-# Create subdomain markers (0=fluid,  1=structure)
-sub_domains = MeshFunction("uint", mesh, D)
-sub_domains.set_all(0)
-structure.mark(sub_domains, 1)
-
 # Create cell_domain markers (0=fluid,  1=structure)
 cell_domains = MeshFunction("uint", mesh, D)
 cell_domains.set_all(0)
@@ -65,8 +65,8 @@ structure.mark(cell_domains, 1)
 
 # Extract submeshes for fluid and structure
 Omega = mesh
-Omega_F = SubMesh(mesh, sub_domains, 0)
-Omega_S = SubMesh(mesh, sub_domains, 1)
+Omega_F = SubMesh(mesh, cell_domains, 0)
+Omega_S = SubMesh(mesh, cell_domains, 1)
 omega_F0 = Mesh(Omega_F)
 omega_F1 = Mesh(Omega_F)
 

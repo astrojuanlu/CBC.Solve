@@ -319,8 +319,7 @@ while t <= T:
             break
     
     # Compute displacement    
-    area = 0.2*0.5
-    displacement = (1.0/area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
+    displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 
     # Move to next time step
     F.update(t)
@@ -354,9 +353,8 @@ while t <= T:
 disp_vs_t.close()
 
 # Define convergence indicators
-area = 0.2*0.5
-displacement = (1.0/area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
-functional = u_F((4.0, 0.5))[0]
+end_displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
+end_functional = u_F((4.0, 0.5))[0]
 
 # Store info 
 convergence_data.write(str("Mesh size (nx*ny):     ") + str(mesh.num_cells()) + "\n")
@@ -364,8 +362,8 @@ convergence_data.write(str("End time T:            ") + str(T) + "\n")
 convergence_data.write(str("Min(hK):               ") + str(mesh.hmin()) + "\n")
 convergence_data.write(str("Time step kn:          ") + str(dt) + "\n")
 convergence_data.write(str("Tolerance (FSI f.p.):  ") + str(tol) + "\n" + "\n")
-convergence_data.write(str("Functional(T):         ") + str(functional) + "\n")
-convergence_data.write(str("Displacment(T):        ") + str(displacement) + "\n")
+convergence_data.write(str("Functional u_F(T):     ") + str(end_functional) + "\n")
+convergence_data.write(str("Displacment(T):        ") + str(end_displacement) + "\n")
 convergence_data.close()
 
 
