@@ -109,9 +109,9 @@ Z_PM0 = Function(Q_M)
 # Create initial condition for stress displacement (\Psi^T)
 Nv = Omega.num_vertices()
 U_S_subdofs = Vector()
-primal_U_S.retrieve(U_S_subdofs, T) 
+primal_U_S.retrieve(U_S_subdofs, T)
 global_vertex_indices_S = Omega_S.data().mesh_function("global vertex indices")
-S_global_index = zeros([global_vertex_indices_S.size()], "uint") 
+S_global_index = zeros([global_vertex_indices_S.size()], "uint")
 for j in range(global_vertex_indices_S.size()):
     S_global_index[j] = global_vertex_indices_S[j]
 U_S_global_dofs = S_global_index
@@ -119,18 +119,21 @@ Z_US0.vector()[U_S_global_dofs] = 1.0
 
 # file_jada = File("jada.pvd")
 # file_jada << Z_US0
+#lhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
+#L = rhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
+
 
 # plot(Z_US0, mesh = Omega, interactive=True)
 # import sys
 # sys.exit(1)
 
 # Primal varibles
-U_M0  = Function(V_M) 
+U_M0  = Function(V_M)
 U_F0  = Function(V_F1)
 U_S0  = Function(V_S)
 P_S0  = Function(Q_S)
 
-# Define time-step NOTE: we are using Backward Euler 
+# Define time-step NOTE: we are using Backward Euler
 kn = dt
 
 # Define FSI normal
@@ -138,8 +141,8 @@ N_S =  FacetNormal(Omega_S)
 N =  N_S('+')
 
 # Fluid eq. linearized around fluid variables
-A_FF01 = -(1/kn)*inner((Z_UF - Z_UF0), rho_F*J(U_M)*v_F)*dx(0)
-A_FF02 =  inner(Z_UF, rho_F*J(U_M)*dot(dot(grad(v_F),F_inv(U_M)), (U_F - (U_M - U_M0)*(1/kn))))*dx(0)
+A_FF01 = -(1/kn)*inner((Z_UF0 - Z_UF), rho_F*J(U_M)*v_F)*dx(0)
+A_FF02 =  inner(Z_UF, rho_F*J(U_M)*dot(dot(grad(v_F),F_inv(U_M)), (U_F - (U_M0 - U_M)*(1/kn))))*dx(0)
 A_FF03 =  inner(Z_UF, rho_F*J(U_M)*dot(grad(U_F) , dot(F_inv(U_M), v_F)))*dx(0)
 A_FF04 =  inner(grad(Z_UF), J(U_M)*mu_F*dot(grad(v_F) , dot(F_inv(U_M), F_invT(U_M))))*dx(0)
 A_FF05 =  inner(grad(Z_UF), J(U_M)*mu_F*dot(F_invT(U_M) , dot(grad(v_F).T, F_invT(U_M))))*dx(0)
@@ -150,16 +153,16 @@ A_FF07 =  inner(Z_PF, div(J(U_M)*dot(F_inv(U_M),v_F)))*dx(0)
 A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07
 
 # Fluid eq. linearized around mesh variable
-A_FM01 =  (1/kn)*inner(Z_UF, rho_F*DJ(U_M, v_M)*(U_F - U_F0))*dx(0)
+A_FM01 =  (1/kn)*inner(Z_UF, rho_F*DJ(U_M, v_M)*(U_F0 - U_F))*dx(0)
 A_FM02 =  inner(Z_UF, rho_F*DJ(U_M, v_M)*dot(grad(U_F), dot(F_inv(U_M), (U_M - U_M0)*(1/kn))))*dx(0)
-A_FM03 = -inner(Z_UF,  rho_F*J(U_M)*dot((dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M),F_inv(U_M))))),(U_F - (U_M - U_M0)/kn)))*dx(0)
-A_FM04 =  (1/kn)*inner((Z_UF - Z_UF0), rho_F*J(U_M)*dot(grad(U_F), dot(F_inv(U_M) ,v_M )))*dx(0)
+A_FM03 = -inner(Z_UF,  rho_F*J(U_M)*dot((dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M),F_inv(U_M))))),(U_F - (U_M0 - U_M)/kn)))*dx(0)
+A_FM04 =  (1/kn)*inner((Z_UF0 - Z_UF), rho_F*J(U_M)*dot(grad(U_F), dot(F_inv(U_M) ,v_M )))*dx(0)
 A_FM05 =  inner(grad(Z_UF), DJ(U_M, v_M)*dot(Sigma_F(U_F, P_F, U_M),F_invT(U_M)))*dx(0)
 A_FM06 = -inner(grad(Z_UF), J(U_M)*dot(mu_F*(dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M), F_inv(U_M))))), F_invT(U_M)))*dx(0)
 A_FM07 = -inner(grad(Z_UF), J(U_M)*dot(mu_F*(dot(F_invT(U_M), dot(grad(v_M).T, dot(F_invT(U_M), grad(U_F).T )))), F_invT(U_M)))*dx(0)
 A_FM08 = -inner(grad(Z_UF), J(U_M)*dot(mu_F*(dot(grad(U_F), dot(F_inv(U_M), dot(F_invT(U_M), grad(v_M).T )))), F_invT(U_M)))*dx(0)
 A_FM09 = -inner(grad(Z_UF), J(U_M)*dot(mu_F*(dot(F_invT(U_M), dot(grad(U_F).T, dot(F_invT(U_M), grad(v_M).T )))), F_invT(U_M)))*dx(0)
-A_FM10 =  inner(grad(Z_UF), J(U_M)*dot(dot( P_F*I(U_F),F_invT(U_M)) ,  dot(grad(v_M).T ,F_invT(U_M) )))*dx(0)
+A_FM10 =  inner(grad(Z_UF), J(U_M)*dot(dot( P_F*I,F_invT(U_M)) ,  dot(grad(v_M).T ,F_invT(U_M) )))*dx(0)
 A_FM11 =  inner(Z_PF, div(DJ(U_M,v_M)*dot(F_inv(U_M), U_F)))*dx(0)
 A_FM12 = -inner(Z_PF, div(J(U_M)*dot(dot(F_inv(U_M),grad(v_M)), dot(F_inv(U_M) ,U_F))))*dx(0)
 
@@ -169,34 +172,59 @@ A_FM =  A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + 
 # Structure eq. linearized around the fluid variables
 A_SF01 = -inner(Z_US('+'), mu_F*J(U_M)('+')*dot(dot(grad(v_F('+')), F_inv(U_M)('+')), dot(F_invT(U_M)('+'), N)))*dS(1)
 A_SF02 = -inner(Z_US('+'), mu_F*J(U_M)('+')*dot(dot(F_invT(U_M)('+'), grad(v_F('+')).T), dot(F_invT(U_M)('+'), N)))*dS(1)
-A_SF03 =  inner(Z_US('+'), mu_F*J(U_M)('+')*q_F('+')*dot(I(U_M)('+'), dot(F_invT(U_M)('+'), N)))*dS(1)
+A_SF03 =  inner(Z_US('+'), mu_F*J(U_M)('+')*q_F('+')*dot(I('+'), dot(F_invT(U_M)('+'), N)))*dS(1)
 
 # Collect A_SF form
 A_SF = A_SF01 + A_SF02 + A_SF03
 
 # Structure eq. linearized around the structure variable
-A_SS01 = -(1/kn)*inner((Z_PS - Z_PS0), rho_S*q_S)*dx(1)
-A_SS02 =  inner(grad(Z_PS), mu_S*dot(grad(q_S), dot(F_T(U_S), F(U_S)) - I(U_S)))*dx(1)
-A_SS03 =  inner(grad(Z_PS), mu_S*dot(F(U_S), dot(grad(q_S).T, F(U_S)) - I(U_S)))*dx(1)
-A_SS04 =  inner(grad(Z_PS), mu_S*dot(F(U_S), dot(F_T(U_S), grad(q_S)) - I(U_S)))*dx(1)
-A_SS05 =  inner(grad(Z_PS), 0.5*lamb_S*dot(grad(q_S), tr(dot(F(U_S),F_T(U_S)))*I(U_S)))*dx(1)
-A_SS06 =  inner(grad(Z_PS), 0.5*lamb_S*dot(F(U_S), tr(dot(grad(q_S),F_T(U_S)))*I(U_S)))*dx(1)
-A_SS07 =  inner(grad(Z_PS), 0.5*lamb_S*dot(F(U_S), tr(dot(F(U_S), grad(q_S).T))*I(U_S)))*dx(1)
-A_SS08 =  -inner(Z_PS, v_S)*dx(1)
-A_SS09 =  -(1/kn)*inner(Z_US - Z_US0, v_S)*dx(1)
+#A_SS01 = -(1/kn)*inner((Z_PS - Z_PS0), rho_S*q_S)*dx(1)
+#A_SS02 =  inner(grad(Z_PS), mu_S*dot(grad(q_S), dot(F_T(U_S), F(U_S)) - I(U_S)))*dx(1)
+#A_SS03 =  inner(grad(Z_PS), mu_S*dot(F(U_S), dot(grad(q_S).T, F(U_S)) - I(U_S)))*dx(1)
+#A_SS04 =  inner(grad(Z_PS), mu_S*dot(F(U_S), dot(F_T(U_S), grad(q_S)) - I(U_S)))*dx(1)
+#A_SS05 =  inner(grad(Z_PS), 0.5*lamb_S*dot(grad(q_S), tr(dot(F(U_S),F_T(U_S)))*I(U_S)))*dx(1)
+#A_SS06 =  inner(grad(Z_PS), 0.5*lamb_S*dot(F(U_S), tr(dot(grad(q_S),F_T(U_S)))*I(U_S)))*dx(1)
+#A_SS07 =  inner(grad(Z_PS), 0.5*lamb_S*dot(F(U_S), tr(dot(F(U_S), grad(q_S).T))*I(U_S)))*dx(1)
+#A_SS08 =  -inner(Z_PS, v_S)*dx(1)
+#A_SS09 =  -(1/kn)*inner(Z_US - Z_US0, v_S)*dx(1)
 
 # Collect A_SS form
-A_SS =  A_SS01 + A_SS02 + A_SS03 + A_SS04 + A_SS05 + A_SS06 + A_SS07 + A_SS08 + A_SS09
+#A_SS =  A_SS01 + A_SS02 + A_SS03 + A_SS04 + A_SS05 + A_SS06 + A_SS07 + A_SS08 + A_SS09
+
+Fu = F(U_S)
+#Fu = I
+Eu = Fu*Fu.T - I
+Ev = grad(v_S)*Fu.T + Fu*grad(v_S).T
+Sv = grad(v_S)*(2*mu_S*Eu + lmbda_S*tr(Eu)*I) + Fu*(2*mu_S*Ev + lmbda_S*tr(Ev)*I)
+
+A_SS = - (1/kn)*inner(Z_US0 - Z_US, rho_S*q_S)*dx(1) + inner(grad(Z_US), Sv)*dx(1) \
+       - (1/kn)*inner(Z_PS0 - Z_PS, v_S)*dx(1) - inner(Z_PS, q_S)*dx(1)
+
+#A_SS =
+
+#A_SS01 = -(1/kn)*inner((Z_PS - Z_PS0), rho_S*q_S)*dx(1)
+#A_SS02 =  inner(grad(Z_PS), mu_S*dot(grad(q_S), dot(F_T(U_S), F(U_S)) - I(U_S)))*dx(1)
+#A_SS03 =  inner(grad(Z_PS), mu_S*dot(F(U_S), dot(grad(q_S).T, F(U_S)) - I(U_S)))*dx(1)
+#A_SS04 =  inner(grad(Z_PS), mu_S*dot(F(U_S), dot(F_T(U_S), grad(q_S)) - I(U_S)))*dx(1)
+#A_SS05 =  inner(grad(Z_PS), 0.5*lmbdaS*dot(grad(q_S), tr(dot(F(U_S),F_T(U_S)))*I(U_S)))*dx(1)
+#A_SS06 =  inner(grad(Z_PS), 0.5*lmbdaS*dot(F(U_S), tr(dot(grad(q_S),F_T(U_S)))*I(U_S)))*dx(1)
+#A_SS07 =  inner(grad(Z_PS), 0.5*lmbdaS*dot(F(U_S), tr(dot(F(U_S), grad(q_S).T))*I(U_S)))*dx(1)
+#A_SS08 =  -inner(Z_PS, v_S)*dx(1)
+#A_SS09 =  -(1/kn)*inner(Z_US - Z_US0, v_S)*dx(1)
+
+
+#print inner(Z_US('+'), DJ(U_M,v_M)('+')*dot(P_F('+')*I(U_F)('+'), dot(F_invT(U_M)('+'),N)))
+
 
 # Structure eq. linearized around mesh variable
 A_SM01 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(grad(U_F('+')), F_inv(U_F)('+')), dot(F_invT(U_M)('+'), N)))*dS(1) # FIXME: Replace with Sigma_F
 A_SM02 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(F_invT(U_F)('+'), grad(U_F('+')).T), dot(F_invT(U_M)('+'), N)))*dS(1)# FIXME: Replace with Sigma_F
-A_SM03 =  inner(Z_US('+'), DJ(U_M,v_M)('+')*dot(P_F('+')*I(U_F)('+'), dot(F_invT(U_M)('+'),N)))*dS(1)# FIXME: Replace with Sigma_F
+A_SM03 =  inner(Z_US('+'), DJ(U_M,v_M)('+')*dot(P_F('+')*I('+'), dot(F_invT(U_M)('+'),N)))*dS(1)# FIXME: Replace with Sigma_F
 A_SM04 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')), dot(F_inv(U_M)('+'),grad(v_M('+')))), dot(F_inv(U_M)('+'), dot(F_invT(U_M)('+'), N))))*dS(1)
 A_SM05 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')).T, dot(F_invT(U_M)('+'), grad(v_M('+')).T)), dot(F_invT(U_M)('+'), dot(F_invT(U_M)('+'),N))))*dS(1)
 A_SM06 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')),F_inv(U_M)('+')),dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'),N)))))*dS(1)
 A_SM07 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'),grad(U_M('+')).T),dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'),N)))))*dS(1)
-A_SM08 = -inner(Z_US('+'), J(U_M)('+')*dot(dot(P_F('+')*I(U_F)('+'),F_invT(U_M)('+')), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'), N))))*dS(1)
+A_SM08 = -inner(Z_US('+'), J(U_M)('+')*dot(dot(P_F('+')*I('+'),F_invT(U_M)('+')), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'), N))))*dS(1)
 
 # Collect A_SM form
 A_SM = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06 + A_SM07 + A_SM08
@@ -209,25 +237,26 @@ A_MM03 = inner(Z_PM('+'),q_M('+'))*dS(1)
 # Collect A_MM form
 A_MM = A_MM01 + A_MM02 + A_MM03
 
-# Mesh eq. linearized around strucure variable
-A_MS = - inner(Z_PM('+'), q_S('+'))*dS(1)
+# Mesh eq. linearized around structure variable
+#A_MS = - inner(Z_PM('+'), q_S('+'))*dS(1)
+
+# FIXME: Temporary fix
+A_MS = - 0.0*inner(Z_PM('+'), q_S('+'))*dS(1)
 
 # Define goal funtionals
-psi_S_t = Constant((1.0, 0.0))
+#n_F = FacetNormal(Omega_F)
+#goal_F = inner(v_F, n_F)*ds(2)
 area = 0.2*0.5
-goal_S = (1.0/area)*inner(v_S, psi_S_t)*dx(1)
-n_F = FacetNormal(Omega_F)
-goal_F = inner(v_F, n_F)*ds(2)
-goal_functionals = inner(Z_US0, v_S)*dx(1)
+goal_functional = (1.0/area)*v_S[0]*dx(1)
 
 # Define the dual rhs and lhs
-A_dual = lhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
-L = rhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
-L_dual = L + goal_functionals
+A_system = A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS
+A = lhs(A_system)
+L = rhs(A_system) + goal_functional
 
 # Define BCs (define the dual trial space = homo. Dirichlet BCs)
 bc_U_F   = DirichletBC(W.sub(0), Constant((0.0, 0.0)), noslip)
-bc_P_F0  = DirichletBC(W.sub(1), Constant(0.0), inflow) 
+bc_P_F0  = DirichletBC(W.sub(1), Constant(0.0), inflow)
 bc_P_F1  = DirichletBC(W.sub(1), Constant(0.0), outflow)
 bc_U_S   = DirichletBC(W.sub(2), Constant((0.0, 0.0)), dirichlet_boundaries)
 bc_P_S   = DirichletBC(W.sub(3), Constant((0.0, 0.0)), dirichlet_boundaries)        # FIXME: Correct BC? Initial condintion????
@@ -262,7 +291,7 @@ while t <= T:
 
    print "*******************************************"
    print "-------------------------------------------"
-   print "Solving the DUAL problem at t = ", str(T - t)
+   print "Solving the DUAL problem at t =", str(T - t)
    print "-------------------------------------------"
    print "*******************************************"
 
@@ -270,8 +299,8 @@ while t <= T:
    get_primal_data(t)
 
    # Assemble
-   dual_matrix = assemble(A_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)#, exterior_facet_domains = exterior_boundary)
-   dual_vector = assemble(L_dual, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)#, exterior_facet_domains = exterior_boundary)
+   dual_matrix = assemble(A, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)#, exterior_facet_domains = exterior_boundary)
+   dual_vector = assemble(L, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains)#, exterior_facet_domains = exterior_boundary)
 
    # Apply bcs
    for bc in bcs:

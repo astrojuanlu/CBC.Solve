@@ -7,7 +7,7 @@ from numpy import array, append, zeros
 # Define the Jacobian matrices and determinants
 def F(u):
     I = SecondOrderIdentity(u)
-    F = (I + grad(u)) 
+    F = (I + grad(u))
     return F
 
 def F_inv(u):
@@ -40,32 +40,33 @@ def DJ(u,w):
 def J(u):
     return det(F(u))
 
-def I(u):
-    I = SecondOrderIdentity(u)
-    return I
+#def I(u):
+#    I = SecondOrderIdentity(u)
+#    return I
+I = variable(Identity(2))
 
 def sym_gradient(u):
     sym_gradient = 0.5*(grad(u)+ grad(u).T)
     return sym_gradient
-   
+
 # Define fluid stress sigma_F
 def Sigma_F(u,p,v):
-    return  mu_F*(grad(u)*F_inv(v) + F_invT(v)*grad(u).T) - p*I(u)  
- 
+    return  mu_F*(grad(u)*F_inv(v) + F_invT(v)*grad(u).T) - p*I
+
 # Define constants FIXME: Move !!!
 rho_F = 1.0
 mu_F = 0.002
 rho_S = 1
 mu_S =  0.15
-lamb_S =  0.25
+lmbda_S =  0.25
 mu_M =  3.8461
-lamb_M =  5.76
+lmbda_M =  5.76
 
 # def sigma_F(u,p):
-#     return 2.0*mu_F*sym_gradient(u) + I(u)*p 
+#     return 2.0*mu_F*sym_gradient(u) + I(u)*p
 
 def sigma_M(u):
-    return 2.0*mu_M*sym_gradient(u) + lamb_M*tr(sym_gradient(u))*I(u)
+    return 2.0*mu_M*sym_gradient(u) + lmbda_M*tr(sym_gradient(u))*I
 
 
 # mfile = File("matrix.m")

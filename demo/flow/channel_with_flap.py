@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-04-28
+# Last changed: 2010-05-01
 
 from cbc.flow import *
 
@@ -61,7 +61,10 @@ class ChannelWithFlap(NavierStokes):
         return u0, p0
 
     def end_time(self):
-        return 2.5
+        return 10.0
+
+    def time_step(self):
+        return 0.00005
 
     def functional(self, u, p):
         return u((4.0, 0.5))[0]
