@@ -356,14 +356,26 @@ disp_vs_t.close()
 end_displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 end_functional = u_F((4.0, 0.5))[0]
 
-# Store info 
+# Store info (some needs to be stored by hand... marked with ##)
+convergence_data.write(str("==FLUID PARAMETERS==")+ "\n")
+convergence_data.write(str("viscosity:  ") + str(F.viscosity()) + "\n")
+convergence_data.write(str("density:    ") + str(F.density()) + "\n")
+convergence_data.write(str("==STRUCTURE PARAMETERS==")+ "\n")
+convergence_data.write(str("density: ") + str(S.reference_density()) + "\n")
+convergence_data.write(str("mu:      ") + str(0.15) + "\n") ##
+convergence_data.write(str("lambda:  ") + str(0.25) + "\n") ##
+convergence_data.write(str("==MESH PARAMETERS==")+ "\n")
+convergence_data.write(str("no. mesh smooth: ") + str(50) + "\n") ##
+convergence_data.write(str("mu:              ") + str(0.15) + "\n") ##   
+convergence_data.write(str("lambda:          ") + str((0.25)) + "\n" + "\n") ##
+convergence_data.write(str("****MESH/TIME*****") +  "\n")
 convergence_data.write(str("Mesh size (nx*ny):     ") + str(mesh.num_cells()) + "\n")
-convergence_data.write(str("End time T:            ") + str(T) + "\n")
 convergence_data.write(str("Min(hK):               ") + str(mesh.hmin()) + "\n")
+convergence_data.write(str("End time T:            ") + str(T) + "\n")
 convergence_data.write(str("Time step kn:          ") + str(dt) + "\n")
 convergence_data.write(str("Tolerance (FSI f.p.):  ") + str(tol) + "\n" + "\n")
+convergence_data.write(str("****INDICATORS****")+ "\n")
 convergence_data.write(str("Functional u_F(T):     ") + str(end_functional) + "\n")
 convergence_data.write(str("Displacment(T):        ") + str(end_displacement) + "\n")
 convergence_data.close()
-
 

@@ -5,7 +5,7 @@ from numpy import array, append, zeros
 nx = 40
 ny = nx/4
 dt = 0.1
-T = 0.4
+T = 0.2
 tol = 1e-6
 
 # Constants related to the geometry of the channel and the obstruction
