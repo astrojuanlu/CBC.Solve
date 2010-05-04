@@ -10,6 +10,7 @@ from common import *
 from math import ceil
 
 plot_solution = False
+store_vtu_files = False
 
 # Define fluid problem
 class FluidProblem(NavierStokes):
@@ -257,6 +258,7 @@ file_U_S = File("U_S.pvd")
 file_P_S = File("P_S.pvd")
 file_U_M = File("U_M.pvd")
 disp_vs_t = open("disp_vs_t_file", "w")
+convergence_data = open("convergence_data_file", "w")
 
 # Fix time step if needed. Note that this has to be done
 # in oder to save the primal data at the correct time
@@ -317,8 +319,7 @@ while t <= T:
             break
     
     # Compute displacement    
-    area = 0.2*0.5
-    displacement = (1.0/area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
+    displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 
     # Move to next time step
     F.update(t)
@@ -327,15 +328,18 @@ while t <= T:
     # FIXME: This should be done automatically by the solver
     F.update_extra()
 
-    # Store solutions
-    file_u_F << u_F
-    file_p_F << p_F
-    file_U_S << U_S
-    file_P_S << P_S
-    file_U_M << U_M
+    # Store solutions in .vtu format
+    if store_vtu_files:
+        file_u_F << u_F
+        file_p_F << p_F
+        file_U_S << U_S
+        file_P_S << P_S
+        file_U_M << U_M
+        
+    # Store raw data for displacement
     disp_vs_t.write(str(displacement) + "    " + str(t) + "\n")
     
-    # Store primal vectors
+    # Store primal vectors in .bin format
     primal_u_F.store(u_F.vector(), t)
     primal_p_F.store(p_F.vector(), t)
     primal_U_S.store(U_S.vector(), t)
@@ -349,20 +353,29 @@ while t <= T:
 disp_vs_t.close()
 
 # Define convergence indicators
-area = 0.2*0.5
-displacement = (1.0/area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
-functional = u_F((4.0, 0.5))[0]
+end_displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
+end_functional = u_F((4.0, 0.5))[0]
 
-# Print convergence indicators
-print "*******************************************"
-print "Mesh size: %g "%  mesh.num_cells()
-print "mesh h %g"  % mesh.hmin()
-print "Time step kn: %g"% dt
-print "End time T: %g"%T
-print "TOL %g" % tol
-print " "
-print " "
-print "Functional: %g" % functional
-print "Displacement %g"% displacement
-print "*******************************************"
+# Store info (some needs to be stored by hand... marked with ##)
+convergence_data.write(str("==FLUID PARAMETERS==")+ "\n")
+convergence_data.write(str("viscosity:  ") + str(F.viscosity()) + "\n")
+convergence_data.write(str("density:    ") + str(F.density()) + "\n")
+convergence_data.write(str("==STRUCTURE PARAMETERS==")+ "\n")
+convergence_data.write(str("density: ") + str(S.reference_density()) + "\n")
+convergence_data.write(str("mu:      ") + str(0.15) + "\n") ##
+convergence_data.write(str("lambda:  ") + str(0.25) + "\n") ##
+convergence_data.write(str("==MESH PARAMETERS==")+ "\n")
+convergence_data.write(str("no. mesh smooth: ") + str(50) + "\n") ##
+convergence_data.write(str("mu:              ") + str(0.15) + "\n") ##   
+convergence_data.write(str("lambda:          ") + str((0.25)) + "\n" + "\n") ##
+convergence_data.write(str("****MESH/TIME*****") +  "\n")
+convergence_data.write(str("Mesh size (nx*ny):     ") + str(mesh.num_cells()) + "\n")
+convergence_data.write(str("Min(hK):               ") + str(mesh.hmin()) + "\n")
+convergence_data.write(str("End time T:            ") + str(T) + "\n")
+convergence_data.write(str("Time step kn:          ") + str(dt) + "\n")
+convergence_data.write(str("Tolerance (FSI f.p.):  ") + str(tol) + "\n" + "\n")
+convergence_data.write(str("****INDICATORS****")+ "\n")
+convergence_data.write(str("Functional u_F(T):     ") + str(end_functional) + "\n")
+convergence_data.write(str("Displacment(T):        ") + str(end_displacement) + "\n")
+convergence_data.close()
 
