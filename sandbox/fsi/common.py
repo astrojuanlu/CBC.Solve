@@ -2,10 +2,10 @@ from dolfin import *
 from numpy import array, append, zeros
 
 # Mesh and time stepping parameters
-nx = 40
+nx = 80
 ny = nx/4
-dt = 0.1
-T = 0.2
+dt = 0.01
+T = 2.5
 tol = 1e-6
 
 # Constants related to the geometry of the channel and the obstruction

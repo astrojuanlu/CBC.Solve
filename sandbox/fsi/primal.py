@@ -10,7 +10,7 @@ from common import *
 from math import ceil
 
 plot_solution = False
-store_vtu_files = False
+store_vtu_files = True
 
 # Define fluid problem
 class FluidProblem(NavierStokes):
