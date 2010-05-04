@@ -80,38 +80,43 @@ velocity_series = TimeSeries("velocity")
 
 # Adjoint problem
 
-u_h = Function(vector)
-v_h = Function(vector)
+U_h = Function(mixed_element)
+ZU = Function(mixed_element)
+ZU0 = Function(mixed_element)
 
-# goal = dt*xi[0]*dx
-# F_adjoint = - rho0*inner(zv - zv0, xi)*dx \
-#              - inner(zu - zu0, eta)*dx \
-#              - dt*inner(zv, xi)*dx \
-#              + dt*inner(grad(zu), P(xi))*dx
-# a_adjoint = derivative(F_adjoint, ZU)
-# L_adjoint = F_adjoint + goal
+zu, zv = split(ZU)
+zu0, zv0 = split(ZU0)
+u_h, v_h = U_h.split(True)
 
-# problem_adjoint = VariationalProblem(a_adjoint, L_adjoint, homogenize(bc))
+F_adjoint = - rho0*inner(zv - zv0, xi)*dx - inner(zu0 - zu, eta)*dx \
+            - dt*inner(zv, eta)*dx
+goal = dt*xi[0]*dx
 
-# plot_file_adjoint = File("adjoint_displacement.pvd")
+# + inner(grad(zu), P(xi))*dx
+a_adjoint = lhs(F_adjoint)
+L_adjoint = rhs(F_adjoint) + goal
+
+
+problem_adjoint = VariationalProblem(a_adjoint, L_adjoint, homogenize(bc))
+
+plot_file_adjoint = File("adjoint_displacement.pvd")
 
 t = end_time
 
 while t  >= 0:
+
     t = t - float(dt)
 
     displacement_series.retrieve(u_h.vector(), t)
     velocity_series.retrieve(v_h.vector(), t)
 
-#     problem_adjoint.solve(ZU0)
-#     zu0, zv0 = ZU0.split(True)
+    problem_adjoint.solve(ZU0)
+    zu0, zv0 = ZU0.split(True)
 
-#     plot_file_adjoint << zu0
+    plot_file_adjoint << zu0
 
-#     ZU.assign(ZU0)
+    ZU.assign(ZU0)
 
-#     plot(zu0, mode='displacement')
-
-    plot(u_h, mode='displacement')
+    plot(zu0, mode='displacement')
 
 interactive()
