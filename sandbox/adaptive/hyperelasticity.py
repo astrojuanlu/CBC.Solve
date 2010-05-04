@@ -88,19 +88,16 @@ zu, zv = split(ZU)
 zu0, zv0 = split(ZU0)
 u_h, v_h = U_h.split(True)
 
-# I = Identity(u_h.cell().d)
-# Fu = I + grad(u_h)
-# Eu = Fu*Fu.T - I
-# Ev = grad(xi)*Fu.T + Fu*grad(xi).T
-# Sv = grad(xi)*(2*mu*Eu + lmbda*tr(Eu)*I) + Fu*(2*mu*Ev + lmbda*tr(Ev)*I)
+F_adjoint = - rho0*inner(zv - zv0, xi)*dx - inner(zu0 - zu, eta)*dx \
+            - dt*inner(zv, eta)*dx
+goal = dt*xi[0]*dx
 
-# a_adjoint = - rho0*inner(zu0 - zu, eta)*dx \
-#     + dt*inner(grad(zu), Sv)*dx \
-#     - inner(zv0 - zv, xi)*dx \
-#     - dt*inner(zv, eta)*dx
-# L_adjoint = dt*xi[0]*dx
+# + inner(grad(zu), P(xi))*dx
+a_adjoint = lhs(F_adjoint)
+L_adjoint = rhs(F_adjoint) + goal
 
-# problem_adjoint = VariationalProblem(a_adjoint, L_adjoint, homogenize(bc))
+
+problem_adjoint = VariationalProblem(a_adjoint, L_adjoint, homogenize(bc))
 
 plot_file_adjoint = File("adjoint_displacement.pvd")
 
@@ -113,14 +110,13 @@ while t  >= 0:
     displacement_series.retrieve(u_h.vector(), t)
     velocity_series.retrieve(v_h.vector(), t)
 
-#     problem_adjoint.solve(ZU0)
-#     zu0, zv0 = ZU0.split(True)
+    problem_adjoint.solve(ZU0)
+    zu0, zv0 = ZU0.split(True)
 
-#     plot_file_adjoint << zu0
+    plot_file_adjoint << zu0
 
-#     ZU.assign(ZU0)
+    ZU.assign(ZU0)
 
-    # plot(zu0, mode='displacement')
-    plot(u_h, mode='displacement')
+    plot(zu0, mode='displacement')
 
 interactive()
