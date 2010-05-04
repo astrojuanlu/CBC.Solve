@@ -72,31 +72,16 @@ class Channel(NavierStokes):
         bcu = DirichletBC(V, Constant((0, 0)), noslip)
 
         # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(2), inflow)
-        bcp1 = DirichletBC(Q, Constant(0), outflow)
+        bcp0 = DirichletBC(Q, Constant(1.0), inflow)
+        bcp1 = DirichletBC(Q, Constant(0.0), outflow)
 
         return [bcu], [bcp0, bcp1]
-
 
     def time_step(self):
         return dt
 
     def end_time(self):
         return T
-
-    def functional(self, u, p):
-        return u((1.0, 0.5))[0]
-
-    def reference(self, t):
-        num_terms = 30
-        u = 1.0
-        c = 1.0
-        for n in range(1, 2*num_terms, 2):
-            a = 32.0 / (DOLFIN_PI**3*n**3)
-            b = (1.0/8.0)*DOLFIN_PI**2*n**2
-            c = -c
-            u += a*exp(-b*t)*c
-        return u
 
     def __str__(self):
         return "Pressure-driven channel (2D)"
@@ -107,7 +92,7 @@ class ChannelDual(NavierStokesDual):
         return omega_F
 
     def boundary_markers(self):
-        right = compile_subdomains("x[0] <= DOLFIN_EPS")
+        right = compile_subdomains("x[0] >= 4.0 - DOLFIN_EPS")
         boundary_marker = MeshFunction("uint", self.mesh(), self.mesh().topology().dim() - 1)
         right.mark(boundary_marker, 2)
         return boundary_marker
@@ -118,11 +103,11 @@ class ChannelDual(NavierStokesDual):
     def boundary_conditions(self, V, Q):
 
         # Create no-slip boundary condition for velocity
-        bcu = DirichletBC(V, Constant((0, 0)), noslip)
+        bcu = DirichletBC(V, Constant((0.0, 0.0)), noslip)
 
         # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(1), inflow)
-        bcp1 = DirichletBC(Q, Constant(0), outflow)
+        bcp0 = DirichletBC(Q, Constant(0.0), inflow)
+        bcp1 = DirichletBC(Q, Constant(0.0), outflow)
 
         return [bcu], [bcp0, bcp1]
 # FIXME: base the following on zie goal funtional
@@ -144,9 +129,9 @@ class ChannelDual(NavierStokesDual):
     def __str__(self):
         return "Pressure-driven channel (2D)"
 
-# Solve problem
+# # Solve problem
 # problem = Channel()
-# problem.parameters["solver_parameters"]["plot_solution"] = False
+# problem.parameters["solver_parameters"]["plot_solution"] = True
 # problem.parameters["solver_parameters"]["store_solution_data"] = True
 # u, p = problem.solve()
 
