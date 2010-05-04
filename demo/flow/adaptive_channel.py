@@ -15,7 +15,7 @@ ny = nx/4
 
 # Parameters
 dt = 0.01
-T = 2.0
+T = 0.1
 tol = 1e-4
 
 # Create the complete mesh
@@ -33,27 +33,15 @@ class Structure(SubDomain):
 # Create structure subdomain
 structure = Structure()
 
-# Create subdomain markers (0=fluid,  1=structure)
+# Create subdomain markers
 sub_domains = MeshFunction("uint", mesh, D)
 sub_domains.set_all(0)
 structure.mark(sub_domains, 1)
 
-# Create cell_domain markers (0=fluid,  1=structure)
-cell_domains = MeshFunction("uint", mesh, D)
-cell_domains.set_all(0)
-structure.mark(cell_domains, 1)
-
-# Extract submeshes for fluid and structure
+# Extract submesh for the fluid
 Omega = mesh
 Omega_F = SubMesh(mesh, sub_domains, 0)
-Omega_S = SubMesh(mesh, sub_domains, 1)
 omega_F = Mesh(Omega_F)
-
-# Create facet marker for outflow
-right = compile_subdomains("x[0] == channel_length")
-exterior_boundary = MeshFunction("uint", Omega, D-1)
-right.mark(exterior_boundary, 2)
-
 
 # Define inflow boundary
 def inflow(x):
@@ -118,6 +106,12 @@ class ChannelDual(NavierStokesDual):
     def mesh(self):
         return omega_F
 
+    def boundary_markers(self):
+        right = compile_subdomains("x[0] <= DOLFIN_EPS")
+        boundary_marker = MeshFunction("uint", self.mesh(), self.mesh().topology().dim() - 1)
+        right.mark(boundary_marker, 2)
+        return boundary_marker
+
     def viscosity(self):
         return 1e-2
 
@@ -144,24 +138,21 @@ class ChannelDual(NavierStokesDual):
         return T
 
     def functional(self, u, p, V, Q, n):
-#         right = RightBoundary(Q)
-#         right = RightBoundary(Q)
-#         sigma = nu*(grad(u) + grad(u).T) - p*Identity(u.cell().d)
-#        n_F = FacetNormal(Omega_F)
-        goal_F = inner(u, n)*ds(2)
-        return goal_F
+        goal = inner(u, n)*ds(2)
+        return goal
 
     def __str__(self):
         return "Pressure-driven channel (2D)"
 
 # Solve problem
 # problem = Channel()
-# problem.parameters["solver_parameters"]["plot_solution"] = True
+# problem.parameters["solver_parameters"]["plot_solution"] = False
 # problem.parameters["solver_parameters"]["store_solution_data"] = True
 # u, p = problem.solve()
 
 dual_problem = ChannelDual()
-dual_problem.parameters["solver_parameters"]["plot_solution_data"] = True
+dual_problem.parameters["solver_parameters"]["plot_solution"] = True
+dual_problem.parameters["solver_parameters"]["save_solution"] = True
 dual_problem.parameters["solver_parameters"]["store_solution_data"] = False
 w, r = dual_problem.solve()
 
