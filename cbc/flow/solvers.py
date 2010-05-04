@@ -223,7 +223,7 @@ class NavierStokesDualSolver(CBCSolver):
         w1 = project(Constant((0.0, 0.0)), V)
         r1 = project(Constant(0.0), Q)
 
-        bcw, bcr = homogenize(problem.boundary_conditions(V, Q))
+        bcw, bcr = problem.boundary_conditions(V, Q)
 
         # Functions
         w0 = Function(V)
@@ -263,6 +263,12 @@ class NavierStokesDualSolver(CBCSolver):
         self.w_plot = w_plot
         self.r_plot = r_plot
         self.exterior_facet_domains = problem.boundary_markers()
+
+        # Empty file handlers / time series
+        self.dual_velocity_file = None
+        self.dual_pressure_file = None
+        self.dual_velocity_series = None
+        self.dual_pressure_series = None
 
     def solve(self):
         "Solve problem and return computed solution (u, p)"
@@ -308,5 +314,19 @@ class NavierStokesDualSolver(CBCSolver):
             self.r_plot.assign(self.r0)
             plot(self.r_plot, title="Pressure", rescale=True)
             plot(self.w_plot, title="Velocity", rescale=True)
+
+        # Store solution (for plotting)
+        if self.parameters["save_solution"]:
+            if self.dual_velocity_file is None: self.dual_velocity_file = File("dual_velocity.pvd")
+            if self.dual_pressure_file is None: self.dual_pressure_file = File("dual_pressure.pvd")
+            self.dual_velocity_file << self.w0
+            self.dual_pressure_file << self.r0
+
+        # Store solution data
+        if self.parameters["store_solution_data"]:
+            if self.dual_velocity_series is None: self.velocity_series = TimeSeries("dual_velocity")
+            if self.dual_pressure_series is None: self.pressure_series = TimeSeries("dual_pressure")
+            self.dual_velocity_series.store(self.w0.vector(), t)
+            self.dual_pressure_series.store(self.r0.vector(), t)
 
         return self.w0, self.r0
