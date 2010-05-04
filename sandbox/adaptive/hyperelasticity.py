@@ -3,11 +3,11 @@ from numpy import array, loadtxt
 
 parameters["form_compiler"]["cpp_optimize"] = True
 
-mesh = UnitCube(8, 8, 8)
+mesh = UnitSquare(16, 16)
 vector = VectorFunctionSpace(mesh, "CG", 1)
 
-B  = Expression(("0.0", "0.0", "0.0"))
-T  = Expression(("0.0", "0.0", "0.0"))
+B  = Expression(("0.0", "0.0"))
+T  = Expression(("0.01*t", "0.0"))
 
 mixed_element = MixedFunctionSpace([vector, vector])
 V = TestFunction(mixed_element)
@@ -15,55 +15,59 @@ dU = TrialFunction(mixed_element)
 U = Function(mixed_element)
 U0 = Function(mixed_element)
 
+ZU = Function(mixed_element)
+ZU0 = Function(mixed_element)
+
 xi, eta = split(V)
 u, v = split(U)
 u0, v0 = split(U0)
+zu, zv = split(ZU)
+zu0, zv0 = split(ZU0)
 
-_u0 = loadtxt("twisty.txt")[:]
-U0.vector()[0:len(_u0)] = _u0[:]
+clamp = Constant((0.0, 0.0))
+bottom = compile_subdomains("x[1] == 0")
+bc = DirichletBC(mixed_element.sub(0), clamp, bottom)
 
-clamp = Constant((0.0, 0.0, 0.0))
-left = compile_subdomains("x[0] == 0")
-bcl = DirichletBC(mixed_element.sub(0), clamp, left)
-
-u_mid = 0.5*(u0 + u)
-v_mid = 0.5*(v0 + v)
-
-I = Identity(v.cell().d)
-F = I + grad(u_mid)
-C = F.T*F
-E = (C - I)/2
-E = variable(E)
+u_int = u
+v_int = v
 
 mu    = Constant(3.85)
 lmbda = Constant(5.77)
 
-psi = lmbda/2*(tr(E)**2) + mu*tr(E*E)
-S = diff(psi, E)
-P = F*S
+def P(u):
+    I = Identity(u.cell().d)
+    F = I + grad(u)
+    C = F.T*F
+    E = (C - I)/2
+    E = variable(E)
+    psi = lmbda/2*(tr(E)**2) + mu*tr(E*E)
+    S = diff(psi, E)
+    P = F*S
+    return P
 
 rho0 = Constant(1.0)
 dt = Constant(0.01)
 
-L = rho0*inner(v - v0, xi)*dx + dt*inner(P, grad(xi))*dx \
+L = rho0*inner(v - v0, xi)*dx + dt*inner(P(u_int), grad(xi))*dx \
     - dt*inner(B, xi)*dx - dt*inner(T, xi)*ds \
-    + inner(u - u0, eta)*dx - dt*inner(v_mid, eta)*dx 
+    + inner(u - u0, eta)*dx - dt*inner(v_int, eta)*dx
 a = derivative(L, U, dU)
 
 t = 0.0
-T = 2.0
+end_time = 10.0
 
-problem = VariationalProblem(a, L, bcl, nonlinear = True)
+problem = VariationalProblem(a, L, bc, nonlinear = True)
 
 plot_file = File("displacement.pvd")
 displacement_series = TimeSeries("displacement")
 velocity_series = TimeSeries("velocity")
 
-# Primal problem
+# # Primal problem
 
-# while t < T:
+# while t < end_time:
 
 #     t = t + float(dt)
+#     T.t = t
 
 #     problem.solve(U)
 #     u, v = U.split(True)
@@ -79,32 +83,35 @@ velocity_series = TimeSeries("velocity")
 u_h = Function(vector)
 v_h = Function(vector)
 
-right_boundary = compile_subdomains("x[0] == 1.0")
-exterior_facet_domains = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
-exterior_facet_domains.set_all(0)
-right_boundary.mark(exterior_facet_domains, 1)
+# goal = dt*xi[0]*dx
+# F_adjoint = - rho0*inner(zv - zv0, xi)*dx \
+#              - inner(zu - zu0, eta)*dx \
+#              - dt*inner(zv, xi)*dx \
+#              + dt*inner(grad(zu), P(xi))*dx
+# a_adjoint = derivative(F_adjoint, ZU)
+# L_adjoint = F_adjoint + goal
 
-a_adjoint = adjoint(a)
-L_adjoint = dt*inner(grad(u_h), grad(xi))*dx
-# FIXME: Replace u with u_h here
-problem_adjoint = VariationalProblem(a_adjoint, L_adjoint, homogenize(bcl), exterior_facet_domains=exterior_facet_domains)
+# problem_adjoint = VariationalProblem(a_adjoint, L_adjoint, homogenize(bc))
 
-plot_file_adjoint = File("adjoint_displacement.pvd")
+# plot_file_adjoint = File("adjoint_displacement.pvd")
 
-while t < T:
-    t = t + float(dt)
+t = end_time
+
+while t  >= 0:
+    t = t - float(dt)
 
     displacement_series.retrieve(u_h.vector(), t)
     velocity_series.retrieve(v_h.vector(), t)
 
-    problem_adjoint.solve(U)
-    u, v = U.split(True)
+#     problem_adjoint.solve(ZU0)
+#     zu0, zv0 = ZU0.split(True)
 
-    plot_file_adjoint << u
+#     plot_file_adjoint << zu0
 
-    U0.assign(U)
+#     ZU.assign(ZU0)
 
-#    plot(u, mode='displacement')
-#    plot(v_h)
+#     plot(zu0, mode='displacement')
+
+    plot(u_h, mode='displacement')
 
 interactive()
