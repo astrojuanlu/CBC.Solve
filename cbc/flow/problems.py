@@ -131,3 +131,7 @@ class NavierStokesDual(NavierStokes):
     def functional(self, u, p, V, Q, n):
         "Return goal functional"
         missing_function("functional")
+
+    def boundary_markers(self):
+        "Return exterior boundary markers"
+        return None
