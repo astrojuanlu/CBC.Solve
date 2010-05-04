@@ -125,7 +125,7 @@ class StructureProblem(Hyperelasticity):
         self.v_F = TestFunction(self.V_F)
         self.N_F = FacetNormal(Omega_F)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
-
+        
         Hyperelasticity.__init__(self)
 
     def mesh(self):
@@ -245,6 +245,7 @@ file_p_F = File("p_F.pvd")
 file_U_S = File("U_S.pvd")
 file_P_S = File("P_S.pvd")
 file_U_M = File("U_M.pvd")
+disp_vs_t = open("disp_vs_t_file", "w")
 
 # Fix time step if needed. Note that this has to be done
 # in oder to save the primal data at the correct time
@@ -303,6 +304,10 @@ while t <= T:
         # Check convergence
         if r < tol:
             break
+    
+    # Compute displacement    
+    area = 0.2*0.5
+    displacement = (1.0/area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 
     # Move to next time step
     F.update(t)
@@ -317,7 +322,8 @@ while t <= T:
     file_U_S << U_S
     file_P_S << P_S
     file_U_M << U_M
-
+    disp_vs_t.write(str(displacement) + "    " + str(t) + "\n")
+    
     # Store primal vectors
     primal_u_F.store(u_F.vector(), t)
     primal_p_F.store(p_F.vector(), t)
@@ -328,8 +334,12 @@ while t <= T:
     # Move on to the next time level
     t += dt
 
-# Define convergence indicator for structure (integral over displacement in x1-direction)
-displacement = assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
+# Close file
+disp_vs_t.close()
+
+# Define convergence indicators
+area = 0.2*0.5
+displacement = (1.0/area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 functional = u_F((4.0, 0.5))[0]
 
 # Print convergence indicators
