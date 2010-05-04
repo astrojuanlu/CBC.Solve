@@ -164,8 +164,8 @@ class NavierStokesSolver(CBCSolver):
         if self.parameters["store_solution_data"]:
             if self.velocity_series is None: self.velocity_series = TimeSeries("velocity")
             if self.pressure_series is None: self.pressure_series = TimeSeries("pressure")
-            self.velocity_series.store(self.u1, t)
-            self.pressure_series.store(self.p1, t)
+            self.velocity_series.store(self.u1.vector(), t)
+            self.pressure_series.store(self.p1.vector(), t)
 
         return self.u1, self.p1
 
@@ -207,9 +207,13 @@ class NavierStokesDualSolver(CBCSolver):
         Q = FunctionSpace(mesh, "CG", 1)
 
         # Test and trial functions
-        system = V*Q
+        system = MixedFunctionSpace([V, Q])
         (v, q) = TestFunctions(system)
         (w, r) = TrialFunctions(system)
+
+        # Functions for plotting without opening multiple windows
+        w_plot = Function(V)
+        r_plot = Function(Q)
 
         # Initial and boundary conditions (which are homogenised
         # versions of the primal conditions)
@@ -239,6 +243,7 @@ class NavierStokesDualSolver(CBCSolver):
             + div(v)*r*dx
 
         a = inner(v, w)*dx + dt*a_tilde
+
         goal = problem.functional(v, q, V, Q, n)
         L = inner(v, w1)*dx + dt*goal
 
@@ -255,6 +260,9 @@ class NavierStokesDualSolver(CBCSolver):
         self.a = a
         self.u_h = u_h
         self.p_h = p_h
+        self.w_plot = w_plot
+        self.r_plot = r_plot
+        self.exterior_facet_domains = problem.boundary_markers()
 
     def solve(self):
         "Solve problem and return computed solution (u, p)"
@@ -280,7 +288,7 @@ class NavierStokesDualSolver(CBCSolver):
         # Compute dual solution
         begin("Computing dual solution")
         bcs = self.bcw + self.bcr
-        pde_dual = VariationalProblem(self.a, self.L, bcs)
+        pde_dual = VariationalProblem(self.a, self.L, bcs, exterior_facet_domains = self.exterior_facet_domains)
         (self.w0, self.r0) = pde_dual.solve().split(True)
         end()
 
@@ -294,7 +302,11 @@ class NavierStokesDualSolver(CBCSolver):
 
         # Plot solution
         if self.parameters["plot_solution"]:
-            plot(self.w0, title="Velocity", rescale=True)
-            plot(self.r0, title="Pressure", rescale=True)
+            # Copy to a fixed function to trick Viper into not opening
+            # up multiple windows
+            self.w_plot.assign(self.w0)
+            self.r_plot.assign(self.r0)
+            plot(self.r_plot, title="Pressure", rescale=True)
+            plot(self.w_plot, title="Velocity", rescale=True)
 
         return self.w0, self.r0
