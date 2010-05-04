@@ -523,7 +523,8 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
         # FIXME: Figure out why I am needed
         self.mesh = mesh
-        self.t = 0
+        # Kristoffer's fix in order to sync the F and S solvers dt...
+        self.t = dt
 
         # Empty file handlers / time series
         self.displacement_file = None
