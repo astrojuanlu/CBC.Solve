@@ -176,5 +176,5 @@ class Hyperelasticity(StaticHyperelasticity):
         """Return the kinetic energy given a velocity field, v"""
 
         rho0 = self.reference_density()
-        ke = assemble(0.5*rho0*inner(v, v)*dx, mesh=u.function_space().mesh())
+        ke = assemble(0.5*rho0*inner(v, v)*dx, mesh=v.function_space().mesh())
         return ke
