@@ -258,6 +258,7 @@ file_U_S = File("U_S.pvd")
 file_P_S = File("P_S.pvd")
 file_U_M = File("U_M.pvd")
 disp_vs_t = open("disp_vs_t_file", "w")
+general_data = open("general_data_file", "w")
 
 # Fix time step if needed. Note that this has to be done
 # in oder to save the primal data at the correct time
@@ -357,16 +358,14 @@ area = 0.2*0.5
 displacement = (1.0/area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 functional = u_F((4.0, 0.5))[0]
 
-# Print convergence indicators
-print "*******************************************"
-print "Mesh size: %g "%  mesh.num_cells()
-print "mesh h %g"  % mesh.hmin()
-print "Time step kn: %g"% dt
-print "End time T: %g"%T
-print "TOL %g" % tol
-print " "
-print " "
-print "Functional: %g" % functional
-print "Displacement %g"% displacement
-print "*******************************************"
+# Store info 
+general_data.write(str("Mesh size (nx*ny):     ") + str(mesh.num_cells()) + "\n")
+general_data.write(str("Min size (hK):         ") + str(mesh.hmin()) + "\n")
+general_data.write(str("Time step kn:          ") + str(dt) + "\n")
+general_data.write(str("End time:              ") + str(T) + "\n")
+general_data.write(str("Tolerance (FSI f.p.):  ") + str(tol) + "\n")
+general_data.write(str("Functional(T):         ") + str(functional) + "\n")
+general_data.write(str("Displacment(T):        ") + str(displacement) + "\n")
+general_data.close()
+
 
