@@ -61,7 +61,7 @@ class ChannelWithFlap(NavierStokes):
         return u0, p0
 
     def end_time(self):
-        return 10.0
+        return 2.5
 
     #def time_step(self):
     #    return 0.00005
