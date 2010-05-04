@@ -10,6 +10,7 @@ from common import *
 from math import ceil
 
 plot_solution = False
+store_vtu_files = False
 
 # Define fluid problem
 class FluidProblem(NavierStokes):
@@ -327,15 +328,18 @@ while t <= T:
     # FIXME: This should be done automatically by the solver
     F.update_extra()
 
-    # Store solutions
-    file_u_F << u_F
-    file_p_F << p_F
-    file_U_S << U_S
-    file_P_S << P_S
-    file_U_M << U_M
+    # Store solutions in .vtu format
+    if store_vtu_files:
+        file_u_F << u_F
+        file_p_F << p_F
+        file_U_S << U_S
+        file_P_S << P_S
+        file_U_M << U_M
+        
+    # Store raw data for displacement
     disp_vs_t.write(str(displacement) + "    " + str(t) + "\n")
     
-    # Store primal vectors
+    # Store primal vectors in .bin format
     primal_u_F.store(u_F.vector(), t)
     primal_p_F.store(p_F.vector(), t)
     primal_U_S.store(U_S.vector(), t)
