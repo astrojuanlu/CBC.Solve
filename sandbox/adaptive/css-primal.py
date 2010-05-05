@@ -3,7 +3,6 @@
 ## time step to be later used in the dual problem solution.
 
 from dolfin import *
-from numpy import array, vstack, savetxt, loadtxt
 from math import ceil
 import os
 
@@ -15,39 +14,21 @@ n = FacetNormal(mesh)
 
 # Constants
 nu = 1.0/8.0
-T = 5.0
+T = 0.5
 k = 0.25*mesh.hmin()
 
 # Dirichlet boundary
-class DirichletBoundary(SubDomain):
-    def inside(self, x, on_boundary):
-        return x[1] < DOLFIN_EPS or x[1] > 1.0 - DOLFIN_EPS
+def noslipboundary(x):
+    return x[1] < DOLFIN_EPS or x[1] > 1.0 - DOLFIN_EPS
 
 # Neumann boundary
 # Inflow boundary
-class InflowBoundary(SubDomain):
-    def inside(self, x, on_boundary):
-        return x[0] < DOLFIN_EPS
+def inflowboundary(x):
+    return x[0] < DOLFIN_EPS
 
 # Outflow boundary
-class OutflowBoundary(SubDomain):
-    def inside(self, x, on_boundary):
-        return x[0] > 1.0 - DOLFIN_EPS
-
-# Neumann boundary condition. This is a vector field that is (1, 0) on
-# the left end and (0, 0) on the right end (and everywhere else).
-class NeumannBoundaryCondition(Expression):
-    def eval(self, values, x):
-        if (x[0] == 0 and
-            (x[1] > 0 + DOLFIN_EPS or x[1] < 1.0 - DOLFIN_EPS)):
-            values[0] = 1.0
-            values[1] = 0.0
-        elif (x[0] == 1):
-            values[0] = 0.0
-            values[1] = 0.0
-        else:
-            values[0] = 0.0
-            values[0] = 0.0
+def outflowboundary(x):
+    return x[0] > 1.0 - DOLFIN_EPS
 
 # Define Epsilon
 def epsilon(v):
@@ -63,26 +44,26 @@ scalar = FunctionSpace(mesh, "CG", 1)
 
 # Create Dirichlet (no-slip) boundary conditions for velocity
 g0 = Constant((0, 0))
-bc0 = DirichletBC(vector, g0, DirichletBoundary())
+bc0 = DirichletBC(vector, g0, noslipboundary)
 
 # Transform Neumann boundary conditions to values for pressure on the
 # boundary #FIXME
 g1 = Constant(1.0)
-bc1 = DirichletBC(scalar, g1, InflowBoundary())
+bc1 = DirichletBC(scalar, g1, inflowboundary)
 
 # Create outflow boundary condition for pressure
 g2 = Constant(0.0)
-bc2 = DirichletBC(scalar, g2, OutflowBoundary())
+bc2 = DirichletBC(scalar, g2, outflowboundary)
 
 # Create boundary conditions for psi
 g3 = Constant(0.0)
-bc3 = DirichletBC(scalar, g3, InflowBoundary())
+bc3 = DirichletBC(scalar, g3, inflowboundary)
 g4 = Constant(0.0)
-bc4 = DirichletBC(scalar, g4, OutflowBoundary())
+bc4 = DirichletBC(scalar, g4, outflowboundary)
 
 u0 = Constant((0.0, 0.0))
 u0 = project(u0, vector)
-p0 = Expression('1.0 - x[0]')
+p0 = Expression("1.0 - x[0]")
 p0 = project(p0, scalar)
 
 bcv = [bc0]
@@ -100,8 +81,6 @@ u1  = interpolate(u0, vector)
 p1  = interpolate(p0, scalar)
 f   = Constant((0.0, 0.0))
 psi = Function(scalar)
-
-g = NeumannBoundaryCondition(vector, mesh)     # Traction force
 
 # Tentative velocity step
 F1 =  (1/k)*inner(v, u - u0)*dx + inner(v, grad(u0)*u0)*dx \
@@ -129,16 +108,17 @@ A3 = assemble(a3)
 t = 0.0
 i = 0
 
-# Variables to store all the answers
-u_store = u0.vector().array()
-p_store = p0.vector().array()
-
-# Create files for storing the solution in VTK format
+# Create folder for storing results
 if not os.path.exists("./results/square"):
     os.makedirs("./results/square")
 
-ufile_pvd = File("results/square/css_primal_velocity.pvd")
-pfile_pvd = File("results/square/css_primal_pressure.pvd")
+# Create files for storing the solution in VTK format
+ufile = File("results/square/css_primal_velocity.pvd")
+pfile = File("results/square/css_primal_pressure.pvd")
+
+# Create time series for storing the solution in binary format
+useries = TimeSeries("results/square/css_primal_velocity")
+pseries = TimeSeries("results/square/css_primal_pressure")
 
 while t < T:
 
@@ -147,8 +127,6 @@ while t < T:
 		
     # Propagate values to next time step
     t += k
-
-    g1.t = t
 
     # Compute tentative velocity step
     b = assemble(L1)
@@ -168,11 +146,11 @@ while t < T:
     [bc.apply(A3, b) for bc in bcp]
     solve(A3, p1.vector(), b, "gmres", "ilu")
 
-    ufile_pvd << u1
-    pfile_pvd << p1
+    useries.store(u1.vector(), t)
+    pseries.store(p1.vector(), t)
 
-    u_store = vstack([u_store, u1.vector().array()])
-    p_store = vstack([p_store, p1.vector().array()])
+    ufile << u1
+    pfile << p1
 
     u0.assign(u1)
     p0.assign(p1)
@@ -180,8 +158,3 @@ while t < T:
     i = i + 1
 
     print "Computed the solution at step", i, "where t =", t, "(", t/T*100, "% )"
-
-if not os.path.exists("./results/square"):
-    os.makedirs("./results/square")
-savetxt('results/square/CSS_u_store.txt', u_store, fmt="%12.6G")
-savetxt('results/square/CSS_p_store.txt', p_store, fmt="%12.6G")
