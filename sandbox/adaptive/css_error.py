@@ -51,6 +51,9 @@ for t in t_range:
     # FIXME: Add time derivative contributions here
     DW = project(div(wh), scalarDG)
 
+    R2 = project(div(uh), scalarDG)
+    DR = project(grad(rh), vectorDG)
+
     # plot(DW, title='Divergence of the dual velocity')
 
     # Determine error indicators
@@ -69,7 +72,8 @@ for t in t_range:
     for c in cells(mesh):  
         x = array((c.midpoint().x(), c.midpoint().y()))
         E1[i] = sqrt(R1(x)[0]**2 + R1(x)[1]**2)*abs(DW(x))
-        E[i] = h[i]*E1[i]
+        E2[i] = sqrt(DR(x)[0]**2 + DR(x)[1]**2)*abs(R2(x))
+        E[i] = h[i]*(E1[i] + E2[i])
         i = i + 1
 
     Enorm = 0
@@ -89,23 +93,3 @@ for t in t_range:
 
     mesh = refine(mesh, cell_markers=cell_markers)
     plot(mesh)
-
-#    mesh_temp = UnitSquare(24, 24)
-#    mesh_temp.refine(cell_markers)
-#    scalarDG_temp = FunctionSpace(mesh_temp, "DG", 0)
-#    meshes.append(mesh_temp)
-#    plot(mesh_temp)
-#    h_temp = CellSize(mesh_temp)
-#     plot(h_temp)
-#    h_temp = project(h_temp, scalarDG_temp)
-#    mesh_pvd << h_temp
-    
-    
-# #     mesh.smooth()
-# #     mesh.smooth()
-# #     mesh.smooth()
-
-# raw_input()
-
-# # for j in range(N):
-# #     plot(meshes[j], title="Refined meshes")
