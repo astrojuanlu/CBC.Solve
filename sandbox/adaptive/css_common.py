@@ -3,6 +3,7 @@
 from dolfin import *
 import os
 from math import ceil
+from numpy import linspace
 
 # Create the mesh
 mesh = UnitSquare(24, 24)
@@ -15,6 +16,15 @@ nu = 1.0/8.0
 T = 0.5
 k = 0.25*mesh.hmin()
 N = int(ceil(T / k))
+
+dt = k
+t_range = linspace(0, T, N + 1)
+k = t_range[1]
+
+# Warn about changing time step
+if dt != k:
+    warning("Changing time step from %g to %g" % (k, dt))
+
 TOL = 1e-6
 REFINE_RATIO = 0.12
 

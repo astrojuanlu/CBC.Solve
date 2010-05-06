@@ -71,14 +71,14 @@ A3 = assemble(a3)
 t = 0.0
 i = 0
 
-while t < T:
+for t in t_range:
 
-#    plot(p1)
-#    plot(u1)
+    useries.store(u0.vector(), t)
+    pseries.store(p0.vector(), t)
+
+    ufile << u0
+    pfile << p0
 		
-    # Propagate values to next time step
-    t += k
-
     # Compute tentative velocity step
     b = assemble(L1)
     [bc.apply(A1, b) for bc in bcv]
@@ -97,15 +97,7 @@ while t < T:
     [bc.apply(A3, b) for bc in bcp]
     solve(A3, p1.vector(), b, "gmres", "ilu")
 
-    useries.store(u1.vector(), t)
-    pseries.store(p1.vector(), t)
-
-    ufile << u1
-    pfile << p1
+    print "Computed the solution at t = ", t, "(", t/T*100, "% )"
 
     u0.assign(u1)
     p0.assign(p1)
-    
-    i = i + 1
-
-    print "Computed the solution at step", i, "where t =", t, "(", t/T*100, "% )"
