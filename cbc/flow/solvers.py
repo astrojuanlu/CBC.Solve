@@ -150,8 +150,8 @@ class NavierStokesSolver(CBCSolver):
 
         # Plot solution
         if self.parameters["plot_solution"]:
-            plot(self.u1, title="Velocity", rescale=True)
             plot(self.p1, title="Pressure", rescale=True)
+            plot(self.u1, title="Velocity", rescale=True)
 
         # Store solution (for plotting)
         if self.parameters["save_solution"]:
@@ -293,8 +293,7 @@ class NavierStokesDualSolver(CBCSolver):
 
         # Compute dual solution
         begin("Computing dual solution")
-        bcs = self.bcw + self.bcr
-        pde_dual = VariationalProblem(self.a, self.L, bcs, exterior_facet_domains = self.exterior_facet_domains)
+        pde_dual = VariationalProblem(self.a, self.L, self.bcw + self.bcr, exterior_facet_domains = self.exterior_facet_domains)
         (self.w0, self.r0) = pde_dual.solve().split(True)
         end()
 
