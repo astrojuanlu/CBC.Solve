@@ -3,7 +3,6 @@
 
 from dolfin import *
 from css_common import *
-from math import ceil
 
 # Define a portion of the linearised dual bilinear form
 def a_tilde(uh, ph, v, q, w, r):
@@ -34,18 +33,13 @@ w1 = project(Psi, vector)
 r1 = project(Constant(0.0), scalar) # Needs to be solved initially
 w0 = Function(vector)
 r0 = Function(scalar)
-#gt = Constant(mesh, (-0.0001, 0.0))           # Needs to depend on the goal
 cutoff = Cutoff(scalar)
 tgt = Expression(("1.0", "0"))
 
-# Backward Euler (?) (stable)
+# Backward Euler (stable, unlike Crank-Nicholson)
 a_dual = inner(v, w)*dx + k*a_tilde(uh, ph, v, q, w, r)
 L_dual = inner(v, w1)*dx + k*cutoff*inner(sigma(v, q)*n, tgt)*ds # Optimise for shear component
-#+ k*inner(v, gt)*dx*cutoff                                              # on top surface
-
-# # Crank-Nicholson (?) (unstable)
-# a_dual = inner(v, w)*dx + (k/2.0)*a_tilde(uh, ph, v, q, w, r)
-# L_dual = inner(v, w1)*dx + k*inner(v, gt)*dx*cutoff - (k/2.0)*a_tilde(uh, ph, v, q, w1, r1)
+                                                                 # on the top surface
 
 # Create Dirichlet (no-slip) boundary conditions for velocity
 gd0 = Constant((0.0, 0.0))
@@ -68,7 +62,6 @@ bcs_dual = bcd0 + bcd1 + bcd2
 
 # Time loop
 t = T
-N = int(ceil(T / k))
 j = N - 1
 
 # Variables to store the dual solution
@@ -99,6 +92,3 @@ while t >= 0:
 
     w1.assign(w0)
     r1.assign(r0)
-
-#savetxt('stored/CSS_w_store.txt', w_store, fmt="%12.6G")
-#savetxt('stored/CSS_r_store.txt', r_store, fmt="%12.6G")

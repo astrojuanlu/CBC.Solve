@@ -2,6 +2,7 @@
 
 from dolfin import *
 import os
+from math import ceil
 
 # Create the mesh
 mesh = UnitSquare(24, 24)
@@ -13,6 +14,9 @@ n = FacetNormal(mesh)
 nu = 1.0/8.0
 T = 0.5
 k = 0.25*mesh.hmin()
+N = int(ceil(T / k))
+TOL = 1e-6
+REFINE_RATIO = 0.12
 
 # Dirichlet boundary
 def noslipboundary(x):
@@ -39,6 +43,8 @@ def sigma(v, q):
 vector = VectorFunctionSpace(mesh, "CG", 2)
 scalar = FunctionSpace(mesh, "CG", 1)
 system = vector + scalar
+scalarDG = FunctionSpace(mesh, "DG", 0)
+vectorDG = VectorFunctionSpace(mesh, "DG", 0)
 
 # Create folder for storing results
 if not os.path.exists("./results/square"):
