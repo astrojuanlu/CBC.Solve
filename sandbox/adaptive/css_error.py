@@ -3,7 +3,6 @@
 
 from dolfin import *
 from css_common import *
-#from numpy import array, vstack, savetxt, loadtxt, zeros, max, abs
 
 # Create the mesh
 mesh      = UnitSquare(24, 24)
@@ -33,14 +32,8 @@ R1 = Function(vector)
 
 mesh_pvd = File("paraview/css/meshes.pvd")
 
-t = 0
-#for j in range(N):
+for t in t_range:
    
-while t < T:
-
-
-    t += k
-
     print "######################", t
 
 #    useries.retrieve(uh.vector(), t)

@@ -56,18 +56,37 @@ system = vector + scalar
 scalarDG = FunctionSpace(mesh, "DG", 0)
 vectorDG = VectorFunctionSpace(mesh, "DG", 0)
 
+# Create Dirichlet (no-slip) boundary conditions for velocity
+g0 = Constant((0, 0))
+bc0 = DirichletBC(vector, g0, noslipboundary)
+
+# Transform Neumann boundary conditions to values for pressure on the
+# boundary #FIXME
+g1 = Constant(1.0)
+bc1 = DirichletBC(scalar, g1, inflowboundary)
+
+# Create outflow boundary condition for pressure
+g2 = Constant(0.0)
+bc2 = DirichletBC(scalar, g2, outflowboundary)
+
+# Create boundary conditions for psi
+g3 = Constant(0.0)
+bc3 = DirichletBC(scalar, g3, inflowboundary)
+g4 = Constant(0.0)
+bc4 = DirichletBC(scalar, g4, outflowboundary)
+
 # Create folder for storing results
 if not os.path.exists("./results/square"):
     os.makedirs("./results/square")
 
 # Create files for storing the solution in VTK format
-ufile = File("results/square/css_primal_velocity.pvd")
-pfile = File("results/square/css_primal_pressure.pvd")
-wfile = File("results/square/css_dual_velocity.pvd")
-rfile = File("results/square/css_dual_pressure.pvd")
+ufile = File("results/square/primal_velocity.pvd")
+pfile = File("results/square/primal_pressure.pvd")
+wfile = File("results/square/dual_velocity.pvd")
+rfile = File("results/square/dual_pressure.pvd")
 
 # Create time series for storing the solution in binary format
-useries = TimeSeries("results/square/css_primal_velocity")
-pseries = TimeSeries("results/square/css_primal_pressure")
-wseries = TimeSeries("results/square/css_dual_velocity")
-rseries = TimeSeries("results/square/css_dual_pressure")
+useries = TimeSeries("results/square/primal_velocity")
+pseries = TimeSeries("results/square/primal_pressure")
+wseries = TimeSeries("results/square/dual_velocity")
+rseries = TimeSeries("results/square/dual_pressure")

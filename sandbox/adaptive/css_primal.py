@@ -5,25 +5,6 @@
 from dolfin import *
 from css_common import *
 
-# Create Dirichlet (no-slip) boundary conditions for velocity
-g0 = Constant((0, 0))
-bc0 = DirichletBC(vector, g0, noslipboundary)
-
-# Transform Neumann boundary conditions to values for pressure on the
-# boundary #FIXME
-g1 = Constant(1.0)
-bc1 = DirichletBC(scalar, g1, inflowboundary)
-
-# Create outflow boundary condition for pressure
-g2 = Constant(0.0)
-bc2 = DirichletBC(scalar, g2, outflowboundary)
-
-# Create boundary conditions for psi
-g3 = Constant(0.0)
-bc3 = DirichletBC(scalar, g3, inflowboundary)
-g4 = Constant(0.0)
-bc4 = DirichletBC(scalar, g4, outflowboundary)
-
 u0 = Constant((0.0, 0.0))
 u0 = project(u0, vector)
 p0 = Expression("1.0 - x[0]")

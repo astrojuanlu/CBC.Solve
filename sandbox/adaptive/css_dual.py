@@ -42,18 +42,15 @@ L_dual = inner(v, w1)*dx + k*cutoff*inner(sigma(v, q)*n, tgt)*ds # Optimise for 
                                                                  # on the top surface
 
 # Create Dirichlet (no-slip) boundary conditions for velocity
-gd0 = Constant((0.0, 0.0))
-bcd0 = [DirichletBC(vector, gd0, noslipboundary)]
+bcd0 = homogenize(bc0)
 
 # Create inflow boundary condition for pressure
-gd1 = Constant(0.0)
-bcd1 = [DirichletBC(scalar, gd1, inflowboundary)]
+bcd1 = homogenize(bc1)
 
 # Create outflow boundary condition for pressure
-gd2 = Constant(0.0)
-bcd2 = [DirichletBC(scalar, gd2, outflowboundary)]
+bcd2 = homogenize(bc2)
 
-bcs_dual = bcd0 + bcd1 + bcd2
+bcs_dual = [bcd0, bcd1, bcd2]
 
 # If the pressure boundary condition was not set explicitly in the
 # primal, but imposed weakly as a term on the rhs of the bilinear
@@ -61,6 +58,8 @@ bcs_dual = bcd0 + bcd1 + bcd2
 # the dual.
 
 for t in reversed(t_range):
+
+    plot(w1)
 
     wseries.store(w1.vector(), t)
     rseries.store(r1.vector(), t)
