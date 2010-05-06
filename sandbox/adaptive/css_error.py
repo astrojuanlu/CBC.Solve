@@ -72,10 +72,9 @@ for t in t_range:
         E[i] = h[i]*E1[i]
         i = i + 1
 
-	
     Enorm = 0
     for i2 in range(mesh.num_cells()):
-        Enorm = Enorm + abs(E[i2])*h[i2]
+        Enorm = Enorm + abs(E[i2])*h[i2]*sqrt(K[i2])
         #Enorm = Enorm + sqrt(K[i2])*sqrt(K[i2]) # Check area
 	           
     print "*************************"

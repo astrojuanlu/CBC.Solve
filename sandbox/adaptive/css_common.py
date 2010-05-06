@@ -6,14 +6,14 @@ from math import ceil
 from numpy import linspace
 
 # Create the mesh
-mesh = UnitSquare(24, 24)
+mesh = UnitSquare(8, 8)
 
 # Some useful fields related to the geometry
 n = FacetNormal(mesh)
 
 # Constants
 nu = 1.0/8.0
-T = 0.5
+T = 1.0
 k = 0.25*mesh.hmin()
 N = int(ceil(T / k))
 
@@ -26,7 +26,7 @@ if dt != k:
     warning("Changing time step from %g to %g" % (k, dt))
 
 TOL = 1e-6
-REFINE_RATIO = 0.12
+REFINE_RATIO = 0.05
 
 # Dirichlet boundary
 def noslipboundary(x):
