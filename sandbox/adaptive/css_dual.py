@@ -60,35 +60,22 @@ bcs_dual = bcd0 + bcd1 + bcd2
 # form, I don't think it must be imposed as a Dirichlet condition in
 # the dual.
 
-# Time loop
-t = T
-j = N - 1
+for t in reversed(t_range):
 
-# Variables to store the dual solution
-w_store = w1.vector().array()
-r_store = r1.vector().array()
+    wseries.store(w1.vector(), t)
+    rseries.store(r1.vector(), t)
 
-while t >= 0:
-
-#    plot(w0)
-#    plot(r0)
+    wfile << w1
+    rfile << r1
 
     useries.retrieve(uh.vector(), t)
     pseries.retrieve(ph.vector(), t)
 
+    # Compute dual velocity and pressure
     pde_dual = VariationalProblem(a_dual, L_dual, bcs_dual)
     (w0, r0) = pde_dual.solve().split(True)
 
-    print "Computed the solution at step", j, "where t =", t, "(", t/T*100, "% )"
-
-    j -= 1
-    t -= k
-
-    wseries.store(w0.vector(), t)
-    rseries.store(w0.vector(), t)
-
-    wfile << w0
-    rfile << r0
+    print "Computed the solution at t = ", t, "(", t/T*100, "% )"
 
     w1.assign(w0)
     r1.assign(r0)
