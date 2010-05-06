@@ -52,7 +52,7 @@ def sigma(v, q):
 # Define function spaces
 vector = VectorFunctionSpace(mesh, "CG", 2)
 scalar = FunctionSpace(mesh, "CG", 1)
-system = vector + scalar
+system = MixedFunctionSpace([vector, scalar])
 scalarDG = FunctionSpace(mesh, "DG", 0)
 vectorDG = VectorFunctionSpace(mesh, "DG", 0)
 
