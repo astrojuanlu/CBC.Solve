@@ -59,10 +59,8 @@ bcs_dual = [bcd0, bcd1, bcd2]
 
 for t in reversed(t_range):
 
-    plot(w1)
-
-    wseries.store(w1.vector(), t)
-    rseries.store(r1.vector(), t)
+    wseries.store(w1.vector(), T - t) # Store at a fake time 
+    rseries.store(r1.vector(), T - t) # Store at a fake time
 
     wfile << w1
     rfile << r1

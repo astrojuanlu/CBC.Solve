@@ -34,31 +34,24 @@ mesh_pvd = File("paraview/css/meshes.pvd")
 
 for t in t_range:
    
-    print "######################", t
-
-#    useries.retrieve(uh.vector(), t)
-#    pseries.retrieve(ph.vector(), t)
-    wseries.retrieve(wh.vector(), t)
-#    rseries.retrieve(rh.vector(), t)
+    useries.retrieve(uh.vector(), t)
+    pseries.retrieve(ph.vector(), t)
+    wseries.retrieve(wh.vector(), T - t) # Retrieve at a fake time
+    rseries.retrieve(rh.vector(), T - t) # Retrieve at a fake time
     
-#    plot(uh, title='Primal velocity')
-#    plot(ph, title='Primal pressure')
-    plot(wh, title='Dual velocity')
-#    plot(rh, title='Dual pressure')
+    # Calculate residuals and project them to piecewise constant spaces
+    #    R1 = (uh1 - uh)/k + mult(grad(uh), uh) - div(sigma(uh, ph)) - f
+    #    R1 = project(uh, vectorDG)
+    L = (1/k)*inner(v, uh1 - uh)*dx + inner(v, grad(uh)*uh)*dx \
+        + inner(sym(grad(v)), sigma(uh, ph))*dx - inner(v, f)*dx \
+        - nu*inner(v, grad(uh).T*n)*ds + inner(v, ph*n)*ds
+    a = inner(Pv, v)*dx
 
-#     # Calculate residuals and project them to piecewise constant spaces
-#     #    R1 = (uh1 - uh)/k + mult(grad(uh), uh) - div(sigma(uh, ph)) - f
-#     #    R1 = project(uh, vectorDG)
-#     L = (1/k)*inner(v, uh1 - uh)*dx + inner(v, grad(uh)*uh)*dx \
-#         + inner(sgrad(v), sigma(uh, ph))*dx - inner(v, f)*dx \
-#         - nu*inner(v, grad(uh).T*n)*ds + inner(v, ph*n)*ds
-#     a = inner(Pv, v)*dx
+    A = assemble(a)
+    b = assemble(L)
+    solve(A, R1.vector(), b)
 
-#     A = assemble(a)
-#     b = assemble(L)
-#     solve(A, R1.vector(), b)
-
-# #    plot(R1, title='Residual 1 over time')
+#    plot(R1, title='Residual 1 over time')
 
 #     # Calculate derivatives of dual fields
 #     # FIXME: Add time derivative contributions here
