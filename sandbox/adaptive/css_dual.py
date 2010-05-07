@@ -2,7 +2,7 @@
 ## solutions of the primal problem.
 
 from dolfin import *
-from css_common import *
+from css_common_aneurysm import *
 
 # Define a portion of the linearised dual bilinear form
 def a_tilde(uh, ph, v, q, w, r):
@@ -14,7 +14,7 @@ def a_tilde(uh, ph, v, q, w, r):
 # Delineate goal functional region
 class Cutoff(Expression):
     def eval(self, values, x):
-        if (x[1] > 1.0 - DOLFIN_EPS and x[0] > 0.0 + DOLFIN_EPS and x[0] < 1.0 - DOLFIN_EPS):
+        if (x[1] > 2.0 - DOLFIN_EPS):
             values[0] = 1.0
         else:
             values[0] = 0.0
@@ -34,7 +34,7 @@ r1 = project(Constant(0.0), scalar) # Needs to be solved initially
 w0 = Function(vector)
 r0 = Function(scalar)
 cutoff = Cutoff(scalar)
-tgt = Expression(("1.0", "0"))
+tgt = as_vector([n[1], -n[0]])
 
 # Backward Euler (stable, unlike Crank-Nicholson)
 a_dual = inner(v, w)*dx + k*a_tilde(uh, ph, v, q, w, r)
@@ -64,6 +64,9 @@ for t in reversed(t_range):
 
     wfile << w1
     rfile << r1
+
+    plot(w1)
+    plot(r1)
 
     useries.retrieve(uh.vector(), t)
     pseries.retrieve(ph.vector(), t)

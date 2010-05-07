@@ -3,11 +3,11 @@
 ## time step to be later used in the dual problem solution.
 
 from dolfin import *
-from css_common import *
+from css_common_aneurysm import *
 
 u0 = Constant((0.0, 0.0))
 u0 = project(u0, vector)
-p0 = Expression("1.0 - x[0]")
+p0 = Constant(0.0)
 p0 = project(p0, scalar)
 
 bcv = [bc0]
@@ -23,7 +23,6 @@ p = TrialFunction(scalar)
 # Functions
 u1  = interpolate(u0, vector)
 p1  = interpolate(p0, scalar)
-f   = Constant((0.0, 0.0))
 psi = Function(scalar)
 
 # Tentative velocity step
@@ -59,7 +58,7 @@ for t in t_range:
 
     ufile << u0
     pfile << p0
-		
+
     # Compute tentative velocity step
     b = assemble(L1)
     [bc.apply(A1, b) for bc in bcv]
