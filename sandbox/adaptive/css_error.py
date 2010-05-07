@@ -2,7 +2,7 @@
 ## and pressures.
 
 from dolfin import *
-from css_common import *
+from css_common_aneurysm import *
 from numpy import array, zeros
 
 # Load primal and dual solutions

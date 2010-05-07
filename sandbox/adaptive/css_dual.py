@@ -65,9 +65,6 @@ for t in reversed(t_range):
     wfile << w1
     rfile << r1
 
-    plot(w1)
-    plot(r1)
-
     useries.retrieve(uh.vector(), t)
     pseries.retrieve(ph.vector(), t)
 
