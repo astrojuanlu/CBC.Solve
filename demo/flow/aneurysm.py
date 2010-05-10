@@ -5,12 +5,11 @@ __license__  = "GNU GPL Version 3 or any later version"
 from cbc.flow import *
 
 def inflow_boundary(x):
-    return x[0] == -10.0
+    return x[0] == -10.0 and x[1] > -2.0 and x[1] < 0.0
 
 def outflow_boundary(x):
-    return x[0] == 10.0
+    return x[0] ==  10.0 and x[1] > -2.0 and x[1] < 0.0
 
-# Dirichlet boundary
 def noslip_boundary(x, on_boundary):
     return on_boundary and \
         not inflow_boundary(x) and \
