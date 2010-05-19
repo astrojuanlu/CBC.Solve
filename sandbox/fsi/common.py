@@ -2,9 +2,9 @@ from dolfin import *
 from numpy import array, append, zeros
 
 # Mesh and time stepping parameters
-nx = 80
+nx = 160
 ny = nx/4
-dt = 0.01
+dt = 0.005
 T = 2.5
 tol = 1e-6
 
@@ -86,7 +86,7 @@ interior_facet_domains = MeshFunction("uint", Omega, D-1)
 interior_facet_domains.set_all(0)
 
 # Create facet marker for outflow
-right = compile_subdomains("x[0] == channel_length")
+right = compile_subdomains("x[0] == 4.0")
 exterior_boundary = MeshFunction("uint", Omega, D-1)
 right.mark(exterior_boundary, 2)
 

@@ -106,32 +106,25 @@ Z_PS0 = Function(Q_S)
 Z_UM0 = Function(V_M)
 Z_PM0 = Function(Q_M)
 
-# Create initial condition for stress displacement (\Psi^T)
-Nv = Omega.num_vertices()
-U_S_subdofs = Vector()
-primal_U_S.retrieve(U_S_subdofs, T)
-global_vertex_indices_S = Omega_S.data().mesh_function("global vertex indices")
-S_global_index = zeros([global_vertex_indices_S.size()], "uint")
-for j in range(global_vertex_indices_S.size()):
-    S_global_index[j] = global_vertex_indices_S[j]
-U_S_global_dofs = S_global_index
-Z_US0.vector()[U_S_global_dofs] = 1.0
-
-# file_jada = File("jada.pvd")
-# file_jada << Z_US0
-#lhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
-#L = rhs(A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS)
-
-
-# plot(Z_US0, mesh = Omega, interactive=True)
-# import sys
-# sys.exit(1)
-
 # Primal varibles
 U_M0  = Function(V_M)
 U_F0  = Function(V_F1)
 U_S0  = Function(V_S)
 P_S0  = Function(Q_S)
+
+# # Create initial condition for stress displacement (\Psi^T)
+# Nv = Omega.num_vertices()
+# U_S_subdofs = Vector()
+# primal_U_S.retrieve(U_S_subdofs, T)
+# global_vertex_indices_S = Omega_S.data().mesh_function("global vertex indices")
+# S_global_index = zeros([global_vertex_indices_S.size()], "uint")
+# for j in range(global_vertex_indices_S.size()):
+#     S_global_index[j] = global_vertex_indices_S[j]
+# U_S_global_dofs = S_global_index
+#Z_US0.vector()[U_S_global_dofs] = 1.0
+# plot(Z_US0, mesh = Omega, interactive=True)
+# import sys
+# sys.exit(1)
 
 # Define time-step NOTE: we are using Backward Euler
 kn = dt
@@ -185,6 +178,7 @@ Sv = grad(v_S)*(2*mu_S*Eu + lmbda_S*tr(Eu)*I) + Fu*(2*mu_S*Ev + lmbda_S*tr(Ev)*I
 
 A_SS = - (1/kn)*inner(Z_US0 - Z_US, rho_S*q_S)*dx(1) + inner(grad(Z_US), Sv)*dx(1) \
        - (1/kn)*inner(Z_PS0 - Z_PS, v_S)*dx(1) - inner(Z_PS, q_S)*dx(1)
+
 # Structure eq. linearized around mesh variable
 A_SM01 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(grad(U_F('+')), F_inv(U_F)('+')), dot(F_invT(U_M)('+'), N)))*dS(1) # FIXME: Replace with Sigma_F
 A_SM02 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(F_invT(U_F)('+'), grad(U_F('+')).T), dot(F_invT(U_M)('+'), N)))*dS(1)# FIXME: Replace with Sigma_F
@@ -214,14 +208,14 @@ A_MS = -inner(Z_PM('+'), q_S('+'))*dS(1)
 
 # Define goal funtionals
 n_F = FacetNormal(Omega_F)
-# goal_F = 0.03*inner(v_F, n_F)*ds(2)
+#goal_F = 0.03*inner(v_F('+'), N)*ds(1)
 area = 0.2*0.5
 goal_functional = (1/T)*(1.0/area)*v_S[0]*dx(1) 
 
 # Define the dual rhs and lhs
 A_system = A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS
 A = lhs(A_system)
-L = rhs(A_system) + goal_functional
+L = rhs(A_system)  + goal_functional
 
 # Define BCs (define the dual trial space = homo. Dirichlet BCs)
 bc_U_F0  = DirichletBC(W.sub(0), Constant((0.0, 0.0)), noslip)
@@ -231,13 +225,13 @@ bc_P_F1  = DirichletBC(W.sub(1), Constant(0.0), outflow)
 bc_P_F2  = DirichletBC(W.sub(1), Constant(0.0), interior_facet_domains, 1 )
 bc_U_S   = DirichletBC(W.sub(2), Constant((0.0, 0.0)), dirichlet_boundaries)
 bc_P_S   = DirichletBC(W.sub(3), Constant((0.0, 0.0)), dirichlet_boundaries)    
-bc_U_M1  = DirichletBC(W.sub(4), Constant((0.0, 0.0)), DomainBoundary())
+bc_U_M1  = DirichletBC(W.sub(4), Constant((0.0, 0.0)), DomainBoundary())          
 bc_U_M2  = DirichletBC(W.sub(4), Constant((0.0, 0.0)), interior_facet_domains, 1)
-bc_U_PM1 = DirichletBC(W.sub(5), Constant((0.0, 0.0)), DomainBoundary())            # FIXME: Correct BC?
-bc_U_PM2 = DirichletBC(W.sub(5), Constant((0.0, 0.0)), interior_facet_domains, 1)   # FIXME: Correct BC?
+bc_P_M1  = DirichletBC(W.sub(5), Constant((0.0, 0.0)), DomainBoundary())            # FIXME: Correct BC?
+bc_P_M2  = DirichletBC(W.sub(5), Constant((0.0, 0.0)), interior_facet_domains, 1)   
 
 # Collect bcs
-bcs = [bc_U_F0, bc_U_F1, bc_P_F0, bc_P_F1, bc_P_F2, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_U_PM1, bc_U_PM2]
+bcs = [bc_U_F0, bc_U_F1, bc_P_F0, bc_P_F1, bc_P_F2, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_P_M1, bc_P_M2]
 
 # Create files
 file_Z_UF = File("Z_UF.pvd")
@@ -305,12 +299,12 @@ while t <= T:
    file_Z_UM << Z_UM
    file_Z_PM << Z_PM
 
-   # Plot solutions
-   plot(Z_UF, title="Dual fluid velocity")
-   plot(Z_PF, title="Dual fluid pressure")
-   plot(Z_US, title="Dual displacement")
-   plot(Z_PS, title="Dual structure velocity")
-   plot(Z_UM, title="Dual mesh displacement")
+#    # Plot solutions
+#    plot(Z_UF, title="Dual fluid velocity")
+#    plot(Z_PF, title="Dual fluid pressure")
+#    plot(Z_US, title="Dual displacement")
+#    plot(Z_PS, title="Dual structure velocity")
+#    plot(Z_UM, title="Dual mesh displacement")
 
 # plot(Z_PM, title="Dual mesh Lagrange Multiplier")
   # interactive()
