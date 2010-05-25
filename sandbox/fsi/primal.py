@@ -193,36 +193,109 @@ class StructureProblem(Hyperelasticity):
     def __str__(self):
         return "The structure problem"
 
-# Define mesh problem
-class MeshProblem(StaticHyperelasticity):
+# # Define mesh problem OLD VERSION
+# class MeshProblem(StaticHyperelasticity):
+
+#     def __init__(self):
+#         self.V_M = VectorFunctionSpace(Omega_F, "CG", 1)
+
+#         StaticHyperelasticity.__init__(self)
+
+#     def mesh(self):
+#         return Omega_F
+
+#     def dirichlet_conditions(self):
+#         self.displacement = Function(self.V_M)
+#         return [self.displacement]
+
+#     def dirichlet_boundaries(self):
+#         return ["on_boundary"]
+
+#     def material_model(self):
+#         E  = 10.0
+#         nu = 0.3
+#         mu   = E / (2.0*(1.0 + nu))
+#         lmbda = E*nu / ((1.0 + nu)*(1.0 - 2.0*nu))
+#         return LinearElastic([mu, lmbda])
+
+#     def update_structure_displacement(self, U_S):
+#         self.displacement.vector().zero()
+#         fsi_add_s2f(self.displacement.vector(), U_S.vector())
+#         self.displacement.vector().array()
+
+#     def __str__(self):
+#         return "The mesh problem"
+
+# Define mesh problem (time-dependent linear elasticity)
+class MeshProblem():
 
     def __init__(self):
-        self.V_M = VectorFunctionSpace(Omega_F, "CG", 1)
+        
+        # Define functions etc.   
+        V_M = VectorFunctionSpace(Omega_F, "CG", 1)
+        v  = TestFunction(V_M) 
+        u = TrialFunction(V_M)
+        u0 = Function(V_M)
+        u1 = Function(V_M)
+        u_bar = 0.5*(u + u0)
+        displacement = Function(V_M)
+        bcs  = []
 
-        StaticHyperelasticity.__init__(self)
+        # Define the stress tensor
+        def sigma(v):
+            return 2.0*mu*sym(grad(v)) + lmbda*tr(grad(v))*Identity(v.cell().d)
 
-    def mesh(self):
-        return Omega_F
+        # Define mesh parameters
+        mu = 3.8461
+        lmbda = 5.76
+        alpha = 1.0
 
-    def dirichlet_conditions(self):
-        self.displacement = Function(self.V_M)
-        return [self.displacement]
+        # Define form (cG1 scheme) (lhs/rhs do not work with sym_grad...)
+        a = alpha*inner(v, u)*dx + dt*inner(sym(grad(v)), sigma(u_bar))*dx
+        L = alpha*inner(v, u0)*dx
 
-    def dirichlet_boundaries(self):
-        return ["on_boundary"]
+        # Define the Dirichlet boundary
+        def dirichlet_boundaries(self):
+            return ["on_boundary"]
 
-    def material_model(self):
-        E  = 10.0
-        nu = 0.3
-        mu   = E / (2.0*(1.0 + nu))
-        lmbda = E*nu / ((1.0 + nu)*(1.0 - 2.0*nu))
-        return LinearElastic([mu, lmbda])
+        # Define structure displacement as Dirichlet condition
+        def dirichlet_conditions(self):
+            return [self.displacement]
 
+        # Store variables for time stepping
+        self.u = u
+        self.u0 = u0
+        self.u1 = u1
+        self.a = a
+        self.L = L
+        self.dt = dt
+        self.displacement = displacement
+        self.bcs = bcs
+        self.V_M = V_M
+        self.dirichlet_conditions = dirichlet_conditions
+        self.dirichlet_boundaries = dirichlet_boundaries
+        
+    def step(self, dt):
+        # Compute mesh equation
+        A = assemble(self.a)
+        b = assemble(self.L)
+#         self.bcs.append(DirichletBC(self.V_M, self.dirichlet_conditions,\
+#                                         compile_subdomains(self.dirichlet_boundaries)))
+#         self.bcs.apply(A, b)
+        solve(A, self.u1.vector(), b)
+        return self.u1
+ 
+    # Update structure displacement 
     def update_structure_displacement(self, U_S):
         self.displacement.vector().zero()
         fsi_add_s2f(self.displacement.vector(), U_S.vector())
         self.displacement.vector().array()
 
+    # Update mesh solution
+    def update(self, t):    
+        self.u0.assign(self.u1)
+        return self.u1 
+       
     def __str__(self):
         return "The mesh problem"
 
@@ -238,13 +311,13 @@ F.parameters["solver_parameters"]["store_solution_data"] = False
 S.parameters["solver_parameters"]["plot_solution"] = False
 S.parameters["solver_parameters"]["save_solution"] = False
 S.parameters["solver_parameters"]["store_solution_data"] = False
-M.parameters["solver_parameters"]["plot_solution"] = False
-M.parameters["solver_parameters"]["save_solution"] = False
-M.parameters["solver_parameters"]["store_solution_data"] = False
+# M.parameters["solver_parameters"]["plot_solution"] = False
+# M.parameters["solver_parameters"]["save_solution"] = False
+# M.parameters["solver_parameters"]["store_solution_data"] = False
 
 # Solve mesh equation (will give zero vector first time which corresponds to
 # identity map between the current domain and the reference domain)
-U_M = M.solve()
+U_M = M.step(0.0) 
 
 # Create inital displacement vector
 V0 = VectorFunctionSpace(Omega_S, "CG", 1)
@@ -289,7 +362,7 @@ while t <= T:
         M.update_structure_displacement(U_S)
 
         # Solve mesh equation
-        U_M = M.solve()
+        U_M = M.step(dt)
 
         # Update mesh displcament and mesh velocity
         F.update_mesh_displacement(U_M)
@@ -324,6 +397,7 @@ while t <= T:
     # Move to next time step
     F.update(t)
     S.update()
+    M.update(t)
 
     # FIXME: This should be done automatically by the solver
     F.update_extra()
