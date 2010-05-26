@@ -193,39 +193,6 @@ class StructureProblem(Hyperelasticity):
     def __str__(self):
         return "The structure problem"
 
-# # Define mesh problem OLD VERSION
-# class MeshProblem(StaticHyperelasticity):
-
-#     def __init__(self):
-#         self.V_M = VectorFunctionSpace(Omega_F, "CG", 1)
-
-#         StaticHyperelasticity.__init__(self)
-
-#     def mesh(self):
-#         return Omega_F
-
-#     def dirichlet_conditions(self):
-#         self.displacement = Function(self.V_M)
-#         return [self.displacement]
-
-#     def dirichlet_boundaries(self):
-#         return ["on_boundary"]
-
-#     def material_model(self):
-#         E  = 10.0
-#         nu = 0.3
-#         mu   = E / (2.0*(1.0 + nu))
-#         lmbda = E*nu / ((1.0 + nu)*(1.0 - 2.0*nu))
-#         return LinearElastic([mu, lmbda])
-
-#     def update_structure_displacement(self, U_S):
-#         self.displacement.vector().zero()
-#         fsi_add_s2f(self.displacement.vector(), U_S.vector())
-#         self.displacement.vector().array()
-
-#     def __str__(self):
-#         return "The mesh problem"
-
 # Define mesh problem (time-dependent linear elasticity)
 class MeshProblem():
 
@@ -239,7 +206,7 @@ class MeshProblem():
         u1 = Function(V_M)
         u_bar = 0.5*(u + u0)
         displacement = Function(V_M)
-        bcs  = []
+        bcs = DirichletBC(V_M, displacement, compile_subdomains("on_boundary"))
 
         # Define the stress tensor
         def sigma(v):
@@ -248,19 +215,11 @@ class MeshProblem():
         # Define mesh parameters
         mu = 3.8461
         lmbda = 5.76
-        alpha = 1.0
+        alpha = Constant(1.0)
 
         # Define form (cG1 scheme) (lhs/rhs do not work with sym_grad...)
         a = alpha*inner(v, u)*dx + dt*inner(sym(grad(v)), sigma(u_bar))*dx
         L = alpha*inner(v, u0)*dx
-
-        # Define the Dirichlet boundary
-        def dirichlet_boundaries(self):
-            return ["on_boundary"]
-
-        # Define structure displacement as Dirichlet condition
-        def dirichlet_conditions(self):
-            return [self.displacement]
 
         # Store variables for time stepping
         self.u = u
@@ -272,16 +231,12 @@ class MeshProblem():
         self.displacement = displacement
         self.bcs = bcs
         self.V_M = V_M
-        self.dirichlet_conditions = dirichlet_conditions
-        self.dirichlet_boundaries = dirichlet_boundaries
-        
+
     def step(self, dt):
         # Compute mesh equation
         A = assemble(self.a)
         b = assemble(self.L)
-#         self.bcs.append(DirichletBC(self.V_M, self.dirichlet_conditions,\
-#                                         compile_subdomains(self.dirichlet_boundaries)))
-#         self.bcs.apply(A, b)
+        self.bcs.apply(A, b)
         solve(A, self.u1.vector(), b)
         return self.u1
  
