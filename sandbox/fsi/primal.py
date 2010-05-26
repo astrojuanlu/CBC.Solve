@@ -266,9 +266,6 @@ F.parameters["solver_parameters"]["store_solution_data"] = False
 S.parameters["solver_parameters"]["plot_solution"] = False
 S.parameters["solver_parameters"]["save_solution"] = False
 S.parameters["solver_parameters"]["store_solution_data"] = False
-# M.parameters["solver_parameters"]["plot_solution"] = False
-# M.parameters["solver_parameters"]["save_solution"] = False
-# M.parameters["solver_parameters"]["store_solution_data"] = False
 
 # Solve mesh equation (will give zero vector first time which corresponds to
 # identity map between the current domain and the reference domain)
