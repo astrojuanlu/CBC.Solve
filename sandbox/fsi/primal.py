@@ -232,8 +232,8 @@ class MeshProblem():
         self.bcs = bcs
         self.V_M = V_M
 
+    # Compute mesh equation 
     def step(self, dt):
-        # Compute mesh equation
         A = assemble(self.a)
         b = assemble(self.L)
         self.bcs.apply(A, b)
