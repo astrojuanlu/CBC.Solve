@@ -392,6 +392,7 @@ convergence_data.write(str("mu:      ") + str(0.15) + "\n") ##
 convergence_data.write(str("lambda:  ") + str(0.25) + "\n") ##
 convergence_data.write(str("==MESH PARAMETERS==")+ "\n")
 convergence_data.write(str("no. mesh smooth: ") + str(50) + "\n") ##
+convergence_data.write(str("alpha:              ") + str(1.0) + "\n") ##   
 convergence_data.write(str("mu:              ") + str(3.8461) + "\n") ##   
 convergence_data.write(str("lambda:          ") + str(5.76) + "\n" + "\n") ##
 convergence_data.write(str("****MESH/TIME*****") +  "\n")
