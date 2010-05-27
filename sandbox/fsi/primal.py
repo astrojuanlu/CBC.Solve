@@ -9,9 +9,6 @@ from numpy import array, append
 from common import *
 from math import ceil
 
-plot_solution = False
-store_vtu_files = True
-
 # Define fluid problem
 class FluidProblem(NavierStokes):
 
@@ -92,7 +89,7 @@ class FluidProblem(NavierStokes):
         omega_F1.coordinates()[:] = x1
 
         # Smooth the mesh
-        omega_F1.smooth(50)
+        omega_F1.smooth(mesh_smooth)
 
         # Update mesh velocity
         wx = self.w.vector().array()
@@ -215,13 +212,13 @@ class MeshProblem():
         # Define mesh parameters
         mu = 3.8461
         lmbda = 5.76
-        alpha = Constant(1.0)
+        alpha = 1.0
 
         # Define form (cG1 scheme) (lhs/rhs do not work with sym_grad...)
         a = alpha*inner(v, u)*dx + dt*inner(sym(grad(v)), sigma(u_bar))*dx
         L = alpha*inner(v, u0)*dx
 
-        # Store variables for time stepping
+        # Store variables for time stepping (and saving data)
         self.u = u
         self.u0 = u0
         self.u1 = u1
@@ -231,6 +228,9 @@ class MeshProblem():
         self.displacement = displacement
         self.bcs = bcs
         self.V_M = V_M
+        self.alpha = alpha
+        self.mu = mu
+        self.lmbda = lmbda
 
     # Compute mesh equation 
     def step(self, dt):
@@ -260,6 +260,9 @@ S = StructureProblem()
 M = MeshProblem()
 
 # Define problem parameters
+plot_solution = False
+store_vtu_files = False
+store_bin_files = False
 F.parameters["solver_parameters"]["plot_solution"] = False
 F.parameters["solver_parameters"]["save_solution"] = False
 F.parameters["solver_parameters"]["store_solution_data"] = False
@@ -282,8 +285,8 @@ file_p_F = File("p_F.pvd")
 file_U_S = File("U_S.pvd")
 file_P_S = File("P_S.pvd")
 file_U_M = File("U_M.pvd")
-disp_vs_t = open("disp_vs_t_file", "w")
-convergence_data = open("convergence_data_file", "w")
+disp_vs_t = open("displacement(nx_dt_smooth)" +str(nx) +  str(dt) + str(mesh_smooth), "w")
+convergence_data = open("convergence(nx_dt_smooth)" +str(nx) + str(dt) + str(mesh_smooth), "w")
 
 # Fix time step if needed. Note that this has to be done
 # in oder to save the primal data at the correct time
@@ -363,14 +366,15 @@ while t <= T:
         file_U_M << U_M
         
     # Store raw data for displacement
-    disp_vs_t.write(str(displacement) + "    " + str(t) + "\n")
+    disp_vs_t.write(str(displacement) + " ,  " + str(t) + "\n")
     
     # Store primal vectors in .bin format
-    primal_u_F.store(u_F.vector(), t)
-    primal_p_F.store(p_F.vector(), t)
-    primal_U_S.store(U_S.vector(), t)
-    primal_P_S.store(P_S.vector(), t)
-    primal_U_M.store(U_M.vector(), t)
+    if store_bin_files:
+        primal_u_F.store(u_F.vector(), t)
+        primal_p_F.store(p_F.vector(), t)
+        primal_U_S.store(U_S.vector(), t)
+        primal_P_S.store(P_S.vector(), t)
+        primal_U_M.store(U_M.vector(), t)
 
     # Move on to the next time level
     t += dt
@@ -385,16 +389,16 @@ end_functional = u_F((4.0, 0.5))[0]
 # Store info (some needs to be stored by hand... marked with ##)
 convergence_data.write(str("==FLUID PARAMETERS==")+ "\n")
 convergence_data.write(str("viscosity:  ") + str(F.viscosity()) + "\n")
-convergence_data.write(str("density:    ") + str(F.density()) + "\n")
+convergence_data.write(str("density:    ") + str(F.density()) + "\n" + "\n")
 convergence_data.write(str("==STRUCTURE PARAMETERS==")+ "\n")
 convergence_data.write(str("density: ") + str(S.reference_density()) + "\n")
 convergence_data.write(str("mu:      ") + str(0.15) + "\n") ##
-convergence_data.write(str("lambda:  ") + str(0.25) + "\n") ##
+convergence_data.write(str("lambda:  ") + str(0.25) + "\n" + "\n") ##
 convergence_data.write(str("==MESH PARAMETERS==")+ "\n")
-convergence_data.write(str("no. mesh smooth: ") + str(50) + "\n") ##
-convergence_data.write(str("alpha:              ") + str(1.0) + "\n") ##   
-convergence_data.write(str("mu:              ") + str(3.8461) + "\n") ##   
-convergence_data.write(str("lambda:          ") + str(5.76) + "\n" + "\n") ##
+convergence_data.write(str("no. mesh smooth:    ") + str(mesh_smooth) + "\n") ##
+convergence_data.write(str("alpha:              ") + str(M.alpha) + "\n")    
+convergence_data.write(str("mu:                 ") + str(M.mu) + "\n")   
+convergence_data.write(str("lambda:             ") + str(M.lmbda) + "\n" + "\n" + "\n" + "\n")
 convergence_data.write(str("****MESH/TIME*****") +  "\n")
 convergence_data.write(str("Mesh size (nx*ny):     ") + str(mesh.num_cells()) + "\n")
 convergence_data.write(str("Min(hK):               ") + str(mesh.hmin()) + "\n")
