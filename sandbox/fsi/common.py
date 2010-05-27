@@ -1,11 +1,18 @@
 from dolfin import *
 from numpy import array, append, zeros
+import sys
 
-# Mesh and time stepping parameters
-nx = 40
+# Set resolution in space/time
+if len(sys.argv) == 3:
+    nx = int(sys.argv[1])
+    dt = float(sys.argv[2])
+else:
+    nx = 80
+    dt = 0.025
+
+# Fixed parameters
 ny = nx/4
-dt = 0.025
-T = 1.0
+T = 2.5
 tol = 1e-6
 
 # Constants related to the geometry of the channel and the obstruction
