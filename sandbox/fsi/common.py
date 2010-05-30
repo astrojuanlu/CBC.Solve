@@ -14,7 +14,7 @@ else:
 
 # Fixed parameters
 ny = nx/4
-T = 0.3
+T = 2.5 + dt
 tol = 1e-6
 
 # Constants related to the geometry of the channel and the obstruction
