@@ -288,8 +288,8 @@ file_p_F = File("p_F.pvd")
 file_U_S = File("U_S.pvd")
 file_P_S = File("P_S.pvd")
 file_U_M = File("U_M.pvd")
-disp_vs_t = open("displacement(nx_dt_smooth)" +str(nx) +  str(dt) + str(mesh_smooth), "w")
-convergence_data = open("convergence(nx_dt_smooth)" +str(nx) + str(dt) + str(mesh_smooth), "w")
+disp_vs_t = open("displacement_nx_dt_T_smooth"+ "_" + str(nx) + "_"  +  str(dt) + "_" + str(T) + "_"+ str(mesh_smooth), "w")
+convergence_data = open("convergence_nx_dt_T_smooth" + "_" + str(nx)  +  "_"  +  str(dt) + "_" + str(T) +  "_" + str(mesh_smooth), "w")
 
 # Time-stepping
 for t in t_range:
@@ -332,7 +332,10 @@ for t in t_range:
 
         print "*******************************************"
         print "Solving the problem at t = ", str(t)
-        print "With time step dt =" , str(dt)
+        print "dt = ", str(dt)
+        print "T  = ", str(T)
+        print "nx = ", str(nx)
+        print "mesh smooth = ", str(mesh_smooth)
         print ""
         print "norm(r)", str(r)
         print " "
