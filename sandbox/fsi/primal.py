@@ -9,8 +9,9 @@ from numpy import array, append
 from common import *
 from math import ceil
 
-plot_solution = False
-store_vtu_files = True
+# Fix time step if needed. Note that this has to be done
+# in oder to save the primal data at the correct time
+dt, t_range = timestep_range(T, dt)
 
 # Define fluid problem
 class FluidProblem(NavierStokes):
@@ -92,7 +93,7 @@ class FluidProblem(NavierStokes):
         omega_F1.coordinates()[:] = x1
 
         # Smooth the mesh
-        omega_F1.smooth(50)
+        omega_F1.smooth(mesh_smooth)
 
         # Update mesh velocity
         wx = self.w.vector().array()
@@ -193,36 +194,66 @@ class StructureProblem(Hyperelasticity):
     def __str__(self):
         return "The structure problem"
 
-# Define mesh problem
-class MeshProblem(StaticHyperelasticity):
+# Define mesh problem (time-dependent linear elasticity)
+class MeshProblem():
 
     def __init__(self):
-        self.V_M = VectorFunctionSpace(Omega_F, "CG", 1)
+        
+        # Define functions etc.   
+        V_M = VectorFunctionSpace(Omega_F, "CG", 1)
+        v  = TestFunction(V_M) 
+        u = TrialFunction(V_M)
+        u0 = Function(V_M)
+        u1 = Function(V_M)
+        displacement = Function(V_M)
+        bcs = DirichletBC(V_M, displacement, compile_subdomains("on_boundary"))
 
-        StaticHyperelasticity.__init__(self)
+        # Define the stress tensor
+        def sigma(v):
+            return 2.0*mu*sym(grad(v)) + lmbda*tr(grad(v))*Identity(v.cell().d)
 
-    def mesh(self):
-        return Omega_F
+        # Define mesh parameters
+        mu = 3.8461
+        lmbda = 5.76
+        alpha = 1.0
 
-    def dirichlet_conditions(self):
-        self.displacement = Function(self.V_M)
-        return [self.displacement]
+        # Define form (cG1 scheme) (lhs/rhs do not work with sym_grad...)
+        a = alpha*inner(v, u)*dx + 0.5*dt*inner(sym(grad(v)), sigma(u))*dx
+        L = alpha*inner(v, u0)*dx - 0.5*dt*inner(sym(grad(v)), sigma(u0))*dx
+        A = assemble(a)
 
-    def dirichlet_boundaries(self):
-        return ["on_boundary"]
-
-    def material_model(self):
-        E  = 10.0
-        nu = 0.3
-        mu   = E / (2.0*(1.0 + nu))
-        lmbda = E*nu / ((1.0 + nu)*(1.0 - 2.0*nu))
-        return LinearElastic([mu, lmbda])
-
+        # Store variables for time stepping (and saving data)
+        self.u = u
+        self.u0 = u0
+        self.u1 = u1
+        self.A = A
+        self.L = L
+        self.dt = dt
+        self.displacement = displacement
+        self.bcs = bcs
+        self.V_M = V_M
+        self.alpha = alpha
+        self.mu = mu
+        self.lmbda = lmbda
+                
+    # Compute mesh equation 
+    def step(self, dt):
+        b = assemble(self.L)
+        self.bcs.apply(self.A, b)
+        solve(self.A, self.u1.vector(), b)
+        return self.u1
+ 
+    # Update structure displacement 
     def update_structure_displacement(self, U_S):
         self.displacement.vector().zero()
         fsi_add_s2f(self.displacement.vector(), U_S.vector())
         self.displacement.vector().array()
 
+    # Update mesh solution
+    def update(self, t):    
+        self.u0.assign(self.u1)
+        return self.u1 
+       
     def __str__(self):
         return "The mesh problem"
 
@@ -232,19 +263,19 @@ S = StructureProblem()
 M = MeshProblem()
 
 # Define problem parameters
+plot_solution = False
+store_vtu_files = False
+store_bin_files = False
 F.parameters["solver_parameters"]["plot_solution"] = False
 F.parameters["solver_parameters"]["save_solution"] = False
 F.parameters["solver_parameters"]["store_solution_data"] = False
 S.parameters["solver_parameters"]["plot_solution"] = False
 S.parameters["solver_parameters"]["save_solution"] = False
 S.parameters["solver_parameters"]["store_solution_data"] = False
-M.parameters["solver_parameters"]["plot_solution"] = False
-M.parameters["solver_parameters"]["save_solution"] = False
-M.parameters["solver_parameters"]["store_solution_data"] = False
 
 # Solve mesh equation (will give zero vector first time which corresponds to
 # identity map between the current domain and the reference domain)
-U_M = M.solve()
+U_M = M.step(0.0) 
 
 # Create inital displacement vector
 V0 = VectorFunctionSpace(Omega_S, "CG", 1)
@@ -257,18 +288,11 @@ file_p_F = File("p_F.pvd")
 file_U_S = File("U_S.pvd")
 file_P_S = File("P_S.pvd")
 file_U_M = File("U_M.pvd")
-disp_vs_t = open("disp_vs_t_file", "w")
-convergence_data = open("convergence_data_file", "w")
-
-# Fix time step if needed. Note that this has to be done
-# in oder to save the primal data at the correct time
-n = ceil(T / dt)
-t_range = linspace(0, T, n + 1)[1:]
-dt = t_range[0]
+disp_vs_t = open("displacement_nx_dt_T_smooth"+ "_" + str(nx) + "_"  +  str(dt) + "_" + str(T) + "_"+ str(mesh_smooth), "w")
+convergence_data = open("convergence_nx_dt_T_smooth" + "_" + str(nx)  +  "_"  +  str(dt) + "_" + str(T) +  "_" + str(mesh_smooth), "w")
 
 # Time-stepping
-t = 0
-while t <= T:
+for t in t_range:
 
  # Fixed point iteration on FSI problem
     r = 2*tol
@@ -289,7 +313,7 @@ while t <= T:
         M.update_structure_displacement(U_S)
 
         # Solve mesh equation
-        U_M = M.solve()
+        U_M = M.step(dt)
 
         # Update mesh displcament and mesh velocity
         F.update_mesh_displacement(U_M)
@@ -308,7 +332,10 @@ while t <= T:
 
         print "*******************************************"
         print "Solving the problem at t = ", str(t)
-        print "With time step dt =" , str(dt)
+        print "dt = ", str(dt)
+        print "T  = ", str(T)
+        print "nx = ", str(nx)
+        print "mesh smooth = ", str(mesh_smooth)
         print ""
         print "norm(r)", str(r)
         print " "
@@ -324,6 +351,7 @@ while t <= T:
     # Move to next time step
     F.update(t)
     S.update()
+    M.update(t)
 
     # FIXME: This should be done automatically by the solver
     F.update_extra()
@@ -337,17 +365,15 @@ while t <= T:
         file_U_M << U_M
         
     # Store raw data for displacement
-    disp_vs_t.write(str(displacement) + "    " + str(t) + "\n")
+    disp_vs_t.write(str(displacement) + " ,  " + str(t) + "\n")
     
     # Store primal vectors in .bin format
-    primal_u_F.store(u_F.vector(), t)
-    primal_p_F.store(p_F.vector(), t)
-    primal_U_S.store(U_S.vector(), t)
-    primal_P_S.store(P_S.vector(), t)
-    primal_U_M.store(U_M.vector(), t)
-
-    # Move on to the next time level
-    t += dt
+    if store_bin_files:
+        primal_u_F.store(u_F.vector(), t)
+        primal_p_F.store(p_F.vector(), t)
+        primal_U_S.store(U_S.vector(), t)
+        primal_P_S.store(P_S.vector(), t)
+        primal_U_M.store(U_M.vector(), t)
 
 # Close file
 disp_vs_t.close()
@@ -359,15 +385,16 @@ end_functional = u_F((4.0, 0.5))[0]
 # Store info (some needs to be stored by hand... marked with ##)
 convergence_data.write(str("==FLUID PARAMETERS==")+ "\n")
 convergence_data.write(str("viscosity:  ") + str(F.viscosity()) + "\n")
-convergence_data.write(str("density:    ") + str(F.density()) + "\n")
+convergence_data.write(str("density:    ") + str(F.density()) + "\n" + "\n")
 convergence_data.write(str("==STRUCTURE PARAMETERS==")+ "\n")
 convergence_data.write(str("density: ") + str(S.reference_density()) + "\n")
 convergence_data.write(str("mu:      ") + str(0.15) + "\n") ##
-convergence_data.write(str("lambda:  ") + str(0.25) + "\n") ##
+convergence_data.write(str("lambda:  ") + str(0.25) + "\n" + "\n") ##
 convergence_data.write(str("==MESH PARAMETERS==")+ "\n")
-convergence_data.write(str("no. mesh smooth: ") + str(50) + "\n") ##
-convergence_data.write(str("mu:              ") + str(0.15) + "\n") ##   
-convergence_data.write(str("lambda:          ") + str((0.25)) + "\n" + "\n") ##
+convergence_data.write(str("no. mesh smooth:    ") + str(mesh_smooth) + "\n") ##
+convergence_data.write(str("alpha:              ") + str(M.alpha) + "\n")    
+convergence_data.write(str("mu:                 ") + str(M.mu) + "\n")   
+convergence_data.write(str("lambda:             ") + str(M.lmbda) + "\n" + "\n" + "\n" + "\n")
 convergence_data.write(str("****MESH/TIME*****") +  "\n")
 convergence_data.write(str("Mesh size (nx*ny):     ") + str(mesh.num_cells()) + "\n")
 convergence_data.write(str("Min(hK):               ") + str(mesh.hmin()) + "\n")

@@ -134,7 +134,7 @@ class MomentumBalanceSolver(CBCSolver):
 
         # Get problem parameters
         mesh        = problem.mesh()
-        dt, t_range = timestep_range(problem, mesh)
+        dt, t_range = timestep_range_cfl(problem, mesh)
         end_time    = problem.end_time()
 
         # Define function spaces
@@ -398,7 +398,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
         # Get problem parameters
         mesh        = problem.mesh()
-        dt, t_range = timestep_range(problem, mesh)
+        dt, t_range = timestep_range_cfl(problem, mesh)
         end_time    = problem.end_time()
         info("Using time step dt = %g" % dt)
 

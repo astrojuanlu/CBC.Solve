@@ -4,52 +4,20 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from cbc.flow import *
 
-# Constants related to the geometry of the channel and the obstruction
-channel_length  = 4.0
-channel_height  = 1.0
-structure_left  = 1.4
-structure_right = 1.6
-structure_top   = 0.5
-nx = 80
-ny = nx/4
-
 # Parameters
-dt = 0.01
+dt = 0.001
 T = 0.1
 tol = 1e-4
 
-# Create the complete mesh
-mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
-
-# Define dimension of mesh
-D = mesh.topology().dim()
-
-# Define structure subdomain
-class Structure(SubDomain):
-    def inside(self, x, on_boundary):
-        return (x[0] >= structure_left) and (x[0] <= structure_right) \
-            and (x[1] <= structure_top)
-
-# Create structure subdomain
-structure = Structure()
-
-# Create subdomain markers
-sub_domains = MeshFunction("uint", mesh, D)
-sub_domains.set_all(0)
-structure.mark(sub_domains, 1)
-
-# Extract submesh for the fluid
-Omega = mesh
-Omega_F = SubMesh(mesh, sub_domains, 0)
-omega_F = Mesh(Omega_F)
-
-# Define inflow boundary
-def inflow(x):
-    return x[0] < DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
+mesh = UnitSquare(10, 10)
 
 # Define outflow boundary
 def outflow(x):
-    return x[0] > channel_length - DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
+    return x[0] > 1.0 - DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < 1.0 - DOLFIN_EPS
+
+# Define inflow boundary
+def inflow(x):
+    return x[0] < 0.0 + DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < 1.0 - DOLFIN_EPS
 
 # Define noslip boundary
 def noslip(x, on_boundary):
@@ -58,10 +26,10 @@ def noslip(x, on_boundary):
 class Channel(NavierStokes):
 
     def mesh(self):
-        return omega_F
+        return mesh
 
     def viscosity(self):
-        return 1e-2
+        return 1.0/8.0
 
     def density(self):
         return 1.0
@@ -89,16 +57,7 @@ class Channel(NavierStokes):
 class ChannelDual(NavierStokesDual):
 
     def mesh(self):
-        return omega_F
-
-    def boundary_markers(self):
-        right = compile_subdomains("x[0] >= 4.0 - DOLFIN_EPS")
-        boundary_marker = MeshFunction("uint", self.mesh(), self.mesh().topology().dim() - 1)
-        right.mark(boundary_marker, 2)
-        return boundary_marker
-
-    def viscosity(self):
-        return 1e-2
+        return mesh
 
     def boundary_conditions(self, V, Q):
 
@@ -110,11 +69,6 @@ class ChannelDual(NavierStokesDual):
         bcp1 = DirichletBC(Q, Constant(0.0), outflow)
 
         return [bcu], [bcp0, bcp1]
-# FIXME: base the following on zie goal funtional
-#     def initial_conditions(self, V, Q):
-#         u0 = Constant((0, 0))
-#         p0 = Expression("1 - x[0]")
-#         return u0, p0
 
     def time_step(self):
         return dt
@@ -123,13 +77,20 @@ class ChannelDual(NavierStokesDual):
         return T
 
     def functional(self, u, p, V, Q, n):
-        goal = inner(u, n)*ds(2)
+        goal = u[0]*ds(2)
         return goal
+
+    def boundary_markers(self):
+        # ("x == 0", 2)
+        right = compile_subdomains("x[0] == 1.0")
+        boundary_marker = MeshFunction("uint", self.mesh(), self.mesh().topology().dim() - 1)
+        right.mark(boundary_marker, 2)
+        return boundary_marker
 
     def __str__(self):
         return "Pressure-driven channel (2D)"
 
-# # Solve problem
+# Solve problem
 # problem = Channel()
 # problem.parameters["solver_parameters"]["plot_solution"] = True
 # problem.parameters["solver_parameters"]["store_solution_data"] = True
@@ -140,8 +101,6 @@ dual_problem.parameters["solver_parameters"]["plot_solution"] = True
 dual_problem.parameters["solver_parameters"]["save_solution"] = True
 dual_problem.parameters["solver_parameters"]["store_solution_data"] = False
 w, r = dual_problem.solve()
-
-#interactive()
 
 # # Check error
 # e = problem.functional(u, p) - problem.reference(0.5)

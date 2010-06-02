@@ -1,11 +1,21 @@
 from dolfin import *
 from numpy import array, append, zeros
+import sys
 
-# Mesh and time stepping parameters
-nx = 80
+# Set resolution in space/time
+if len(sys.argv) == 5:
+    nx = int(sys.argv[1])
+    dt = float(sys.argv[2])
+    T = float(sys.argv[3])
+    mesh_smooth = int(sys.argv[4])
+else:
+    nx = 80
+    dt = 0.05
+    T = 0.10
+    mesh_smooth = 1
+
+# Fixed parameters
 ny = nx/4
-dt = 0.01
-T = 2.5
 tol = 1e-6
 
 # Constants related to the geometry of the channel and the obstruction
@@ -86,7 +96,7 @@ interior_facet_domains = MeshFunction("uint", Omega, D-1)
 interior_facet_domains.set_all(0)
 
 # Create facet marker for outflow
-right = compile_subdomains("x[0] == channel_length")
+right = compile_subdomains("x[0] == 4.0")
 exterior_boundary = MeshFunction("uint", Omega, D-1)
 right.mark(exterior_boundary, 2)
 
