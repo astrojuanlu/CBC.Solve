@@ -24,9 +24,9 @@ class NavierStokesSolver(CBCSolver):
 
         # Get mesh and time step range
         mesh = problem.mesh()
-        dt, t_range = timestep_range(problem, mesh)
+        dt, t_range = timestep_range_cfl(problem, mesh)
         info("Using time step dt = %g" % dt)
-
+        
         # Function spaces
         V1 = VectorFunctionSpace(mesh, "CG", 1)
         V = VectorFunctionSpace(mesh, "CG", 2)

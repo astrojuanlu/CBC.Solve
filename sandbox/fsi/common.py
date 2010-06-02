@@ -3,18 +3,19 @@ from numpy import array, append, zeros
 import sys
 
 # Set resolution in space/time
-if len(sys.argv) == 4:
+if len(sys.argv) == 5:
     nx = int(sys.argv[1])
     dt = float(sys.argv[2])
-    mesh_smooth = int(sys.argv[3])
+    T = float(sys.argv[3])
+    mesh_smooth = int(sys.argv[4])
 else:
-    nx = 20
-    dt = 0.15
-    mesh_smooth = 10
+    nx = 80
+    dt = 0.05
+    T = 0.10
+    mesh_smooth = 1
 
 # Fixed parameters
 ny = nx/4
-T = 2.5 + dt
 tol = 1e-6
 
 # Constants related to the geometry of the channel and the obstruction

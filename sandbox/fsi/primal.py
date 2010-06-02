@@ -9,6 +9,10 @@ from numpy import array, append
 from common import *
 from math import ceil
 
+# Fix time step if needed. Note that this has to be done
+# in oder to save the primal data at the correct time
+dt, t_range = timestep_range(T, dt)
+
 # Define fluid problem
 class FluidProblem(NavierStokes):
 
@@ -201,7 +205,6 @@ class MeshProblem():
         u = TrialFunction(V_M)
         u0 = Function(V_M)
         u1 = Function(V_M)
-        u_bar = 0.5*(u + u0)
         displacement = Function(V_M)
         bcs = DirichletBC(V_M, displacement, compile_subdomains("on_boundary"))
 
@@ -215,14 +218,15 @@ class MeshProblem():
         alpha = 1.0
 
         # Define form (cG1 scheme) (lhs/rhs do not work with sym_grad...)
-        a = alpha*inner(v, u)*dx + dt*inner(sym(grad(v)), sigma(u_bar))*dx
-        L = alpha*inner(v, u0)*dx
+        a = alpha*inner(v, u)*dx + 0.5*dt*inner(sym(grad(v)), sigma(u))*dx
+        L = alpha*inner(v, u0)*dx - 0.5*dt*inner(sym(grad(v)), sigma(u0))*dx
+        A = assemble(a)
 
         # Store variables for time stepping (and saving data)
         self.u = u
         self.u0 = u0
         self.u1 = u1
-        self.a = a
+        self.A = A
         self.L = L
         self.dt = dt
         self.displacement = displacement
@@ -231,13 +235,12 @@ class MeshProblem():
         self.alpha = alpha
         self.mu = mu
         self.lmbda = lmbda
-
+                
     # Compute mesh equation 
     def step(self, dt):
-        A = assemble(self.a)
         b = assemble(self.L)
-        self.bcs.apply(A, b)
-        solve(A, self.u1.vector(), b)
+        self.bcs.apply(self.A, b)
+        solve(self.A, self.u1.vector(), b)
         return self.u1
  
     # Update structure displacement 
@@ -288,15 +291,8 @@ file_U_M = File("U_M.pvd")
 disp_vs_t = open("displacement(nx_dt_smooth)" +str(nx) +  str(dt) + str(mesh_smooth), "w")
 convergence_data = open("convergence(nx_dt_smooth)" +str(nx) + str(dt) + str(mesh_smooth), "w")
 
-# Fix time step if needed. Note that this has to be done
-# in oder to save the primal data at the correct time
-n = ceil(T / dt)
-t_range = linspace(0, T, n + 1)[1:]
-dt = t_range[0]
-
 # Time-stepping
-t = 0
-while t <= T:
+for t in t_range:
 
  # Fixed point iteration on FSI problem
     r = 2*tol
@@ -375,9 +371,6 @@ while t <= T:
         primal_U_S.store(U_S.vector(), t)
         primal_P_S.store(P_S.vector(), t)
         primal_U_M.store(U_M.vector(), t)
-
-    # Move on to the next time level
-    t += dt
 
 # Close file
 disp_vs_t.close()
