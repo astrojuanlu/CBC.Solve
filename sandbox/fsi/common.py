@@ -2,21 +2,29 @@ from dolfin import *
 from numpy import array, append, zeros
 import sys
 
-# Set resolution in space/time
-if len(sys.argv) == 5:
-    nx = int(sys.argv[1])
-    dt = float(sys.argv[2])
-    T = float(sys.argv[3])
-    mesh_smooth = int(sys.argv[4])
-else:
-    nx = 80
-    dt = 0.05
-    T = 0.10
-    mesh_smooth = 1
-
-# Fixed parameters
-ny = nx/4
+# Set default parameters
+nx = 80
+dt = 0.05
+T = 0.2
+mesh_smooth = 1
 tol = 1e-6
+
+# Get command-line parameters
+for arg in sys.argv[1:]:
+    if not "=" in arg: continue
+    key, val = arg.split("=")
+
+    if key == "nx":
+        nx = int(val)
+    elif key == "dt":
+        dt = float(val)
+    elif key == "T":
+        T = float(val)
+    elif key == "smooth":
+        mesh_smooth = int(val)
+
+# Set resolution
+ny = nx/4
 
 # Constants related to the geometry of the channel and the obstruction
 channel_length  = 4.0

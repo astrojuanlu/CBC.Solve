@@ -127,7 +127,7 @@ class StructureProblem(Hyperelasticity):
         self.v_F = TestFunction(self.V_F)
         self.N_F = FacetNormal(Omega_F)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
-        
+
         Hyperelasticity.__init__(self)
 
     def mesh(self):
@@ -198,10 +198,10 @@ class StructureProblem(Hyperelasticity):
 class MeshProblem():
 
     def __init__(self):
-        
-        # Define functions etc.   
+
+        # Define functions etc.
         V_M = VectorFunctionSpace(Omega_F, "CG", 1)
-        v  = TestFunction(V_M) 
+        v  = TestFunction(V_M)
         u = TrialFunction(V_M)
         u0 = Function(V_M)
         u1 = Function(V_M)
@@ -218,8 +218,9 @@ class MeshProblem():
         alpha = 1.0
 
         # Define form (cG1 scheme) (lhs/rhs do not work with sym_grad...)
-        a = alpha*inner(v, u)*dx + 0.5*dt*inner(sym(grad(v)), sigma(u))*dx
-        L = alpha*inner(v, u0)*dx - 0.5*dt*inner(sym(grad(v)), sigma(u0))*dx
+        k = Constant(dt)
+        a = alpha*inner(v, u)*dx + 0.5*k*inner(sym(grad(v)), sigma(u))*dx
+        L = alpha*inner(v, u0)*dx - 0.5*k*inner(sym(grad(v)), sigma(u0))*dx
         A = assemble(a)
 
         # Store variables for time stepping (and saving data)
@@ -235,25 +236,25 @@ class MeshProblem():
         self.alpha = alpha
         self.mu = mu
         self.lmbda = lmbda
-                
-    # Compute mesh equation 
+
+    # Compute mesh equation
     def step(self, dt):
         b = assemble(self.L)
         self.bcs.apply(self.A, b)
         solve(self.A, self.u1.vector(), b)
         return self.u1
- 
-    # Update structure displacement 
+
+    # Update structure displacement
     def update_structure_displacement(self, U_S):
         self.displacement.vector().zero()
         fsi_add_s2f(self.displacement.vector(), U_S.vector())
         self.displacement.vector().array()
 
     # Update mesh solution
-    def update(self, t):    
+    def update(self, t):
         self.u0.assign(self.u1)
-        return self.u1 
-       
+        return self.u1
+
     def __str__(self):
         return "The mesh problem"
 
@@ -275,7 +276,7 @@ S.parameters["solver_parameters"]["store_solution_data"] = False
 
 # Solve mesh equation (will give zero vector first time which corresponds to
 # identity map between the current domain and the reference domain)
-U_M = M.step(0.0) 
+U_M = M.step(0.0)
 
 # Create inital displacement vector
 V0 = VectorFunctionSpace(Omega_S, "CG", 1)
@@ -344,8 +345,8 @@ for t in t_range:
         # Check convergence
         if r < tol:
             break
-    
-    # Compute displacement    
+
+    # Compute displacement
     displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 
     # Move to next time step
@@ -363,10 +364,10 @@ for t in t_range:
         file_U_S << U_S
         file_P_S << P_S
         file_U_M << U_M
-        
+
     # Store raw data for displacement
     disp_vs_t.write(str(displacement) + " ,  " + str(t) + "\n")
-    
+
     # Store primal vectors in .bin format
     if store_bin_files:
         primal_u_F.store(u_F.vector(), t)
@@ -378,9 +379,11 @@ for t in t_range:
 # Close file
 disp_vs_t.close()
 
-# Define convergence indicators
+# Compute convergence indicators
 end_displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
-end_functional = u_F((4.0, 0.5))[0]
+end_velocity = u_F((4.0, 0.5))[0]
+print "Functional 1 (displacement):", end_displacement
+print "Functional 2 (velocity):    ", end_velocity
 
 # Store info (some needs to be stored by hand... marked with ##)
 convergence_data.write(str("==FLUID PARAMETERS==")+ "\n")
@@ -392,8 +395,8 @@ convergence_data.write(str("mu:      ") + str(0.15) + "\n") ##
 convergence_data.write(str("lambda:  ") + str(0.25) + "\n" + "\n") ##
 convergence_data.write(str("==MESH PARAMETERS==")+ "\n")
 convergence_data.write(str("no. mesh smooth:    ") + str(mesh_smooth) + "\n") ##
-convergence_data.write(str("alpha:              ") + str(M.alpha) + "\n")    
-convergence_data.write(str("mu:                 ") + str(M.mu) + "\n")   
+convergence_data.write(str("alpha:              ") + str(M.alpha) + "\n")
+convergence_data.write(str("mu:                 ") + str(M.mu) + "\n")
 convergence_data.write(str("lambda:             ") + str(M.lmbda) + "\n" + "\n" + "\n" + "\n")
 convergence_data.write(str("****MESH/TIME*****") +  "\n")
 convergence_data.write(str("Mesh size (nx*ny):     ") + str(mesh.num_cells()) + "\n")
@@ -402,7 +405,6 @@ convergence_data.write(str("End time T:            ") + str(T) + "\n")
 convergence_data.write(str("Time step kn:          ") + str(dt) + "\n")
 convergence_data.write(str("Tolerance (FSI f.p.):  ") + str(tol) + "\n" + "\n")
 convergence_data.write(str("****INDICATORS****")+ "\n")
-convergence_data.write(str("Functional u_F(T):     ") + str(end_functional) + "\n")
-convergence_data.write(str("Displacment(T):        ") + str(end_displacement) + "\n")
+convergence_data.write(str("Functional 1 (displacement): ") + str(end_displacement) + "\n")
+convergence_data.write(str("Functional 2 (velocity):     ") + str(end_velocity) + "\n")
 convergence_data.close()
-
