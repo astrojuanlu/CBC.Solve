@@ -293,9 +293,10 @@ disp_vs_t = open("displacement_nx_dt_T_smooth"+ "_" + str(nx) + "_"  +  str(dt) 
 convergence_data = open("convergence_nx_dt_T_smooth" + "_" + str(nx)  +  "_"  +  str(dt) + "_" + str(T) +  "_" + str(mesh_smooth), "w")
 
 # Time-stepping
+p = Progress("Time-stepping")
 for t in t_range:
 
- # Fixed point iteration on FSI problem
+    # Fixed point iteration on FSI problem
     r = 2*tol
     while r > tol:
 
@@ -375,6 +376,9 @@ for t in t_range:
         primal_U_S.store(U_S.vector(), t)
         primal_P_S.store(P_S.vector(), t)
         primal_U_M.store(U_M.vector(), t)
+
+    # Update progress bar
+    p.update(t / T)
 
 # Close file
 disp_vs_t.close()
