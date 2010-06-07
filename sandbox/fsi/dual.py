@@ -245,10 +245,7 @@ A_MM03 = inner(Z_PM('+'),q_M('+'))*dS(1)
 A_MM = A_MM01 + A_MM02 + A_MM03
 
 # Mesh eq. linearized around structure variable
-#A_MS = - inner(Z_PM('+'), q_S('+'))*dS(1)
-
-# FIXME: Temporary fix
-A_MS = -inner(Z_PM('+'), q_S('+'))*dS(1)
+A_MS = - inner(Z_PM('+'), q_S('+'))*dS(1)
 
 # Define goal funtionals
 n_F = FacetNormal(Omega_F)
