@@ -1,8 +1,8 @@
 from common import *
 from cbc.common import CBCSolver
+from cbc.common.utils import *
 from cbc.twist.kinematics import SecondOrderIdentity
 from numpy import array, append, zeros, linspace
-from math import ceil
 from dualoperators import *
 
 # Optimize form compiler
@@ -245,14 +245,13 @@ file_Z_PM = File("Z_PM.pvd")
 Z = Function(W)
 (Z_UF, Z_PF, Z_US, Z_PS, Z_UM, Z_PM) = Z.split()
 
-# Compute time step
-n = ceil(T / dt)
-t_range = linspace(0, T, n + 1)[1:]
-kn = t_range[0]
+# Fix time step if needed. Note that this has to be done
+# in oder to save the primal data at the correct time
+dt, t_range = timestep_range(T, dt)
 
-# Time stepping
-t=0
-while t <= T:
+# Time-stepping
+p = Progress("Time-stepping")
+for t in t_range:
 
    print "*******************************************"
    print "-------------------------------------------"
