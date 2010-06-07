@@ -112,21 +112,9 @@ U_F0  = Function(V_F1)
 U_S0  = Function(V_S)
 P_S0  = Function(Q_S)
 
-# # Create initial condition for stress displacement (\Psi^T)
-# Nv = Omega.num_vertices()
-# U_S_subdofs = Vector()
-# primal_U_S.retrieve(U_S_subdofs, T)
-# global_vertex_indices_S = Omega_S.data().mesh_function("global vertex indices")
-# S_global_index = zeros([global_vertex_indices_S.size()], "uint")
-# for j in range(global_vertex_indices_S.size()):
-#     S_global_index[j] = global_vertex_indices_S[j]
-# U_S_global_dofs = S_global_index
-#Z_US0.vector()[U_S_global_dofs] = 1.0
-# plot(Z_US0, mesh = Omega, interactive=True)
-# import sys
-# sys.exit(1)
-
-# Define time-step NOTE: we are using Backward Euler
+# Fix time step if needed. Note that this has to be done
+# in oder to save the primal data at the correct time
+dt, t_range = timestep_range(T, dt)
 kn = dt
 
 # Define FSI normal
@@ -245,9 +233,6 @@ file_Z_PM = File("Z_PM.pvd")
 Z = Function(W)
 (Z_UF, Z_PF, Z_US, Z_PS, Z_UM, Z_PM) = Z.split()
 
-# Fix time step if needed. Note that this has to be done
-# in oder to save the primal data at the correct time
-dt, t_range = timestep_range(T, dt)
 
 # Time-stepping
 p = Progress("Time-stepping")
@@ -304,9 +289,8 @@ for t in t_range:
 #    plot(Z_US, title="Dual displacement")
 #    plot(Z_PS, title="Dual structure velocity")
 #    plot(Z_UM, title="Dual mesh displacement")
-
-# plot(Z_PM, title="Dual mesh Lagrange Multiplier")
-  # interactive()
+#    plot(Z_PM, title="Dual mesh Lagrange Multiplier")
+#    interactive()
 
    # Move to next time interval
    t += kn
