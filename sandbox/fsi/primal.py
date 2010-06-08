@@ -248,7 +248,6 @@ class MeshProblem():
     def update_structure_displacement(self, U_S):
         self.displacement.vector().zero()
         fsi_add_s2f(self.displacement.vector(), U_S.vector())
-        self.displacement.vector().array()
 
     # Update mesh solution
     def update(self, t):
