@@ -179,9 +179,6 @@ class StructureProblem(Hyperelasticity):
         lmbda = 0.25
         return StVenantKirchhoff([mu, lmbda])
 
-    def is_dynamic(self):
-        return True
-
     def time_stepping(self):
         return "CG1"
 
