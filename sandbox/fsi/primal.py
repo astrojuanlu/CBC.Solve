@@ -261,7 +261,7 @@ M = MeshProblem()
 
 # Define problem parameters
 plot_solution = False
-store_vtu_files = True
+store_vtu_files = False
 store_bin_files = False 
 F.parameters["solver_parameters"]["plot_solution"] = False
 F.parameters["solver_parameters"]["save_solution"] = False
