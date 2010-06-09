@@ -216,8 +216,8 @@ class MeshProblem():
 
         # Define form (cG1 scheme) (lhs/rhs do not work with sym_grad...)
         k = Constant(dt)
-        a = alpha*inner(v, u)*dx + 0.5*k*inner(sym(grad(v)), sigma(u))*dx
-        L = alpha*inner(v, u0)*dx - 0.5*k*inner(sym(grad(v)), sigma(u0))*dx
+        a = alpha*inner(v, u)*dx + 0.5*dt*inner(sym(grad(v)), sigma(u))*dx
+        L = alpha*inner(v, u0)*dx - 0.5*dt*inner(sym(grad(v)), sigma(u0))*dx
         A = assemble(a)
 
         # Store variables for time stepping (and saving data)
