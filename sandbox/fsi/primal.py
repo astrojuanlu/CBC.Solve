@@ -7,7 +7,6 @@ from cbc.twist import *
 from cbc.common.utils import *
 from numpy import array, append
 from common import *
-from math import ceil
 
 # Fix time step if needed. Note that this has to be done
 # in oder to save the primal data at the correct time
