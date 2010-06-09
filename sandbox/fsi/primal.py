@@ -140,7 +140,7 @@ class StructureProblem(Hyperelasticity):
     def dirichlet_boundaries(self):
         #FIXME: Figure out how to use the constants above in the
         #following boundary definitions
-        bottom ="x[1] == 0.0 && x[0] >= 1.4 && x[0] <= 1.6"
+        bottom ="x[1] == 0.0"
         return [bottom]
 
     def update_fluid_stress(self, Sigma_F):
@@ -261,8 +261,8 @@ M = MeshProblem()
 
 # Define problem parameters
 plot_solution = False
-store_vtu_files = False
-store_bin_files = True 
+store_vtu_files = True
+store_bin_files = False 
 F.parameters["solver_parameters"]["plot_solution"] = False
 F.parameters["solver_parameters"]["save_solution"] = False
 F.parameters["solver_parameters"]["store_solution_data"] = False
