@@ -173,7 +173,7 @@ lmbda_M =  5.76
 
 # Fix time step if needed. Note that this has to be done
 # in oder to save the primal data at the correct time
-dt, t_range = timestep_range(T, dt)
+dt, t_range = timestep_range(T, dt) #FIXME: Only the default values in common.py are set!!!
 kn = Constant(dt)
 
 # Define FSI normal
@@ -288,7 +288,6 @@ file_Z_PM = File("Z_PM.pvd")
 # Create solution functions
 Z = Function(W)
 (Z_UF, Z_PF, Z_US, Z_PS, Z_UM, Z_PM) = Z.split()
-
 
 # Time-stepping
 p = Progress("Time-stepping")
