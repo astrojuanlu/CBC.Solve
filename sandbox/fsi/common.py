@@ -7,7 +7,7 @@ nx = 80
 dt = 0.05
 T = 0.2
 mesh_smooth = 1
-tol = 1e-6
+tol = 1e-10
 
 # Get command-line parameters
 for arg in sys.argv[1:]:
