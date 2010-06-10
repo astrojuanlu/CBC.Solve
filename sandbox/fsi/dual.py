@@ -10,6 +10,15 @@ parameters["form_compiler"]["cpp_optimize"] = True
 # Plot solution during run-time 
 plot_solution = False
 
+# Define constants FIXME: should be retrived from problem!!!
+rho_F = 1.0
+mu_F = 0.002
+rho_S = 1.0
+mu_S =  0.15
+lmbda_S =  0.25
+mu_M =  3.8461
+lmbda_M =  5.76
+
 # Define function spaces defined on the whole domain
 V_F1 = VectorFunctionSpace(Omega, "CG", 1)
 V_F2 = VectorFunctionSpace(Omega, "CG", 2)
@@ -162,14 +171,6 @@ def Sigma_F(u,p,v):
 def sigma_M(u):
     return 2.0*mu_M*sym_gradient(u) + lmbda_M*tr(sym_gradient(u))*I
 
-# Define constants FIXME: should be retrived from problem!!!
-rho_F = 1.0
-mu_F = 0.002
-rho_S = 1.0
-mu_S =  0.15
-lmbda_S =  0.25
-mu_M =  3.8461
-lmbda_M =  5.76
 
 # Fix time step if needed. Note that this has to be done
 # in oder to save the primal data at the correct time
