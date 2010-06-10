@@ -174,7 +174,7 @@ lmbda_M =  5.76
 # Fix time step if needed. Note that this has to be done
 # in oder to save the primal data at the correct time
 dt, t_range = timestep_range(T, dt)
-kn = dt
+kn = Constant(dt)
 
 # Define FSI normal
 N_S =  FacetNormal(Omega_S)
