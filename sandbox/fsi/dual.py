@@ -7,6 +7,9 @@ from numpy import array, append, zeros, linspace
 # Optimize form compiler
 parameters["form_compiler"]["cpp_optimize"] = True
 
+# Plot solution during run-time 
+plot_solution = False
+
 # Define function spaces defined on the whole domain
 V_F1 = VectorFunctionSpace(Omega, "CG", 1)
 V_F2 = VectorFunctionSpace(Omega, "CG", 2)
@@ -336,16 +339,15 @@ for t in t_range:
    file_Z_UM << Z_UM
    file_Z_PM << Z_PM
 
-#    # Plot solutions
-#    plot(Z_UF, title="Dual fluid velocity")
-#    plot(Z_PF, title="Dual fluid pressure")
-#    plot(Z_US, title="Dual displacement")
-#    plot(Z_PS, title="Dual structure velocity")
-#    plot(Z_UM, title="Dual mesh displacement")
-#    plot(Z_PM, title="Dual mesh Lagrange Multiplier")
-#    interactive()
+   # Plot solutions
+   if plot_solution:
+       plot(Z_UF, title="Dual fluid velocity")
+       plot(Z_PF, title="Dual fluid pressure")
+       plot(Z_US, title="Dual displacement")
+       plot(Z_PS, title="Dual structure velocity")
+       plot(Z_UM, title="Dual mesh displacement")
+       plot(Z_PM, title="Dual mesh Lagrange Multiplier")
 
    # Move to next time interval
    t += kn
-   # FIXME: Change to t =+ float(kn)
 
