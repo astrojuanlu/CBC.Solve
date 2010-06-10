@@ -503,7 +503,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
             print "Applying Neumann boundary condition at", neumann_boundary
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
-            L = L - dt*inner(neumann_conditions[i], xi)*ds(i)
+            L = L - k*inner(neumann_conditions[i], xi)*ds(i)
 
         a = derivative(L, U, dU)
 
