@@ -177,9 +177,10 @@ def sigma_M(u):
 dt, t_range = timestep_range(T, dt) #FIXME: Only the default values in common.py are set!!!
 kn = Constant(dt)
 
-# Define FSI normal
+# Define normals
 N_S =  FacetNormal(Omega_S)
 N =  N_S('+')
+N_F = FacetNormal(Omega_F)
 
 # Fluid eq. linearized around fluid variables
 A_FF01 = -(1/kn)*inner((Z_UF0 - Z_UF), rho_F*J(U_M)*v_F)*dx(0)
@@ -190,8 +191,18 @@ A_FF05 =  inner(grad(Z_UF), J(U_M)*mu_F*dot(F_invT(U_M) , dot(grad(v_F).T, F_inv
 A_FF06 = -inner(grad(Z_UF), J(U_M)*q_F*F_invT(U_M))*dx(0)
 A_FF07 =  inner(Z_PF, div(J(U_M)*dot(F_inv(U_M),v_F)))*dx(0)
 
+# Boundary terms (Neumann condition G_N_F, dS(2) = in, dS(3) = out)
+# Note that we assume an inifinte long channel -> grad(U_F) = 0
+G_FF_in_1  = -inner(Z_US('+'), dot(J(U_M)('+')*mu_F*dot(F_invT(U_M)('+') , dot(grad(v_F('+')).T, F_invT(U_M)('+'))), N_F('+')))*dS(2)
+G_FF_in_2  =  inner(Z_US('+'), dot(J(U_M)('+')*q_F('+')*F_invT(U_M)('+'), N_F('+')))*dS(2)
+G_FF_out_1 = -inner(Z_US('+'), dot(J(U_M)('+')*mu_F*dot(F_invT(U_M)('+') , dot(grad(v_F('+')).T, F_invT(U_M)('+'))), N_F('+')))*dS(3)
+G_FF_out_2 =  inner(Z_US('+'), dot(J(U_M)('+')*q_F('+')*F_invT(U_M)('+'), N_F('+')))*dS(3)                 
+
+# Collect boundary terms
+G_FF = G_FF_in_1 + G_FF_in_2 + G_FF_out_1 + G_FF_out_2
+
 # Collect A_FF form
-A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07
+A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + G_FF
 
 # Fluid eq. linearized around mesh variable
 A_FM01 =  (1/kn)*inner(Z_UF, rho_F*DJ(U_M, v_M)*(U_F0 - U_F))*dx(0)
@@ -207,8 +218,22 @@ A_FM10 =  inner(grad(Z_UF), J(U_M)*dot(dot( P_F*I,F_invT(U_M)) ,  dot(grad(v_M).
 A_FM11 =  inner(Z_PF, div(DJ(U_M,v_M)*dot(F_inv(U_M), U_F)))*dx(0)
 A_FM12 = -inner(Z_PF, div(J(U_M)*dot(dot(F_inv(U_M),grad(v_M)), dot(F_inv(U_M) ,U_F))))*dx(0)
 
+# Boundary terms (Neumann conditions G_N_F, dS(2) = in, dS(3) = out)
+# Note that we assume an inifinte long channel -> grad(U_F) = 0
+G_FM_in_1 = -inner(Z_UF('+'), DJ(U_M, v_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'),grad(U_F('+')).T), dot(F_invT(U_M)('+'), N_F('+'))))*dS(2)
+G_FM_in_2 =  inner(Z_UF('+'), DJ(U_M, v_M)('+')*dot(P_F('+')*I('+'), N_F('+')))*dS(2)
+G_FM_in_3 =  inner(Z_UF('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, F_invT(U_M)('+'))), dot(grad(U_F('+')).T, dot(F_invT(U_M)('+'), N_F('+') ))))*dS(2)
+G_FM_in_4 =  inner(Z_UF('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'), dot(grad(U_F('+')).T, F_invT(U_M)('+'))), dot(grad(v_M('+')).T , dot(F_invT(U_M)('+'),N_F('+')))))*dS(2)
+G_FM_out_1 = -inner(Z_UF('+'), DJ(U_M, v_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'),grad(U_F('+')).T), dot(F_invT(U_M)('+'), N_F('+'))))*dS(3)
+G_FM_out_2 =  inner(Z_UF('+'), DJ(U_M, v_M)('+')*dot(P_F('+')*I('+'), N_F('+')))*dS(3)
+G_FM_out_3 =  inner(Z_UF('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, F_invT(U_M)('+'))), dot(grad(U_F('+')).T, dot(F_invT(U_M)('+'), N_F('+') ))))*dS(3)
+G_FM_out_4 =  inner(Z_UF('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'), dot(grad(U_F('+')).T, F_invT(U_M)('+'))), dot(grad(v_M('+')).T , dot(F_invT(U_M)('+'),N_F('+')))))*dS(3)
+
+# Collect boundary terms
+G_FM = G_FM_in_1 + G_FM_in_2 + G_FM_in_3 + G_FM_in_4 + G_FM_out_1 + G_FM_out_2 + G_FM_out_3 + G_FM_out_4 
+
 # Collect A_FM form
-A_FM =  A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + A_FM11 + A_FM12
+A_FM =  A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + A_FM11 + A_FM12 + G_FM  
 
 # Structure eq. linearized around the fluid variables
 A_SF01 = -inner(Z_US('+'), mu_F*J(U_M)('+')*dot(dot(grad(v_F('+')), F_inv(U_M)('+')), dot(F_invT(U_M)('+'), N)))*dS(1)
@@ -218,12 +243,13 @@ A_SF03 =  inner(Z_US('+'), mu_F*J(U_M)('+')*q_F('+')*dot(I('+'), dot(F_invT(U_M)
 # Collect A_SF form
 A_SF = A_SF01 + A_SF02 + A_SF03
 
+# Operators for A_SS
 Fu = F(U_S)
-#Fu = I
 Eu = Fu*Fu.T - I
 Ev = grad(v_S)*Fu.T + Fu*grad(v_S).T
 Sv = grad(v_S)*(2*mu_S*Eu + lmbda_S*tr(Eu)*I) + Fu*(2*mu_S*Ev + lmbda_S*tr(Ev)*I)
 
+# Structure eq. linearized around structure variable
 A_SS = - (1/kn)*inner(Z_US0 - Z_US, rho_S*q_S)*dx(1) + inner(grad(Z_US), Sv)*dx(1) \
        - (1/kn)*inner(Z_PS0 - Z_PS, v_S)*dx(1) - inner(Z_PS, q_S)*dx(1)
 
