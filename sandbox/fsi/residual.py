@@ -1,6 +1,6 @@
 "Computes the error indicators on the reference domain"
 from dolfin import *
-from common import Omega
+from common import *
 
 # Define constants FIXME: should be retrived from problem!!!
 rho_F = 1.0
@@ -12,25 +12,32 @@ mu_M =  3.8461
 lmbda_M =  5.76
 
 # Define function spaces defined on the whole domain
-V_F1 = VectorFunctionSpace(Omega, "CG", 1)
-V_F2 = VectorFunctionSpace(Omega, "CG", 2)
-Q_F  = FunctionSpace(Omega, "CG", 1)
-V_S  = VectorFunctionSpace(Omega, "CG", 1)
-Q_S  = VectorFunctionSpace(Omega, "CG", 1)
-V_M  = VectorFunctionSpace(Omega, "CG", 1)
-Q_M  = VectorFunctionSpace(Omega, "CG", 1)
+vector = VectorFunctionSpace(Omega, "CG", 1)
+scalar  = FunctionSpace(Omega, "CG", 1)
 
+# Define test functions
+v = TestFunction(vector)
+q = TestFunction(scalar)
+ 
 # Define projection spaces
 vectorDG = VectorFunctionSpace(Omega, "DG", 1)
 scalarDG = FunctionSpace(Omega, "DG", 1)
 
+# Define projection functions
+vDG = Function(vectorDG)
+sDG = Function(scalarDG)
+
 # Create primal functions on Omega
-U_F = Function(V_F1)
-P_F = Function(Q_F)
-U_S = Function(V_S)
-P_S = Function(Q_S)
-U_M = Function(V_M)
-P_M = Function(Q_M) #FIXME: Check for sure that Im not needed in the primal!
+U_F = Function(vector)
+P_F = Function(scalar)
+U_S = Function(vector)
+P_S = Function(vector)
+U_M = Function(vector)
+
+# Create primal functions for time-derivateves
+U_F0 = Function(vector)
+P_S0 = Function(vector)
+U_M0 = Function(vector)
 
 # Retrieve primal data
 def get_primal_data(t):
@@ -93,3 +100,40 @@ def get_primal_data(t):
     U_M.vector()[U_M_global_dofs] = U_M_subdofs
 
     return U_F, P_F, U_S, P_S, U_M
+
+# k = 1
+
+# get_primal_data(0.2)
+
+
+
+
+
+# # Define stresses 
+# def Sigma_F(u,p,v):
+#     return  mu_F*(grad(u)*F_inv(v) + F_invT(v)*grad(u).T) - p*I
+
+# # def Sigma_M(u):
+# #     return 2.0*mu_M*sym_gradient(u) + lmbda_M*tr(sym_gradient(u))*I
+
+# # def Sigma_M(u):
+# #     return None 
+
+# # Define forms for error the error E_h (see paper for notation)
+# R_1_h_F = (1/k)*inner(v, (U_F -U_F0))*dx + inner(v, grad(U_F)*U_F)*dx \
+           
+
+
+# R = (1/k)*inner(grad(v), grad(U_M))*dx
+# jada = assemble(R)
+# print jada
+
+# # Compute space residals (aka Rannacher's eta k's)
+# def compute_space_residuals(t):
+    
+    
+    
+# Create .bin files for storinf residual information
+
+
+
