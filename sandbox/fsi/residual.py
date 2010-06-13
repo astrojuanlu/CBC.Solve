@@ -1,15 +1,7 @@
 "Computes the error indicators on the reference domain"
 from dolfin import *
 from common import *
-
-# Define constants FIXME: should be retrived from problem!!!
-rho_F = 1.0
-mu_F = 0.002
-rho_S = 1.0
-mu_S =  0.15
-lmbda_S =  0.25
-mu_M =  3.8461
-lmbda_M =  5.76
+from operators import *
 
 # Define function spaces defined on the whole domain
 vector = VectorFunctionSpace(Omega, "CG", 1)
@@ -101,31 +93,20 @@ def get_primal_data(t):
 
     return U_F, P_F, U_S, P_S, U_M
 
-# k = 1
-
-# get_primal_data(0.2)
-
+k = 1
+get_primal_data(0.2)
 
 
 
+# Define forms for residuals for the error E_h (see paper for notation)
+R_h_F_1 = (1/k)*inner(v, D_t(U_F, U_F0, U_M, rho_F))*dx \
+- inner(v, div(J(U_M)*dot(Sigma_F(U_F, P_F, U_M) ,F_invT(U_M))))*dx
 
-# # Define stresses 
-# def Sigma_F(u,p,v):
-#     return  mu_F*(grad(u)*F_inv(v) + F_invT(v)*grad(u).T) - p*I
-
-# # def Sigma_M(u):
-# #     return 2.0*mu_M*sym_gradient(u) + lmbda_M*tr(sym_gradient(u))*I
-
-# # def Sigma_M(u):
-# #     return None 
-
-# # Define forms for error the error E_h (see paper for notation)
-# R_1_h_F = (1/k)*inner(v, (U_F -U_F0))*dx + inner(v, grad(U_F)*U_F)*dx \
-           
+R_h_F_2 = inner(q, div(J(U_M)*dot(F_inv(U_M), U_F)))*dx
 
 
-# R = (1/k)*inner(grad(v), grad(U_M))*dx
-# jada = assemble(R)
+# # R = (1/k)*inner(grad(v), grad(U_M))*dx
+# jada = assemble(R_h_F_2)
 # print jada
 
 # # Compute space residals (aka Rannacher's eta k's)
