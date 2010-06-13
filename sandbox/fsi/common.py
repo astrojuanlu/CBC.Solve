@@ -5,7 +5,7 @@ import sys
 # Set default parameters
 nx = 80
 dt = 0.05
-T = 0.2
+T = 0.5
 mesh_smooth = 1
 tol = 1e-10
 
