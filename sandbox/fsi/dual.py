@@ -209,7 +209,7 @@ A_SM08 = -inner(Z_US('+'), J(U_M)('+')*dot(dot(P_F('+')*I('+'),F_invT(U_M)('+'))
 A_SM = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06 + A_SM07 + A_SM08
 
 # Mesh eq. linearized around mesh variable
-A_MM01 = -(1/kn)*inner(v_M, Z_UM0 - Z_UM)*dx(0) + inner(sym_gradient(Z_UM), sigma_M(v_M))*dx(0)
+A_MM01 = -(1/kn)*inner(v_M, Z_UM0 - Z_UM)*dx(0) + inner(sym_gradient(Z_UM), Sigma_M(v_M))*dx(0)
 A_MM02 = inner(Z_UM('+'),v_M('+'))*dS(1)
 A_MM03 = inner(Z_PM('+'),q_M('+'))*dS(1)
 

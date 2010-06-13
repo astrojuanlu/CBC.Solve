@@ -45,7 +45,7 @@ def DJ(u,w):
         -w[1].dx(0)*u[0].dx(1) + w[1].dx(1)*(1 + u[0].dx(0))
     return DJ
 
-
+# Sym gradient FIXME: This should be removed ones the UFL bug for rhs/lhs is fixed
 def sym_gradient(u):
     sym_gradient = 0.5*(grad(u)+ grad(u).T)
     return sym_gradient
@@ -55,7 +55,7 @@ def Sigma_F(u,p,v):
     return  mu_F*(grad(u)*F_inv(v) + F_invT(v)*grad(u).T) - p*I
 
 # Mesh stress in the reference domain
-def sigma_M(u):
+def Sigma_M(u):
     return 2.0*mu_M*sym_gradient(u) + lmbda_M*tr(sym_gradient(u))*I
 
 
