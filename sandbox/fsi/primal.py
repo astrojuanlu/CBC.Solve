@@ -156,6 +156,11 @@ class StructureProblem(Hyperelasticity):
         B_S = Vector(self.V_S.dim())
         fsi_add_f2s(B_S, B_F)
 
+        
+        # For testing constant force
+        constant_force = project(Constant((1, 0)), self.V_S)
+        B_S[:] = constant_force.vector()[:]
+
         # In the structure solver the body force is defined on
         # the LHS...
         self.fluid_load.vector()[:] = - B_S.array()
