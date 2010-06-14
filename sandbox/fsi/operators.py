@@ -9,6 +9,7 @@ mu_S =  0.15
 lmbda_S =  0.25
 mu_M =  3.8461
 lmbda_M =  5.76
+alpha = 1.0
 
 # Identity matrix
 I = variable(Identity(2))
