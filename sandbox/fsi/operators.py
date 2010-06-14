@@ -45,6 +45,10 @@ def DJ(u,w):
         -w[1].dx(0)*u[0].dx(1) + w[1].dx(1)*(1 + u[0].dx(0))
     return DJ
 
+# Green - Lagrange tensor
+def E(u):
+    return 0.5*(F_T(u)*F(u) - I)
+
 # Sym gradient FIXME: This should be removed ones the UFL bug for rhs/lhs is fixed
 def sym_gradient(u):
     sym_gradient = 0.5*(grad(u)+ grad(u).T)
@@ -53,6 +57,10 @@ def sym_gradient(u):
 # Fluid stress in the reference domain
 def Sigma_F(u,p,v):
     return  mu_F*(grad(u)*F_inv(v) + F_invT(v)*grad(u).T) - p*I
+
+# Structure stress in the reference domain
+def Sigma_S(u):
+    return F(u)*(2*mu_S*E(u) + lmbda_S*tr(E(u))*I)
 
 # Mesh stress in the reference domain
 def Sigma_M(u):
