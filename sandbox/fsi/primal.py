@@ -2,16 +2,13 @@
 # Navier-Stokes flow field. Lessons learnt from this exercise will be
 # used to construct an FSI class in the future.
 
+from pylab import *
 from cbc.flow import *
 from cbc.twist import *
-from cbc.common.utils import *
 from numpy import array, append
 from problems import *
 from common import *
-
-# Fix time step if needed. Note that this has to be done
-# in oder to save the primal data at the correct time
-dt, t_range = timestep_range(T, dt)
+from adaptivity import *
 
 # Define the three problems
 F = FluidProblem()
@@ -47,9 +44,16 @@ file_U_M = File("U_M.pvd")
 disp_vs_t = open("displacement_nx_dt_T_smooth"+ "_" + str(nx) + "_"  +  str(dt) + "_" + str(T) + "_"+ str(mesh_smooth), "w")
 convergence_data = open("convergence_nx_dt_T_smooth" + "_" + str(nx)  +  "_"  +  str(dt) + "_" + str(T) +  "_" + str(mesh_smooth), "w")
 
+# Storing of adaptive data
+times = []
+timesteps = []
+
 # Time-stepping
 p = Progress("Time-stepping")
+t = dt
+at_end = False
 for t in t_range:
+#while True:
 
     # Fixed point iteration on FSI problem
     r = 2*tol
@@ -132,11 +136,29 @@ for t in t_range:
         primal_P_S.store(P_S.vector(), t)
         primal_U_M.store(U_M.vector(), t)
 
+    # Store time and time steps
+    times.append(t)
+    timesteps.append(dt)
+
     # Update progress bar
     p.update(t / T)
 
+    # Check if we have reached the end time
+    if at_end:
+        print "Finished time-stepping\n"
+        break
+
+    # FIXME: Compute these
+    Rk = 1.0
+    TOL = 0.1
+    ST = 1.0
+
+    # Compute new time step
+    #(dt, at_end) = compute_timestep(Rk, ST, TOL, dt, t, T)
+
 # Close file
 disp_vs_t.close()
+
 
 # Compute convergence indicators
 end_displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())

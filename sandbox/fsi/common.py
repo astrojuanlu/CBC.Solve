@@ -1,6 +1,8 @@
+import sys
+
 from dolfin import *
 from numpy import array, append, zeros
-import sys
+from cbc.common.utils import *
 
 # Set default parameters
 nx = 80
@@ -171,3 +173,7 @@ primal_p_F = TimeSeries("primal_p_F")
 primal_U_S = TimeSeries("primal_U_S")
 primal_P_S = TimeSeries("primal_P_S")
 primal_U_M = TimeSeries("primal_U_M")
+
+# Fix time step if needed. Note that this has to be done
+# in oder to save the primal data at the correct time
+dt, t_range = timestep_range(T, dt)
