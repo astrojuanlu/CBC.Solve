@@ -9,7 +9,7 @@ from numpy import array, append
 from common import *
 
 # Fix time step if needed. Note that this has to be done
-# in order to save the primal data at the correct time
+# in oder to save the primal data at the correct time
 dt, t_range = timestep_range(T, dt)
 
 # Define fluid problem
@@ -155,11 +155,6 @@ class StructureProblem(Hyperelasticity):
         # Add contribution from fluid vector to structure
         B_S = Vector(self.V_S.dim())
         fsi_add_f2s(B_S, B_F)
-        
-        # For testing constant force
-        #constant_force = project(Constant((0.0004, 0)), self.V_S)
-        #print "norms:", norm(B_S), norm(constant_force.vector())
-        #B_S[:] = constant_force.vector()[:]
 
         # In the structure solver the body force is defined on
         # the LHS...
@@ -263,11 +258,10 @@ F = FluidProblem()
 S = StructureProblem()
 M = MeshProblem()
 
-# FIXME: Propagate parameters from command-line
 # Define problem parameters
 plot_solution = False
 store_vtu_files = False
-store_bin_files = True
+store_bin_files = False
 F.parameters["solver_parameters"]["plot_solution"] = False
 F.parameters["solver_parameters"]["save_solution"] = False
 F.parameters["solver_parameters"]["store_solution_data"] = False
@@ -387,10 +381,8 @@ disp_vs_t.close()
 # Compute convergence indicators
 end_displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
 end_velocity = u_F((4.0, 0.5))[0]
-end_point_displacement = U_S((1.5, 0.4))[0]
-print "Functional 1 (displacement):       ", end_displacement
-print "Functional 2 (velocity):           ", end_velocity
-print "Functional 3 (point displacement): ", end_point_displacement
+print "Functional 1 (displacement):", end_displacement
+print "Functional 2 (velocity):    ", end_velocity
 
 # Store info (some needs to be stored by hand... marked with ##)
 convergence_data.write(str("==FLUID PARAMETERS==")+ "\n")
