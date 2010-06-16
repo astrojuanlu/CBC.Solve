@@ -1,27 +1,17 @@
-# Computes the error indicators on the reference domain. Note that all error indicators are
-# evaluated on Omega since the dual solution lives on Omega
+" Computes the error indicators on the reference domain. Note that all error indicators are "
+" evaluated on Omega since the dual solution lives on Omega "
 
 from dolfin import *
 from common import *
 from operators import *
 
-# Define function spaces defined on the whole domain
-V = VectorFunctionSpace(Omega, "CG", 1)
-Q = FunctionSpace(Omega, "CG", 1)
+# Define projection spaces 
+V = VectorFunctionSpace(Omega, "DG", 0)
+Q = FunctionSpace(Omega, "DG", 0)
 
 # Define test/trial functions
 v = TestFunction(V)
 q = TestFunction(Q)
-qtrial = TrialFunction(Q)
-vtrial = TrialFunction(V)
-
-## Define projection spaces
-V_DG = VectorFunctionSpace(Omega, "DG", 1)
-Q_DG = FunctionSpace(Omega, "DG", 1)
-
-# Define projection functions
-vDG = Function(V_DG)
-sDG = Function(V_DG)
 
 # Create primal functions on Omega
 U_F = Function(V)
@@ -53,7 +43,9 @@ R_h_M_1 = Function(V)
 R_h_M_2 = Function(V)
 R_h_M_3 = Function(V)
 R_h_M_4 = Function(V)
-
+R_k_v = Function(V)
+R_k_s = Function(Q)
+ 
 # Retrieve primal data
 def get_primal_data(t):
 
@@ -117,7 +109,7 @@ def get_primal_data(t):
     return U_F, P_F, U_S, P_S, U_M
 
 k = 1
-get_primal_data(0.5)
+get_primal_data(0.3)
 
 # Create .bin files for store residual information
 # R_h = ...
@@ -127,70 +119,49 @@ get_primal_data(0.5)
 r_h_F_1 = (1/k)*inner(v, D_t(U_F, U_F0, U_M, rho_F))*dx \
           - inner(v, div(J(U_M)*dot(Sigma_F(U_F, P_F, U_M) ,F_invT(U_M))))*dx
 r_h_F_2 = inner(q, div(J(U_M)*dot(F_inv(U_M), U_F)))*dx
-#r_h_F_3 = inner(v('+'), 2*mu_F*dot(jump(sym(grad(U_F))), N_F('+')))*dS  # FIXME: Jump terms do not work
-r_h_S_1 = inner(v, rho_S*(P_S - P_S0) - div(Sigma_S(U_S)))*dx 
-#R_h_S_2 = inner(v('+'), 2*mu_F*dot(jump(Sigma_S(U_S)), N_S('+')))*dS    # FIXME: Jump terms do not work
-r_h_S_3 = inner(v('+'), dot((Sigma_S(U_S)('+') + (J(U_M)('+')*dot(Sigma_F(U_F,P_F,U_M)('+'), F_invT(U_M)('+')))), N_F('+')))*dS(1)
+# r_h_F_3 = inner(v('+'), 2*mu_F*dot(jump(sym(grad(U_F))), N_F('+')))*dS(1)  # FIXME: Jump terms do not work
+r_h_S_1 = (1/k)*inner(v, rho_S*(P_S - P_S0))*dx  - inner(v, div(Sigma_S(U_S)))*dx 
+# #r_h_S_2 = inner(v('+'), 2*mu_F*dot(jump(Sigma_S(U_S)), N_S('+')))*dS    # FIXME: Jump terms do not work
+r_h_S_3 = inner(v('+'), dot((Sigma_S(U_S)('+') + (J(U_M)('+')*dot(Sigma_F(U_F,P_F,U_M)('+'), F_invT(U_M)('+')))), N_F('+')))*dS(1) # FIXME: Check if this is correct
 r_h_S_4 = inner(v, (U_S - U_S0) - P_S)*dx
 r_h_M_1 = inner(v, alpha*(U_M - U_M0))*dx - inner(v, div(Sigma_M(U_M)))*dx
-#R_h_M_2 = inner(v('+'), dot(jump(Sigma_M(U_M)), N_F('+')))*dS           # FIXME: Jump terms do not work
-#R_h_M_3 = inner(v, P_M)*dx                                              # FIXME: This term is zero in the primal, how to fix?
+# #r_h_M_2 = inner(v('+'), dot(jump(Sigma_M(U_M)), N_F('+')))*dS           # FIXME: Jump terms do not work
 r_h_M_4 = inner(v('+'), U_M('+') - U_S('+'))*dS(1)
 
-# Define forms for the residual R_k (see paper for details)
-
-
 # Assemble forms for residuals R_h
-L_h_F_1 = assemble(r_h_F_1, interior_facet_domains=interior_facet_domains)
-L_h_F_2 = assemble(r_h_F_2, interior_facet_domains=interior_facet_domains)
-#L_h_F_3 = assemble(r_h_F_3, interior_facet_domains=interior_facet_domains)
-L_h_S_1 = assemble(r_h_S_1, interior_facet_domains=interior_facet_domains)
-#L_h_S_2 = assemble(r_h_S_2, interior_facet_domains=interior_facet_domains)
-L_h_S_3 = assemble(r_h_S_3, interior_facet_domains=interior_facet_domains)
-L_h_S_4 = assemble(r_h_S_4, interior_facet_domains=interior_facet_domains)
-L_h_M_1 = assemble(r_h_M_1, interior_facet_domains=interior_facet_domains)
-#L_h_M_2 = assemble(r_h_M_2, interior_facet_domains=interior_facet_domains)
-#L_h_M_3 = assemble(r_h_M_3, interior_facet_domains=interior_facet_domains)
-L_h_M_4 = assemble(r_h_M_4, interior_facet_domains=interior_facet_domains)
+R_h_F_1 = assemble(r_h_F_1, interior_facet_domains=interior_facet_domains)
+R_h_F_2 = assemble(r_h_F_2, interior_facet_domains=interior_facet_domains)
+# L_h_F_3 = assemble(r_h_F_3, interior_facet_domains=interior_facet_domains)
+R_h_S_1 = assemble(r_h_S_1, interior_facet_domains=interior_facet_domains)
+# L_h_S_2 = assemble(r_h_S_2, interior_facet_domains=interior_facet_domains)
+R_h_S_3 = assemble(r_h_S_3, interior_facet_domains=interior_facet_domains)
+R_h_S_4 = assemble(r_h_S_4, interior_facet_domains=interior_facet_domains)
+R_h_M_1 = assemble(r_h_M_1, interior_facet_domains=interior_facet_domains)
+# L_h_M_2 = assemble(r_h_M_2, interior_facet_domains=interior_facet_domains)
+R_h_M_4 = assemble(r_h_M_4, interior_facet_domains=interior_facet_domains)
 
-# Define and assemble rhs
-a = inner(vtrial, v)*dx
-A = assemble(a, interior_facet_domains=interior_facet_domains)
-a_s = qtrial*q*dx
-As = assemble(a_s, interior_facet_domains=interior_facet_domains)
+# Define forms for the residual R_k (see paper for details)
+r_k_F_mom = (1/k)*inner(v, D_t(U_F, U_F0, U_M, rho_F))*dx \
+             + inner(grad(v), J(U_M)*dot(Sigma_F(U_F, P_F, U_M), F_invT(U_M)))*dx
+r_k_F_con = inner(q, div(U_F))*dx
+r_k_S     = (1/k)*inner(v, rho_S*(P_S - P_S0))*dx \
+            + inner(grad(v), Sigma_S(U_S))*dx \
+            - inner(v('+'), J(U_M)('+')*dot(Sigma_F(U_F,P_F,U_M)('+'), dot(F_invT(U_M)('+'), N_S('+'))))*dS(1) \
+            + inner(v, (U_S -U_S0) - P_S)*dx
+r_k_M     = (1/k)*inner(v, alpha*(U_S - U_S0))*dx \
+            + inner(sym(grad(v)), Sigma_S(U_S))*dx \
+            + inner(v('+'), U_M('+') - U_S('+'))*dS(1)
 
-# Compute residuals R_h
-solve(A, R_h_F_1.vector(), L_h_F_1)
-solve(As, R_h_F_2.vector(), L_h_F_2)
-# solve(A, R_h_F_3.vector(), L_h_F_3)
-solve(A, R_h_S_1.vector(), L_h_S_1)
-# solve(A, R_h_S_2.vector(), L_h_S_2)
-solve(A, R_h_S_3.vector(), L_h_S_3)
-solve(A, R_h_S_4.vector(), L_h_S_4)
-solve(A, R_h_M_1.vector(), L_h_M_1)
-# solve(A, R_h_M_2.vector(), L_h_M_2)
-# solve(A, R_h_M_3.vector(), L_h_M_3)
-solve(A, R_h_M_4.vector(), L_h_M_4)
+# Collect vector/scalar contributions
+r_k_vector = r_k_F_mom + r_k_S + r_k_M
+r_k_scalar = r_k_F_con
 
+# Assemble R_k
+R_k_vector = assemble(r_k_vector)
+R_k_scalar = assemble(r_k_scalar)
 
-
-
-
-# file_jada = File("jada.pvd")
-# file_jada << R_h_S_3
-# plot(R_h_S_3, mesh=Omega)
-# interactive()
-
-
-
-
-
-# # Compute residuals
-# def compute_space_residuals(t):
-    
-    
-    
-
-
+# Compute R_k
+R_k = norm(R_k_vector) + norm(R_k_scalar)
+print "|| R_k || = ", R_k
 
 
