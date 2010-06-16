@@ -45,6 +45,7 @@ R_h_M_3 = Function(V)
 R_h_M_4 = Function(V)
 R_k_v = Function(V)
 R_k_s = Function(Q)
+R_C = Function(V)
  
 # Retrieve primal data
 def get_primal_data(t):
@@ -119,25 +120,25 @@ get_primal_data(0.3)
 r_h_F_1 = (1/k)*inner(v, D_t(U_F, U_F0, U_M, rho_F))*dx \
           - inner(v, div(J(U_M)*dot(Sigma_F(U_F, P_F, U_M) ,F_invT(U_M))))*dx
 r_h_F_2 = inner(q, div(J(U_M)*dot(F_inv(U_M), U_F)))*dx
-# r_h_F_3 = inner(v('+'), 2*mu_F*dot(jump(sym(grad(U_F))), N_F('+')))*dS(1)  # FIXME: Jump terms do not work
+#r_h_F_3 inner(jump(v), 2*mu_F*avg(dot(sym_gradient(U_F), N)))*dS   # FIXME: Jump terms do not work
 r_h_S_1 = (1/k)*inner(v, rho_S*(P_S - P_S0))*dx  - inner(v, div(Sigma_S(U_S)))*dx 
-# #r_h_S_2 = inner(v('+'), 2*mu_F*dot(jump(Sigma_S(U_S)), N_S('+')))*dS    # FIXME: Jump terms do not work
+#r_h_S_2 = inner(jump(v), 2*mu_F*avg(dot(Sigma_S(U_S), N_S)))*dS    # FIXME: Jump terms do not work
 r_h_S_3 = inner(v('+'), dot((Sigma_S(U_S)('+') + (J(U_M)('+')*dot(Sigma_F(U_F,P_F,U_M)('+'), F_invT(U_M)('+')))), N_F('+')))*dS(1) # FIXME: Check if this is correct
 r_h_S_4 = inner(v, (U_S - U_S0) - P_S)*dx
 r_h_M_1 = inner(v, alpha*(U_M - U_M0))*dx - inner(v, div(Sigma_M(U_M)))*dx
-# #r_h_M_2 = inner(v('+'), dot(jump(Sigma_M(U_M)), N_F('+')))*dS           # FIXME: Jump terms do not work
+#r_h_M_2 = inner(jump(v), avg(dot(Sigma_M(U_M), N_F)))*dS           # FIXME: Jump terms do not work
 r_h_M_4 = inner(v('+'), U_M('+') - U_S('+'))*dS(1)
 
 # Assemble forms for residuals R_h
 R_h_F_1 = assemble(r_h_F_1, interior_facet_domains=interior_facet_domains)
 R_h_F_2 = assemble(r_h_F_2, interior_facet_domains=interior_facet_domains)
-# L_h_F_3 = assemble(r_h_F_3, interior_facet_domains=interior_facet_domains)
+# R_h_F_3 = assemble(r_h_F_3, interior_facet_domains=interior_facet_domains)
 R_h_S_1 = assemble(r_h_S_1, interior_facet_domains=interior_facet_domains)
-# L_h_S_2 = assemble(r_h_S_2, interior_facet_domains=interior_facet_domains)
+# R_h_S_2 = assemble(r_h_S_2, interior_facet_domains=interior_facet_domains)
 R_h_S_3 = assemble(r_h_S_3, interior_facet_domains=interior_facet_domains)
 R_h_S_4 = assemble(r_h_S_4, interior_facet_domains=interior_facet_domains)
 R_h_M_1 = assemble(r_h_M_1, interior_facet_domains=interior_facet_domains)
-# L_h_M_2 = assemble(r_h_M_2, interior_facet_domains=interior_facet_domains)
+# R_h_M_2 = assemble(r_h_M_2, interior_facet_domains=interior_facet_domains)
 R_h_M_4 = assemble(r_h_M_4, interior_facet_domains=interior_facet_domains)
 
 # Define forms for the residual R_k (see paper for details)
@@ -162,6 +163,9 @@ R_k_scalar = assemble(r_k_scalar)
 
 # Compute R_k
 R_k = norm(R_k_vector) + norm(R_k_scalar)
-print "|| R_k || = ", R_k
+#print "|| R_k || = ", R_k
 
+# r_h_F_3 = inner(jump(v), avg(dot(sym_gradient(U_F), N)))*dS
+# R_h_F_3 = assemble(r_h_F_3)
 
+# print norm(R_h_F_3)
