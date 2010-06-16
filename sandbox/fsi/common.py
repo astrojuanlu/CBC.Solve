@@ -137,7 +137,7 @@ def fsi_add_s2f(xf, xs):
 # Mark facet orientation for the fsi boundary
 for facet in facets(mesh):
 
-    # Skip facets on the non-boundary
+    # Skip facets on the boundary
     if facet.num_entities(D) == 1:
         continue
 
@@ -162,6 +162,9 @@ for facet in facets(mesh):
         facet_orientation[facet.index()] = c1
     elif p1_inside and not p0_inside:
         interior_facet_domains[facet.index()] = 1
+        facet_orientation[facet.index()] = c0
+    else:
+        # Just set c0, will not be used
         facet_orientation[facet.index()] = c0
 
 #info(interior_facet_domains, True)

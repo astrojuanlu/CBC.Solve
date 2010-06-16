@@ -5,7 +5,7 @@ from dolfin import *
 from common import *
 from operators import *
 
-# Define projection spaces 
+# Define projection spaces
 V = VectorFunctionSpace(Omega, "DG", 0)
 Q = FunctionSpace(Omega, "DG", 0)
 
@@ -46,7 +46,7 @@ R_h_M_4 = Function(V)
 R_k_v = Function(V)
 R_k_s = Function(Q)
 R_C = Function(V)
- 
+
 # Retrieve primal data
 def get_primal_data(t):
 
@@ -65,7 +65,7 @@ def get_primal_data(t):
     P_S_subdofs = Vector()
     U_M_subdofs = Vector()
 
-    # Get primal data 
+    # Get primal data
     primal_u_F.retrieve(u_F_subdofs, t)
     primal_p_F.retrieve(p_F_subdofs, t)
     primal_U_S.retrieve(U_S_subdofs, t)
@@ -121,7 +121,7 @@ r_h_F_1 = (1/k)*inner(v, D_t(U_F, U_F0, U_M, rho_F))*dx \
           - inner(v, div(J(U_M)*dot(Sigma_F(U_F, P_F, U_M) ,F_invT(U_M))))*dx
 r_h_F_2 = inner(q, div(J(U_M)*dot(F_inv(U_M), U_F)))*dx
 #r_h_F_3 inner(jump(v), 2*mu_F*avg(dot(sym_gradient(U_F), N)))*dS   # FIXME: Jump terms do not work
-r_h_S_1 = (1/k)*inner(v, rho_S*(P_S - P_S0))*dx  - inner(v, div(Sigma_S(U_S)))*dx 
+r_h_S_1 = (1/k)*inner(v, rho_S*(P_S - P_S0))*dx  - inner(v, div(Sigma_S(U_S)))*dx
 #r_h_S_2 = inner(jump(v), 2*mu_F*avg(dot(Sigma_S(U_S), N_S)))*dS    # FIXME: Jump terms do not work
 r_h_S_3 = inner(v('+'), dot((Sigma_S(U_S)('+') + (J(U_M)('+')*dot(Sigma_F(U_F,P_F,U_M)('+'), F_invT(U_M)('+')))), N_F('+')))*dS(1) # FIXME: Check if this is correct
 r_h_S_4 = inner(v, (U_S - U_S0) - P_S)*dx
@@ -165,7 +165,7 @@ R_k_scalar = assemble(r_k_scalar)
 R_k = norm(R_k_vector) + norm(R_k_scalar)
 #print "|| R_k || = ", R_k
 
-# r_h_F_3 = inner(jump(v), avg(dot(sym_gradient(U_F), N)))*dS
-# R_h_F_3 = assemble(r_h_F_3)
+r_h_F_3 = inner(avg(v), jump(N, sym_gradient(U_F)))*dS
+R_h_F_3 = assemble(r_h_F_3)
 
 # print norm(R_h_F_3)
