@@ -18,8 +18,10 @@ class FluidProblem(NavierStokes):
     def __init__(self):
         NavierStokes.__init__(self)
         self.V = VectorFunctionSpace(Omega_F, "CG", 2)
+        self.VP1 = VectorFunctionSpace(Omega_F, "CG", 1)
         self.Q = FunctionSpace(Omega_F, "CG", 1)
-        self.U_F = Function(self.V)
+        self.U_F_temp = Function(self.V)
+        self.U_F = Function(self.VP1)
         self.P_F = Function(self.Q)
 
     def mesh(self):
@@ -57,18 +59,23 @@ class FluidProblem(NavierStokes):
     def compute_fluid_stress(self, u_F, p_F, U_M):
 
         # Map u and p back to reference domain
-        self.U_F.vector()[:] = u_F.vector()[:]
+        self.U_F_temp.vector()[:] = u_F.vector()[:]
         self.P_F.vector()[:] = p_F.vector()[:]
+        
+        print "Projecting fluid-stress to P1 elements"
+        # Project U_F to a P1 element
+        self.U_F = project(self.U_F_temp, self.VP1)
 
         # Compute mesh deformation gradient
         F = DeformationGradient(U_M)
         F_inv = inv(F)
         F_inv_T = F_inv.T
+        I = variable(Identity(2))
 
         # Compute mapped stress (sigma_F \circ Phi) (here, grad "=" Grad)
         mu = self.viscosity()
         sigma_F = mu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T \
-                  - self.P_F*Identity(self.U_F.cell().d))
+                  - self.P_F*I)
 
         # Map to physical stress
         Sigma_F = PiolaTransform(sigma_F, U_M)
