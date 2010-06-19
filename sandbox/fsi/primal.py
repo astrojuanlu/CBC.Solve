@@ -175,7 +175,7 @@ convergence_data.write(str("density: ") + str(S.reference_density()) + "\n")
 convergence_data.write(str("mu:      ") + str(0.15) + "\n") ##
 convergence_data.write(str("lambda:  ") + str(0.25) + "\n" + "\n") ##
 convergence_data.write(str("==MESH PARAMETERS==")+ "\n")
-convergence_data.write(str("no. mesh smooth:    ") + str(mesh_smooth) + "\n") ##
+convergence_data.write(str("no. mesh smooth:    ") + str(mesh_smooth) + "\n") 
 convergence_data.write(str("alpha:              ") + str(M.alpha) + "\n")
 convergence_data.write(str("mu:                 ") + str(M.mu) + "\n")
 convergence_data.write(str("lambda:             ") + str(M.lmbda) + "\n" + "\n" + "\n" + "\n")
