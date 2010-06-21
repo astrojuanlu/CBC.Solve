@@ -72,10 +72,21 @@ class FluidProblem(NavierStokes):
         F_inv_T = F_inv.T
         I = variable(Identity(2))
        
+        print ""
+        print "FLUID, indices and dofs"
+        print "num vertices F", Omega_F.num_vertices()
+        print fluid_indices
+        print fdofs
+        print "" 
+        print "STRUCTURE, indices and dofs"
+        print "num vertices S", Omega_S.num_vertices()
+        print structure_indices
+        print sdofs
+        
         # Compute mapped stress (sigma_F \circ Phi) (here, grad "=" Grad)
         mu = self.viscosity()
-        sigma_F = mu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T) \
-                  - self.P_F*I
+        sigma_F = mu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T \
+                  - self.P_F*I)
 
         # Map to physical stress
         Sigma_F = PiolaTransform(sigma_F, U_M)
@@ -153,7 +164,7 @@ class StructureProblem(Hyperelasticity):
 
         # Assemble traction on fluid domain
         print "Assembling traction on fluid domain"
-        L_F = inner(self.v_F, dot(Sigma_F, self.N_F))*ds
+        L_F = dot(self.v_F, dot(Sigma_F, self.N_F))*ds
         B_F = assemble(L_F)
 
         # Transfer values to structure domain
@@ -165,8 +176,7 @@ class StructureProblem(Hyperelasticity):
 
         # In the structure solver the body force is defined on
         # the LHS...
-        ful_losning  = Omega_F.hmin()
-        self.fluid_load.vector()[:] = - B_S.array()*(1/ful_losning)
+        self.fluid_load.vector()[:] = - B_S.array()
 
     def neumann_conditions(self):
         self.fluid_load = Function(self.V_S)
