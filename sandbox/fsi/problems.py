@@ -165,7 +165,8 @@ class StructureProblem(Hyperelasticity):
 
         # In the structure solver the body force is defined on
         # the LHS...
-        self.fluid_load.vector()[:] = - B_S.array()
+        ful_losning  = Omega_F.hmin()
+        self.fluid_load.vector()[:] = - B_S.array()*(1/ful_losning)
 
     def neumann_conditions(self):
         self.fluid_load = Function(self.V_S)
