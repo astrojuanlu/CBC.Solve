@@ -2,7 +2,7 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-04-28
+# Last changed: 2010-06-22
 
 __all__ = ["NavierStokesSolver", "NavierStokesDualSolver"]
 
@@ -26,7 +26,7 @@ class NavierStokesSolver(CBCSolver):
         mesh = problem.mesh()
         dt, t_range = timestep_range_cfl(problem, mesh)
         info("Using time step dt = %g" % dt)
-        
+
         # Function spaces
         V1 = VectorFunctionSpace(mesh, "CG", 1)
         V = VectorFunctionSpace(mesh, "CG", 2)
@@ -171,7 +171,7 @@ class NavierStokesSolver(CBCSolver):
 
     def reassemble(self):
         "Reassemble matrices, needed when mesh or time step has changed"
-        print "(Re)assembling matrices"
+        info("(Re)assembling matrices")
         self.A1 = assemble(self.a1)
         self.A2 = assemble(self.a2)
         self.A3 = assemble(self.a3)

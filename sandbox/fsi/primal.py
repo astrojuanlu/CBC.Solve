@@ -49,45 +49,52 @@ times = []
 timesteps = []
 
 # Time-stepping
-p = Progress("Time-stepping")
 t = dt
 at_end = False
 for t in t_range:
 #while True:
 
+    info("")
+    begin("* Starting new time step")
+    info_blue("  * t = %g (T = %g, dt = %g)" % (t, T, dt))
+
     # Fixed point iteration on FSI problem
-    r = 2*tol
-    while r > tol:
+    for iter in range(maxiter):
+
+        info("")
+        begin("* Starting nonlinear iteration")
 
         # Solve fluid equation
-        begin("1. Solving fluid sub problem (F)")
+        begin("* Solving fluid sub problem (F)")
         u_F, p_F = F.step(dt)
         end()
 
         # Update fluid stress for structure problem
-        begin("2. Transferring fluid stresses to structure (F --> S)")
+        begin("* Transferring fluid stresses to structure (F --> S)")
         Sigma_F = F.compute_fluid_stress(u_F, p_F, U_M)
         S.update_fluid_stress(Sigma_F)
         end()
 
         # Solve structure equation
-        begin("3. Solving structure sub problem (S)")
+        begin("* Solving structure sub problem (S)")
         structure_sol = S.step(dt)
         U_S, P_S = structure_sol.split(True)
         end()
 
         # Update structure displacement for mesh problem
-        begin("4. Transferring structure displacement to mesh (S --> M)")
+        begin("* Transferring structure displacement to mesh (S --> M)")
         M.update_structure_displacement(U_S)
         end()
 
         # Solve mesh equation
-        begin("5. Solving mesh sub problem (M)")
+        begin("* Solving mesh sub problem (M)")
         U_M = M.step(dt)
         end()
 
         # Update mesh displacement and mesh velocity
+        begin("* Transferring mesh displacement to fluid (M --> S)")
         F.update_mesh_displacement(U_M)
+        end()
 
         # Plot solutions
         if plot_solution:
@@ -100,21 +107,18 @@ for t in t_range:
         U_S_vector_old.axpy(-1, U_S.vector())
         r = norm(U_S_vector_old)
         U_S_vector_old[:] = U_S.vector()[:]
-
-        print "*******************************************"
-        print "Solving the problem at t = ", str(t)
-        print "dt = ", str(dt)
-        print "T  = ", str(T)
-        print "nx = ", str(nx)
-        print "mesh smooth = ", str(mesh_smooth)
-        print ""
-        print "norm(r)", str(r)
-        print " "
-        print "*******************************************"
+        info("")
 
         # Check convergence
         if r < tol:
+            info_green("    Residual = %g (tolerance = %g), converged after %d iterations" % (r, tol, iter + 1))
+            end()
             break
+        elif iter == maxiter - 1:
+            raise RuntimeError, "FSI iteration failed to converge after %d iterations." % maxiter
+        else:
+            info_red("    Residual = %g (tolerance = %g), iteration %d" % (r, tol, iter + 1))
+            end()
 
     # Compute displacement
     displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
@@ -150,11 +154,9 @@ for t in t_range:
     times.append(t)
     timesteps.append(dt)
 
-    # Update progress bar
-    p.update(t / T)
-
     # Check if we have reached the end time
     if at_end:
+        end()
         info("Finished time-stepping")
         break
 
@@ -165,6 +167,8 @@ for t in t_range:
 
     # Compute new time step
     #(dt, at_end) = compute_timestep(Rk, ST, TOL, dt, t, T)
+
+    end()
 
 # Close file
 disp_vs_t.close()

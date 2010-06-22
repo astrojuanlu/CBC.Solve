@@ -10,6 +10,7 @@ dt = 0.05
 T = 0.5
 mesh_smooth = 1
 tol = 1e-10
+maxiter = 100
 
 # Get command-line parameters
 for arg in sys.argv[1:]:
@@ -100,7 +101,7 @@ structure_indices = array([i for i in structure_to_fluid.iterkeys()])
 # Extract matching dofs for fluid and structure
 fdofs = append(fluid_indices, fluid_indices + Omega_F.num_vertices()) #This is not true for a P2 element!
 sdofs = append(structure_indices, structure_indices + Omega_S.num_vertices())
-  
+
 # Create facet marker for the entire mesh
 interior_facet_domains = MeshFunction("uint", Omega, D-1)
 interior_facet_domains.set_all(0)
