@@ -55,6 +55,7 @@ for t in t_range:
 #while True:
 
     info("")
+    info("-"*80)
     begin("* Starting new time step")
     info_blue("  * t = %g (T = %g, dt = %g)" % (t, T, dt))
 
