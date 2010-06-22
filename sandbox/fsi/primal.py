@@ -60,23 +60,33 @@ for t in t_range:
     while r > tol:
 
         # Solve fluid equation
+        begin("1. Solving fluid sub problem (F)")
         u_F, p_F = F.step(dt)
+        end()
 
         # Update fluid stress for structure problem
+        begin("2. Transferring fluid stresses to structure (F --> S)")
         Sigma_F = F.compute_fluid_stress(u_F, p_F, U_M)
         S.update_fluid_stress(Sigma_F)
+        end()
 
         # Solve structure equation
+        begin("3. Solving structure sub problem (S)")
         structure_sol = S.step(dt)
         U_S, P_S = structure_sol.split(True)
+        end()
 
         # Update structure displacement for mesh problem
+        begin("4. Transferring structure displacement to mesh (S --> M)")
         M.update_structure_displacement(U_S)
+        end()
 
         # Solve mesh equation
+        begin("5. Solving mesh sub problem (M)")
         U_M = M.step(dt)
+        end()
 
-        # Update mesh displcament and mesh velocity
+        # Update mesh displacement and mesh velocity
         F.update_mesh_displacement(U_M)
 
         # Plot solutions
@@ -145,7 +155,7 @@ for t in t_range:
 
     # Check if we have reached the end time
     if at_end:
-        print "Finished time-stepping\n"
+        info("Finished time-stepping")
         break
 
     # FIXME: Compute these
@@ -158,7 +168,6 @@ for t in t_range:
 
 # Close file
 disp_vs_t.close()
-
 
 # Compute convergence indicators
 end_displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
@@ -175,7 +184,7 @@ convergence_data.write(str("density: ") + str(S.reference_density()) + "\n")
 convergence_data.write(str("mu:      ") + str(0.15) + "\n") ##
 convergence_data.write(str("lambda:  ") + str(0.25) + "\n" + "\n") ##
 convergence_data.write(str("==MESH PARAMETERS==")+ "\n")
-convergence_data.write(str("no. mesh smooth:    ") + str(mesh_smooth) + "\n") 
+convergence_data.write(str("no. mesh smooth:    ") + str(mesh_smooth) + "\n")
 convergence_data.write(str("alpha:              ") + str(M.alpha) + "\n")
 convergence_data.write(str("mu:                 ") + str(M.mu) + "\n")
 convergence_data.write(str("lambda:             ") + str(M.lmbda) + "\n" + "\n" + "\n" + "\n")

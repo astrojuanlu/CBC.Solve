@@ -61,9 +61,9 @@ class FluidProblem(NavierStokes):
         # Map u and p back to reference domain
         self.U_F_temp.vector()[:] = u_F.vector()[:]
         self.P_F.vector()[:] = p_F.vector()[:]
-        
-        print "Projecting fluid-stress to P1 elements"
+
         # Project U_F to a P1 element
+        info("Projecting fluid-stress to P1 elements")
         self.U_F = project(self.U_F_temp, self.VP1)
 
         # Compute mesh deformation gradient
@@ -71,7 +71,7 @@ class FluidProblem(NavierStokes):
         F_inv = inv(F)
         F_inv_T = F_inv.T
         I = variable(Identity(2))
-       
+
         # Compute mapped stress (sigma_F \circ Phi) (here, grad "=" Grad)
         mu = self.viscosity()
         sigma_F = mu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T) \
@@ -152,14 +152,12 @@ class StructureProblem(Hyperelasticity):
     def update_fluid_stress(self, Sigma_F):
 
         # Assemble traction on fluid domain
-        print "Assembling traction on fluid domain"
+        info("Assembling traction on fluid domain")
         L_F = dot(self.v_F, dot(Sigma_F, self.N_F))*ds
         B_F = assemble(L_F)
 
-        # Transfer values to structure domain
-        print "Transferring values to structure domain"
-
         # Add contribution from fluid vector to structure
+        info("Transferring values to structure domain")
         B_S = Vector(self.V_S.dim())
         fsi_add_f2s(B_S, B_F)
 
