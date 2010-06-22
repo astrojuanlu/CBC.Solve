@@ -72,21 +72,10 @@ class FluidProblem(NavierStokes):
         F_inv_T = F_inv.T
         I = variable(Identity(2))
        
-        print ""
-        print "FLUID, indices and dofs"
-        print "num vertices F", Omega_F.num_vertices()
-        print fluid_indices
-        print fdofs
-        print "" 
-        print "STRUCTURE, indices and dofs"
-        print "num vertices S", Omega_S.num_vertices()
-        print structure_indices
-        print sdofs
-        
         # Compute mapped stress (sigma_F \circ Phi) (here, grad "=" Grad)
         mu = self.viscosity()
-        sigma_F = mu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T \
-                  - self.P_F*I)
+        sigma_F = mu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T) \
+                  - self.P_F*I
 
         # Map to physical stress
         Sigma_F = PiolaTransform(sigma_F, U_M)
