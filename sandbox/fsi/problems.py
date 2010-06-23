@@ -128,11 +128,13 @@ class StructureProblem(Hyperelasticity):
     def __init__(self):
 
         # Define functions and function spaces for transfer the fluid stress
-        # FIXME: change name on function spaces
         self.V_F = VectorFunctionSpace(Omega_F, "CG", 1)
-        self.v_F = TestFunction(self.V_F)
-        self.N_F = FacetNormal(Omega_F)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
+        self.v_F = TestFunction(self.V_F)
+        self.u_F = TestFunction(self.V_F)
+        self.G_F = Function(self.V_F)
+        self.G_S = Function(self.V_S)
+        self.N_F = FacetNormal(Omega_F)
 
         Hyperelasticity.__init__(self)
 
@@ -151,23 +153,22 @@ class StructureProblem(Hyperelasticity):
 
     def update_fluid_stress(self, Sigma_F):
 
-        # Assemble traction on fluid domain
+        # Project traction to piecewise linears on boundary
         info("Assembling traction on fluid domain")
+        a_F = dot(self.v_F, self.u_F)*ds
         L_F = dot(self.v_F, dot(Sigma_F, self.N_F))*ds
+        A_F = assemble(a_F)
         B_F = assemble(L_F)
+        A_F.ident_zeros()
+        solve(A_F, self.G_F.vector(), B_F)
 
         # Add contribution from fluid vector to structure
         info("Transferring values to structure domain")
-        B_S = Vector(self.V_S.dim())
-        fsi_add_f2s(B_S, B_F)
-
-        # In the structure solver the body force is defined on
-        # the LHS...
-        self.fluid_load.vector()[:] = - B_S.array()
+        G_S.vector().zero()
+        fsi_add_f2s(G_S.vector(), G_F.vector())
 
     def neumann_conditions(self):
-        self.fluid_load = Function(self.V_S)
-        return [self.fluid_load]
+        return [self.G_S]
 
     def neumann_boundaries(self):
         # Return the entire structure boundary as the Neumann
