@@ -131,7 +131,7 @@ class StructureProblem(Hyperelasticity):
         self.V_F = VectorFunctionSpace(Omega_F, "CG", 1)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
         self.v_F = TestFunction(self.V_F)
-        self.u_F = TestFunction(self.V_F)
+        self.u_F = TrialFunction(self.V_F)
         self.G_F = Function(self.V_F)
         self.G_S = Function(self.V_S)
         self.N_F = FacetNormal(Omega_F)
@@ -164,8 +164,8 @@ class StructureProblem(Hyperelasticity):
 
         # Add contribution from fluid vector to structure
         info("Transferring values to structure domain")
-        G_S.vector().zero()
-        fsi_add_f2s(G_S.vector(), G_F.vector())
+        self.G_S.vector().zero()
+        fsi_add_f2s(self.G_S.vector(), self.G_F.vector())
 
     def neumann_conditions(self):
         return [self.G_S]
