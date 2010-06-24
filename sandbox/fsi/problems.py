@@ -18,10 +18,8 @@ class FluidProblem(NavierStokes):
     def __init__(self):
         NavierStokes.__init__(self)
         self.V = VectorFunctionSpace(Omega_F, "CG", 2)
-        self.VP1 = VectorFunctionSpace(Omega_F, "CG", 1)
         self.Q = FunctionSpace(Omega_F, "CG", 1)
-        self.U_F_temp = Function(self.V)
-        self.U_F = Function(self.VP1)
+        self.U_F = Function(self.V)
         self.P_F = Function(self.Q)
 
     def mesh(self):
@@ -59,12 +57,8 @@ class FluidProblem(NavierStokes):
     def compute_fluid_stress(self, u_F, p_F, U_M):
 
         # Map u and p back to reference domain
-        self.U_F_temp.vector()[:] = u_F.vector()[:]
+        self.U_F.vector()[:] = u_F.vector()[:]
         self.P_F.vector()[:] = p_F.vector()[:]
-
-        # Project U_F to a P1 element
-        info("Projecting fluid-stress to P1 elements")
-        self.U_F = project(self.U_F_temp, self.VP1)
 
         # Compute mesh deformation gradient
         F = DeformationGradient(U_M)
@@ -130,8 +124,8 @@ class StructureProblem(Hyperelasticity):
         # Define functions and function spaces for transfer the fluid stress
         self.V_F = VectorFunctionSpace(Omega_F, "CG", 1)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
-        self.v_F = TestFunction(self.V_F)
-        self.u_F = TrialFunction(self.V_F)
+        self.v1_F = TestFunction(self.V_F)
+        self.v2_F = TrialFunction(self.V_F)
         self.G_F = Function(self.V_F)
         self.G_S = Function(self.V_S)
         self.N_F = FacetNormal(Omega_F)
@@ -155,8 +149,8 @@ class StructureProblem(Hyperelasticity):
 
         # Project traction to piecewise linears on boundary
         info("Assembling traction on fluid domain")
-        a_F = dot(self.v_F, self.u_F)*ds
-        L_F = dot(self.v_F, dot(Sigma_F, self.N_F))*ds
+        a_F = dot(self.v1_F, self.v2_F)*ds
+        L_F = dot(self.v1_F, dot(Sigma_F, self.N_F))*ds
         A_F = assemble(a_F)
         B_F = assemble(L_F)
         A_F.ident_zeros()
