@@ -110,7 +110,7 @@ def get_primal_data(t):
     return U_F, P_F, U_S, P_S, U_M
 
 k = 1
-get_primal_data(0.3)
+get_primal_data(1.0)
 
 # Define forms for residuals R_h (see paper for notation)
 r_h_F_1 = (1/k)*inner(v, D_t(U_F, U_F0, U_M, rho_F))*dx \
@@ -119,7 +119,7 @@ r_h_F_2 = inner(q, div(J(U_M)*dot(F_inv(U_M), U_F)))*dx
 r_h_F_3 = inner(avg(v), 2*mu_F*jump(dot(sym_gradient(U_F), N)))*dS  
 r_h_S_1 = (1/k)*inner(v, rho_S*(P_S - P_S0))*dx  - inner(v, div(Sigma_S(U_S)))*dx
 r_h_S_2 = inner(avg(v), 2*mu_F*jump(dot(Sigma_S(U_S), N_S)))*dS    
-r_h_S_3 = inner(v('+'), dot((Sigma_S(U_S)('+') + (J(U_M)('+')*dot(Sigma_F(U_F,P_F,U_M)('+'), F_invT(U_M)('+')))), N_F('+')))*dS(1) # FIXME: Check if this is correct
+r_h_S_3 = inner(v('+'), dot((Sigma_S(U_S)('+') - (J(U_M)('+')*dot(Sigma_F(U_F,P_F,U_M)('+'), F_invT(U_M)('+')))), N_F('+')))*dS(1) # FIXME: Check if this is correct
 r_h_S_4 = inner(v, (U_S - U_S0) - P_S)*dx
 r_h_M_1 = inner(v, alpha*(U_M - U_M0))*dx - inner(v, div(Sigma_M(U_M)))*dx
 r_h_M_2 = inner(avg(v), jump(dot(Sigma_M(U_M), N_F)))*dS           
