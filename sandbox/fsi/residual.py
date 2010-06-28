@@ -48,7 +48,7 @@ R_k_s   = Function(Q)
 R_C     = Function(V)
 
 # Retrieve primal data
-def get_primal_data(t):
+def get_primal_data(t, dt):
 
    # Initialize edges on fluid sub mesh (needed for P2 elements)
     Omega_F.init(1)
@@ -59,18 +59,24 @@ def get_primal_data(t):
     Ne_F = Omega_F.num_edges()
 
     # Create vectors for primal dofs
-    u_F_subdofs = Vector()
-    p_F_subdofs = Vector()
-    U_S_subdofs = Vector()
-    P_S_subdofs = Vector()
-    U_M_subdofs = Vector()
-
+    u_F_subdofs  = Vector()
+    u_F0_subdofs = Vector()
+    p_F_subdofs  = Vector()
+    U_S_subdofs  = Vector()
+    U_S0_subdofs = Vector()
+    P_S_subdofs  = Vector()
+    U_M_subdofs  = Vector()
+    U_M0_subdofs = Vector()
+   
     # Get primal data
     primal_u_F.retrieve(u_F_subdofs, t)
+    primal_u_F.retrieve(u_F0_subdofs, t - dt)
     primal_p_F.retrieve(p_F_subdofs, t)
     primal_U_S.retrieve(U_S_subdofs, t)
+    primal_U_S.retrieve(U_S0_subdofs, t - dt)
     primal_P_S.retrieve(P_S_subdofs, t)
     primal_U_M.retrieve(U_M_subdofs, t)
+    primal_U_M.retrieve(U_M0_subdofs, t - dt)    
 
     # Create mapping from Omega_(F,S,M) to Omega (extend primal vectors with zeros)
     global_vertex_indices_F = Omega_F.data().mesh_function("global vertex indices")
@@ -92,6 +98,7 @@ def get_primal_data(t):
 
     # Get global dofs
     U_F_global_dofs = append(F_global_index, F_global_index + Nv)
+    U_F0_global_dofs = append(F_global_index, F_global_index + Nv)
     P_F_global_dofs = F_global_index
     U_S_global_dofs = append(S_global_index, S_global_index + Nv)
     P_S_global_dofs = append(S_global_index, S_global_index + Nv)
@@ -99,18 +106,23 @@ def get_primal_data(t):
 
     # Get rid of P2 dofs for u_F and create a P1 function
     u_F_subdofs = append(u_F_subdofs[:Nv_F], u_F_subdofs[Nv_F + Ne_F: 2*Nv_F + Ne_F])
+    u_F0_subdofs = append(u_F0_subdofs[:Nv_F], u_F0_subdofs[Nv_F + Ne_F: 2*Nv_F + Ne_F])
 
     # Transfer the stored primal solutions on the dual mesh Omega
     U_F.vector()[U_F_global_dofs] = u_F_subdofs
+    U_F0.vector()[U_F0_global_dofs] = u_F0_subdofs
     P_F.vector()[P_F_global_dofs] = p_F_subdofs
     U_S.vector()[U_S_global_dofs] = U_S_subdofs
+    U_S0.vector()[U_S_global_dofs] = U_S0_subdofs
     P_S.vector()[U_S_global_dofs] = P_S_subdofs
     U_M.vector()[U_M_global_dofs] = U_M_subdofs
+    U_M0.vector()[U_M_global_dofs] = U_M0_subdofs
 
-    return U_F, P_F, U_S, P_S, U_M
+    return U_F, U_F0, P_F, U_S, U_S0, P_S, U_M, U_M0
 
-k = 1
-get_primal_data(1.0)
+dt = 0.025
+k = Constant(dt)
+get_primal_data(0.5, dt)
 
 # Define forms for residuals R_h (see paper for notation)
 r_h_F_1 = (1/k)*inner(v, D_t(U_F, U_F0, U_M, rho_F))*dx \
