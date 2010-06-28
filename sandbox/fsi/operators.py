@@ -4,9 +4,9 @@ from dolfin import *
 # Define constants 
 rho_F = 1.0
 mu_F = 0.002
-rho_S = 1.0
-mu_S =  0.15
-lmbda_S =  0.25
+rho_S = 15.0
+mu_S =  75.0
+lmbda_S =  125.0
 mu_M =  3.8461
 lmbda_M =  5.76
 alpha = 1.0

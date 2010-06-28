@@ -6,9 +6,9 @@ from cbc.common.utils import *
 
 # Set default parameters
 nx = 80
-dt = 0.05
-T = 0.5
-mesh_smooth = 1
+dt = 0.025
+T = 1.0
+mesh_smooth = 50
 tol = 1e-10
 maxiter = 100
 

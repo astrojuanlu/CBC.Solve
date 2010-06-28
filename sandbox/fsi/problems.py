@@ -150,7 +150,7 @@ class StructureProblem(Hyperelasticity):
         # Project traction to piecewise linears on boundary
         info("Assembling traction on fluid domain")
         a_F = dot(self.v1_F, self.v2_F)*ds
-        L_F = dot(self.v1_F, dot(Sigma_F, self.N_F))*ds
+        L_F = -dot(self.v1_F, dot(Sigma_F, self.N_F))*ds
         A_F = assemble(a_F)
         B_F = assemble(L_F)
         A_F.ident_zeros()
@@ -171,11 +171,12 @@ class StructureProblem(Hyperelasticity):
         return["on_boundary"]
 
     def reference_density(self):
-        return 1.0
+        return 15.0
 
     def material_model(self):
-        mu    = 0.15
-        lmbda = 0.25
+        factor = 500
+        mu    = 0.15 * factor
+        lmbda = 0.25 * factor
         return StVenantKirchhoff([mu, lmbda])
 
     def time_stepping(self):
