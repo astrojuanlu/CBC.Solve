@@ -1,3 +1,4 @@
+
 __author__ = "Harish Narayanan"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
@@ -487,7 +488,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
         # The variational form corresponding to hyperelasticity
         L = rho0*inner(v - v0, xi)*dx + k*inner(P, grad(xi))*dx \
             - k*inner(B, xi)*dx + inner(u - u0, eta)*dx \
-            - k*inner(v_mid, eta)*dx 
+            - k*inner(v_mid, eta)*dx
 
         # Add contributions to the form from the Neumann boundary
         # conditions

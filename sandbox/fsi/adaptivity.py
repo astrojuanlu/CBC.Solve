@@ -25,3 +25,6 @@ def compute_timestep(R, S, TOL, dt, t, T):
     print "Changing time step: %g --> %g" % (dt, dt_new)
 
     return dt_new, at_end
+
+def refine_mesh(mesh, indicators):
+    return mesh

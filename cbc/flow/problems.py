@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-04-28
+# Last changed: 2010-06-29
 
 __all__ = ["NavierStokes", "NavierStokesDual"]
 
