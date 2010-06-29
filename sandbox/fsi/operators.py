@@ -68,6 +68,6 @@ def Sigma_M(u):
     return 2.0*mu_M*sym_gradient(u) + lmbda_M*tr(sym_gradient(u))*I
 
 # Define Quasi-Euler time derivative for the fluid
-def D_t(U_F, U_F0, U_M, rho_F):
-    return rho_F*J(U_M)*((U_F - U_F0) + dot(dot(grad(U_F), F_inv(U_M)), U_F))
+def D_t(U_F, U_F0, kn, U_M, rho_F):
+    return rho_F*J(U_M)*((1/kn)*(U_F - U_F0) + dot(dot(grad(U_F), F_inv(U_M)), U_F))
 
