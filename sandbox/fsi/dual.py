@@ -4,11 +4,11 @@ from cbc.common.utils import *
 from operators import *
 from numpy import array, append, zeros, linspace
 
-# Optimize form compiler
+# Parameters
 parameters["form_compiler"]["cpp_optimize"] = True
-
-# Plot solution during run-time 
 plot_solution = False
+store_bin_files = True
+store_vtu_files = True
 
 # Define function spaces defined on the whole domain
 V_F1 = VectorFunctionSpace(Omega, "CG", 1)
@@ -286,7 +286,6 @@ for t in t_range:
    solve(dual_matrix, Z.vector(), dual_vector)
 
    # Copy solution from previous interval
-
    # Dual varibles
    Z_UF0.assign(Z_UF)
    Z_PF0.assign(Z_PF)
@@ -296,24 +295,8 @@ for t in t_range:
    #Z_PM0.assign(Z_PM)
 
    # Primal varibles
-   U_M0.assign(U_M)  # FIXME: Should be done when we get the primal data
-   U_F0.assign(U_F)  # FIXME: Should be done when we get the primal data
-
-   # Save solutions
-   file_Z_UF << Z_UF
-   file_Z_PF << Z_PF
-   file_Z_US << Z_US
-   file_Z_PS << Z_PS
-   file_Z_UM << Z_UM
-   file_Z_PM << Z_PM
-
-#    # Store bin files 
-#    primal_u_F.store(u_F.vector(), t)
-#    primal_p_F.store(p_F.vector(), t)
-#    primal_U_S.store(U_S.vector(), t)
-#    primal_P_S.store(P_S.vector(), t)
-#    primal_U_M.store(U_M.vector(), t)
-
+   U_M0.assign(U_M)  
+   U_F0.assign(U_F)  
 
    # Plot solutions
    if plot_solution:
@@ -323,6 +306,19 @@ for t in t_range:
        plot(Z_PS, title="Dual structure velocity")
        plot(Z_UM, title="Dual mesh displacement")
        plot(Z_PM, title="Dual mesh Lagrange Multiplier")
+
+   # Store dual bin files. NOTE: we save dual solutions at t!
+   if store_bin_files:    
+       dual_Z.store(Z.vector(), t)
+
+   # Store vtu files
+   if store_vtu_files:
+       file_Z_UF << Z_UF
+       file_Z_PF << Z_PF
+       file_Z_US << Z_US
+       file_Z_PS << Z_PS
+       file_Z_UM << Z_UM
+       file_Z_PM << Z_PM
 
    # Move to next time interval
    t += kn

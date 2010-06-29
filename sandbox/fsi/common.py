@@ -176,12 +176,8 @@ primal_P_S = TimeSeries("primal_P_S")
 primal_U_M = TimeSeries("primal_U_M")
 
 # Create time series for storing dual data
-dual_Z_UF = TimeSeries("dual_Z_UF")
-dual_Z_PF = TimeSeries("dual_Z_PF")
-dual_Z_US = TimeSeries("dual_Z_US")
-dual_Z_PS = TimeSeries("dual_Z_PS")
-dual_Z_UM = TimeSeries("dual_Z_UM")
-dual_Z_PM = TimeSeries("dual_Z_PM")
+# Note only one vector
+dual_Z = TimeSeries("dual_Z")
 
 # Fix time step if needed. Note that this has to be done
 # in oder to save the primal data at the correct time
