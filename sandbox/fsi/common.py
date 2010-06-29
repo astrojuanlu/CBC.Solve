@@ -120,7 +120,7 @@ right.mark(exterior_boundary, 3)
 facet_orientation = mesh.data().create_mesh_function("facet orientation", D - 1)
 facet_orientation.set_all(0)
 
-# Functions for adding vectors between domains
+# Functions for adding vectors between domains        self.ts = 0 
 def fsi_add_f2s(xs, xf):
     "Compute xs += xf for corresponding indices"
     xs_array = xs.array()

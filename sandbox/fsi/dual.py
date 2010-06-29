@@ -307,6 +307,14 @@ for t in t_range:
    file_Z_UM << Z_UM
    file_Z_PM << Z_PM
 
+#    # Store bin files 
+#    primal_u_F.store(u_F.vector(), t)
+#    primal_p_F.store(p_F.vector(), t)
+#    primal_U_S.store(U_S.vector(), t)
+#    primal_P_S.store(P_S.vector(), t)
+#    primal_U_M.store(U_M.vector(), t)
+
+
    # Plot solutions
    if plot_solution:
        plot(Z_UF, title="Dual fluid velocity")
