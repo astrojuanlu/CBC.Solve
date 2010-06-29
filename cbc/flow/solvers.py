@@ -2,7 +2,7 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-06-22
+# Last changed: 2010-06-28
 
 __all__ = ["NavierStokesSolver", "NavierStokesDualSolver"]
 
@@ -21,10 +21,14 @@ class NavierStokesSolver(CBCSolver):
         self.parameters.add("plot_solution", True)        # Plot when running
         self.parameters.add("save_solution", True)        # Store solution for later plotting
         self.parameters.add("store_solution_data", False) # Store solution data in binary format
-
+        
+        # added by Aron June 28
+        self.parameters.add("stabilization", True)        # Add streamline-diffusion stabilization
+        #
+        
         # Get mesh and time step range
         mesh = problem.mesh()
-        dt, t_range = timestep_range_cfl(problem, mesh)
+        dt, t_range = timestep_range(problem, mesh)
         info("Using time step dt = %g" % dt)
 
         # Function spaces
@@ -55,18 +59,60 @@ class NavierStokesSolver(CBCSolver):
         k = Constant(dt)
         f = problem.body_force(V1)
         w = problem.mesh_velocity(V1)
-
+        
+        # added by Aron June 28
+        h = CellSize(mesh)
+        #
+        
         # Tentative velocity step
         U = 0.5*(u0 + u)
-        F1 = rho*(1/k)*inner(v, u - u0)*dx + rho*inner(v, grad(u0)*(u0 - w))*dx \
+        # Aron changed u0 --> U in second term
+        F1 = rho*(1/k)*inner(v, u - u0)*dx + rho*inner(v, grad(U)*(u0 - w))*dx \
             + mu*inner(grad(v), grad(U))*dx + inner(v, grad(p0))*dx \
             - inner(v, f)*dx
+        
+        # added by Aron June 28
+        # Add streamline diffusion stabilization in velocity    
+        if self.parameters["stabilization"]:
+            d1 = h # (Hansbo ans Szepessy 1989)
+            vv = d1 * dot(grad(v), u0) # part of modification of test function
+            
+            # Residual part (U or u in diffusion term?)
+            res = rho/k*(u - u0)\
+                + rho*dot(grad(U), u0 - w)\
+                - mu*div(grad(U))\
+                + grad(p0)\
+                - f    
+            F1 += inner(vv, res) * dx
+                
+            # Extra stabilizing parameters (Hansbo and Szepessy 1989)    
+            F1 += self._d2(div(u0)) * inner(div(v), div(U))*dx
+            F1 += self._r(div(u0)) * inner(v, U)*dx
+        #
+        
         a1 = lhs(F1)
         L1 = rhs(F1)
 
         # Pressure correction
         a2 = inner(grad(q), k*grad(p))*dx
         L2 = inner(grad(q), k*grad(p0))*dx - q*div(u1)*dx
+        
+        # added by Aron June 28
+        F2 = a2 - L2
+        
+        # Add streamline diffusion stabilization in pressure    
+        if self.parameters["stabilization"]:
+            
+            qq =  k * d1 * grad(q) # part of modification of test function
+            
+            # Residual part (U or u in diffusion term?)
+            F2 += rho * inner(qq, dot(grad(u1), u0 - w))*dx\
+                - mu * inner(qq, div(grad(u1)))*dx\
+               - inner(qq, f)*dx
+
+        a2 = lhs(F2)
+        L2 = rhs(F2)
+        #
 
         # Velocity correction
         a3 = inner(v, u)*dx
@@ -75,6 +121,7 @@ class NavierStokesSolver(CBCSolver):
         # Store variables needed for time-stepping
         self.dt = dt
         self.t_range = t_range
+        self.ts = 0                 # time step nbr
         self.bcu = bcu
         self.bcp = bcp
         self.u0 = u0
@@ -139,6 +186,11 @@ class NavierStokesSolver(CBCSolver):
         [bc.apply(self.A3, b) for bc in self.bcu]
         solve(self.A3, self.u1.vector(), b, "gmres", "ilu")
         end()
+        
+        ## added by Aron July 28
+        ## Is the divergence really zero as assumed?
+        #testquantity = assemble(self.dg * div(self.u1) * dx)
+        #print "\nThe divergence of u1 is ", sum(testquantity)
 
         return self.u1, self.p1
 
@@ -147,11 +199,14 @@ class NavierStokesSolver(CBCSolver):
         # Propagate values
         self.u0.assign(self.u1)
         self.p0.assign(self.p1)
+        
+        # Update time step nbr
+        self.ts += 1
 
         # Plot solution
         if self.parameters["plot_solution"]:
-            plot(self.p1, title="Pressure", rescale=True)
             plot(self.u1, title="Velocity", rescale=True)
+            plot(self.p1, title="Pressure", rescale=True)
 
         # Store solution (for plotting)
         if self.parameters["save_solution"]:
@@ -164,20 +219,41 @@ class NavierStokesSolver(CBCSolver):
         if self.parameters["store_solution_data"]:
             if self.velocity_series is None: self.velocity_series = TimeSeries("velocity")
             if self.pressure_series is None: self.pressure_series = TimeSeries("pressure")
-            self.velocity_series.store(self.u1.vector(), t)
-            self.pressure_series.store(self.p1.vector(), t)
+            self.velocity_series.store(self.u1, t)
+            self.pressure_series.store(self.p1, t)
 
         return self.u1, self.p1
 
     def reassemble(self):
         "Reassemble matrices, needed when mesh or time step has changed"
-        info("(Re)assembling matrices")
+        print "(Re)assembling matrices"
         self.A1 = assemble(self.a1)
         self.A2 = assemble(self.a2)
         self.A3 = assemble(self.a3)
         self.b1 = assemble(self.L1)
         self.b2 = assemble(self.L2)
         self.b3 = assemble(self.L3)
+    
+    def _d2(self, y):
+        "Stabilization parameter function"
+        K = 20
+        if y <= K/4:
+            return h
+        elif y >= K/2:
+            return 1
+        else:
+            return 1*(h + (1 - h)*(4*y/K - 1))
+        
+    def _r(self, y):
+        "stabilizationi parameter function"
+        K = 20
+        if y <= K/2:
+            return 0
+        elif y >= K:
+            return y/2
+        else:
+            return y - K/2
+        
 
 class NavierStokesDualSolver(CBCSolver):
     "Navier-Stokes dual solver"
@@ -207,13 +283,9 @@ class NavierStokesDualSolver(CBCSolver):
         Q = FunctionSpace(mesh, "CG", 1)
 
         # Test and trial functions
-        system = MixedFunctionSpace([V, Q])
+        system = V*Q
         (v, q) = TestFunctions(system)
         (w, r) = TrialFunctions(system)
-
-        # Functions for plotting without opening multiple windows
-        w_plot = Function(V)
-        r_plot = Function(Q)
 
         # Initial and boundary conditions (which are homogenised
         # versions of the primal conditions)
@@ -223,7 +295,7 @@ class NavierStokesDualSolver(CBCSolver):
         w1 = project(Constant((0.0, 0.0)), V)
         r1 = project(Constant(0.0), Q)
 
-        bcw, bcr = problem.boundary_conditions(V, Q)
+        bcw, bcr = homogenize(problem.boundary_conditions(V, Q))
 
         # Functions
         w0 = Function(V)
@@ -243,7 +315,6 @@ class NavierStokesDualSolver(CBCSolver):
             + div(v)*r*dx
 
         a = inner(v, w)*dx + dt*a_tilde
-
         goal = problem.functional(v, q, V, Q, n)
         L = inner(v, w1)*dx + dt*goal
 
@@ -260,15 +331,6 @@ class NavierStokesDualSolver(CBCSolver):
         self.a = a
         self.u_h = u_h
         self.p_h = p_h
-        self.w_plot = w_plot
-        self.r_plot = r_plot
-        self.exterior_facet_domains = problem.boundary_markers()
-
-        # Empty file handlers / time series
-        self.dual_velocity_file = None
-        self.dual_pressure_file = None
-        self.dual_velocity_series = None
-        self.dual_pressure_series = None
 
     def solve(self):
         "Solve problem and return computed solution (u, p)"
@@ -293,7 +355,8 @@ class NavierStokesDualSolver(CBCSolver):
 
         # Compute dual solution
         begin("Computing dual solution")
-        pde_dual = VariationalProblem(self.a, self.L, self.bcw + self.bcr, exterior_facet_domains = self.exterior_facet_domains)
+        bcs = self.bcw + self.bcr
+        pde_dual = VariationalProblem(self.a, self.L, bcs)
         (self.w0, self.r0) = pde_dual.solve().split(True)
         end()
 
@@ -307,25 +370,7 @@ class NavierStokesDualSolver(CBCSolver):
 
         # Plot solution
         if self.parameters["plot_solution"]:
-            # Copy to a fixed function to trick Viper into not opening
-            # up multiple windows
-            self.w_plot.assign(self.w0)
-            self.r_plot.assign(self.r0)
-            plot(self.r_plot, title="Pressure", rescale=True)
-            plot(self.w_plot, title="Velocity", rescale=True)
-
-        # Store solution (for plotting)
-        if self.parameters["save_solution"]:
-            if self.dual_velocity_file is None: self.dual_velocity_file = File("dual_velocity.pvd")
-            if self.dual_pressure_file is None: self.dual_pressure_file = File("dual_pressure.pvd")
-            self.dual_velocity_file << self.w0
-            self.dual_pressure_file << self.r0
-
-        # Store solution data
-        if self.parameters["store_solution_data"]:
-            if self.dual_velocity_series is None: self.velocity_series = TimeSeries("dual_velocity")
-            if self.dual_pressure_series is None: self.pressure_series = TimeSeries("dual_pressure")
-            self.dual_velocity_series.store(self.w0.vector(), t)
-            self.dual_pressure_series.store(self.r0.vector(), t)
+            plot(self.w0, title="Velocity", rescale=True)
+            plot(self.r0, title="Pressure", rescale=True)
 
         return self.w0, self.r0
