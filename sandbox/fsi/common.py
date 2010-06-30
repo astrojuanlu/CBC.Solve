@@ -28,47 +28,16 @@ for arg in sys.argv[1:]:
     elif key == "smooth":
         mesh_smooth = int(val)
 
-# Set resolution
-ny = nx/4
-
-# Constants related to the geometry of the channel and the obstruction
-channel_length  = 4.0
-channel_height  = 1.0
-structure_left  = 1.4
-structure_right = 1.6
-structure_top   = 0.5
-
 # Define area of the structure
 structure_area = (structure_right - structure_left)*structure_top
-
-# Create the complete mesh
-mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
-
-# Define dimension of mesh
-D = mesh.topology().dim()
 
 # Initialize mesh conectivity
 mesh.init(D-1, D)
 
-# Define inflow boundary
-def inflow(x):
-    return x[0] < DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
 
-# Define outflow boundary
-def outflow(x):
-    return x[0] > channel_length - DOLFIN_EPS and x[1] > DOLFIN_EPS and x[1] < channel_height - DOLFIN_EPS
+omega_F0 = Mesh(Omega_F)
+omega_F1 = Mesh(Omega_F)
 
-# Define noslip boundary
-def noslip(x, on_boundary):
-    return on_boundary and not inflow(x) and not outflow(x)
-
-# Define structure subdomain
-class Structure(SubDomain):
-    def inside(self, x, on_boundary):
-        return \
-            x[0] >= structure_left  - DOLFIN_EPS  and \
-            x[0] <= structure_right + DOLFIN_EPS  and \
-            x[1] <= structure_top   + DOLFIN_EPS
 
 # Structure dirichlet boundaries
 def dirichlet_boundaries(x):
@@ -78,20 +47,7 @@ def dirichlet_boundaries(x):
     #return [bottom]
     return x[1] < DOLFIN_EPS and x[0] >= structure_left and x[0] <= structure_right
 
-# Create structure subdomain
-structure = Structure()
 
-# Create cell_domain markers (0=fluid,  1=structure)
-cell_domains = MeshFunction("uint", mesh, D)
-cell_domains.set_all(0)
-structure.mark(cell_domains, 1)
-
-# Extract submeshes for fluid and structure
-Omega = mesh
-Omega_F = SubMesh(mesh, cell_domains, 0)
-Omega_S = SubMesh(mesh, cell_domains, 1)
-omega_F0 = Mesh(Omega_F)
-omega_F1 = Mesh(Omega_F)
 
 # Extract matching indices for fluid and structure
 structure_to_fluid = compute_vertex_map(Omega_S, Omega_F)
@@ -122,7 +78,7 @@ right.mark(exterior_boundary, 3)
 facet_orientation = mesh.data().create_mesh_function("facet orientation", D - 1)
 facet_orientation.set_all(0)
 
-# Functions for adding vectors between domains        self.ts = 0
+# Functions for adding vectors between domains
 def fsi_add_f2s(xs, xf):
     "Compute xs += xf for corresponding indices"
     xs_array = xs.array()
@@ -131,7 +87,7 @@ def fsi_add_f2s(xs, xf):
     xs[:] = xs_array
 
 def fsi_add_s2f(xf, xs):
-    "Compute xs += xf for corresponding indices"
+    "Compute xf += xs for corresponding indices"
     xf_array = xf.array()
     xs_array = xs.array()
     xf_array[fdofs] += xs_array[sdofs]

@@ -2,9 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-06-29
-
-__all__ = ["FSI"]
+# Last changed: 2010-06-30
 
 from dolfin import *
 from cbc.common import CBCProblem
@@ -16,6 +14,9 @@ class FSI(CBCProblem):
 
     def __init__(self, parameters=None):
         "Create FSI problem"
+
+        # Initialize base class
+        CBCProblem.__init__(self)
 
         # Create solver
         self.solver = FSISolver(self)
@@ -32,3 +33,7 @@ class FSI(CBCProblem):
 
         # Call solver
         return self.solver.solve(tolerance)
+
+    def time_step(self):
+        "Return default time step (will be changed by adaptive algorithm)"
+        return 1.0

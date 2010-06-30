@@ -10,16 +10,16 @@
 
 from subproblems import *
 
-def solve_primal():
+def solve_primal(problem):
     "Solve the primal FSI problem"
 
-    # FIXME: Should not be here
-    from common import *
+    # Get problem parameters
+    T = problem.end_time()
 
-    # Define the three problems
-    F = FluidProblem()
-    S = StructureProblem()
-    M = MeshProblem()
+    # Define the three subproblems
+    F = FluidProblem(problem)
+    S = StructureProblem(problem)
+    M = MeshProblem(problem)
 
     # Define problem parameters
     plot_solution = False

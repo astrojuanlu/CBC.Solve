@@ -1,4 +1,4 @@
-"""This module defines the three problems:
+"""This module defines the three subproblems:
 
   FluidProblem     - the fluid problem (F)
   StructureProblem - the structure problem (S)
@@ -9,58 +9,51 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-06-29
+# Last changed: 2010-06-30
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem"]
+
+from dolfin import *
 
 from cbc.flow import NavierStokes
 from cbc.twist import Hyperelasticity, StVenantKirchhoff
 from cbc.twist import DeformationGradient, PiolaTransform
 
-# FIXME: Clean this up
-from common import *
-
 # Define fluid problem
 class FluidProblem(NavierStokes):
 
-    def __init__(self):
+    def __init__(self, problem):
+
+        #self.U_F = Function(self.V)
+        #self.P_F = Function(self.Q)
+
+        # Store data
+        self.problem = problem
+
+        # Initialize base class
         NavierStokes.__init__(self)
-        self.V = VectorFunctionSpace(Omega_F, "CG", 2)
-        self.Q = FunctionSpace(Omega_F, "CG", 1)
-        self.U_F = Function(self.V)
-        self.P_F = Function(self.Q)
 
     def mesh(self):
-        return omega_F1
+        return self.problem.fluid_mesh()
 
     def viscosity(self):
-        return 0.002
+        return self.problem.fluid_viscosity()
 
     def density(self):
-        return 1.0
+        return self.problem.fluid_density()
 
     def mesh_velocity(self, V):
         self.w = Function(V)
         return self.w
 
     def boundary_conditions(self, V, Q):
-
-        # Create no-slip boundary condition for velocity
-        bcu = DirichletBC(V, Constant((0.0, 0.0)), noslip)
-
-        # FIXME: Anders fix DirichletBC to take int or float instead of Constant
-
-        # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(1.0), inflow)
-        bcp1 = DirichletBC(Q, Constant(0.0), outflow)
-
-        return [bcu], [bcp0, bcp1]
+        return self.problem.fluid_boundary_conditions(V, Q)
 
     def end_time(self):
-        return T
+        return self.problem.end_time()
 
     def time_step(self):
-        return dt
+        return self.problem.time_step()
 
     def compute_fluid_stress(self, u_F, p_F, U_M):
 
@@ -122,14 +115,16 @@ class FluidProblem(NavierStokes):
         omega_F0.coordinates()[:] = omega_F1.coordinates()[:]
 
     def __str__(self):
-        return "Pressure driven channel (2D) with an obstructure"
+        return "The fluid problem (F)"
 
-# Define struture problem
+# Define structure problem
 class StructureProblem(Hyperelasticity):
 
-    def __init__(self):
+    def __init__(self, problem):
 
-        # Define functions and function spaces for transfer the fluid stress
+        # Define function spaces and functions for transfer of fluid stress
+        Omega_F = problem.fluid_mesh()
+        Omega_S = problem.structure_mesh()
         self.V_F = VectorFunctionSpace(Omega_F, "CG", 1)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
         self.v1_F = TestFunction(self.V_F)
@@ -138,10 +133,14 @@ class StructureProblem(Hyperelasticity):
         self.G_S = Function(self.V_S)
         self.N_F = FacetNormal(Omega_F)
 
+        # Store data
+        self.problem = problem
+
+        # Initialize base class
         Hyperelasticity.__init__(self)
 
     def mesh(self):
-        return Omega_S
+        return self.problem.structure_mesh()
 
     def dirichlet_conditions(self):
         fix = Constant((0,0))
@@ -191,73 +190,76 @@ class StructureProblem(Hyperelasticity):
         return "CG1"
 
     def time_step(self):
-        return dt
+        return self.problem.time_step()
 
     def end_time(self):
-        return T
+        return self.problem.end_time()
 
     def __str__(self):
-        return "The structure problem"
+        return "The structure problem (S)"
 
 # Define mesh problem (time-dependent linear elasticity)
 class MeshProblem():
 
-    def __init__(self):
+    def __init__(self, problem):
 
-        # Define functions etc.
-        V_M = VectorFunctionSpace(Omega_F, "CG", 1)
-        v  = TestFunction(V_M)
-        u = TrialFunction(V_M)
-        u0 = Function(V_M)
-        u1 = Function(V_M)
-        displacement = Function(V_M)
-        bcs = DirichletBC(V_M, displacement, compile_subdomains("on_boundary"))
+        # Get problem parameters
+        mu, lmbda, alpha = problem.mesh_parameters()
+        Omega_F = problem.fluid_mesh()
+        dt = problem.time_step()
+
+        # Define function spaces and functions
+        V = VectorFunctionSpace(Omega_F, "CG", 1)
+        v = TestFunction(V)
+        u = TrialFunction(V)
+        u0 = Function(V)
+        u1 = Function(V)
+
+        # Define boundary condition
+        displacement = Function(V)
+        bc = DirichletBC(V, displacement, DomainBoundary())
 
         # Define the stress tensor
         def sigma(v):
             return 2.0*mu*sym(grad(v)) + lmbda*tr(grad(v))*Identity(v.cell().d)
 
-        # Define mesh parameters
-        mu = 3.8461
-        lmbda = 5.76
-        alpha = 1.0
-
-        # Define form (cG1 scheme) (lhs/rhs do not work with sym_grad...)
+        # Define cG(1) scheme for time-stepping
         k = Constant(dt)
         a = alpha*inner(v, u)*dx + 0.5*k*inner(sym(grad(v)), sigma(u))*dx
         L = alpha*inner(v, u0)*dx - 0.5*k*inner(sym(grad(v)), sigma(u0))*dx
-        A = assemble(a)
 
-        # Store variables for time stepping (and saving data)
-        self.u = u
+        # Store variables for time stepping
         self.u0 = u0
         self.u1 = u1
-        self.A = A
+        self.a = a
         self.L = L
-        self.dt = dt
+        self.k = k
         self.displacement = displacement
-        self.bcs = bcs
-        self.V_M = V_M
-        self.alpha = alpha
-        self.mu = mu
-        self.lmbda = lmbda
+        self.bc = bc
 
-    # Compute mesh equation
     def step(self, dt):
+        "Compute solution for new time step"
+
+        # Update time step
+        self.k.assign(dt)
+
+        # Assemble linear system and apply boundary conditions
+        A = assemble(self.a)
         b = assemble(self.L)
-        self.bcs.apply(self.A, b)
-        solve(self.A, self.u1.vector(), b)
+        self.bc.apply(A, b)
+
+        # Compute solution
+        solve(A, self.u1.vector(), b)
+
         return self.u1
 
-    # Update structure displacement
-    def update_structure_displacement(self, U_S):
-        self.displacement.vector().zero()
-        fsi_add_s2f(self.displacement.vector(), U_S.vector())
-
-    # Update mesh solution
     def update(self, t):
         self.u0.assign(self.u1)
         return self.u1
 
+    def update_structure_displacement(self, U_S):
+        self.displacement.vector().zero()
+        fsi_add_s2f(self.displacement.vector(), U_S.vector())
+
     def __str__(self):
-        return "The mesh problem"
+        return "The mesh problem (M)"

@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-06-29
+# Last changed: 2010-06-30
 
 __all__ = ["NavierStokes", "NavierStokesDual"]
 
@@ -61,7 +61,6 @@ class NavierStokes(CBCProblem):
     def pressure_stress(self, u, p):
         fluid_stress_p = - p*Identity(u.cell().d)
         return fluid_stress_p
-
 
     #--- Functions that must be overloaded by subclasses ---
 

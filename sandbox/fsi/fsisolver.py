@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-06-29
+# Last changed: 2010-06-30
 
 __all__ = ["FSISolver"]
 
@@ -27,6 +27,9 @@ class FSISolver(CBCSolver):
         self.parameters.add("save_solution", False)
         self.parameters.add("store_solution_data", False)
 
+        # Store problem
+        self.problem = problem
+
     def solve(self, tolerance):
         "Solve the FSI problem"
 
@@ -35,7 +38,7 @@ class FSISolver(CBCSolver):
 
             # Solve primal problem
             begin("Solving primal problem")
-            solve_primal()
+            solve_primal(self.problem)
             end()
 
             # Solve dual problem
