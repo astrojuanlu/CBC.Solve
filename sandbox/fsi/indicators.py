@@ -3,19 +3,18 @@
 
 from dolfin import *
 from operators import *
-from common import *
-from numpy import append        
-
+from common import * # only need the time primal/dual series and the mesh (Omega)
 
 # Define function spaces for primal/dual 
 V1 = VectorFunctionSpace(Omega, "CG", 1)
 V2 = VectorFunctionSpace(Omega, "CG", 2)
 V3 = VectorFunctionSpace(Omega, "CG", 3)
-Q  = FunctionSpace(Omega, "CG", 1)
+Q1 = FunctionSpace(Omega, "CG", 1)
+Q2 = FunctionSpace(Omega, "CG", 2)
 DG = FunctionSpace(Omega, "DG" , 0)
     
 # Define a the mixed finite element space for dual varibles 
-mixed_space = (V2, Q, V1, V1, V1, V1)
+mixed_space = (V2, Q1, V1, V1, V1, V1)
 W = MixedFunctionSpace(mixed_space)
 
 # Create dual mixed function
@@ -23,7 +22,7 @@ Z = Function(W)
 
 # Create primal functions on Omega
 U_F = Function(V1)
-P_F = Function(Q)
+P_F = Function(Q1)
 U_S = Function(V1)
 P_S = Function(V1)
 U_M = Function(V1)
@@ -36,7 +35,7 @@ U_M0 = Function(V1)
 
 # Create dual functions on Omega
 Z_UF = Function(V2) 
-Z_PF = Function(V1)
+Z_PF = Function(Q1)
 Z_US = Function(V1)
 Z_PS = Function(V1)
 Z_UM = Function(V1)
@@ -44,7 +43,7 @@ Z_PM = Function(V1)
 
 # Create extrapolated dual functions
 eZ_UF = Function(V3)
-eZ_PF = Function(V2)
+eZ_PF = Function(Q2)
 eZ_US = Function(V2)
 eZ_PS = Function(V2)
 eZ_UM = Function(V2)
@@ -55,14 +54,18 @@ chi = Function(DG)
 
 # Create test functions for R_k
 v = TestFunction(V1)
-q = TestFunction(Q)
+q = TestFunction(Q1)
 
 # Create facet normals
 N   = FacetNormal(Omega)
 N_F = FacetNormal(Omega_F)
 N_S = FacetNormal(Omega_S)
 
-
+# Get time step
+T = 1.0
+dt = 0.025
+kn = Constant(dt)
+t=0.3
 
 # Retrieve dual data
 def get_dual_data(t):
@@ -161,11 +164,6 @@ def get_primal_data(t):
 
      return U_F, U_F0, P_F, U_S, U_S0, P_S, U_M, U_M0
 
-# Test
-T = 1.0
-dt = 0.025
-kn = Constant(dt)
-t=0.3
 get_dual_data(t)
 get_primal_data(t)
 
@@ -173,7 +171,7 @@ get_primal_data(t)
 # Define spatial error indicators \eta_K
 RW_h_F_1 = chi * inner(eZ_UF, D_t(U_F, U_F0, kn, U_M, rho_F))*dx \
          - chi * inner(eZ_UF, div(J(U_M)*dot(Sigma_F(U_F, P_F, U_M) ,F_invT(U_M))))*dx
-#RW_h_F_2 = chi * inner(eZ_PF, div(J(U_M)*dot(F_inv(U_M), U_F)))*dx
+RW_h_F_2 = chi * inner(eZ_PF, div(J(U_M)*dot(F_inv(U_M), U_F)))*dx
 RW_h_F_3 = chi * inner(avg(eZ_UF), 2*mu_F*jump(dot(sym_gradient(U_F), N)))*dS  
 RW_h_S_1 = chi * (1/kn)*inner(eZ_US, rho_S*(P_S - P_S0))*dx  - chi * inner(eZ_US, div(Sigma_S(U_S)))*dx
 RW_h_S_2 = chi * inner(avg(eZ_US), 2*mu_F*jump(dot(Sigma_S(U_S), N_S)))*dS    
@@ -205,7 +203,7 @@ r_k_scalar = r_k_F_con
 R_k_vector = assemble(r_k_vector)
 R_k_scalar = assemble(r_k_scalar)
 
-# Compute R_k
+# Compute time residual R_k
 R_k = norm(R_k_vector) + norm(R_k_scalar)
 
 print "RK  = ", R_k
