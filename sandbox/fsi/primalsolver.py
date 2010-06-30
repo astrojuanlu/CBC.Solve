@@ -1,15 +1,14 @@
-# FIXME: Need to cleanup
+"This module implements the primal FSI solver."
 
-#from pylab import *
-#from cbc.flow import *
-#from cbc.twist import *
-#from numpy import array, append
-#from problems import *
-#from common import *
-#from adaptivity import *
+__author__ = "Kristoffer Selim and Anders Logg"
+__copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
+__license__  = "GNU GPL Version 3 or any later version"
+
+# Last changed: 2010-06-30
 
 from dolfin import *
 from subproblems import *
+from adaptivity import *
 
 def solve_primal(problem):
     "Solve the primal FSI problem"
