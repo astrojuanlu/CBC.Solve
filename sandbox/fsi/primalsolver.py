@@ -48,9 +48,12 @@ def solve_primal(problem):
     S = StructureProblem(problem)
     M = MeshProblem(problem)
 
-    # Prepare some initial variables
+    # Get initial mesh displacement
     U_M = M.update(0)
-    U_S_old = Vector(2*problem.structure_mesh().num_vertices())
+
+    # Get initial structure displacement (used for plotting and checking convergence)
+    V_S = VectorFunctionSpace(problem.structure_mesh(), "CG", 1)
+    U_S0 = Function(V_S)
 
     # Storing of adaptive data
     times = []
@@ -103,17 +106,17 @@ def solve_primal(problem):
             F.update_mesh_displacement(U_M, dt)
             end()
 
+            # Compute increment of displacement vector
+            U_S0.vector().axpy(-1, U_S.vector())
+            increment = norm(U_S0.vector())
+            U_S0.vector()[:] = U_S.vector()[:]
+
             # Plot solutions
             if plot_solution:
-                plot(u_F, title="Fluid velocity")
-                plot(U_S, title="Structure displacement", mode="displacement")
-                plot(U_M, title="Mesh displacement", mode="displacement")
-                plot(F.w, title="Mesh velocity")
-
-            # Compute increment of displacement vector
-            U_S_old.axpy(-1, U_S.vector())
-            increment = norm(U_S_old)
-            U_S_old[:] = U_S.vector()[:]
+                plot(u_F,  title="Fluid velocity")
+                plot(U_S0, title="Structure displacement", mode="displacement")
+                plot(U_M,  title="Mesh displacement", mode="displacement")
+                plot(F.w,  title="Mesh velocity")
 
             # Check convergence
             if increment < itertol:
