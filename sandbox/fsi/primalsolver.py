@@ -116,7 +116,7 @@ def solve_primal(problem):
                 plot(u_F,  title="Fluid velocity")
                 plot(U_S0, title="Structure displacement", mode="displacement")
                 plot(U_M,  title="Mesh displacement", mode="displacement")
-                plot(F.w,  title="Mesh velocity")
+                #plot(F.w,  title="Mesh velocity")
 
             # Check convergence
             if increment < itertol:

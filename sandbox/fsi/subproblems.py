@@ -41,6 +41,10 @@ class FluidProblem(NavierStokes):
         # Initialize base class
         NavierStokes.__init__(self)
 
+        # Don't plot and save solution in subsolvers
+        self.parameters["solver_parameters"]["plot_solution"] = False
+        self.parameters["solver_parameters"]["save_solution"] = False
+
     def mesh(self):
         return self.omega_F1
 
@@ -147,6 +151,10 @@ class StructureProblem(Hyperelasticity):
 
         # Initialize base class
         Hyperelasticity.__init__(self)
+
+        # Don't plot and save solution in subsolvers
+        self.parameters["solver_parameters"]["plot_solution"] = False
+        self.parameters["solver_parameters"]["save_solution"] = False
 
     def mesh(self):
         return self.problem.structure_mesh()

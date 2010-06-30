@@ -1,10 +1,10 @@
-# FIXME: Need to cleanup
+"This module implements the primal FSI solver."
 
-#from common import *
-#from cbc.common import CBCSolver
-#from cbc.common.utils import *
-#from operators import *
-#from numpy import array, append, zeros, linspace
+__author__ = "Kristoffer Selim and Anders Logg"
+__copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
+__license__  = "GNU GPL Version 3 or any later version"
+
+# Last changed: 2010-06-30
 
 def solve_dual():
     "Solve the dual FSI problem"
