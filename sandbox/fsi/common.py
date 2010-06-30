@@ -6,9 +6,6 @@ from dolfin import *
 from numpy import array, append, zeros
 from cbc.common.utils import *
 
-# Set default parameters
-tol = 1e-10
-
 # Get command-line parameters
 for arg in sys.argv[1:]:
     if not "=" in arg: continue

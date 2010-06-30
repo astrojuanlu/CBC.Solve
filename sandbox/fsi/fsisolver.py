@@ -27,6 +27,7 @@ class FSISolver(CBCSolver):
         self.parameters.add("save_solution", False)
         self.parameters.add("store_solution_data", False)
         self.parameters.add("maxiter", 100)
+        self.parameters.add("itertol", 1e-10)
         self.parameters.add("num_smoothings", 50)
 
         # Define problem parameters

@@ -20,6 +20,7 @@ def solve_primal(problem):
 
     # Get solver parameters
     maxiter = problem.parameters["solver_parameters"]["maxiter"]
+    itertol = problem.parameters["solver_parameters"]["itertol"]
     plot_solution = problem.parameters["solver_parameters"]["plot_solution"]
 
     # Define the three subproblems
@@ -27,8 +28,9 @@ def solve_primal(problem):
     S = StructureProblem(problem)
     M = MeshProblem(problem)
 
-    # Get initial (zero) mesh displacement
+    # Prepare some initial variables
     U_M = M.update(0)
+    U_S_old = Vector(2*problem.structure_mesh().num_vertices())
 
     # Create inital displacement vector
     #V0 = VectorFunctionSpace(Omega_S, "CG", 1)
@@ -102,21 +104,23 @@ def solve_primal(problem):
                 plot(U_M, title="Mesh displacement", mode="displacement")
                 plot(F.w, title="Mesh velocity")
 
-            # Compute residual
-            U_S_vector_old.axpy(-1, U_S.vector())
-            r = norm(U_S_vector_old)
-            U_S_vector_old[:] = U_S.vector()[:]
-            info("")
+            # Compute increment of displacement vector
+            U_S_old.axpy(-1, U_S.vector())
+            increment = norm(U_S_old)
+            U_S_old[:] = U_S.vector()[:]
 
             # Check convergence
-            if r < tol:
-                info_green("    Residual = %g (tolerance = %g), converged after %d iterations" % (r, tol, iter + 1))
+            if increment < itertol:
+                info("")
+                info_green("    Increment = %g (tolerance = %g), converged after %d iterations" % \
+                               (increment, itertol, iter + 1))
                 end()
                 break
             elif iter == maxiter - 1:
                 raise RuntimeError, "FSI iteration failed to converge after %d iterations." % maxiter
             else:
-                info_red("    Residual = %g (tolerance = %g), iteration %d" % (r, tol, iter + 1))
+                info("")
+                info_red("    Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, iter + 1))
                 end()
 
         # Compute displacement
