@@ -119,11 +119,9 @@ class FluidProblem(NavierStokes):
         self.solver.reassemble()
 
     def update_extra(self):
-
         # FIXME: The solver should call this function automatically
-
         # Copy mesh coordinates
-        omega_F0.coordinates()[:] = omega_F1.coordinates()[:]
+        self.omega_F0.coordinates()[:] = self.omega_F1.coordinates()[:]
 
     def __str__(self):
         return "The fluid problem (F)"

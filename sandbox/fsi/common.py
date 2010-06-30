@@ -92,13 +92,6 @@ for facet in facets(mesh):
         # Just set c0, will not be used
         facet_orientation[facet.index()] = c0
 
-# Create time series for storing primal
-primal_u_F = TimeSeries("primal_u_F")
-primal_p_F = TimeSeries("primal_p_F")
-primal_U_S = TimeSeries("primal_U_S")
-primal_P_S = TimeSeries("primal_P_S")
-primal_U_M = TimeSeries("primal_U_M")
-
 # Create time series for storing dual data
 # Note only one vector
 dual_Z = TimeSeries("dual_Z")

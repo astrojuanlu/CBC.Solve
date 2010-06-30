@@ -22,6 +22,27 @@ def solve_primal(problem):
     maxiter = problem.parameters["solver_parameters"]["maxiter"]
     itertol = problem.parameters["solver_parameters"]["itertol"]
     plot_solution = problem.parameters["solver_parameters"]["plot_solution"]
+    save_solution = problem.parameters["solver_parameters"]["save_solution"]
+    store_solution_data = problem.parameters["solver_parameters"]["store_solution_data"]
+
+    # Create time series for storing solution
+    u_F_series = TimeSeries("u_F")
+    p_F_series = TimeSeries("p_F")
+    U_S_series = TimeSeries("U_S")
+    P_S_series = TimeSeries("P_S")
+    U_M_series = TimeSeries("U_M")
+
+    # Create files for saving to VTK
+    if save_solution:
+        file_u_F = File("u_F.pvd")
+        file_p_F = File("p_F.pvd")
+        file_U_S = File("U_S.pvd")
+        file_P_S = File("P_S.pvd")
+        file_U_M = File("U_M.pvd")
+
+    # FIXME: Problem-specific, should not be here
+    #disp_vs_t = open("displacement_nx_dt_T_smooth"+ "_" + str(nx) + "_"  +  str(dt) + "_" + str(T) + "_"+ str(mesh_smooth), "w")
+    #convergence_data = open("convergence_nx_dt_T_smooth" + "_" + str(nx)  +  "_"  +  str(dt) + "_" + str(T) +  "_" + str(mesh_smooth), "w")
 
     # Define the three subproblems
     F = FluidProblem(problem)
@@ -31,20 +52,6 @@ def solve_primal(problem):
     # Prepare some initial variables
     U_M = M.update(0)
     U_S_old = Vector(2*problem.structure_mesh().num_vertices())
-
-    # Create inital displacement vector
-    #V0 = VectorFunctionSpace(Omega_S, "CG", 1)
-    #v0 = Function(V0)
-    #U_S_vector_old  = v0.vector()
-
-    # Create files for storing solution
-    #file_u_F = File("u_F.pvd")
-    #file_p_F = File("p_F.pvd")
-    #file_U_S = File("U_S.pvd")
-    #file_P_S = File("P_S.pvd")
-    #file_U_M = File("U_M.pvd")
-    #disp_vs_t = open("displacement_nx_dt_T_smooth"+ "_" + str(nx) + "_"  +  str(dt) + "_" + str(T) + "_"+ str(mesh_smooth), "w")
-    #convergence_data = open("convergence_nx_dt_T_smooth" + "_" + str(nx)  +  "_"  +  str(dt) + "_" + str(T) +  "_" + str(mesh_smooth), "w")
 
     # Storing of adaptive data
     times = []
@@ -123,8 +130,30 @@ def solve_primal(problem):
                 info_red("    Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, iter + 1))
                 end()
 
+        # FIXME: Problem-specific, should not be here
+        # Store raw data for displacement
         # Compute displacement
-        displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
+        #displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
+        #disp_vs_t.write(str(displacement) + " ,  " + str(t) + "\n")
+
+        # Store solution in time series
+        u_F_series.store(u_F.vector(), t)
+        p_F_series.store(p_F.vector(), t)
+        U_S_series.store(U_S.vector(), t)
+        P_S_series.store(P_S.vector(), t)
+        U_M_series.store(U_M.vector(), t)
+
+        # Store time and time steps
+        times.append(t)
+        timesteps.append(dt)
+
+        # Save solution in VTK format
+        if save_solution:
+            file_u_F << u_F
+            file_p_F << p_F
+            file_U_S << U_S
+            file_P_S << P_S
+            file_U_M << U_M
 
         # Move to next time step
         F.update(t)
@@ -133,29 +162,6 @@ def solve_primal(problem):
 
         # FIXME: This should be done automatically by the solver
         F.update_extra()
-
-        # Store solutions in .vtu format
-        if store_vtu_files:
-            file_u_F << u_F
-            file_p_F << p_F
-            file_U_S << U_S
-            file_P_S << P_S
-            file_U_M << U_M
-
-        # Store raw data for displacement
-        disp_vs_t.write(str(displacement) + " ,  " + str(t) + "\n")
-
-        # Store primal vectors in .bin format
-        if store_bin_files:
-            primal_u_F.store(u_F.vector(), t)
-            primal_p_F.store(p_F.vector(), t)
-            primal_U_S.store(U_S.vector(), t)
-            primal_P_S.store(P_S.vector(), t)
-            primal_U_M.store(U_M.vector(), t)
-
-        # Store time and time steps
-        times.append(t)
-        timesteps.append(dt)
 
         # Check if we have reached the end time
         if at_end:
