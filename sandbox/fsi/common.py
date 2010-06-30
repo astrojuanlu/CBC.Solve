@@ -49,17 +49,6 @@ def dirichlet_boundaries(x):
 
 
 
-# Extract matching indices for fluid and structure
-structure_to_fluid = compute_vertex_map(Omega_S, Omega_F)
-
-# Extract matching indices for fluid and structure
-fluid_indices = array([i for i in structure_to_fluid.itervalues()])
-structure_indices = array([i for i in structure_to_fluid.iterkeys()])
-
-# Extract matching dofs for fluid and structure
-fdofs = append(fluid_indices, fluid_indices + Omega_F.num_vertices()) #This is not true for a P2 element!
-sdofs = append(structure_indices, structure_indices + Omega_S.num_vertices())
-
 # Create facet marker for the entire mesh
 interior_facet_domains = MeshFunction("uint", Omega, D-1)
 interior_facet_domains.set_all(0)
@@ -77,21 +66,6 @@ right.mark(exterior_boundary, 3)
 # Create facet orientation for the entire mesh
 facet_orientation = mesh.data().create_mesh_function("facet orientation", D - 1)
 facet_orientation.set_all(0)
-
-# Functions for adding vectors between domains
-def fsi_add_f2s(xs, xf):
-    "Compute xs += xf for corresponding indices"
-    xs_array = xs.array()
-    xf_array = xf.array()
-    xs_array[sdofs] += xf_array[fdofs]
-    xs[:] = xs_array
-
-def fsi_add_s2f(xf, xs):
-    "Compute xf += xs for corresponding indices"
-    xf_array = xf.array()
-    xs_array = xs.array()
-    xf_array[fdofs] += xs_array[sdofs]
-    xf[:] = xf_array
 
 # Mark facet orientation for the fsi boundary
 for facet in facets(mesh):

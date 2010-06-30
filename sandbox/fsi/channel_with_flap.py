@@ -50,17 +50,17 @@ class ChannelWithFlap(FSI):
 
     def __init__(self):
 
-        # Initialize base class
-        FSI.__init__(self)
-
         # Create the complete mesh
         ny = command_line_parameters["ny"]
         self.Omega = Rectangle(0.0, 0.0, channel_length, channel_height, 4*ny, ny)
 
         # Create submeshes for fluid and structure
-        self.update()
+        self.init_meshes()
 
-    def update(self):
+        # Initialize base class
+        FSI.__init__(self)
+
+    def init_meshes(self):
 
         # Create cell markers (0 = fluid, 1 = structure)
         D = self.Omega.topology().dim()
@@ -86,7 +86,7 @@ class ChannelWithFlap(FSI):
 
     #--- Parameters for fluid problem ---
 
-    def fluid_mesh(self):
+    def initial_fluid_mesh(self):
         return self.Omega_F
 
     def fluid_viscosity(self):

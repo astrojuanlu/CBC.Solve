@@ -20,11 +20,15 @@ def solve_primal(problem):
 
     # Get solver parameters
     maxiter = problem.parameters["solver_parameters"]["maxiter"]
+    plot_solution = problem.parameters["solver_parameters"]["plot_solution"]
 
     # Define the three subproblems
     F = FluidProblem(problem)
     S = StructureProblem(problem)
     M = MeshProblem(problem)
+
+    # Get initial (zero) mesh displacement
+    U_M = M.update(0)
 
     # Create inital displacement vector
     #V0 = VectorFunctionSpace(Omega_S, "CG", 1)
@@ -60,34 +64,33 @@ def solve_primal(problem):
             info("")
             begin("* Starting nonlinear iteration")
 
-            # Solve fluid equation
-            begin("* Solving fluid sub problem (F)")
+            # Solve fluid subproblem
+            begin("* Solving fluid subproblem (F)")
             u_F, p_F = F.step(dt)
             end()
 
-            # Update fluid stress for structure problem
+            # Transfer fluid stresses to structure
             begin("* Transferring fluid stresses to structure (F --> S)")
             Sigma_F = F.compute_fluid_stress(u_F, p_F, U_M)
             S.update_fluid_stress(Sigma_F)
             end()
 
-            # Solve structure equation
-            begin("* Solving structure sub problem (S)")
-            structure_sol = S.step(dt)
-            U_S, P_S = structure_sol.split(True)
+            # Solve structure subproblem
+            begin("* Solving structure subproblem (S)")
+            U_S, P_S = S.step(dt).split(True)
             end()
 
-            # Update structure displacement for mesh problem
-            begin("* Transferring structure displacement to mesh (S --> M)")
+            # Transfer structure displacement to fluid mesh
+            begin("* Transferring structure displacement to fluid mesh (S --> M)")
             M.update_structure_displacement(U_S)
             end()
 
             # Solve mesh equation
-            begin("* Solving mesh sub problem (M)")
+            begin("* Solving mesh subproblem (M)")
             U_M = M.step(dt)
             end()
 
-            # Update mesh displacement and mesh velocity
+            # Transfer mesh displacement to fluid
             begin("* Transferring mesh displacement to fluid (M --> S)")
             F.update_mesh_displacement(U_M)
             end()
@@ -162,7 +165,7 @@ def solve_primal(problem):
         ST = 1.0
 
         # Compute new time step
-        #(dt, at_end) = compute_timestep(Rk, ST, TOL, dt, t, T)
+        (dt, at_end) = compute_timestep(Rk, ST, TOL, dt, t, T)
 
         end()
 

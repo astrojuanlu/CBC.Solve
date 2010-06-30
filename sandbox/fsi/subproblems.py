@@ -24,17 +24,25 @@ class FluidProblem(NavierStokes):
 
     def __init__(self, problem):
 
-        #self.U_F = Function(self.V)
-        #self.P_F = Function(self.Q)
-
-        # Store data
+        # Store problem
         self.problem = problem
+
+        # Store initial and current mesh
+        self.Omega_F = problem.initial_fluid_mesh()
+        self.omega_F0 = Mesh(self.Omega_F)
+        self.omega_F1 = Mesh(self.Omega_F)
+
+        # Create functions for velocity and pressure on reference domain
+        self.V = VectorFunctionSpace(self.Omega_F, "CG", 2)
+        self.Q = FunctionSpace(self.Omega_F, "CG", 1)
+        self.U_F = Function(self.V)
+        self.P_F = Function(self.Q)
 
         # Initialize base class
         NavierStokes.__init__(self)
 
     def mesh(self):
-        return self.problem.fluid_mesh()
+        return self.omega_F1
 
     def viscosity(self):
         return self.problem.fluid_viscosity()
@@ -42,9 +50,9 @@ class FluidProblem(NavierStokes):
     def density(self):
         return self.problem.fluid_density()
 
-    def mesh_velocity(self, V):
-        self.w = Function(V)
-        return self.w
+#    def mesh_velocity(self, V):
+#        self.w = Function(V)
+#        return self.w
 
     def boundary_conditions(self, V, Q):
         return self.problem.fluid_boundary_conditions(V, Q)
@@ -65,12 +73,11 @@ class FluidProblem(NavierStokes):
         F = DeformationGradient(U_M)
         F_inv = inv(F)
         F_inv_T = F_inv.T
-        I = variable(Identity(2))
+        I = variable(Identity(U_M.cell().d))
 
-        # Compute mapped stress (sigma_F \circ Phi) (here, grad "=" Grad)
+        # Compute mapped stress sigma_F \circ Phi (here, grad "=" Grad)
         mu = self.viscosity()
-        sigma_F = mu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T) \
-                  - self.P_F*I
+        sigma_F = mu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T) - self.P_F*I
 
         # Map to physical stress
         Sigma_F = PiolaTransform(sigma_F, U_M)
@@ -79,18 +86,20 @@ class FluidProblem(NavierStokes):
 
     def update_mesh_displacement(self, U_M):
 
-        # Update the mesh
+        # Get mesh coordinate data
         X  = Omega_F.coordinates()
         x0 = omega_F0.coordinates()
         x1 = omega_F1.coordinates()
         dofs = U_M.vector().array()
         dim = omega_F1.geometry().dim()
         N = omega_F1.num_vertices()
+
+        # Update omega_F1
         for i in range(N):
             for j in range(dim):
                 x1[i][j] = X[i][j] + dofs[j*N + i]
 
-        # Update mesh
+        # FIXME: Is this necessary? Should be taken care of above
         omega_F1.coordinates()[:] = x1
 
         # Smooth the mesh
@@ -102,6 +111,7 @@ class FluidProblem(NavierStokes):
             for j in range(dim):
                 wx[j*N + i] = (x1[i][j] - x0[i][j]) / dt
 
+        # FIXME: Is this necessary? Should be taken care of above
         self.w.vector()[:] = wx
 
         # Reassemble matrices
@@ -122,8 +132,11 @@ class StructureProblem(Hyperelasticity):
 
     def __init__(self, problem):
 
+        # Store problem
+        self.problem = problem
+
         # Define function spaces and functions for transfer of fluid stress
-        Omega_F = problem.fluid_mesh()
+        Omega_F = problem.initial_fluid_mesh()
         Omega_S = problem.structure_mesh()
         self.V_F = VectorFunctionSpace(Omega_F, "CG", 1)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
@@ -132,9 +145,6 @@ class StructureProblem(Hyperelasticity):
         self.G_F = Function(self.V_F)
         self.G_S = Function(self.V_S)
         self.N_F = FacetNormal(Omega_F)
-
-        # Store data
-        self.problem = problem
 
         # Initialize base class
         Hyperelasticity.__init__(self)
@@ -166,7 +176,7 @@ class StructureProblem(Hyperelasticity):
         # Add contribution from fluid vector to structure
         info("Transferring values to structure domain")
         self.G_S.vector().zero()
-        fsi_add_f2s(self.G_S.vector(), self.G_F.vector())
+        self.problem.add_f2s(self.G_S.vector(), self.G_F.vector())
 
     def neumann_conditions(self):
         return [self.G_S]
@@ -203,9 +213,12 @@ class MeshProblem():
 
     def __init__(self, problem):
 
+        # Store problem
+        self.problem = problem
+
         # Get problem parameters
         mu, lmbda, alpha = problem.mesh_parameters()
-        Omega_F = problem.fluid_mesh()
+        Omega_F = problem.initial_fluid_mesh()
         dt = problem.initial_time_step()
 
         # Define function spaces and functions
@@ -259,7 +272,7 @@ class MeshProblem():
 
     def update_structure_displacement(self, U_S):
         self.displacement.vector().zero()
-        fsi_add_s2f(self.displacement.vector(), U_S.vector())
+        self.problem.add_s2f(self.displacement.vector(), U_S.vector())
 
     def __str__(self):
         return "The mesh problem (M)"
