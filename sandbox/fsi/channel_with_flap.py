@@ -10,6 +10,7 @@ from fsiproblem import *
 command_line_parameters = Parameters("command_line_parameters")
 command_line_parameters.parse()
 command_line_parameters.add("ny", 20)
+command_line_parameters.add("dt", 0.1)
 command_line_parameters.parse()
 
 # Constants related to the geometry of the channel and the obstruction
@@ -75,6 +76,14 @@ class ChannelWithFlap(FSI):
 #    def mesh(self):
 #        return self.Omega
 
+    #--- Common parameters ---
+
+    def end_time(self):
+        return 1.0
+
+    def initial_time_step(self):
+        return command_line_parameters["dt"]
+
     #--- Parameters for fluid problem ---
 
     def fluid_mesh(self):
@@ -84,9 +93,6 @@ class ChannelWithFlap(FSI):
         return 0.002
 
     def fluid_density(self):
-        return 1.0
-
-    def end_time(self):
         return 1.0
 
     def fluid_boundary_conditions(self, V, Q):

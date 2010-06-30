@@ -26,6 +26,21 @@ class FSISolver(CBCSolver):
         self.parameters.add("plot_solution", True)
         self.parameters.add("save_solution", False)
         self.parameters.add("store_solution_data", False)
+        self.parameters.add("maxiter", 100)
+
+        # Define problem parameters
+        #plot_solution = False
+        #store_vtu_files = True
+        #store_bin_files = True
+        #F.parameters["solver_parameters"]["plot_solution"] = False
+        #F.parameters["solver_parameters"]["save_solution"] = False
+        #F.parameters["solver_parameters"]["store_solution_data"] = False
+        #S.parameters["solver_parameters"]["plot_solution"] = False
+        #S.parameters["solver_parameters"]["save_solution"] = False
+        #S.parameters["solver_parameters"]["store_solution_data"] = False
+
+
+
 
         # Store problem
         self.problem = problem

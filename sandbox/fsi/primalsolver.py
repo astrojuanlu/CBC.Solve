@@ -8,6 +8,7 @@
 #from common import *
 #from adaptivity import *
 
+from dolfin import *
 from subproblems import *
 
 def solve_primal(problem):
@@ -15,40 +16,29 @@ def solve_primal(problem):
 
     # Get problem parameters
     T = problem.end_time()
+    dt = problem.initial_time_step()
+
+    # Get solver parameters
+    maxiter = problem.parameters["solver_parameters"]["maxiter"]
 
     # Define the three subproblems
     F = FluidProblem(problem)
     S = StructureProblem(problem)
     M = MeshProblem(problem)
 
-    # Define problem parameters
-    plot_solution = False
-    store_vtu_files = True
-    store_bin_files = True
-    F.parameters["solver_parameters"]["plot_solution"] = False
-    F.parameters["solver_parameters"]["save_solution"] = False
-    F.parameters["solver_parameters"]["store_solution_data"] = False
-    S.parameters["solver_parameters"]["plot_solution"] = False
-    S.parameters["solver_parameters"]["save_solution"] = False
-    S.parameters["solver_parameters"]["store_solution_data"] = False
-
-    # Solve mesh equation (will give zero vector first time which corresponds to
-    # identity map between the current domain and the reference domain)
-    U_M = M.step(0.0)
-
     # Create inital displacement vector
-    V0 = VectorFunctionSpace(Omega_S, "CG", 1)
-    v0 = Function(V0)
-    U_S_vector_old  = v0.vector()
+    #V0 = VectorFunctionSpace(Omega_S, "CG", 1)
+    #v0 = Function(V0)
+    #U_S_vector_old  = v0.vector()
 
     # Create files for storing solution
-    file_u_F = File("u_F.pvd")
-    file_p_F = File("p_F.pvd")
-    file_U_S = File("U_S.pvd")
-    file_P_S = File("P_S.pvd")
-    file_U_M = File("U_M.pvd")
-    disp_vs_t = open("displacement_nx_dt_T_smooth"+ "_" + str(nx) + "_"  +  str(dt) + "_" + str(T) + "_"+ str(mesh_smooth), "w")
-    convergence_data = open("convergence_nx_dt_T_smooth" + "_" + str(nx)  +  "_"  +  str(dt) + "_" + str(T) +  "_" + str(mesh_smooth), "w")
+    #file_u_F = File("u_F.pvd")
+    #file_p_F = File("p_F.pvd")
+    #file_U_S = File("U_S.pvd")
+    #file_P_S = File("P_S.pvd")
+    #file_U_M = File("U_M.pvd")
+    #disp_vs_t = open("displacement_nx_dt_T_smooth"+ "_" + str(nx) + "_"  +  str(dt) + "_" + str(T) + "_"+ str(mesh_smooth), "w")
+    #convergence_data = open("convergence_nx_dt_T_smooth" + "_" + str(nx)  +  "_"  +  str(dt) + "_" + str(T) +  "_" + str(mesh_smooth), "w")
 
     # Storing of adaptive data
     times = []
@@ -57,8 +47,7 @@ def solve_primal(problem):
     # Time-stepping
     t = dt
     at_end = False
-    for t in t_range:
-    #while True:
+    while True:
 
         info("")
         info("-"*80)

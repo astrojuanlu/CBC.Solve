@@ -53,7 +53,7 @@ class FluidProblem(NavierStokes):
         return self.problem.end_time()
 
     def time_step(self):
-        return self.problem.time_step()
+        return self.problem.initial_time_step()
 
     def compute_fluid_stress(self, u_F, p_F, U_M):
 
@@ -190,7 +190,7 @@ class StructureProblem(Hyperelasticity):
         return "CG1"
 
     def time_step(self):
-        return self.problem.time_step()
+        return self.problem.initial_time_step()
 
     def end_time(self):
         return self.problem.end_time()
@@ -206,7 +206,7 @@ class MeshProblem():
         # Get problem parameters
         mu, lmbda, alpha = problem.mesh_parameters()
         Omega_F = problem.fluid_mesh()
-        dt = problem.time_step()
+        dt = problem.initial_time_step()
 
         # Define function spaces and functions
         V = VectorFunctionSpace(Omega_F, "CG", 1)

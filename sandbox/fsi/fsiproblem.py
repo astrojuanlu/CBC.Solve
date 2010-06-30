@@ -33,7 +33,3 @@ class FSI(CBCProblem):
 
         # Call solver
         return self.solver.solve(tolerance)
-
-    def time_step(self):
-        "Return default time step (will be changed by adaptive algorithm)"
-        return 1.0
