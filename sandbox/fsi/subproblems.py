@@ -50,9 +50,9 @@ class FluidProblem(NavierStokes):
     def density(self):
         return self.problem.fluid_density()
 
-#    def mesh_velocity(self, V):
-#        self.w = Function(V)
-#        return self.w
+    def mesh_velocity(self, V):
+        self.w = Function(V)
+        return self.w
 
     def boundary_conditions(self, V, Q):
         return self.problem.fluid_boundary_conditions(V, Q)
@@ -84,15 +84,15 @@ class FluidProblem(NavierStokes):
 
         return Sigma_F
 
-    def update_mesh_displacement(self, U_M):
+    def update_mesh_displacement(self, U_M, dt):
 
         # Get mesh coordinate data
-        X  = Omega_F.coordinates()
-        x0 = omega_F0.coordinates()
-        x1 = omega_F1.coordinates()
+        X  = self.Omega_F.coordinates()
+        x0 = self.omega_F0.coordinates()
+        x1 = self.omega_F1.coordinates()
         dofs = U_M.vector().array()
-        dim = omega_F1.geometry().dim()
-        N = omega_F1.num_vertices()
+        dim = self.omega_F1.geometry().dim()
+        N = self.omega_F1.num_vertices()
 
         # Update omega_F1
         for i in range(N):
@@ -100,10 +100,11 @@ class FluidProblem(NavierStokes):
                 x1[i][j] = X[i][j] + dofs[j*N + i]
 
         # FIXME: Is this necessary? Should be taken care of above
-        omega_F1.coordinates()[:] = x1
+        self.omega_F1.coordinates()[:] = x1
 
         # Smooth the mesh
-        omega_F1.smooth(mesh_smooth)
+        num_smoothings = self.problem.parameters["solver_parameters"]["num_smoothings"]
+        self.omega_F1.smooth(num_smoothings)
 
         # Update mesh velocity
         wx = self.w.vector().array()

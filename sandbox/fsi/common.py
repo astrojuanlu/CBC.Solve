@@ -7,12 +7,7 @@ from numpy import array, append, zeros
 from cbc.common.utils import *
 
 # Set default parameters
-nx = 80
-dt = 0.025
-T = 1.0
-mesh_smooth = 50
 tol = 1e-10
-maxiter = 100
 
 # Get command-line parameters
 for arg in sys.argv[1:]:

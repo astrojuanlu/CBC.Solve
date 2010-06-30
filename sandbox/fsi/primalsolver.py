@@ -92,7 +92,7 @@ def solve_primal(problem):
 
             # Transfer mesh displacement to fluid
             begin("* Transferring mesh displacement to fluid (M --> S)")
-            F.update_mesh_displacement(U_M)
+            F.update_mesh_displacement(U_M, dt)
             end()
 
             # Plot solutions

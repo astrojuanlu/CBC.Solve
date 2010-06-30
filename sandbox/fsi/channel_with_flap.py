@@ -10,7 +10,7 @@ from fsiproblem import *
 command_line_parameters = Parameters("command_line_parameters")
 command_line_parameters.parse()
 command_line_parameters.add("ny", 20)
-command_line_parameters.add("dt", 0.1)
+command_line_parameters.add("dt", 0.025)
 command_line_parameters.parse()
 
 # Constants related to the geometry of the channel and the obstruction
