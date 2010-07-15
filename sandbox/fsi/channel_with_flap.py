@@ -10,7 +10,7 @@ from fsiproblem import *
 command_line_parameters = Parameters("command_line_parameters")
 command_line_parameters.parse()
 command_line_parameters.add("ny", 20)
-command_line_parameters.add("dt", 0.025)
+command_line_parameters.add("dt", 0.02)
 command_line_parameters.parse()
 
 # Constants related to the geometry of the channel and the obstruction
@@ -79,7 +79,7 @@ class ChannelWithFlap(FSI):
     #--- Common parameters ---
 
     def end_time(self):
-        return 1.0
+        return 0.04
 
     def initial_time_step(self):
         return command_line_parameters["dt"]
@@ -111,9 +111,31 @@ class ChannelWithFlap(FSI):
     def structure_mesh(self):
         return self.Omega_S
 
+    def structure_density(self):
+        return 15.0
+
+    def structure_mu(self):
+        return 75.0
+
+    def structure_lmbda(self):
+        return 125.0
+    
+    def structure_dirichlet_boundaries(self):
+        return "x[1] == 0.0"
+
+    def structure_dirichlet_conditions(self):
+        return Constant((0.0, 0.0)) 
+
+    def structure_neumann_boundaries(self):
+        return "on_boundary"
+
+    def structure_area(self):
+        return (structure_right - structure_left) * structure_top
+
     #--- Parameters for mesh problem ---
 
     def mesh_parameters(self):
+        "mu, lambda, alpha"
         return (3.8461, 5.76, 1.0)
 
     def __str__(self):
@@ -122,4 +144,4 @@ class ChannelWithFlap(FSI):
 # Solve problem
 problem = ChannelWithFlap()
 problem.parameters["solver_parameters"]["plot_solution"] = True
-u_F, p_F, U_S, P_S, U_M, P_M = problem.solve(1e-3)
+u_F, p_F, U_S, P_S, U_M, P_M = problem.solve(3)

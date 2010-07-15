@@ -159,15 +159,25 @@ class StructureProblem(Hyperelasticity):
     def mesh(self):
         return self.problem.structure_mesh()
 
-    def dirichlet_conditions(self):
-        fix = Constant((0,0))
-        return [fix]
+    def reference_density(self):
+        return self.problem.structure_density()
 
     def dirichlet_boundaries(self):
-        #FIXME: Figure out how to use the constants above in the
-        #following boundary definitions
-        bottom ="x[1] == 0.0"
-        return [bottom]
+        return [self.problem.structure_dirichlet_boundaries()]
+
+    def dirichlet_conditions(self):
+        return [self.problem.structure_dirichlet_conditions()]
+
+    def neumann_boundaries(self):
+        return [self.problem.structure_neumann_boundaries()]
+
+    def neumann_conditions(self):
+        return [self.G_S]
+
+    def material_model(self):
+        mu    = self.problem.structure_mu()
+        lmbda = self.problem.structure_lmbda() 
+        return StVenantKirchhoff([mu, lmbda])
 
     def update_fluid_stress(self, Sigma_F):
 
@@ -184,24 +194,6 @@ class StructureProblem(Hyperelasticity):
         info("Transferring values to structure domain")
         self.G_S.vector().zero()
         self.problem.add_f2s(self.G_S.vector(), self.G_F.vector())
-
-    def neumann_conditions(self):
-        return [self.G_S]
-
-    def neumann_boundaries(self):
-        # Return the entire structure boundary as the Neumann
-        # boundary, knowing that the Dirichlet boundary will overwrite
-        # it at the bottom
-        return["on_boundary"]
-
-    def reference_density(self):
-        return 15.0
-
-    def material_model(self):
-        factor = 500
-        mu    = 0.15 * factor
-        lmbda = 0.25 * factor
-        return StVenantKirchhoff([mu, lmbda])
 
     def time_stepping(self):
         return "CG1"

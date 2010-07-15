@@ -23,8 +23,8 @@ class FSISolver(CBCSolver):
 
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", True)
-        self.parameters.add("save_solution", False)
+        self.parameters.add("plot_solution", False)
+        self.parameters.add("save_solution", True)
         self.parameters.add("store_solution_data", False)
         self.parameters.add("maxiter", 100)
         self.parameters.add("itertol", 1e-10)
