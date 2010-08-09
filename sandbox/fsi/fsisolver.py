@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-07-15
+# Last changed: 2010-08-09
 
 __all__ = ["FSISolver"]
 
@@ -26,6 +26,7 @@ class FSISolver(CBCSolver):
         self.parameters.add("plot_solution", False)
         self.parameters.add("save_solution", True)
         self.parameters.add("store_solution_data", False)
+        self.parameters.add("tolerance", 0.1)
         self.parameters.add("maxiter", 100)
         self.parameters.add("itertol", 1e-10)
         self.parameters.add("num_smoothings", 50)
@@ -41,13 +42,10 @@ class FSISolver(CBCSolver):
         #S.parameters["solver_parameters"]["save_solution"] = False
         #S.parameters["solver_parameters"]["store_solution_data"] = False
 
-
-
-
         # Store problem
         self.problem = problem
 
-    def solve(self, tolerance):
+    def solve(self):
         "Solve the FSI problem"
 
         # Adaptive loop
@@ -70,7 +68,7 @@ class FSISolver(CBCSolver):
 
             # Check if error is small enough
             begin("Checking error estimate")
-            if error < tolerance:
+            if error < self.parameters["tolerance"]:
                 info_green("Adaptive solver converged: error = %g < tolerance = %g" % (error, tolerance))
                 break
             end()

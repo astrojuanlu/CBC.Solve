@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-06-30
+# Last changed: 2010-08-09
 
 from dolfin import *
 from numpy import array, append
@@ -29,14 +29,14 @@ class FSI(CBCProblem):
         # Create mappings between submeshes
         self.init_mappings()
 
-    def solve(self, tolerance):
+    def solve(self):
         "Solve and return computed solution (u_F, p_F, U_S, P_S, U_M, P_M)"
 
         # Update solver parameters
         self.solver.parameters.update(self.parameters["solver_parameters"])
 
         # Call solver
-        return self.solver.solve(tolerance)
+        return self.solver.solve()
 
     def init_mappings(self):
         "Create mappings between submeshes"

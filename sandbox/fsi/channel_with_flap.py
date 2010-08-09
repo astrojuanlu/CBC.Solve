@@ -2,13 +2,12 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-07-15
+# Last changed: 2010-08-09
 
 from fsiproblem import *
 
 # Command-line parameters
 command_line_parameters = Parameters("command_line_parameters")
-command_line_parameters.parse()
 command_line_parameters.add("ny", 20)
 command_line_parameters.add("dt", 0.02)
 command_line_parameters.parse()
@@ -42,9 +41,9 @@ def noslip(x, on_boundary):
 class Structure(SubDomain):
     def inside(self, x, on_boundary):
         return \
-            x[0] >= structure_left  - DOLFIN_EPS and \
-            x[0] <= structure_right + DOLFIN_EPS and \
-            x[1] <= structure_top   + DOLFIN_EPS
+            x[0] > structure_left  - DOLFIN_EPS and \
+            x[0] < structure_right + DOLFIN_EPS and \
+            x[1] < structure_top   + DOLFIN_EPS
 
 class ChannelWithFlap(FSI):
 
@@ -52,7 +51,8 @@ class ChannelWithFlap(FSI):
 
         # Create the complete mesh
         ny = command_line_parameters["ny"]
-        self.Omega = Rectangle(0.0, 0.0, channel_length, channel_height, 4*ny, ny)
+        nx = 4*ny
+        self.Omega = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 
         # Create submeshes for fluid and structure
         self.init_meshes()
@@ -84,16 +84,19 @@ class ChannelWithFlap(FSI):
     def initial_time_step(self):
         return command_line_parameters["dt"]
 
+    def __str__(self):
+        return "Channel with flap FSI problem"
+
     #--- Parameters for fluid problem ---
 
     def initial_fluid_mesh(self):
         return self.Omega_F
 
-    def fluid_viscosity(self):
-        return 0.002
-
     def fluid_density(self):
         return 1.0
+
+    def fluid_viscosity(self):
+        return 0.002
 
     def fluid_boundary_conditions(self, V, Q):
 
@@ -119,16 +122,17 @@ class ChannelWithFlap(FSI):
 
     def structure_lmbda(self):
         return 125.0
-    
+
     def structure_dirichlet_boundaries(self):
-        return "x[1] == 0.0"
+        return "x[1] < DOLFIN_EPS"
 
     def structure_dirichlet_conditions(self):
-        return Constant((0.0, 0.0)) 
+        return Constant((0, 0))
 
     def structure_neumann_boundaries(self):
         return "on_boundary"
 
+    # FIXME: Why is this needed?
     def structure_area(self):
         return (structure_right - structure_left) * structure_top
 
@@ -138,10 +142,8 @@ class ChannelWithFlap(FSI):
         "mu, lambda, alpha"
         return (3.8461, 5.76, 1.0)
 
-    def __str__(self):
-        return "Channel with flap FSI problem"
-
 # Solve problem
 problem = ChannelWithFlap()
 problem.parameters["solver_parameters"]["plot_solution"] = True
-u_F, p_F, U_S, P_S, U_M, P_M = problem.solve(3)
+problem.parameters["solver_parameters"]["tolerance"] = 1.0
+u_F, p_F, U_S, P_S, U_M, P_M = problem.solve()
