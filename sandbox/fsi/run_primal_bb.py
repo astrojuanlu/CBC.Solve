@@ -13,11 +13,11 @@ dt = [0.0141421356237,0.0094280904158,0.00707106781185,0.00565685424946,0.004714
 T  = [1.0]
 smooth = [50]
 
-# Loop jobs                                                                                                                                                                 
+# Loop jobs
 for i in range(len(nx)):
    # for j in range(len(dt)):
     for k in range(len(T)):
         for l in range(len(smooth)):
-            jobs =(("python sandbox/fsi/primal.py" + " " + "nx="+ str(nx[i]) + " " + "dt=" + str(dt[i]) + " " +  "T=" + str(T[k]) + " " + "smooth="+ str(smooth[l])))
+            jobs =(("python primal.py" + " " + "nx="+ str(nx[i]) + " " + "dt=" + str(dt[i]) + " " +  "T=" + str(T[k]) + " " + "smooth="+ str(smooth[l])))
             submit(jobs, nodes=1, ppn=8,  keep_environment=True, walltime=24*days, dryrun=False)
             sleep(10)
