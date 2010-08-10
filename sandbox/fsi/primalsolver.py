@@ -126,6 +126,9 @@ def solve_primal(problem, solver_parameters):
                 info_red("    Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, iter + 1))
                 end()
 
+        # Evaluate user functional
+        problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, at_end)
+
         # Save solution in VTK format
         if save_solution:
             file_u_F << u_F
@@ -168,9 +171,3 @@ def solve_primal(problem, solver_parameters):
         (dt, at_end) = compute_timestep(Rk, ST, TOL, dt, t, T)
 
         end()
-
-    # Compute convergence indicators
-    end_displacement = (1.0/problem.structure_area())*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
-    end_velocity = u_F((4.0, 0.5))[0]
-    print "Functional 1 (displacement):", end_displacement
-    print "Functional 2 (velocity):    ", end_velocity

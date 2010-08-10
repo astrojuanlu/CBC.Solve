@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-09
+# Last changed: 2010-08-10
 
 from fsiproblem import *
 
@@ -84,6 +84,24 @@ class ChannelWithFlap(FSI):
     def initial_time_step(self):
         return command_line_parameters["dt"]
 
+    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, at_end):
+
+        # Only evaluate functional at the end time
+        if not at_end: return
+
+        # Compute average displacement
+        structure_area = (structure_right - structure_left) * structure_top
+        displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh=U_S.function_space().mesh())
+
+        # Compute velocity at outflow
+        velocity = u_F((4.0, 0.5))[0]
+
+        # Print values of functionals
+        info("")
+        info_blue("Functional 1 (displacement): %g", displacement)
+        info_blue("Functional 2 (velocity):     %g", velocity)
+        info("")
+
     def __str__(self):
         return "Channel with flap FSI problem"
 
@@ -132,10 +150,6 @@ class ChannelWithFlap(FSI):
     def structure_neumann_boundaries(self):
         return "on_boundary"
 
-    # FIXME: Why is this needed?
-    def structure_area(self):
-        return (structure_right - structure_left) * structure_top
-
     #--- Parameters for mesh problem ---
 
     def mesh_parameters(self):
@@ -144,6 +158,6 @@ class ChannelWithFlap(FSI):
 
 # Solve problem
 problem = ChannelWithFlap()
-problem.parameters["solver_parameters"]["plot_solution"] = True
+problem.parameters["solver_parameters"]["plot_solution"] = False
 problem.parameters["solver_parameters"]["tolerance"] = 1.0
 u_F, p_F, U_S, P_S, U_M, P_M = problem.solve()
