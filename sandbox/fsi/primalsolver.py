@@ -18,18 +18,11 @@ def solve_primal(problem, solver_parameters):
     dt = problem.initial_time_step()
 
     # Get solver parameters
-    maxiter = solver_parameters["maxiter"]
-    itertol = solver_parameters["itertol"]
     plot_solution = solver_parameters["plot_solution"]
     save_solution = solver_parameters["save_solution"]
-    store_solution_data = solver_parameters["store_solution_data"]
-
-    # Create time series for storing solution
-    u_F_series = TimeSeries("u_F")
-    p_F_series = TimeSeries("p_F")
-    U_S_series = TimeSeries("U_S")
-    P_S_series = TimeSeries("P_S")
-    U_M_series = TimeSeries("U_M")
+    store_series = solver_parameters["store_series"]
+    maxiter = solver_parameters["maxiter"]
+    itertol = solver_parameters["itertol"]
 
     # Create files for saving to VTK
     if save_solution:
@@ -39,9 +32,13 @@ def solve_primal(problem, solver_parameters):
         file_P_S = File("P_S.pvd")
         file_U_M = File("U_M.pvd")
 
-    # FIXME: Problem-specific, should not be here
-    #disp_vs_t = open("displacement_nx_dt_T_smooth"+ "_" + str(nx) + "_"  +  str(dt) + "_" + str(T) + "_"+ str(mesh_smooth), "w")
-    #convergence_data = open("convergence_nx_dt_T_smooth" + "_" + str(nx)  +  "_"  +  str(dt) + "_" + str(T) +  "_" + str(mesh_smooth), "w")
+    # Create time series for storing solution
+    if store_series:
+        u_F_series = TimeSeries("u_F")
+        p_F_series = TimeSeries("p_F")
+        U_S_series = TimeSeries("U_S")
+        P_S_series = TimeSeries("P_S")
+        U_M_series = TimeSeries("U_M")
 
     # Define the three subproblems
     F = FluidProblem(problem)
@@ -55,13 +52,10 @@ def solve_primal(problem, solver_parameters):
     V_S = VectorFunctionSpace(problem.structure_mesh(), "CG", 1)
     U_S0 = Function(V_S)
 
-    # Storing of adaptive data
-    times = []
-    timesteps = []
-
     # Time-stepping
     t = dt
     at_end = False
+    time_data = []
     while True:
 
         info("")
@@ -132,23 +126,6 @@ def solve_primal(problem, solver_parameters):
                 info_red("    Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, iter + 1))
                 end()
 
-        # FIXME: Problem-specific, should not be here
-        # Store raw data for displacement
-        # Compute displacement
-        #displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
-        #disp_vs_t.write(str(displacement) + " ,  " + str(t) + "\n")
-
-        # Store solution in time series
-        u_F_series.store(u_F.vector(), t)
-        p_F_series.store(p_F.vector(), t)
-        U_S_series.store(U_S.vector(), t)
-        P_S_series.store(P_S.vector(), t)
-        U_M_series.store(U_M.vector(), t)
-
-        # Store time and time steps
-        times.append(t)
-        timesteps.append(dt)
-
         # Save solution in VTK format
         if save_solution:
             file_u_F << u_F
@@ -156,6 +133,17 @@ def solve_primal(problem, solver_parameters):
             file_U_S << U_S
             file_P_S << P_S
             file_U_M << U_M
+
+        # Store solution in time series
+        if store_series:
+            u_F_series.store(u_F.vector(), t)
+            p_F_series.store(p_F.vector(), t)
+            U_S_series.store(U_S.vector(), t)
+            P_S_series.store(P_S.vector(), t)
+            U_M_series.store(U_M.vector(), t)
+
+        # Store time and time steps
+        time_data.append((t, dt))
 
         # Move to next time step
         F.update(t)
@@ -181,35 +169,8 @@ def solve_primal(problem, solver_parameters):
 
         end()
 
-    # Close file
-#    disp_vs_t.close()
-
     # Compute convergence indicators
     end_displacement = (1.0/problem.structure_area())*assemble(U_S[0]*dx, mesh = U_S.function_space().mesh())
     end_velocity = u_F((4.0, 0.5))[0]
     print "Functional 1 (displacement):", end_displacement
     print "Functional 2 (velocity):    ", end_velocity
-
-#     # Store info (some needs to be stored by hand... marked with ##)
-#     convergence_data.write(str("==FLUID PARAMETERS==")+ "\n")
-#     convergence_data.write(str("viscosity:  ") + str(F.viscosity()) + "\n")
-#     convergence_data.write(str("density:    ") + str(F.density()) + "\n" + "\n")
-#     convergence_data.write(str("==STRUCTURE PARAMETERS==")+ "\n")
-#     convergence_data.write(str("density: ") + str(S.reference_density()) + "\n")
-#     convergence_data.write(str("mu:      ") + str(75) + "\n") ##
-#     convergence_data.write(str("lambda:  ") + str(125) + "\n" + "\n") ##
-#     convergence_data.write(str("==MESH PARAMETERS==")+ "\n")
-#     convergence_data.write(str("no. mesh smooth:    ") + str(mesh_smooth) + "\n")
-#     convergence_data.write(str("alpha:              ") + str(M.alpha) + "\n")
-#     convergence_data.write(str("mu:                 ") + str(M.mu) + "\n")
-#     convergence_data.write(str("lambda:             ") + str(M.lmbda) + "\n" + "\n" + "\n" + "\n")
-#     convergence_data.write(str("****MESH/TIME*****") +  "\n")
-#     convergence_data.write(str("Mesh size (nx*ny):     ") + str(mesh.num_cells()) + "\n")
-#     convergence_data.write(str("Min(hK):               ") + str(mesh.hmin()) + "\n")
-#     convergence_data.write(str("End time T:            ") + str(T) + "\n")
-#     convergence_data.write(str("Time step kn:          ") + str(dt) + "\n")
-#     convergence_data.write(str("Tolerance (FSI f.p.):  ") + str(tol) + "\n" + "\n")
-#     convergence_data.write(str("****INDICATORS****")+ "\n")
-#     convergence_data.write(str("Functional 1 (displacement): ") + str(end_displacement) + "\n")
-#     convergence_data.write(str("Functional 2 (velocity):     ") + str(end_velocity) + "\n")
-#     convergence_data.close()
