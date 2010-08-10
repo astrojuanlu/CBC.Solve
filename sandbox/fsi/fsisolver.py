@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-09
+# Last changed: 2010-08-10
 
 __all__ = ["FSISolver"]
 
@@ -11,7 +11,7 @@ from cbc.common import CBCSolver
 
 from primalsolver import solve_primal
 from dualsolver import solve_dual
-from adaptivity import refine_mesh
+from adaptivity import estimate_error, refine_mesh
 
 class FSISolver(CBCSolver):
 
@@ -31,22 +31,11 @@ class FSISolver(CBCSolver):
         self.parameters.add("itertol", 1e-10)
         self.parameters.add("num_smoothings", 50)
 
-        # Define problem parameters
-        #plot_solution = False
-        #store_vtu_files = True
-        #store_bin_files = True
-        #F.parameters["solver_parameters"]["plot_solution"] = False
-        #F.parameters["solver_parameters"]["save_solution"] = False
-        #F.parameters["solver_parameters"]["store_solution_data"] = False
-        #S.parameters["solver_parameters"]["plot_solution"] = False
-        #S.parameters["solver_parameters"]["save_solution"] = False
-        #S.parameters["solver_parameters"]["store_solution_data"] = False
-
         # Store problem
         self.problem = problem
 
     def solve(self):
-        "Solve the FSI problem"
+        "Solve the FSI problem (main adaptive loop)"
 
         # Adaptive loop
         while True:
@@ -63,7 +52,7 @@ class FSISolver(CBCSolver):
 
             # Estimate error and compute error indicators
             begin("Estimating error and computing error indicators")
-            error, indicators = self._estimate_error()
+            error, indicators = estimate_error()
             end()
 
             # Check if error is small enough
@@ -96,19 +85,3 @@ class FSISolver(CBCSolver):
         # Write solver here
 
         end()
-
-    def _estimate_error(self):
-        "Estimate error and compute error indicators"
-
-        # Compute error indicators
-        indicators = []
-
-        # Compute error estimate
-        error = 1.0
-
-        return error, indicators
-
-    def _refine_mesh(indicators):
-        "Refine mesh"
-
-        pass

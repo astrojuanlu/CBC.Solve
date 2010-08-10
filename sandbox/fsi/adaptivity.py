@@ -4,7 +4,18 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-06-30
+# Last changed: 2010-08-10
+
+def estimate_error(self):
+    "Estimate error and compute error indicators"
+
+    # Compute error indicators
+    indicators = []
+
+    # Compute error estimate
+    error = 1.0
+
+    return error, indicators
 
 def compute_timestep(R, S, TOL, dt, t, T):
     """Compute new time step based on residual R, stability factor S,
