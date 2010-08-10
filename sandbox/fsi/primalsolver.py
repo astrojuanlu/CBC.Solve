@@ -4,13 +4,13 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-07-15
+# Last changed: 2010-08-10
 
 from dolfin import *
 from subproblems import *
 from adaptivity import *
 
-def solve_primal(problem):
+def solve_primal(problem, solver_parameters):
     "Solve the primal FSI problem"
 
     # Get problem parameters
@@ -18,11 +18,11 @@ def solve_primal(problem):
     dt = problem.initial_time_step()
 
     # Get solver parameters
-    maxiter = problem.parameters["solver_parameters"]["maxiter"]
-    itertol = problem.parameters["solver_parameters"]["itertol"]
-    plot_solution = problem.parameters["solver_parameters"]["plot_solution"]
-    save_solution = problem.parameters["solver_parameters"]["save_solution"]
-    store_solution_data = problem.parameters["solver_parameters"]["store_solution_data"]
+    maxiter = solver_parameters["maxiter"]
+    itertol = solver_parameters["itertol"]
+    plot_solution = solver_parameters["plot_solution"]
+    save_solution = solver_parameters["save_solution"]
+    store_solution_data = solver_parameters["store_solution_data"]
 
     # Create time series for storing solution
     u_F_series = TimeSeries("u_F")
