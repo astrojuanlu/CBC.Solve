@@ -6,7 +6,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2010-08-10
 
-def estimate_error(self):
+def estimate_error():
     "Estimate error and compute error indicators"
 
     # Compute error indicators
