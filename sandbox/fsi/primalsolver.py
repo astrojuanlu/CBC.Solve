@@ -171,3 +171,6 @@ def solve_primal(problem, solver_parameters):
         (dt, at_end) = compute_timestep(Rk, ST, TOL, dt, t, T)
 
         end()
+
+    # Return solution
+    return u_F, p_F, U_S, P_S, U_M

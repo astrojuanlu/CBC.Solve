@@ -42,10 +42,10 @@ class FSISolver(CBCSolver):
 
             # Solve primal problem
             begin("Solving primal problem")
-            solve_primal(self.problem, self.parameters)
+            U = solve_primal(self.problem, self.parameters)
             end()
 
-            return
+            return U
 
             # Solve dual problem
             begin("Solving dual problem")
@@ -69,6 +69,9 @@ class FSISolver(CBCSolver):
             mesh = None
             mesh = refine_mesh(mesh, indicators)
             end()
+
+        # Return solution
+        return U
 
     def _solve_primal(self):
         "Solve primal problem"

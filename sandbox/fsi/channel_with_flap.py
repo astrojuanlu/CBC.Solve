@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-10
+# Last changed: 2010-08-11
 
 from fsiproblem import *
 
@@ -160,4 +160,4 @@ class ChannelWithFlap(FSI):
 problem = ChannelWithFlap()
 problem.parameters["solver_parameters"]["plot_solution"] = False
 problem.parameters["solver_parameters"]["tolerance"] = 1.0
-u_F, p_F, U_S, P_S, U_M, P_M = problem.solve()
+u_F, p_F, U_S, P_S, U_M = problem.solve()
