@@ -73,10 +73,10 @@ class ChannelWithFlap(FSI):
         self.Omega_F = SubMesh(self.Omega, cell_domains, 0)
         self.Omega_S = SubMesh(self.Omega, cell_domains, 1)
 
-#    def mesh(self):
-#        return self.Omega
-
     #--- Common parameters ---
+
+    def mesh(self):
+        return self.Omega
 
     def end_time(self):
         return 0.04
@@ -107,7 +107,7 @@ class ChannelWithFlap(FSI):
 
     #--- Parameters for fluid problem ---
 
-    def initial_fluid_mesh(self):
+    def fluid_mesh(self):
         return self.Omega_F
 
     def fluid_density(self):

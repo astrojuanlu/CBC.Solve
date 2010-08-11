@@ -45,13 +45,13 @@ class DualSolver:
         self.U_M_series = TimeSeries("bin/U_M")
 
         # Get nodal points for primal time series
-        times = self.u_F_series.vector_times()
+        t = self.u_F_series.vector_times()
         T = problem.end_time()
         # FIXME: Test disable due to bug in DOLFIN Array typemap
-        #if not (len(times) > 1 and times[0] == 0.0 and times[-1] == T):
+        #if not (len(t) > 1 and t[0] == 0.0 and t[-1] == T):
         #    print "Nodal points for primal time series:", times
         #    raise RuntimeError, "Missing primal data, unable to solve dual problem."
-        self.times = times
+        self.timestep_range = t
 
         # Store problem
         self.problem = problem
@@ -61,6 +61,9 @@ class DualSolver:
 
         # Get problem parameters
         T = self.problem.end_time()
+        Omega = self.problem.mesh()
+        Omega_F = self.problem.fluid_mesh()
+        Omega_S = self.problem.structure_mesh()
 
         # Define function spaces defined on the whole domain
         V_F1 = VectorFunctionSpace(Omega, "CG", 1)
@@ -72,14 +75,11 @@ class DualSolver:
         Q_M  = VectorFunctionSpace(Omega, "CG", 1)
 
         # Create mixed function space
-        mixed_space = (V_F2, Q_F, V_S, Q_S, V_M, Q_M)
-        W = MixedFunctionSpace(mixed_space)
+        W = MixedFunctionSpace([V_F2, Q_F, V_S, Q_S, V_M, Q_M])
 
-        # Create test functions
+        # Create test and trial functions
         (v_F, q_F, v_S, q_S, v_M, q_M) = TestFunctions(W)
-
-        # Define trial functions
-        (Z_UF, Z_PF, Z_US, Z_PS, Z_UM, Z_PM) = TrialFunctions(W)
+        (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = TrialFunctions(W)
 
         # Create primal functions on Omega
         U_F = Function(V_F1)
@@ -87,16 +87,15 @@ class DualSolver:
         U_S = Function(V_S)
         P_S = Function(Q_S)
         U_M = Function(V_M)
-        P_M = Function(Q_M) #FIXME: Check for sure that Im not needed in the primal!
 
         # Create functions for time-stepping/initial conditions
         # Dual varibles
-        Z_UF0 = Function(V_F2)
-        Z_PF0 = Function(Q_F)
-        Z_US0 = Function(V_S)
-        Z_PS0 = Function(Q_S)
-        Z_UM0 = Function(V_M)
-        Z_PM0 = Function(Q_M)
+        Z_F0 = Function(V_F2)
+        Y_F0 = Function(Q_F)
+        Z_S0 = Function(V_S)
+        Y_S0 = Function(Q_S)
+        Z_M0 = Function(V_M)
+        Y_M0 = Function(Q_M)
 
         # Primal variables
         U_M0  = Function(V_M)
@@ -115,20 +114,20 @@ class DualSolver:
         N_F = FacetNormal(Omega_F)
 
         # Fluid eq. linearized around fluid variables
-        A_FF01 = -(1/kn)*inner((Z_UF0 - Z_UF), rho_F*J(U_M)*v_F)*dx(0)
-        A_FF02 =  inner(Z_UF, rho_F*J(U_M)*dot(dot(grad(v_F),F_inv(U_M)), (U_F - (U_M0 - U_M)*(1/kn))))*dx(0)
-        A_FF03 =  inner(Z_UF, rho_F*J(U_M)*dot(grad(U_F) , dot(F_inv(U_M), v_F)))*dx(0)
-        A_FF04 =  inner(grad(Z_UF), J(U_M)*mu_F*dot(grad(v_F) , dot(F_inv(U_M), F_invT(U_M))))*dx(0)
-        A_FF05 =  inner(grad(Z_UF), J(U_M)*mu_F*dot(F_invT(U_M) , dot(grad(v_F).T, F_invT(U_M))))*dx(0)
-        A_FF06 = -inner(grad(Z_UF), J(U_M)*q_F*F_invT(U_M))*dx(0)
-        A_FF07 =  inner(Z_PF, div(J(U_M)*dot(F_inv(U_M),v_F)))*dx(0)
+        A_FF01 = -(1/kn)*inner((Z_F0 - Z_F), rho_F*J(U_M)*v_F)*dx(0)
+        A_FF02 =  inner(Z_F, rho_F*J(U_M)*dot(dot(grad(v_F),F_inv(U_M)), (U_F - (U_M0 - U_M)*(1/kn))))*dx(0)
+        A_FF03 =  inner(Z_F, rho_F*J(U_M)*dot(grad(U_F) , dot(F_inv(U_M), v_F)))*dx(0)
+        A_FF04 =  inner(grad(Z_F), J(U_M)*mu_F*dot(grad(v_F) , dot(F_inv(U_M), F_invT(U_M))))*dx(0)
+        A_FF05 =  inner(grad(Z_F), J(U_M)*mu_F*dot(F_invT(U_M) , dot(grad(v_F).T, F_invT(U_M))))*dx(0)
+        A_FF06 = -inner(grad(Z_F), J(U_M)*q_F*F_invT(U_M))*dx(0)
+        A_FF07 =  inner(Y_F, div(J(U_M)*dot(F_inv(U_M),v_F)))*dx(0)
 
         # Boundary terms (Neumann condition G_N_F, dS(2) = in, dS(3) = out)
         # Note that we assume an inifinte long channel -> grad(U_F) = 0
-        G_FF_in_1  = -inner(Z_US('+'), dot(J(U_M)('+')*mu_F*dot(F_invT(U_M)('+') , dot(grad(v_F('+')).T, F_invT(U_M)('+'))), N_F('+')))*dS(2)
-        G_FF_in_2  =  inner(Z_US('+'), dot(J(U_M)('+')*q_F('+')*F_invT(U_M)('+'), N_F('+')))*dS(2)
-        G_FF_out_1 = -inner(Z_US('+'), dot(J(U_M)('+')*mu_F*dot(F_invT(U_M)('+') , dot(grad(v_F('+')).T, F_invT(U_M)('+'))), N_F('+')))*dS(3)
-        G_FF_out_2 =  inner(Z_US('+'), dot(J(U_M)('+')*q_F('+')*F_invT(U_M)('+'), N_F('+')))*dS(3)
+        G_FF_in_1  = -inner(Z_S('+'), dot(J(U_M)('+')*mu_F*dot(F_invT(U_M)('+') , dot(grad(v_F('+')).T, F_invT(U_M)('+'))), N_F('+')))*dS(2)
+        G_FF_in_2  =  inner(Z_S('+'), dot(J(U_M)('+')*q_F('+')*F_invT(U_M)('+'), N_F('+')))*dS(2)
+        G_FF_out_1 = -inner(Z_S('+'), dot(J(U_M)('+')*mu_F*dot(F_invT(U_M)('+') , dot(grad(v_F('+')).T, F_invT(U_M)('+'))), N_F('+')))*dS(3)
+        G_FF_out_2 =  inner(Z_S('+'), dot(J(U_M)('+')*q_F('+')*F_invT(U_M)('+'), N_F('+')))*dS(3)
 
         # Collect boundary terms
         G_FF = G_FF_in_1 + G_FF_in_2 + G_FF_out_1 + G_FF_out_2
@@ -137,29 +136,29 @@ class DualSolver:
         A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + G_FF
 
         # Fluid eq. linearized around mesh variable
-        A_FM01 =  (1/kn)*inner(Z_UF, rho_F*DJ(U_M, v_M)*(U_F0 - U_F))*dx(0)
-        A_FM02 =  inner(Z_UF, rho_F*DJ(U_M, v_M)*dot(grad(U_F), dot(F_inv(U_M), (U_M - U_M0)*(1/kn))))*dx(0)
-        A_FM03 = -inner(Z_UF,  rho_F*J(U_M)*dot((dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M),F_inv(U_M))))),(U_F - (U_M0 - U_M)/kn)))*dx(0)
-        A_FM04 =  (1/kn)*inner((Z_UF0 - Z_UF), rho_F*J(U_M)*dot(grad(U_F), dot(F_inv(U_M) ,v_M )))*dx(0)
-        A_FM05 =  inner(grad(Z_UF), DJ(U_M, v_M)*dot(Sigma_F(U_F, P_F, U_M),F_invT(U_M)))*dx(0)
-        A_FM06 = -inner(grad(Z_UF), J(U_M)*dot(mu_F*(dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M), F_inv(U_M))))), F_invT(U_M)))*dx(0)
-        A_FM07 = -inner(grad(Z_UF), J(U_M)*dot(mu_F*(dot(F_invT(U_M), dot(grad(v_M).T, dot(F_invT(U_M), grad(U_F).T )))), F_invT(U_M)))*dx(0)
-        A_FM08 = -inner(grad(Z_UF), J(U_M)*dot(mu_F*(dot(grad(U_F), dot(F_inv(U_M), dot(F_invT(U_M), grad(v_M).T )))), F_invT(U_M)))*dx(0)
-        A_FM09 = -inner(grad(Z_UF), J(U_M)*dot(mu_F*(dot(F_invT(U_M), dot(grad(U_F).T, dot(F_invT(U_M), grad(v_M).T )))), F_invT(U_M)))*dx(0)
-        A_FM10 =  inner(grad(Z_UF), J(U_M)*dot(dot( P_F*I,F_invT(U_M)) ,  dot(grad(v_M).T ,F_invT(U_M) )))*dx(0)
-        A_FM11 =  inner(Z_PF, div(DJ(U_M,v_M)*dot(F_inv(U_M), U_F)))*dx(0)
-        A_FM12 = -inner(Z_PF, div(J(U_M)*dot(dot(F_inv(U_M),grad(v_M)), dot(F_inv(U_M) ,U_F))))*dx(0)
+        A_FM01 =  (1/kn)*inner(Z_F, rho_F*DJ(U_M, v_M)*(U_F0 - U_F))*dx(0)
+        A_FM02 =  inner(Z_F, rho_F*DJ(U_M, v_M)*dot(grad(U_F), dot(F_inv(U_M), (U_M - U_M0)*(1/kn))))*dx(0)
+        A_FM03 = -inner(Z_F,  rho_F*J(U_M)*dot((dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M),F_inv(U_M))))),(U_F - (U_M0 - U_M)/kn)))*dx(0)
+        A_FM04 =  (1/kn)*inner((Z_F0 - Z_F), rho_F*J(U_M)*dot(grad(U_F), dot(F_inv(U_M) ,v_M )))*dx(0)
+        A_FM05 =  inner(grad(Z_F), DJ(U_M, v_M)*dot(Sigma_F(U_F, P_F, U_M),F_invT(U_M)))*dx(0)
+        A_FM06 = -inner(grad(Z_F), J(U_M)*dot(mu_F*(dot(grad(U_F), dot(F_inv(U_M), dot(grad(v_M), F_inv(U_M))))), F_invT(U_M)))*dx(0)
+        A_FM07 = -inner(grad(Z_F), J(U_M)*dot(mu_F*(dot(F_invT(U_M), dot(grad(v_M).T, dot(F_invT(U_M), grad(U_F).T )))), F_invT(U_M)))*dx(0)
+        A_FM08 = -inner(grad(Z_F), J(U_M)*dot(mu_F*(dot(grad(U_F), dot(F_inv(U_M), dot(F_invT(U_M), grad(v_M).T )))), F_invT(U_M)))*dx(0)
+        A_FM09 = -inner(grad(Z_F), J(U_M)*dot(mu_F*(dot(F_invT(U_M), dot(grad(U_F).T, dot(F_invT(U_M), grad(v_M).T )))), F_invT(U_M)))*dx(0)
+        A_FM10 =  inner(grad(Z_F), J(U_M)*dot(dot( P_F*I,F_invT(U_M)) ,  dot(grad(v_M).T ,F_invT(U_M) )))*dx(0)
+        A_FM11 =  inner(Y_F, div(DJ(U_M,v_M)*dot(F_inv(U_M), U_F)))*dx(0)
+        A_FM12 = -inner(Y_F, div(J(U_M)*dot(dot(F_inv(U_M),grad(v_M)), dot(F_inv(U_M) ,U_F))))*dx(0)
 
         # Boundary terms (Neumann conditions G_N_F, dS(2) = in, dS(3) = out)
         # Note that we assume an inifinte long channel -> grad(U_F) = 0
-        G_FM_in_1 = -inner(Z_UF('+'), DJ(U_M, v_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'),grad(U_F('+')).T), dot(F_invT(U_M)('+'), N_F('+'))))*dS(2)
-        G_FM_in_2 =  inner(Z_UF('+'), DJ(U_M, v_M)('+')*dot(P_F('+')*I('+'), N_F('+')))*dS(2)
-        G_FM_in_3 =  inner(Z_UF('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, F_invT(U_M)('+'))), dot(grad(U_F('+')).T, dot(F_invT(U_M)('+'), N_F('+') ))))*dS(2)
-        G_FM_in_4 =  inner(Z_UF('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'), dot(grad(U_F('+')).T, F_invT(U_M)('+'))), dot(grad(v_M('+')).T , dot(F_invT(U_M)('+'),N_F('+')))))*dS(2)
-        G_FM_out_1 = -inner(Z_UF('+'), DJ(U_M, v_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'),grad(U_F('+')).T), dot(F_invT(U_M)('+'), N_F('+'))))*dS(3)
-        G_FM_out_2 =  inner(Z_UF('+'), DJ(U_M, v_M)('+')*dot(P_F('+')*I('+'), N_F('+')))*dS(3)
-        G_FM_out_3 =  inner(Z_UF('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, F_invT(U_M)('+'))), dot(grad(U_F('+')).T, dot(F_invT(U_M)('+'), N_F('+') ))))*dS(3)
-        G_FM_out_4 =  inner(Z_UF('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'), dot(grad(U_F('+')).T, F_invT(U_M)('+'))), dot(grad(v_M('+')).T , dot(F_invT(U_M)('+'),N_F('+')))))*dS(3)
+        G_FM_in_1 = -inner(Z_F('+'), DJ(U_M, v_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'),grad(U_F('+')).T), dot(F_invT(U_M)('+'), N_F('+'))))*dS(2)
+        G_FM_in_2 =  inner(Z_F('+'), DJ(U_M, v_M)('+')*dot(P_F('+')*I('+'), N_F('+')))*dS(2)
+        G_FM_in_3 =  inner(Z_F('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, F_invT(U_M)('+'))), dot(grad(U_F('+')).T, dot(F_invT(U_M)('+'), N_F('+') ))))*dS(2)
+        G_FM_in_4 =  inner(Z_F('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'), dot(grad(U_F('+')).T, F_invT(U_M)('+'))), dot(grad(v_M('+')).T , dot(F_invT(U_M)('+'),N_F('+')))))*dS(2)
+        G_FM_out_1 = -inner(Z_F('+'), DJ(U_M, v_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'),grad(U_F('+')).T), dot(F_invT(U_M)('+'), N_F('+'))))*dS(3)
+        G_FM_out_2 =  inner(Z_F('+'), DJ(U_M, v_M)('+')*dot(P_F('+')*I('+'), N_F('+')))*dS(3)
+        G_FM_out_3 =  inner(Z_F('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, F_invT(U_M)('+'))), dot(grad(U_F('+')).T, dot(F_invT(U_M)('+'), N_F('+') ))))*dS(3)
+        G_FM_out_4 =  inner(Z_F('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'), dot(grad(U_F('+')).T, F_invT(U_M)('+'))), dot(grad(v_M('+')).T , dot(F_invT(U_M)('+'),N_F('+')))))*dS(3)
 
         # Collect boundary terms
         G_FM = G_FM_in_1 + G_FM_in_2 + G_FM_in_3 + G_FM_in_4 + G_FM_out_1 + G_FM_out_2 + G_FM_out_3 + G_FM_out_4
@@ -168,9 +167,9 @@ class DualSolver:
         A_FM =  A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + A_FM11 + A_FM12 + G_FM
 
         # Structure eq. linearized around the fluid variables
-        A_SF01 = -inner(Z_US('+'), mu_F*J(U_M)('+')*dot(dot(grad(v_F('+')), F_inv(U_M)('+')), dot(F_invT(U_M)('+'), N)))*dS(1)
-        A_SF02 = -inner(Z_US('+'), mu_F*J(U_M)('+')*dot(dot(F_invT(U_M)('+'), grad(v_F('+')).T), dot(F_invT(U_M)('+'), N)))*dS(1)
-        A_SF03 =  inner(Z_US('+'), mu_F*J(U_M)('+')*q_F('+')*dot(I('+'), dot(F_invT(U_M)('+'), N)))*dS(1)
+        A_SF01 = -inner(Z_S('+'), mu_F*J(U_M)('+')*dot(dot(grad(v_F('+')), F_inv(U_M)('+')), dot(F_invT(U_M)('+'), N)))*dS(1)
+        A_SF02 = -inner(Z_S('+'), mu_F*J(U_M)('+')*dot(dot(F_invT(U_M)('+'), grad(v_F('+')).T), dot(F_invT(U_M)('+'), N)))*dS(1)
+        A_SF03 =  inner(Z_S('+'), mu_F*J(U_M)('+')*q_F('+')*dot(I('+'), dot(F_invT(U_M)('+'), N)))*dS(1)
 
         # Collect A_SF form
         A_SF = A_SF01 + A_SF02 + A_SF03
@@ -182,32 +181,32 @@ class DualSolver:
         Sv = grad(v_S)*(2*mu_S*Eu + lmbda_S*tr(Eu)*I) + Fu*(2*mu_S*Ev + lmbda_S*tr(Ev)*I)
 
         # Structure eq. linearized around structure variable
-        A_SS = - (1/kn)*inner(Z_US0 - Z_US, rho_S*q_S)*dx(1) + inner(grad(Z_US), Sv)*dx(1) \
-            - (1/kn)*inner(Z_PS0 - Z_PS, v_S)*dx(1) - inner(Z_PS, q_S)*dx(1)
+        A_SS = - (1/kn)*inner(Z_S0 - Z_S, rho_S*q_S)*dx(1) + inner(grad(Z_S), Sv)*dx(1) \
+            - (1/kn)*inner(Y_S0 - Y_S, v_S)*dx(1) - inner(Y_S, q_S)*dx(1)
 
         # Structure eq. linearized around mesh variable
-        A_SM01 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(grad(U_F('+')), F_inv(U_F)('+')), dot(F_invT(U_M)('+'), N)))*dS(1) # FIXME: Replace with Sigma_F
-        A_SM02 = -inner(Z_US('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(F_invT(U_F)('+'), grad(U_F('+')).T), dot(F_invT(U_M)('+'), N)))*dS(1)# FIXME: Replace with Sigma_F
-        A_SM03 =  inner(Z_US('+'), DJ(U_M,v_M)('+')*dot(P_F('+')*I('+'), dot(F_invT(U_M)('+'),N)))*dS(1)# FIXME: Replace with Sigma_F
-        A_SM04 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')), dot(F_inv(U_M)('+'),grad(v_M('+')))), dot(F_inv(U_M)('+'), dot(F_invT(U_M)('+'), N))))*dS(1)
-        A_SM05 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')).T, dot(F_invT(U_M)('+'), grad(v_M('+')).T)), dot(F_invT(U_M)('+'), dot(F_invT(U_M)('+'),N))))*dS(1)
-        A_SM06 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')),F_inv(U_M)('+')),dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'),N)))))*dS(1)
-        A_SM07 =  inner(Z_US('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'),grad(U_M('+')).T),dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'),N)))))*dS(1)
-        A_SM08 = -inner(Z_US('+'), J(U_M)('+')*dot(dot(P_F('+')*I('+'),F_invT(U_M)('+')), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'), N))))*dS(1)
+        A_SM01 = -inner(Z_S('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(grad(U_F('+')), F_inv(U_F)('+')), dot(F_invT(U_M)('+'), N)))*dS(1) # FIXME: Replace with Sigma_F
+        A_SM02 = -inner(Z_S('+'), DJ(U_M,v_M)('+')*mu_F*dot(dot(F_invT(U_F)('+'), grad(U_F('+')).T), dot(F_invT(U_M)('+'), N)))*dS(1)# FIXME: Replace with Sigma_F
+        A_SM03 =  inner(Z_S('+'), DJ(U_M,v_M)('+')*dot(P_F('+')*I('+'), dot(F_invT(U_M)('+'),N)))*dS(1)# FIXME: Replace with Sigma_F
+        A_SM04 =  inner(Z_S('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')), dot(F_inv(U_M)('+'),grad(v_M('+')))), dot(F_inv(U_M)('+'), dot(F_invT(U_M)('+'), N))))*dS(1)
+        A_SM05 =  inner(Z_S('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')).T, dot(F_invT(U_M)('+'), grad(v_M('+')).T)), dot(F_invT(U_M)('+'), dot(F_invT(U_M)('+'),N))))*dS(1)
+        A_SM06 =  inner(Z_S('+'), J(U_M)('+')*mu_F*dot(dot(grad(U_F('+')),F_inv(U_M)('+')),dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'),N)))))*dS(1)
+        A_SM07 =  inner(Z_S('+'), J(U_M)('+')*mu_F*dot(dot(F_invT(U_M)('+'),grad(U_M('+')).T),dot(F_invT(U_M)('+'), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'),N)))))*dS(1)
+        A_SM08 = -inner(Z_S('+'), J(U_M)('+')*dot(dot(P_F('+')*I('+'),F_invT(U_M)('+')), dot(grad(v_M('+')).T, dot(F_invT(U_M)('+'), N))))*dS(1)
 
         # Collect A_SM form
         A_SM = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06 + A_SM07 + A_SM08
 
         # Mesh eq. linearized around mesh variable
-        A_MM01 = -(1/kn)*inner(v_M, Z_UM0 - Z_UM)*dx(0) + inner(sym_gradient(Z_UM), Sigma_M(v_M))*dx(0)
-        A_MM02 = inner(Z_UM('+'),v_M('+'))*dS(1)
-        A_MM03 = inner(Z_PM('+'),q_M('+'))*dS(1)
+        A_MM01 = -(1/kn)*inner(v_M, Z_M0 - Z_M)*dx(0) + inner(sym_gradient(Z_M), Sigma_M(v_M))*dx(0)
+        A_MM02 = inner(Z_M('+'),v_M('+'))*dS(1)
+        A_MM03 = inner(Y_M('+'),q_M('+'))*dS(1)
 
         # Collect A_MM form
         A_MM = A_MM01 + A_MM02 + A_MM03
 
         # Mesh eq. linearized around structure variable
-        A_MS = - inner(Z_PM('+'), q_S('+'))*dS(1)
+        A_MS = - inner(Y_M('+'), q_S('+'))*dS(1)
 
         # Define goal funtionals
         n_F = FacetNormal(Omega_F)
@@ -238,7 +237,7 @@ class DualSolver:
 
         # Create solution functions
         Z = Function(W)
-        (Z_UF, Z_PF, Z_US, Z_PS, Z_UM, Z_PM) = Z.split()
+        (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = Z.split()
 
         # Time-stepping
         p = Progress("Time-stepping")
@@ -269,12 +268,12 @@ class DualSolver:
 
             # Copy solution from previous interval
             # Dual varibles
-            Z_UF0.assign(Z_UF)
-            Z_PF0.assign(Z_PF)
-            Z_US0.assign(Z_US)
-            Z_PS0.assign(Z_PS)
-            Z_UM0.assign(Z_UM)
-            #Z_PM0.assign(Z_PM)
+            Z_F0.assign(Z_F)
+            Y_F0.assign(Y_F)
+            Z_S0.assign(Z_S)
+            Y_S0.assign(Y_S)
+            Z_M0.assign(Z_M)
+            #Y_M0.assign(Y_M)
 
             # Primal varibles
             U_M0.assign(U_M)
@@ -282,12 +281,12 @@ class DualSolver:
 
             # Plot solutions
             if plot_solution:
-                plot(Z_UF, title="Dual fluid velocity")
-                plot(Z_PF, title="Dual fluid pressure")
-                plot(Z_US, title="Dual displacement")
-                plot(Z_PS, title="Dual structure velocity")
-                plot(Z_UM, title="Dual mesh displacement")
-                plot(Z_PM, title="Dual mesh Lagrange Multiplier")
+                plot(Z_F, title="Dual fluid velocity")
+                plot(Y_F, title="Dual fluid pressure")
+                plot(Z_S, title="Dual displacement")
+                plot(Y_S, title="Dual structure velocity")
+                plot(Z_M, title="Dual mesh displacement")
+                plot(Y_M, title="Dual mesh Lagrange Multiplier")
 
             # Store dual bin files. NOTE: we save dual solutions at t!
             if store_bin_files:
@@ -295,12 +294,12 @@ class DualSolver:
 
             # Store vtu files
             if store_vtu_files:
-                file_Z_UF << Z_UF
-                file_Z_PF << Z_PF
-                file_Z_US << Z_US
-                file_Z_PS << Z_PS
-                file_Z_UM << Z_UM
-                file_Z_PM << Z_PM
+                file_Z_F << Z_F
+                file_Y_F << Y_F
+                file_Z_S << Z_S
+                file_Y_S << Y_S
+                file_Z_M << Z_M
+                file_Y_M << Y_M
 
             # Move to next time interval
             t += kn

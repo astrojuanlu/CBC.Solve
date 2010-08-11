@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-09
+# Last changed: 2010-08-11
 
 from dolfin import *
 from numpy import array, append
@@ -44,7 +44,7 @@ class FSI(CBCProblem):
         info("Computing mappings between submeshes")
 
         # Get meshes
-        Omega_F = self.initial_fluid_mesh()
+        Omega_F = self.fluid_mesh()
         Omega_S = self.structure_mesh()
 
         # Extract matching indices for fluid and structure

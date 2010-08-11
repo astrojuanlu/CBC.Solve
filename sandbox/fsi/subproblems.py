@@ -28,7 +28,7 @@ class FluidProblem(NavierStokes):
         self.problem = problem
 
         # Store initial and current mesh
-        self.Omega_F = problem.initial_fluid_mesh()
+        self.Omega_F = problem.fluid_mesh()
         self.omega_F0 = Mesh(self.Omega_F)
         self.omega_F1 = Mesh(self.Omega_F)
 
@@ -139,7 +139,7 @@ class StructureProblem(Hyperelasticity):
         self.problem = problem
 
         # Define function spaces and functions for transfer of fluid stress
-        Omega_F = problem.initial_fluid_mesh()
+        Omega_F = problem.fluid_mesh()
         Omega_S = problem.structure_mesh()
         self.V_F = VectorFunctionSpace(Omega_F, "CG", 1)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
@@ -217,7 +217,7 @@ class MeshProblem():
 
         # Get problem parameters
         mu, lmbda, alpha = problem.mesh_parameters()
-        Omega_F = problem.initial_fluid_mesh()
+        Omega_F = problem.fluid_mesh()
         dt = problem.initial_time_step()
 
         # Define function spaces and functions
