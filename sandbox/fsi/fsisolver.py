@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-10
+# Last changed: 2010-08-11
 
 __all__ = ["FSISolver"]
 
@@ -24,8 +24,8 @@ class FSISolver(CBCSolver):
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
         self.parameters.add("plot_solution", False)
-        self.parameters.add("save_solution", False)
-        self.parameters.add("store_series", False)
+        self.parameters.add("save_solution", True)
+        self.parameters.add("save_series", True)
         self.parameters.add("tolerance", 0.1)
         self.parameters.add("maxiter", 100)
         self.parameters.add("itertol", 1e-10)
@@ -44,6 +44,8 @@ class FSISolver(CBCSolver):
             begin("Solving primal problem")
             solve_primal(self.problem, self.parameters)
             end()
+
+            return
 
             # Solve dual problem
             begin("Solving dual problem")

@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-10
+# Last changed: 2010-08-11
 
 from dolfin import *
 from subproblems import *
@@ -20,25 +20,25 @@ def solve_primal(problem, solver_parameters):
     # Get solver parameters
     plot_solution = solver_parameters["plot_solution"]
     save_solution = solver_parameters["save_solution"]
-    store_series = solver_parameters["store_series"]
+    save_series = solver_parameters["save_series"]
     maxiter = solver_parameters["maxiter"]
     itertol = solver_parameters["itertol"]
 
     # Create files for saving to VTK
     if save_solution:
-        file_u_F = File("u_F.pvd")
-        file_p_F = File("p_F.pvd")
-        file_U_S = File("U_S.pvd")
-        file_P_S = File("P_S.pvd")
-        file_U_M = File("U_M.pvd")
+        file_u_F = File("pvd/u_F.pvd")
+        file_p_F = File("pvd/p_F.pvd")
+        file_U_S = File("pvd/U_S.pvd")
+        file_P_S = File("pvd/P_S.pvd")
+        file_U_M = File("pvd/U_M.pvd")
 
     # Create time series for storing solution
-    if store_series:
-        u_F_series = TimeSeries("u_F")
-        p_F_series = TimeSeries("p_F")
-        U_S_series = TimeSeries("U_S")
-        P_S_series = TimeSeries("P_S")
-        U_M_series = TimeSeries("U_M")
+    if save_series:
+        u_F_series = TimeSeries("bin/u_F")
+        p_F_series = TimeSeries("bin/p_F")
+        U_S_series = TimeSeries("bin/U_S")
+        P_S_series = TimeSeries("bin/P_S")
+        U_M_series = TimeSeries("bin/U_M")
 
     # Define the three subproblems
     F = FluidProblem(problem)
@@ -137,8 +137,8 @@ def solve_primal(problem, solver_parameters):
             file_P_S << P_S
             file_U_M << U_M
 
-        # Store solution in time series
-        if store_series:
+        # Save solution in time series
+        if save_series:
             u_F_series.store(u_F.vector(), t)
             p_F_series.store(p_F.vector(), t)
             U_S_series.store(U_S.vector(), t)
