@@ -26,11 +26,11 @@ def solve_primal(problem, solver_parameters):
 
     # Create files for saving to VTK
     if save_solution:
-        file_u_F = File("pvd/u_F.pvd")
-        file_p_F = File("pvd/p_F.pvd")
-        file_U_S = File("pvd/U_S.pvd")
-        file_P_S = File("pvd/P_S.pvd")
-        file_U_M = File("pvd/U_M.pvd")
+        u_F_file = File("pvd/u_F.pvd")
+        p_F_file = File("pvd/p_F.pvd")
+        U_S_file = File("pvd/U_S.pvd")
+        P_S_file = File("pvd/P_S.pvd")
+        U_M_file = File("pvd/U_M.pvd")
 
     # Create time series for storing solution
     if save_series:
@@ -131,11 +131,11 @@ def solve_primal(problem, solver_parameters):
 
         # Save solution in VTK format
         if save_solution:
-            file_u_F << u_F
-            file_p_F << p_F
-            file_U_S << U_S
-            file_P_S << P_S
-            file_U_M << U_M
+            u_F_file << u_F
+            p_F_file << p_F
+            U_S_file << U_S
+            P_S_file << P_S
+            U_M_file << U_M
 
         # Save solution in time series
         if save_series:

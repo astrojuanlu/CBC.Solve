@@ -21,7 +21,7 @@ class FSISolver(CBCSolver):
         # Initialize base class
         CBCSolver.__init__(self)
 
-        # Set up parameters
+        # Set solver parameters
         self.parameters = Parameters("solver_parameters")
         self.parameters.add("plot_solution", False)
         self.parameters.add("save_solution", True)
@@ -30,6 +30,9 @@ class FSISolver(CBCSolver):
         self.parameters.add("maxiter", 100)
         self.parameters.add("itertol", 1e-10)
         self.parameters.add("num_smoothings", 50)
+
+        # Set DOLFIN parameters
+        parameters["form_compiler"]["cpp_optimize"] = True
 
         # Store problem
         self.problem = problem
@@ -42,14 +45,12 @@ class FSISolver(CBCSolver):
 
             # Solve primal problem
             begin("Solving primal problem")
-            U = solve_primal(self.problem, self.parameters)
+            #U = solve_primal(self.problem, self.parameters)
             end()
-
-            return U
 
             # Solve dual problem
             begin("Solving dual problem")
-            solve_dual()
+            solve_dual(self.problem, self.parameters)
             end()
 
             # Estimate error and compute error indicators

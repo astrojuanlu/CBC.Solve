@@ -1,4 +1,3 @@
-* Store primal data by default
 * Check primal data in dual
 * Clean up dual solver
 * Solve dual problem using same time steps

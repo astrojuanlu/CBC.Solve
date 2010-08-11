@@ -1,21 +1,41 @@
-"This module implements the primal FSI solver."
+"This module implements the dual FSI solver."
 
 __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-06-30
+# Last changed: 2010-08-11
 
-def solve_dual():
+from dolfin import *
+
+def solve_dual(problem, solver_parameters):
     "Solve the dual FSI problem"
 
-    return
+    # Get problem parameters
+    T = problem.end_time()
 
-    # Parameters
-    parameters["form_compiler"]["cpp_optimize"] = True
-    plot_solution = False
-    store_bin_files = True
-    store_vtu_files = True
+    # Get solver parameters
+    plot_solution = solver_parameters["plot_solution"]
+    save_solution = solver_parameters["save_solution"]
+    save_series = solver_parameters["save_series"]
+
+    # Create files for saving to VTK
+    if save_solution:
+        Z_F_file = File("pvd/Z_F.pvd")
+        Y_F_file = File("pvd/Y_F.pvd")
+        Z_S_file = File("pvd/Z_S.pvd")
+        Y_S_file = File("pvd/Y_S.pvd")
+        Z_M_file = File("pvd/Z_M.pvd")
+        Y_M_file = File("pvd/Y_M.pvd")
+
+    # Create time series for storing solution
+    if save_series:
+        Z_F_series = TimeSeries("bin/Z_F")
+        Y_F_series = TimeSeries("bin/Y_F")
+        Z_S_series = TimeSeries("bin/Z_S")
+        Y_S_series = TimeSeries("bin/Y_S")
+        Z_M_series = TimeSeries("bin/Z_M")
+        Y_M_series = TimeSeries("bin/Y_M")
 
     # Define function spaces defined on the whole domain
     V_F1 = VectorFunctionSpace(Omega, "CG", 1)
@@ -190,14 +210,6 @@ def solve_dual():
 
     # Collect bcs
     bcs = [bc_U_F0, bc_U_F1, bc_P_F0, bc_P_F1, bc_P_F2, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_P_M1, bc_P_M2]
-
-    # Create files
-    file_Z_UF = File("Z_UF.pvd")
-    file_Z_PF = File("Z_PF.pvd")
-    file_Z_US = File("Z_US.pvd")
-    file_Z_PS = File("Z_PS.pvd")
-    file_Z_UM = File("Z_UM.pvd")
-    file_Z_PM = File("Z_PM.pvd")
 
     # Create solution functions
     Z = Function(W)
