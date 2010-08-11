@@ -11,23 +11,16 @@ from dolfin import *
 class DualSolver:
     "Dual FSI solver"
 
-    def __init__(self, solver_parameters):
+    def __init__(self, problem, solver_parameters):
         "Create dual FSI solver"
-        pass
-
-    def solve_dual(self, problem):
-        "Solve the dual FSI problem"
-
-        # Get problem parameters
-        T = problem.end_time()
 
         # Get solver parameters
-        plot_solution = solver_parameters["plot_solution"]
-        save_solution = solver_parameters["save_solution"]
-        save_series = solver_parameters["save_series"]
+        self.plot_solution = solver_parameters["plot_solution"]
+        self.save_solution = solver_parameters["save_solution"]
+        self.save_series = solver_parameters["save_series"]
 
         # Create files for saving to VTK
-        if save_solution:
+        if self.save_solution:
             Z_F_file = File("pvd/Z_F.pvd")
             Y_F_file = File("pvd/Y_F.pvd")
             Z_S_file = File("pvd/Z_S.pvd")
@@ -36,7 +29,7 @@ class DualSolver:
             Y_M_file = File("pvd/Y_M.pvd")
 
         # Create time series for storing solution
-        if save_series:
+        if self.save_series:
             Z_F_series = TimeSeries("bin/Z_F")
             Y_F_series = TimeSeries("bin/Y_F")
             Z_S_series = TimeSeries("bin/Z_S")
@@ -44,17 +37,30 @@ class DualSolver:
             Z_M_series = TimeSeries("bin/Z_M")
             Y_M_series = TimeSeries("bin/Y_M")
 
-        # Open time series for primal data
-        u_F_series = TimeSeries("bin/u_F")
-        p_F_series = TimeSeries("bin/p_F")
-        U_S_series = TimeSeries("bin/U_S")
-        P_S_series = TimeSeries("bin/P_S")
-        U_M_series = TimeSeries("bin/U_M")
-        primal_data = (u_F_series, p_F_series, U_S_series, P_S_series, U_M_series)
+        # Open time series for primal solution
+        self.u_F_series = TimeSeries("bin/u_F")
+        self.p_F_series = TimeSeries("bin/p_F")
+        self.U_S_series = TimeSeries("bin/U_S")
+        self.P_S_series = TimeSeries("bin/P_S")
+        self.U_M_series = TimeSeries("bin/U_M")
 
-        # Check primal data
-        info(u_F_series, True)
-        print u_F_series.vector_times()
+        # Get nodal points for primal time series
+        times = self.u_F_series.vector_times()
+        T = problem.end_time()
+        # FIXME: Test disable due to bug in DOLFIN Array typemap
+        #if not (len(times) > 1 and times[0] == 0.0 and times[-1] == T):
+        #    print "Nodal points for primal time series:", times
+        #    raise RuntimeError, "Missing primal data, unable to solve dual problem."
+        self.times = times
+
+        # Store problem
+        self.problem = problem
+
+    def solve(self):
+        "Solve the dual FSI problem"
+
+        # Get problem parameters
+        T = self.problem.end_time()
 
         # Define function spaces defined on the whole domain
         V_F1 = VectorFunctionSpace(Omega, "CG", 1)

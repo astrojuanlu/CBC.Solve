@@ -13,7 +13,7 @@ from adaptivity import *
 class PrimalSolver:
     "Primal FSI solver"
 
-    def __init__(self, solver_parameters):
+    def __init__(self, problem, solver_parameters):
         "Create primal FSI solver"
 
         # Get solver parameters
@@ -39,23 +39,26 @@ class PrimalSolver:
             self.P_S_series = TimeSeries("bin/P_S")
             self.U_M_series = TimeSeries("bin/U_M")
 
-    def solve(self, problem):
+        # Store problem
+        self.problem = problem
+
+    def solve(self):
         "Solve the primal FSI problem"
 
         # Get problem parameters
-        T = problem.end_time()
-        dt = problem.initial_time_step()
+        T = self.problem.end_time()
+        dt = self.problem.initial_time_step()
 
         # Define the three subproblems
-        F = FluidProblem(problem)
-        S = StructureProblem(problem)
-        M = MeshProblem(problem)
+        F = FluidProblem(self.problem)
+        S = StructureProblem(self.problem)
+        M = MeshProblem(self.problem)
 
         # Get initial mesh displacement
         U_M = M.update(0)
 
         # Get initial structure displacement (used for plotting and checking convergence)
-        V_S = VectorFunctionSpace(problem.structure_mesh(), "CG", 1)
+        V_S = VectorFunctionSpace(self.problem.structure_mesh(), "CG", 1)
         U_S0 = Function(V_S)
 
         # Save initial solution to file and series
@@ -135,7 +138,7 @@ class PrimalSolver:
                     end()
 
             # Evaluate user functional
-            problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, at_end)
+            self.problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, at_end)
 
             # Save solution to file and series
             self._save_solution(F, S, M)
