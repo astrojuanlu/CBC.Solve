@@ -48,10 +48,9 @@ class DualSolver:
         # Get nodal points for primal time series
         t = self.u_F_series.vector_times()
         T = problem.end_time()
-        # FIXME: Test disable due to bug in DOLFIN Array typemap
-        #if not (len(t) > 1 and t[0] == 0.0 and t[-1] == T):
-        #    print "Nodal points for primal time series:", times
-        #    raise RuntimeError, "Missing primal data, unable to solve dual problem."
+        if not (len(t) > 1 and t[0] == 0.0 and t[-1] == T):
+            print "Nodal points for primal time series:", times
+            raise RuntimeError, "Missing primal data, unable to solve dual problem."
         self.timestep_range = t
 
         # Store problem
