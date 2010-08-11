@@ -8,6 +8,11 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 
-def J(u):
+def F(v):
+    "Return deformation gradient"
+    I = Identity(v.geometric_dimension())
+    return I + grad(v)
+
+def J(v):
     "Return determinant of deformation gradient"
-    return det(I + grad(u))
+    return det(F(v))
