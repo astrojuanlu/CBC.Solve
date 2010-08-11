@@ -14,20 +14,12 @@ alpha = 1.0
 # Identity matrix
 I = variable(Identity(2))
 
-# Deformation gradient
-def F(u):
-    F = (I + grad(u))
-    return F
 
 # Transpose of deformation gradient
 def F_T(u):
     F_T  = ((I + grad(u))).T
     return F_T
 
-# Inverse deformation gradient
-def F_inv(u):
-    F_inv  = inv((I + grad(u)))
-    return F_inv
 
 # Transpose of inverse deformation gradient
 def F_invT(u):

@@ -216,7 +216,9 @@ class MeshProblem():
         self.problem = problem
 
         # Get problem parameters
-        mu, lmbda, alpha = problem.mesh_parameters()
+        mu = problem.mesh_mu()
+        lmbda = problem.mesh_lmbda()
+        alpha = problem.mesh_alpha()
         Omega_F = problem.fluid_mesh()
         dt = problem.initial_time_step()
 

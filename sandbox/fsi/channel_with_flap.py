@@ -152,9 +152,14 @@ class ChannelWithFlap(FSI):
 
     #--- Parameters for mesh problem ---
 
-    def mesh_parameters(self):
-        "mu, lambda, alpha"
-        return (3.8461, 5.76, 1.0)
+    def mesh_mu(self):
+        return 3.8461
+
+    def mesh_lmbda(self):
+        return 5.76
+
+    def mesh_alpha(self):
+        return 1.0
 
 # Solve problem
 problem = ChannelWithFlap()
