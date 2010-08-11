@@ -2,7 +2,7 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-06-30
+# Last changed: 2010-08-11
 
 __all__ = ["NavierStokesSolver", "NavierStokesDualSolver"]
 
@@ -184,6 +184,10 @@ class NavierStokesSolver(CBCSolver):
         self.b1 = assemble(self.L1)
         self.b2 = assemble(self.L2)
         self.b3 = assemble(self.L3)
+
+    def solution(self):
+        "Return current solution values"
+        return self.u1, self.p1
 
 class NavierStokesDualSolver(CBCSolver):
     "Navier-Stokes dual solver"

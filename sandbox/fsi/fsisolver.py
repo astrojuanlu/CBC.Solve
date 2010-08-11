@@ -9,8 +9,8 @@ __all__ = ["FSISolver"]
 from dolfin import *
 from cbc.common import CBCSolver
 
-from primalsolver import solve_primal
-from dualsolver import solve_dual
+from primalsolver import PrimalSolver
+from dualsolver import DualSolver
 from adaptivity import estimate_error, refine_mesh
 
 class FSISolver(CBCSolver):
@@ -45,13 +45,17 @@ class FSISolver(CBCSolver):
 
             # Solve primal problem
             begin("Solving primal problem")
-            #U = solve_primal(self.problem, self.parameters)
+            primal_solver = PrimalSolver()
+            U = primal_solver.solve(self.problem, self.parameters)
             end()
 
             # Solve dual problem
             begin("Solving dual problem")
-            solve_dual(self.problem, self.parameters)
+            dual_solver = DualSolver()
+            dual_solver.solve(self.problem, self.parameters)
             end()
+
+            return
 
             # Estimate error and compute error indicators
             begin("Estimating error and computing error indicators")
