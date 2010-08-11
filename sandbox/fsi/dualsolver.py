@@ -11,11 +11,11 @@ from dolfin import *
 class DualSolver:
     "Dual FSI solver"
 
-    def __init__(self):
+    def __init__(self, solver_parameters):
         "Create dual FSI solver"
         pass
 
-    def solve_dual(self, problem, solver_parameters):
+    def solve_dual(self, problem):
         "Solve the dual FSI problem"
 
         # Get problem parameters

@@ -383,6 +383,10 @@ class MomentumBalanceSolver(CBCSolver):
             bc.t = self.t
         self.B.t = self.t
 
+    def solution(self):
+        "Return current solution values"
+        return self.u1
+
 class CG1MomentumBalanceSolver(CBCSolver):
     """Solves the dynamic balance of linear momentum using a CG1
     time-stepping scheme"""
@@ -554,7 +558,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
         equation.parameters["newton_solver"]["relative_tolerance"] = 1e-12
         equation.parameters["newton_solver"]["maximum_iterations"] = 100
         equation.solve(self.U)
-        return self.U
+        return self.U.split(True)
 
     def update(self):
         """Update problem at time t"""
@@ -593,3 +597,6 @@ class CG1MomentumBalanceSolver(CBCSolver):
             bc.t = self.t
         self.B.t = self.t
 
+    def solution(self):
+        "Return current solution values"
+        return self.U.split(True)

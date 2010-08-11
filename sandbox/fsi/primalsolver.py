@@ -13,23 +13,38 @@ from adaptivity import *
 class PrimalSolver:
     "Primal FSI solver"
 
-    def __init__(self):
+    def __init__(self, solver_parameters):
         "Create primal FSI solver"
-        pass
 
-    def solve(self, problem, solver_parameters):
+        # Get solver parameters
+        self.plot_solution = solver_parameters["plot_solution"]
+        self.save_solution = solver_parameters["save_solution"]
+        self.save_series = solver_parameters["save_series"]
+        self.maxiter = solver_parameters["maxiter"]
+        self.itertol = solver_parameters["itertol"]
+
+        # Create files for saving to VTK
+        if self.save_solution:
+            self.u_F_file = File("pvd/u_F.pvd")
+            self.p_F_file = File("pvd/p_F.pvd")
+            self.U_S_file = File("pvd/U_S.pvd")
+            self.P_S_file = File("pvd/P_S.pvd")
+            self.U_M_file = File("pvd/U_M.pvd")
+
+        # Create time series for storing solution
+        if self.save_series:
+            self.u_F_series = TimeSeries("bin/u_F")
+            self.p_F_series = TimeSeries("bin/p_F")
+            self.U_S_series = TimeSeries("bin/U_S")
+            self.P_S_series = TimeSeries("bin/P_S")
+            self.U_M_series = TimeSeries("bin/U_M")
+
+    def solve(self, problem):
         "Solve the primal FSI problem"
 
         # Get problem parameters
         T = problem.end_time()
         dt = problem.initial_time_step()
-
-        # Get solver parameters
-        plot_solution = solver_parameters["plot_solution"]
-        save_solution = solver_parameters["save_solution"]
-        save_series = solver_parameters["save_series"]
-        maxiter = solver_parameters["maxiter"]
-        itertol = solver_parameters["itertol"]
 
         # Define the three subproblems
         F = FluidProblem(problem)
@@ -43,23 +58,9 @@ class PrimalSolver:
         V_S = VectorFunctionSpace(problem.structure_mesh(), "CG", 1)
         U_S0 = Function(V_S)
 
-        # Create files for saving to VTK and save initial solution
-        if save_solution:
-
-            # Set up files
-            u_F_file = File("pvd/u_F.pvd")
-            p_F_file = File("pvd/p_F.pvd")
-            U_S_file = File("pvd/U_S.pvd")
-            P_S_file = File("pvd/P_S.pvd")
-            U_M_file = File("pvd/U_M.pvd")
-
-        # Create time series for storing solution and store initial solution
-        if save_series:
-            u_F_series = TimeSeries("bin/u_F"); u_F_series.store(u_F.vector(), 0.0)
-            p_F_series = TimeSeries("bin/p_F"); p_F_series.store(p_F.vector(), 0.0)
-            U_S_series = TimeSeries("bin/U_S"); U_S_series.store(U_S.vector(), 0.0)
-            P_S_series = TimeSeries("bin/P_S"); P_S_series.store(P_S.vector(), 0.0)
-            U_M_series = TimeSeries("bin/U_M"); U_M_series.store(U_M.vector(), 0.0)
+        # Save initial solution to file and series
+        self._save_solution(F, S, M)
+        self._save_series(F, S, M, 0.0)
 
         # Time-stepping
         t = dt
@@ -72,7 +73,7 @@ class PrimalSolver:
             info_blue("  * t = %g (T = %g, dt = %g)" % (t, T, dt))
 
             # Fixed point iteration on FSI problem
-            for iter in range(maxiter):
+            for iter in range(self.maxiter):
 
                 info("")
                 begin("* Starting nonlinear iteration")
@@ -90,7 +91,7 @@ class PrimalSolver:
 
                 # Solve structure subproblem
                 begin("* Solving structure subproblem (S)")
-                U_S, P_S = S.step(dt).split(True)
+                U_S, P_S = S.step(dt)
                 end()
 
                 # Transfer structure displacement to fluid mesh
@@ -114,46 +115,31 @@ class PrimalSolver:
                 U_S0.vector()[:] = U_S.vector()[:]
 
                 # Plot solutions
-                if plot_solution:
+                if self.plot_solution:
                     plot(u_F,  title="Fluid velocity")
                     plot(U_S0, title="Structure displacement", mode="displacement")
                     plot(U_M,  title="Mesh displacement", mode="displacement")
 
                 # Check convergence
-                if increment < itertol:
+                if increment < self.itertol:
                     info("")
                     info_green("    Increment = %g (tolerance = %g), converged after %d iterations" % \
-                                   (increment, itertol, iter + 1))
+                                   (increment, self.itertol, iter + 1))
                     end()
                     break
-                elif iter == maxiter - 1:
-                    raise RuntimeError, "FSI iteration failed to converge after %d iterations." % maxiter
+                elif iter == self.maxiter - 1:
+                    raise RuntimeError, "FSI iteration failed to converge after %d iterations." % self.maxiter
                 else:
                     info("")
-                    info_red("    Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, iter + 1))
+                    info_red("    Increment = %g (tolerance = %g), iteration %d" % (increment, self.itertol, iter + 1))
                     end()
 
             # Evaluate user functional
             problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, at_end)
 
-            # Save solution in VTK format
-            if save_solution:
-                u_F_file << u_F
-                p_F_file << p_F
-                U_S_file << U_S
-                P_S_file << P_S
-                U_M_file << U_M
-
-            # Save solution in time series
-            if save_series:
-                u_F_series.store(u_F.vector(), t)
-                p_F_series.store(p_F.vector(), t)
-                U_S_series.store(U_S.vector(), t)
-                P_S_series.store(P_S.vector(), t)
-                U_M_series.store(U_M.vector(), t)
-
-            # Store time and time steps
-            time_data.append((t, dt))
+            # Save solution to file and series
+            self._save_solution(F, S, M)
+            self._save_series(F, S, M, t)
 
             # Move to next time step
             F.update(t)
@@ -182,3 +168,39 @@ class PrimalSolver:
 
         # Return solution
         return u_F, p_F, U_S, P_S, U_M
+
+    def _save_solution(self, F, S, M):
+        "Save solution to VTK"
+
+        # Check if we should save
+        if not self.save_solution: return
+
+        # Get solution
+        u_F, p_F = F.solution()
+        U_S, P_S = F.solution()
+        U_M = M.solution()
+
+        # Save to file
+        self.u_F_file << u_F
+        self.p_F_file << p_F
+        self.U_S_file << U_S
+        self.P_S_file << P_S
+        self.U_M_file << U_M
+
+    def _save_series(self, F, S, M, t):
+        "Save solution to time series"
+
+        # Check if we should save
+        if not self.save_series: return
+
+        # Get solution
+        u_F, p_F = F.solution()
+        U_S, P_S = F.solution()
+        U_M = M.solution()
+
+        # Save to series
+        self.u_F_series.store(u_F.vector(), t)
+        self.p_F_series.store(p_F.vector(), t)
+        self.U_S_series.store(U_S.vector(), t)
+        self.P_S_series.store(P_S.vector(), t)
+        self.U_M_series.store(U_M.vector(), t)

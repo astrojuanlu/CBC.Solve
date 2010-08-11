@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-07-15
+# Last changed: 2010-08-11
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem"]
 
@@ -176,7 +176,7 @@ class StructureProblem(Hyperelasticity):
 
     def material_model(self):
         mu    = self.problem.structure_mu()
-        lmbda = self.problem.structure_lmbda() 
+        lmbda = self.problem.structure_lmbda()
         return StVenantKirchhoff([mu, lmbda])
 
     def update_fluid_stress(self, Sigma_F):
@@ -272,6 +272,10 @@ class MeshProblem():
     def update_structure_displacement(self, U_S):
         self.displacement.vector().zero()
         self.problem.add_s2f(self.displacement.vector(), U_S.vector())
+
+    def solution(self):
+        "Return current solution values"
+        return self.u1
 
     def __str__(self):
         return "The mesh problem (M)"

@@ -120,13 +120,17 @@ class Hyperelasticity(StaticHyperelasticity):
 
         # Update solver parameters
         self.solver.parameters.update(self.parameters["solver_parameters"])
-        
+
         # Call solver
         return self.solver.step(dt)
 
     def update(self):
         "Propagate values to next time step"
         return self.solver.update()
+
+    def solution(self):
+        "Return current solution values"
+        return self.solver.solution()
 
     def end_time(self):
         """Return the end time of the computation"""
