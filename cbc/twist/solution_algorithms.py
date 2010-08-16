@@ -1,10 +1,12 @@
-
 __author__ = "Harish Narayanan"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
+# Modified by Anders Logg, 2010
+# Last changed: 2010-08-16
+
 from dolfin import *
-from cbc.common import CBCSolver
+from cbc.common import *
 from cbc.common.utils import *
 from cbc.twist.kinematics import Grad, DeformationGradient
 from sys import exit
@@ -28,19 +30,10 @@ class StaticMomentumBalanceSolver(CBCSolver):
         # Define function spaces
         vector = VectorFunctionSpace(mesh, "CG", 1)
 
-        # Get Dirichlet boundary conditions on the displacement field
-        bcu = []
-
-        dirichlet_conditions = problem.dirichlet_conditions()
-        dirichlet_boundaries = problem.dirichlet_boundaries()
-
-        if len(dirichlet_conditions) != len(problem.dirichlet_boundaries()):
-            print "Please make sure the number of your Dirichlet conditions match the number of your Dirichlet boundaries"
-            exit(2)
-
-        for (i, dirichlet_condition) in enumerate(dirichlet_conditions):
-            bcu.append(DirichletBC(vector, dirichlet_condition, \
-            compile_subdomains(dirichlet_boundaries[i])))
+        # Create boundary conditions
+        bcu = create_dirichlet_conditions(problem.dirichlet_values(),
+                                          problem.dirichlet_boundaries(),
+                                          vector)
 
         # Define fields
         # Test and trial functions
@@ -164,20 +157,10 @@ class MomentumBalanceSolver(CBCSolver):
             v0 = Function(vector)
             v0.vector()[:] = loadtxt(file_name)[:]
 
-        # Get Dirichlet boundary conditions on the displacement field
-        bcu = []
-
-        dirichlet_conditions = problem.dirichlet_conditions()
-        dirichlet_boundaries = problem.dirichlet_boundaries()
-
-        if len(dirichlet_conditions) != len(problem.dirichlet_boundaries()):
-            print "Please make sure the number of your Dirichlet conditions match the number of your Dirichlet boundaries"
-            exit(2)
-
-        for (i, dirichlet_condition) in enumerate(dirichlet_conditions):
-            print "Applying Dirichlet boundary condition at", dirichlet_boundaries[i]
-            bcu.append(DirichletBC(vector, dirichlet_condition, \
-            compile_subdomains(dirichlet_boundaries[i])))
+        # Create boundary conditions
+        bcu = create_dirichlet_conditions(problem.dirichlet_values(),
+                                          problem.dirichlet_boundaries(),
+                                          vector)
 
         # Driving forces
         B  = problem.body_force()
@@ -439,20 +422,10 @@ class CG1MomentumBalanceSolver(CBCSolver):
             _v0 = loadtxt(file_name)[:]
             U0.vector()[len(_v0) + 1:2*len(_v0) - 1] = _v0[:]
 
-        # Get Dirichlet boundary conditions on the displacement field
-        bcu = []
-
-        dirichlet_conditions = problem.dirichlet_conditions()
-        dirichlet_boundaries = problem.dirichlet_boundaries()
-
-        if len(dirichlet_conditions) != len(problem.dirichlet_boundaries()):
-            print "Please make sure the number of your Dirichlet conditions match the number of your Dirichlet boundaries"
-            exit(2)
-
-        for (i, dirichlet_condition) in enumerate(dirichlet_conditions):
-            print "Applying Dirichlet boundary condition at", dirichlet_boundaries[i]
-            bcu.append(DirichletBC(vector, dirichlet_condition, \
-            compile_subdomains(dirichlet_boundaries[i])))
+        # Create boundary conditions
+        bcu = create_dirichlet_conditions(problem.dirichlet_values(),
+                                          problem.dirichlet_boundaries(),
+                                          vector)
 
         # Driving forces
         B  = problem.body_force()

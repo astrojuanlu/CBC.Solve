@@ -32,13 +32,11 @@ class Release(Hyperelasticity):
         v0 = Expression(("0.0", "0.0", "0.0"))
         return u0, v0
 
-    def dirichlet_conditions(self):
-        clamp = Expression(("0.0", "0.0", "0.0"))
-        return [clamp]
+    def dirichlet_values(self):
+        return (0, 0, 0)
 
     def dirichlet_boundaries(self):
-        left = "x[0] == 0.0"
-        return [left]
+        return "x[0] == 0.0"
 
     def material_model(self):
         mu    = 3.8461

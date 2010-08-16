@@ -112,11 +112,13 @@ class NavierStokes(CBCProblem):
         "Return Dirichlet boundaries for the velocity"
         return []
 
-    def initial_conditions(self, V, Q):
-        "Return initial conditions for velocity and pressure"
-        u0 = Constant((0,)*V.mesh().geometry().dim())
-        p0 = Constant(0)
-        return u0, p0
+    def velocity_initial_condition(self):
+        "Return initial condition for velocity"
+        return None
+
+    def pressure_initial_condition(self):
+        "Return initial condition for pressure"
+        return 0
 
     def end_time(self):
         "Return end time"

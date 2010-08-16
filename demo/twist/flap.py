@@ -28,7 +28,7 @@ class Obstruction(Hyperelasticity):
         fluid_interface = "x[1] > 0.0 && x[0] == 0"
         return [fluid_interface]
 
-    def dirichlet_conditions(self):
+    def dirichlet_values(self):
         fix = Constant((0.0, 0.0))
         return [fix]
 

@@ -10,7 +10,7 @@ class Twist(StaticHyperelasticity):
         n = 8
         return UnitCube(n, n, n)
 
-    def dirichlet_conditions(self):
+    def dirichlet_values(self):
         clamp = Expression(("0.0", "0.0", "0.0"))
         twist = Expression(("0.0",
                             "y0 + (x[1] - y0) * cos(theta) - (x[2] - z0) * sin(theta) - x[1]",
