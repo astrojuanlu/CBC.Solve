@@ -58,17 +58,17 @@ class FluidProblem(NavierStokes):
         self.w = Function(V)
         return self.w
 
-    def velocity_boundary_value(self):
-        return self.problem.fluid_velocity_boundary_values()
+    def velocity_dirichlet_values(self):
+        return self.problem.fluid_velocity_dirichlet_values()
 
-    def velocity_boundaries(self):
-        return self.problem.fluid_velocity_boundaries()
+    def velocity_dirichlet_boundaries(self):
+        return self.problem.fluid_velocity_dirichlet_boundaries()
 
-    def pressure_boundary_value(self):
-        return self.problem.fluid_pressure_boundary_values()
+    def pressure_dirichlet_values(self):
+        return self.problem.fluid_pressure_dirichlet_values()
 
-    def pressure_boundaries(self):
-        return self.problem.fluid_pressure_boundaries()
+    def pressure_dirichlet_boundaries(self):
+        return self.problem.fluid_pressure_dirichlet_boundaries()
 
     def velocity_initial_condition(self):
         return self.problem.fluid_velocity_initial_condition()

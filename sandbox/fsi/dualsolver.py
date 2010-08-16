@@ -4,9 +4,10 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-11
+# Last changed: 2010-08-16
 
 from dolfin import *
+from subproblems import *
 from dualproblem import dual_forms
 
 class DualSolver:
@@ -105,21 +106,8 @@ class DualSolver:
                           U_F0, P_F0, U_S0, P_S0, U_M0,
                           U_F1, P_F1, U_S1, P_S1, U_M1)
 
-        # Define BCs (define the dual trial space = homo. Dirichlet BCs)
-        bc_U_F0 = DirichletBC(W.sub(0), Constant((0.0, 0.0)), noslip)
-        bc_U_F1 = DirichletBC(W.sub(0), Constant((0.0, 0.0)), interior_facet_domains, 1 )
-        bc_P_F0 = DirichletBC(W.sub(1), Constant(0.0), inflow)
-        bc_P_F1 = DirichletBC(W.sub(1), Constant(0.0), outflow)
-        bc_P_F2 = DirichletBC(W.sub(1), Constant(0.0), interior_facet_domains, 1 )
-        bc_U_S  = DirichletBC(W.sub(2), Constant((0.0, 0.0)), dirichlet_boundaries)
-        bc_P_S  = DirichletBC(W.sub(3), Constant((0.0, 0.0)), dirichlet_boundaries)
-        bc_U_M1 = DirichletBC(W.sub(4), Constant((0.0, 0.0)), DomainBoundary())
-        bc_U_M2 = DirichletBC(W.sub(4), Constant((0.0, 0.0)), interior_facet_domains, 1)
-        bc_P_M1 = DirichletBC(W.sub(5), Constant((0.0, 0.0)), DomainBoundary())            # FIXME: Correct BC?
-        bc_P_M2 = DirichletBC(W.sub(5), Constant((0.0, 0.0)), interior_facet_domains, 1)
-
-        # Collect bcs
-        bcs = [bc_U_F0, bc_U_F1, bc_P_F0, bc_P_F1, bc_P_F2, bc_U_S, bc_P_S, bc_U_M1, bc_U_M2, bc_P_M1, bc_P_M2]
+        # Create dual boundary conditions
+        bcs = self.problem.dual_boundary_conditions(W)
 
         # Time-stepping
         p = Progress("Time-stepping")
@@ -186,8 +174,8 @@ class DualSolver:
             # Move to next time interval
             t += kn
 
-# Retrieve primal data
 def _get_primal_data(t):
+    "Retrieve primal data"
 
     # Initialize edges on fluid sub mesh (needed for P2 elements)
     Omega_F.init(1)

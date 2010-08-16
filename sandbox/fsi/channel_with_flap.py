@@ -28,10 +28,6 @@ outflow = "x[0] > %g - DOLFIN_EPS && \
            x[1] < %g - DOLFIN_EPS" % (channel_length, channel_height)
 noslip  = "on_boundary && !(%s) && !(%s)" % (inflow, outflow)
 
-# Define noslip boundary
-def noslip(x, on_boundary):
-    return on_boundary and not inflow(x) and not outflow(x)
-
 # Define structure subdomain
 class Structure(SubDomain):
     def inside(self, x, on_boundary):
@@ -78,6 +74,35 @@ class ChannelWithFlap(FSI):
 
     def initial_time_step(self):
         return command_line_parameters["dt"]
+
+    def dual_boundary_conditions(self, W):
+
+        bcs = []
+
+        # Boundary conditions for dual velocity
+        bcs += [DirichletBC(W.sub(0), (0, 0), noslip)]
+        bcs += [DirichletBC(W.sub(0), (0, 0), interior_facet_domains, 1)]
+
+        # Boundary conditions for dual pressure
+        bcs += [DirichletBC(W.sub(1), 0, inflow)]
+        bcs += [DirichletBC(W.sub(1), 0, outflow)]
+        bcs += [DirichletBC(W.sub(1), 0, interior_facet_domains, 1)]
+
+        # Boundary conditions for dual structure displacement
+        bcs += [DirichletBC(W.sub(2), (0, 0), dirichlet_boundaries)]
+
+        # Boundary conditions for dual structure displacement velocity
+        bcs += [DirichletBC(W.sub(3), (0, 0), dirichlet_boundaries)]
+
+        # Boundary conditions for dual mesh displacement
+        bcs += [DirichletBC(W.sub(4), (0, 0), DomainBoundary())]
+        bcs += [DirichletBC(W.sub(4), (0, 0), interior_facet_domains, 1)]
+
+        # Boundary conditions for dual mesh displacement velocity
+        bcs += [DirichletBC(W.sub(5), (0, 0), DomainBoundary())]            # FIXME: Correct BC?
+        bcs += [DirichletBC(W.sub(5), (0, 0), interior_facet_domains, 1)]
+
+        return bcs
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, at_end):
 
