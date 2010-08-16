@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-11
+# Last changed: 2010-08-16
 
 __all__ = ["NavierStokes", "NavierStokesDual"]
 
@@ -95,6 +95,22 @@ class NavierStokes(CBCProblem):
     def boundary_conditions(self, V, Q):
         "Return boundary conditions for velocity and pressure"
         return [], []
+
+    def velocity_dirichlet_values(self):
+        "Return Dirichlet boundary values for the velocity"
+        return []
+
+    def velocity_dirichlet_boundaries(self):
+        "Return Dirichlet boundaries for the velocity"
+        return []
+
+    def pressure_dirichlet_values(self):
+        "Return Dirichlet boundary conditions for the velocity"
+        return []
+
+    def pressure_dirichlet_boundaries(self):
+        "Return Dirichlet boundaries for the velocity"
+        return []
 
     def initial_conditions(self, V, Q):
         "Return initial conditions for velocity and pressure"

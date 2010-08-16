@@ -2,10 +2,12 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-06-30
+# Last changed: 2010-08-16
 
 from time import time
 from dolfin import info, error, Progress
+from dolfin import compile_subdomains, interpolate, Progress, DirichletBC, Constant, Expression
+from dolfin.cpp import GenericFunction
 
 class CBCSolver:
     "Base class for all solvers"
@@ -50,3 +52,41 @@ class CBCSolver:
         #if self.parameters["save_solution"]:
         #    self.velocity_series.store(self.u1.vector(), t)
         #    self.pressure_series.store(self.p1.vector(), t)
+
+#--- Useful functions for solvers (non-member functions) ---
+
+def create_dirichlet_conditions(values, boundaries, function_space):
+    """Create Dirichlet boundary conditions for given boundary values,
+    boundaries and function space."""
+
+    # FIXME: Handle MeshFunctions!
+
+    # Check that the size matches
+    if len(values) != len(boundaries):
+        error("The number of Dirichlet values does not match the number of Dirichlet boundaries.")
+
+    # Create Dirichlet conditions
+    info("Creating %d Dirichlet boundary conditions" % len(values))
+    bcs = []
+    for (i, value) in enumerate(values):
+        info("Creating Dirichlet boundary condition at %s" % str(boundaries[i]))
+        subdomain = compile_subdomains(boundaries[i])
+        bc = DirichletBC(function_space, value, subdomain)
+        bcs.append(bc)
+
+    return bcs
+
+def create_initial_condition(value, function_space):
+    """Create initial condition from given user data (with intelligent
+    handling of different kinds of input)."""
+
+    # Check if we get a GenericFunction subclass (Function, Expression, Constant)
+    if isinstance(value, GenericFunction):
+        return interpolate(value, function_space)
+
+    # Check if we get an expression
+    if isinstance(value, str):
+        return create_initial_condition(Expression(value), function_space)
+
+    # Try wrapping input as a Constant
+    return create_initial_condition(Constant(value), function_space)

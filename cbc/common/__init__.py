@@ -1,2 +1,2 @@
-from CBCSolver import CBCSolver
-from CBCProblem import CBCProblem
+from CBCSolver import *
+from CBCProblem import *

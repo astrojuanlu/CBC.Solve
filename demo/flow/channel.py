@@ -2,18 +2,9 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-04-28
+# Last changed: 2010-08-16
 
 from cbc.flow import *
-
-def noslip_boundary(x):
-    return x[1] < DOLFIN_EPS or x[1] > 1.0 - DOLFIN_EPS
-
-def inflow_boundary(x):
-    return x[0] < DOLFIN_EPS
-
-def outflow_boundary(x):
-    return x[0] > 1 - DOLFIN_EPS
 
 class Channel(NavierStokes):
 
@@ -23,21 +14,23 @@ class Channel(NavierStokes):
     def viscosity(self):
         return 1.0 / 8.0
 
-    def boundary_conditions(self, V, Q):
+    def velocity_dirichlet_values(self):
+        return [(0, 0)]
 
-        # Create no-slip boundary condition for velocity
-        bcu = DirichletBC(V, Constant((0, 0)), noslip_boundary)
+    def velocity_dirichlet_boundaries(self):
+        return ["x[1] < DOLFIN_EPS || x[1] > 1.0 - DOLFIN_EPS"]
 
-        # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(1), inflow_boundary)
-        bcp1 = DirichletBC(Q, Constant(0), outflow_boundary)
+    def pressure_dirichlet_values(self):
+        return [1, 0]
 
-        return [bcu], [bcp0, bcp1]
+    def pressure_dirichlet_boundaries(self):
+        return ["x[0] < DOLFIN_EPS", "x[0] > 1 - DOLFIN_EPS"]
 
-    def initial_conditions(self, V, Q):
-        u0 = Constant((0, 0))
-        p0 = Expression("1 - x[0]")
-        return u0, p0
+    def velocity_initial_condition(self):
+        return (0, 0)
+
+    def pressure_initial_condition(self):
+        return "1 - x[0]"
 
     def end_time(self):
         return 0.5

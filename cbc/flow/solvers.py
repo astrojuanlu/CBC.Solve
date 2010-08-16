@@ -2,13 +2,13 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-11
+# Last changed: 2010-08-16
 
 __all__ = ["NavierStokesSolver", "NavierStokesDualSolver"]
 
 from dolfin import *
 from cbc.common.utils import *
-from cbc.common import CBCSolver
+from cbc.common import *
 
 class NavierStokesSolver(CBCSolver):
     "Navier-Stokes solver"
@@ -35,9 +35,17 @@ class NavierStokesSolver(CBCSolver):
         V = VectorFunctionSpace(mesh, "CG", 2)
         Q = FunctionSpace(mesh, "CG", 1)
 
-        # Initial and boundary conditions
-        u0, p0 = problem.initial_conditions(V, Q)
-        bcu, bcp = problem.boundary_conditions(V, Q)
+        # Create boundary conditions
+        bcu = create_dirichlet_conditions(problem.velocity_dirichlet_values(),
+                                          problem.velocity_dirichlet_boundaries(),
+                                          V)
+        bcp = create_dirichlet_conditions(problem.pressure_dirichlet_values(),
+                                          problem.pressure_dirichlet_boundaries(),
+                                          Q)
+
+        # Create initial conditions
+        u0 = create_initial_condition(problem.velocity_initial_condition(), V)
+        p0 = create_initial_condition(problem.pressure_initial_condition(), Q)
 
         # Test and trial functions
         v = TestFunction(V)
@@ -46,9 +54,7 @@ class NavierStokesSolver(CBCSolver):
         p = TrialFunction(Q)
 
         # Functions
-        u0 = interpolate(u0, V)
         u1 = interpolate(u0, V)
-        p0 = interpolate(p0, Q)
         p1 = interpolate(p0, Q)
 
         # Coefficients
