@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-11
+# Last changed: 2010-08-16
 
 from fsiproblem import *
 
@@ -19,19 +19,14 @@ structure_left  = 1.4
 structure_right = 1.6
 structure_top   = 0.5
 
-# Define inflow boundary
-def inflow(x):
-    return \
-        x[0] < DOLFIN_EPS and \
-        x[1] > DOLFIN_EPS and \
-        x[1] < channel_height - DOLFIN_EPS
-
-# Define outflow boundary
-def outflow(x):
-    return \
-        x[0] > channel_length - DOLFIN_EPS and \
-        x[1] > DOLFIN_EPS and \
-        x[1] < channel_height - DOLFIN_EPS
+# Define boundaries
+inflow  = "x[0] < DOLFIN_EPS && \
+           x[1] > DOLFIN_EPS && \
+           x[1] < %g - DOLFIN_EPS" % channel_height
+outflow = "x[0] > %g - DOLFIN_EPS && \
+           x[1] > DOLFIN_EPS && \
+           x[1] < %g - DOLFIN_EPS" % (channel_length, channel_height)
+noslip  = "on_boundary && !(%s) && !(%s)" % (inflow, outflow)
 
 # Define noslip boundary
 def noslip(x, on_boundary):
@@ -116,16 +111,23 @@ class ChannelWithFlap(FSI):
     def fluid_viscosity(self):
         return 0.002
 
-    def fluid_boundary_conditions(self, V, Q):
+    def fluid_velocity_dirichlet_values(self):
+        return [(0, 0)]
 
-        # Create no-slip boundary condition for velocity
-        bcu = DirichletBC(V, Constant((0, 0)), noslip)
+    def fluid_velocity_dirichlet_boundaries(self):
+        return [noslip]
 
-        # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(1), inflow)
-        bcp1 = DirichletBC(Q, Constant(0), outflow)
+    def fluid_pressure_dirichlet_values(self):
+        return 1, 0
 
-        return [bcu], [bcp0, bcp1]
+    def fluid_pressure_dirichlet_boundaries(self):
+        return inflow, outflow
+
+    def fluid_velocity_initial_condition(self):
+        return (0, 0)
+
+    def fluid_pressure_initial_condition(self):
+        return "1 - x[0]"
 
     #--- Parameters for structure problem ---
 
@@ -141,11 +143,11 @@ class ChannelWithFlap(FSI):
     def structure_lmbda(self):
         return 125.0
 
-    def structure_dirichlet_boundaries(self):
-        return "x[1] < DOLFIN_EPS"
+    def structure_dirichlet_values(self):
+        return [(0, 0)]
 
-    def structure_dirichlet_conditions(self):
-        return Constant((0, 0))
+    def structure_dirichlet_boundaries(self):
+        return ["x[1] < DOLFIN_EPS"]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"

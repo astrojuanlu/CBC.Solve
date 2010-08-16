@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-11
+# Last changed: 2010-08-16
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem"]
 
@@ -58,8 +58,23 @@ class FluidProblem(NavierStokes):
         self.w = Function(V)
         return self.w
 
-    def boundary_conditions(self, V, Q):
-        return self.problem.fluid_boundary_conditions(V, Q)
+    def velocity_boundary_value(self):
+        return self.problem.fluid_velocity_boundary_values()
+
+    def velocity_boundaries(self):
+        return self.problem.fluid_velocity_boundaries()
+
+    def pressure_boundary_value(self):
+        return self.problem.fluid_pressure_boundary_values()
+
+    def pressure_boundaries(self):
+        return self.problem.fluid_pressure_boundaries()
+
+    def velocity_initial_condition(self):
+        return self.problem.fluid_velocity_initial_condition()
+
+    def pressure_initial_condition(self):
+        return self.problem.fluid_pressure_initial_condition()
 
     def end_time(self):
         return self.problem.end_time()
@@ -162,11 +177,11 @@ class StructureProblem(Hyperelasticity):
     def reference_density(self):
         return self.problem.structure_density()
 
-    def dirichlet_boundaries(self):
-        return [self.problem.structure_dirichlet_boundaries()]
+    def dirichlet_values(self):
+        return self.problem.structure_dirichlet_values()
 
-    def dirichlet_conditions(self):
-        return [self.problem.structure_dirichlet_conditions()]
+    def dirichlet_boundaries(self):
+        return self.problem.structure_dirichlet_boundaries()
 
     def neumann_boundaries(self):
         return [self.problem.structure_neumann_boundaries()]

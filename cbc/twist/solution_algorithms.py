@@ -158,7 +158,8 @@ class MomentumBalanceSolver(CBCSolver):
             v0.vector()[:] = loadtxt(file_name)[:]
 
         # Create boundary conditions
-        bcu = create_dirichlet_conditions(problem.dirichlet_values(),
+        dirichlet_values = problem.dirichlet_values()
+        bcu = create_dirichlet_conditions(dirichlet_values,
                                           problem.dirichlet_boundaries(),
                                           vector)
 
@@ -284,7 +285,7 @@ class MomentumBalanceSolver(CBCSolver):
         self.gamma = gamma
         self.vector = vector
         self.B = B
-        self.dirichlet_conditions = dirichlet_conditions
+        self.dirichlet_values = dirichlet_values
         self.neumann_conditions = neumann_conditions
         self.boundary = boundary
 
@@ -360,8 +361,9 @@ class MomentumBalanceSolver(CBCSolver):
         self.t = self.t + self.dt
 
         # Inform time-dependent functions of new time
-        for bc in self.dirichlet_conditions:
-            bc.t = self.t
+        for bc in self.dirichlet_values:
+            if isinstance(bc, Expression):
+                bc.t = self.t
         for bc in self.neumann_conditions:
             bc.t = self.t
         self.B.t = self.t
@@ -423,7 +425,8 @@ class CG1MomentumBalanceSolver(CBCSolver):
             U0.vector()[len(_v0) + 1:2*len(_v0) - 1] = _v0[:]
 
         # Create boundary conditions
-        bcu = create_dirichlet_conditions(problem.dirichlet_values(),
+        dirichlet_values = problem.dirichlet_values()
+        bcu = create_dirichlet_conditions(dirichlet_values,
                                           problem.dirichlet_boundaries(),
                                           vector)
 
@@ -495,7 +498,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
         self.U0 = U0
         self.U = U
         self.B = B
-        self.dirichlet_conditions = dirichlet_conditions
+        self.dirichlet_values = dirichlet_values
         self.neumann_conditions = neumann_conditions
         self.boundary = boundary
 
@@ -564,8 +567,9 @@ class CG1MomentumBalanceSolver(CBCSolver):
         self.t = self.t + self.dt
 
         # Inform time-dependent functions of new time
-        for bc in self.dirichlet_conditions:
-            bc.t = self.t
+        for bc in self.dirichlet_values:
+            if isinstance(bc, Expression):
+                bc.t = self.t
         for bc in self.neumann_conditions:
             bc.t = self.t
         self.B.t = self.t
