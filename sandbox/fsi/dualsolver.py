@@ -113,14 +113,20 @@ class DualSolver:
         bcs = self._create_boundary_conditions(W)
 
         # Time-stepping
-        p = Progress("Time-stepping")
         for i in reversed(range(len(self.timestep_range) - 1)):
 
             # Get current time and time step
             t0 = self.timestep_range[i]
             t1 = self.timestep_range[i + 1]
+            T  = self.problem.end_time()
             dt = t1 - t0
             k.assign(dt)
+
+            # Display progress
+            info("")
+            info("-"*80)
+            begin("* Starting new time step")
+            info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
             # Read primal data
             self._read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0)
@@ -161,6 +167,8 @@ class DualSolver:
 
             # Copy solution to previous interval (going backwards in time)
             Z1.assign(Z0)
+
+            end()
 
     def _read_primal_data(self, U_F, P_F, U_S, P_S, U_M, t):
         """Read primal data at given time. This includes reading the data

@@ -70,6 +70,7 @@ class PrimalSolver:
         at_end = False
         while True:
 
+            # Display progress
             info("")
             info("-"*80)
             begin("* Starting new time step")
