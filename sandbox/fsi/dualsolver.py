@@ -51,7 +51,7 @@ class DualSolver:
         t = self.u_F_series.vector_times()
         T = problem.end_time()
         if not (len(t) > 1 and t[0] == 0.0 and t[-1] == T):
-            print "Nodal points for primal time series:", times
+            print "Nodal points for primal time series:", t
             raise RuntimeError, "Missing primal data, unable to solve dual problem."
         self.timestep_range = t
 
@@ -129,16 +129,19 @@ class DualSolver:
             # FIXME: out why they are needed
 
             # Assemble matrix
+            info("Assembling matrix")
             matrix = assemble(A,
                               cell_domains=self.problem.cell_domains,
                               interior_facet_domains=self.problem.fsi_boundary)
 
             # Assemble vector
+            info("Assembling vector")
             vector = assemble(L,
                               cell_domains=self.problem.cell_domains,
                               interior_facet_domains=self.problem.fsi_boundary)
 
             # Apply boundary conditions
+            info("Applying boundary conditions")
             for bc in bcs:
                 bc.apply(matrix, vector)
 

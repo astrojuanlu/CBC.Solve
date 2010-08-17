@@ -23,6 +23,8 @@ class FSISolver(CBCSolver):
 
         # Set solver parameters
         self.parameters = Parameters("solver_parameters")
+        self.parameters.add("solve_primal", True)
+        self.parameters.add("solve_dual", True)
         self.parameters.add("plot_solution", False)
         self.parameters.add("save_solution", True)
         self.parameters.add("save_series", True)
@@ -41,22 +43,32 @@ class FSISolver(CBCSolver):
         "Solve the FSI problem (main adaptive loop)"
 
         # Create empty solution (return value when primal is not solved)
-        u_F, p_F, U_S, P_S, U_M = 5*(None,)
+        U = 5*(None,)
 
         # Adaptive loop
         while True:
 
             # Solve primal problem
-            begin("Solving primal problem")
-            primal_solver = PrimalSolver(self.problem, self.parameters)
-            U = primal_solver.solve()
-            end()
+            if self.parameters["solve_primal"]:
+                begin("Solving primal problem")
+                primal_solver = PrimalSolver(self.problem, self.parameters)
+                U = primal_solver.solve()
+                end()
+            else:
+                info("Not solving primal problem")
 
             # Solve dual problem
-            begin("Solving dual problem")
-            dual_solver = DualSolver(self.problem, self.parameters)
-            dual_solver.solve()
-            end()
+            if self.parameters["solve_dual"]:
+                begin("Solving dual problem")
+                dual_solver = DualSolver(self.problem, self.parameters)
+                dual_solver.solve()
+                end()
+            else:
+                info("Not solving dual problem")
+
+            return U
+
+            # FIXME: Implement stuff below
 
             # Estimate error and compute error indicators
             begin("Estimating error and computing error indicators")
