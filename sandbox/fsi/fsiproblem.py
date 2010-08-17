@@ -13,7 +13,7 @@ from fsisolver import FSISolver
 class FSI(CBCProblem):
     "Base class for all FSI problems"
 
-    def __init__(self, parameters=None):
+    def __init__(self, structure):
         "Create FSI problem"
 
         # Initialize base class
@@ -26,8 +26,8 @@ class FSI(CBCProblem):
         self.parameters = Parameters("problem_parameters")
         self.parameters.add(self.solver.parameters)
 
-        # Create mappings between submeshes
-        self.init_mappings()
+        # Create submeshes and mappings
+        self.init_meshes(structure)
 
     def solve(self):
         "Solve and return computed solution (u_F, p_F, U_S, P_S, U_M, P_M)"
@@ -38,15 +38,25 @@ class FSI(CBCProblem):
         # Call solver
         return self.solver.solve()
 
-    def init_mappings(self):
+    def init_meshes(self, structure):
         "Create mappings between submeshes"
 
-        info("Computing mappings between submeshes")
+        info("Exracting fluid and structure submeshes")
 
-        # Get meshes
-        Omega   = self.mesh()
-        Omega_F = self.fluid_mesh()
-        Omega_S = self.structure_mesh()
+        # Get global mesh
+        Omega = self.mesh()
+
+        # Create cell markers (0 = fluid, 1 = structure)
+        D = Omega.topology().dim()
+        cell_domains = MeshFunction("uint", self.Omega, D)
+        cell_domains.set_all(0)
+        structure.mark(cell_domains, 1)
+
+        # Extract submeshes for fluid and structure
+        Omega_F = SubMesh(self.Omega, cell_domains, 0)
+        Omega_S = SubMesh(self.Omega, cell_domains, 1)
+
+        info("Computing mappings between submeshes")
 
         # Extract matching indices for fluid and structure
         structure_to_fluid = compute_vertex_map(Omega_S, Omega_F)
@@ -59,8 +69,9 @@ class FSI(CBCProblem):
         fdofs = append(fluid_indices, fluid_indices + Omega_F.num_vertices())
         sdofs = append(structure_indices, structure_indices + Omega_S.num_vertices())
 
+        info("Computing FSI boundary and orientation markers")
+
         # Initialize FSI boundary and orientation markers
-        D = Omega.topology().dim()
         Omega.init(D - 1, D)
         fsi_boundary = MeshFunction("uint", Omega, D - 1)
         fsi_boundary.set_all(0)
@@ -84,8 +95,8 @@ class FSI(CBCProblem):
             p1 = cell1.midpoint()
 
             # Check if the points are inside
-            p0_inside = self.structure.inside(p0, False)
-            p1_inside = self.structure.inside(p1, False)
+            p0_inside = structure.inside(p0, False)
+            p1_inside = structure.inside(p1, False)
 
             # Look for points where exactly one is inside the structure
             if p0_inside and not p1_inside:
@@ -99,10 +110,19 @@ class FSI(CBCProblem):
                 fsi_orientation[facet.index()] = c0
 
         # Store data
+        self.Omega_F = Omega_F
+        self.Omega_S = Omega_S
+        self.cell_domains = cell_domains
         self.fdofs = fdofs
         self.sdofs = sdofs
         self.fsi_boundary = fsi_boundary
         self.fsi_orientation = fsi_orientation
+
+    def fluid_mesh(self):
+        return self.Omega_F
+
+    def structure_mesh(self):
+        return self.Omega_S
 
     def add_f2s(self, xs, xf):
         "Compute xs += xf for corresponding indices"

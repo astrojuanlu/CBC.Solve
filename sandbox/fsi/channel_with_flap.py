@@ -46,24 +46,11 @@ class ChannelWithFlap(FSI):
         nx = 4*ny
         self.Omega = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 
-        # Create submeshes for fluid and structure
-        self.init_meshes()
+        # Create structure
+        structure = Structure()
 
         # Initialize base class
-        FSI.__init__(self)
-
-    def init_meshes(self):
-
-        # Create cell markers (0 = fluid, 1 = structure)
-        D = self.Omega.topology().dim()
-        cell_domains = MeshFunction("uint", self.Omega, D)
-        cell_domains.set_all(0)
-        self.structure = Structure()
-        self.structure.mark(cell_domains, 1)
-
-        # Extract submeshes for fluid and structure
-        self.Omega_F = SubMesh(self.Omega, cell_domains, 0)
-        self.Omega_S = SubMesh(self.Omega, cell_domains, 1)
+        FSI.__init__(self, structure)
 
     #--- Common parameters ---
 
@@ -99,9 +86,6 @@ class ChannelWithFlap(FSI):
 
     #--- Parameters for fluid problem ---
 
-    def fluid_mesh(self):
-        return self.Omega_F
-
     def fluid_density(self):
         return 1.0
 
@@ -127,9 +111,6 @@ class ChannelWithFlap(FSI):
         return "1 - x[0]"
 
     #--- Parameters for structure problem ---
-
-    def structure_mesh(self):
-        return self.Omega_S
 
     def structure_density(self):
         return 15.0
