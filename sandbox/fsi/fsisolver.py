@@ -40,6 +40,9 @@ class FSISolver(CBCSolver):
     def solve(self):
         "Solve the FSI problem (main adaptive loop)"
 
+        # Create empty solution (return value when primal is not solved)
+        u_F, p_F, U_S, P_S, U_M = 5*(None,)
+
         # Adaptive loop
         while True:
 
@@ -49,17 +52,11 @@ class FSISolver(CBCSolver):
             U = primal_solver.solve()
             end()
 
-            return
-
             # Solve dual problem
             begin("Solving dual problem")
             dual_solver = DualSolver(self.problem, self.parameters)
             dual_solver.solve()
             end()
-
-
-            return
-
 
             # Estimate error and compute error indicators
             begin("Estimating error and computing error indicators")
@@ -81,21 +78,3 @@ class FSISolver(CBCSolver):
 
         # Return solution
         return U
-
-    def _solve_primal(self):
-        "Solve primal problem"
-
-        begin("Solving primal problem")
-
-        # Write solver here
-
-        end()
-
-    def _solve_dual(self):
-        "Solve dual problem"
-
-        begin("Solving dual problem")
-
-        # Write solver here
-
-        end()

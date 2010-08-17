@@ -24,21 +24,21 @@ class DualSolver:
 
         # Create files for saving to VTK
         if self.save_solution:
-            Z_F_file = File("pvd/Z_F.pvd")
-            Y_F_file = File("pvd/Y_F.pvd")
-            Z_S_file = File("pvd/Z_S.pvd")
-            Y_S_file = File("pvd/Y_S.pvd")
-            Z_M_file = File("pvd/Z_M.pvd")
-            Y_M_file = File("pvd/Y_M.pvd")
+            self.Z_F_file = File("pvd/Z_F.pvd")
+            self.Y_F_file = File("pvd/Y_F.pvd")
+            self.Z_S_file = File("pvd/Z_S.pvd")
+            self.Y_S_file = File("pvd/Y_S.pvd")
+            self.Z_M_file = File("pvd/Z_M.pvd")
+            self.Y_M_file = File("pvd/Y_M.pvd")
 
         # Create time series for storing solution
         if self.save_series:
-            Z_F_series = TimeSeries("bin/Z_F")
-            Y_F_series = TimeSeries("bin/Y_F")
-            Z_S_series = TimeSeries("bin/Z_S")
-            Y_S_series = TimeSeries("bin/Y_S")
-            Z_M_series = TimeSeries("bin/Z_M")
-            Y_M_series = TimeSeries("bin/Y_M")
+            self.Z_F_series = TimeSeries("bin/Z_F")
+            self.Y_F_series = TimeSeries("bin/Y_F")
+            self.Z_S_series = TimeSeries("bin/Z_S")
+            self.Y_S_series = TimeSeries("bin/Y_S")
+            self.Z_M_series = TimeSeries("bin/Z_M")
+            self.Y_M_series = TimeSeries("bin/Y_M")
 
         # Open time series for primal solution
         self.u_F_series = TimeSeries("bin/u_F")
@@ -86,6 +86,8 @@ class DualSolver:
         # Create solution functions
         Z0 = Function(W)
         Z1 = Function(W)
+
+        # Extract sub functions (shallow copy)
         (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = Z0.split()
         (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = Z1.split()
 
@@ -123,62 +125,39 @@ class DualSolver:
             # Read primal data
             self._read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0)
 
-            # Assemble matrix and vector
+            # FIXME: Missing exterior_facet_domains, need to figure
+            # FIXME: out why they are needed
+
+            # Assemble matrix
             matrix = assemble(A,
-                              cell_domains = cell_domains,
-                              interior_facet_domains = interior_facet_domains,
-                              exterior_facet_domains = exterior_boundary)
+                              cell_domains=self.problem.cell_domains,
+                              interior_facet_domains=self.problem.fsi_boundary)
 
-            #
-            vector = assemble(L, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains, exterior_facet_domains = exterior_boundary)
+            # Assemble vector
+            vector = assemble(L,
+                              cell_domains=self.problem.cell_domains,
+                              interior_facet_domains=self.problem.fsi_boundary)
 
-            # Apply bcs
+            # Apply boundary conditions
             for bc in bcs:
-                bc.apply(dual_matrix, dual_vector)
+                bc.apply(matrix, vector)
 
             # Remove inactive dofs
-            dual_matrix.ident_zeros()
+            matrix.ident_zeros()
 
-            # Compute dual solution
-            solve(dual_matrix, Z.vector(), dual_vector)
+            # Solve linear system
+            solve(matrix, Z0.vector(), vector)
 
-            # Copy solution from previous interval
-            # Dual varibles
-            Z_F0.assign(Z_F)
-            Y_F0.assign(Y_F)
-            Z_S0.assign(Z_S)
-            Y_S0.assign(Y_S)
-            Z_M0.assign(Z_M)
-            #Y_M0.assign(Y_M)
+            # Extract sub functions (deep copy)
+            (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = Z0.split(True)
 
-            # Primal varibles
-            U_M0.assign(U_M)
-            U_F0.assign(U_F)
+            # Save and plot solution
+            self._save_solution(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0)
+            self._save_series(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0, t0)
+            self._plot_solution(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0)
 
-            # Plot solutions
-            if plot_solution:
-                plot(Z_F, title="Dual fluid velocity")
-                plot(Y_F, title="Dual fluid pressure")
-                plot(Z_S, title="Dual displacement")
-                plot(Y_S, title="Dual structure velocity")
-                plot(Z_M, title="Dual mesh displacement")
-                plot(Y_M, title="Dual mesh Lagrange Multiplier")
-
-            # Store dual bin files. NOTE: we save dual solutions at t!
-            if store_bin_files:
-                dual_Z.store(Z.vector(), t)
-
-            # Store vtu files
-            if store_vtu_files:
-                file_Z_F << Z_F
-                file_Y_F << Y_F
-                file_Z_S << Z_S
-                file_Y_S << Y_S
-                file_Z_M << Z_M
-                file_Y_M << Y_M
-
-            # Move to next time interval
-            t += kn
+            # Copy solution to previous interval (going backwards in time)
+            Z1.assign(Z0)
 
     def _read_primal_data(self, U_F, P_F, U_S, P_S, U_M, t):
         """Read primal data at given time. This includes reading the data
@@ -256,3 +235,45 @@ class DualSolver:
         bcs += [DirichletBC(W.sub(4), (0, 0), DomainBoundary())]
 
         return bcs
+
+    def _save_solution(self, Z_F, Y_F, Z_S, Y_S, Z_M, Y_M):
+        "Save solution to VTK"
+
+        # Check if we should save
+        if not self.save_solution: return
+
+        # Save to file
+        self.Z_F_file << Z_F
+        self.Y_F_file << Y_F
+        self.Z_S_file << Z_S
+        self.Y_S_file << Y_S
+        self.Z_M_file << Z_M
+        self.Y_M_file << Y_M
+
+    def _save_series(self, Z_F, Y_F, Z_S, Y_S, Z_M, Y_M, t):
+        "Save solution to time series"
+
+        # Check if we should save
+        if not self.save_series: return
+
+        # Save to series
+        self.Z_F_series.store(Z_F.vector(), t)
+        self.Y_F_series.store(Y_F.vector(), t)
+        self.Z_S_series.store(Z_S.vector(), t)
+        self.Y_S_series.store(Y_S.vector(), t)
+        self.Z_M_series.store(Z_M.vector(), t)
+        self.Y_M_series.store(Y_M.vector(), t)
+
+    def _plot_solution(self, Z_F, Y_F, Z_S, Y_S, Z_M, Y_M):
+        "Save solution to time series"
+
+        # Check if we should plot
+        if not self.plot_solution: return
+
+        # Plot solution
+        plot(Z_F, title="Dual fluid velocity")
+        plot(Y_F, title="Dual fluid pressure")
+        plot(Z_S, title="Dual displacement")
+        plot(Y_S, title="Dual displacement velocity")
+        plot(Z_M, title="Dual mesh displacement")
+        plot(Y_M, title="Dual mesh Lagrange multiplier")

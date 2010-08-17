@@ -140,7 +140,7 @@ class PrimalSolver:
             # Evaluate user functional
             self.problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, at_end)
 
-            # Save solution to file and series
+            # Save solution and time series to file
             self._save_solution(F, S, M)
             self._save_series(F, S, M, t)
 
