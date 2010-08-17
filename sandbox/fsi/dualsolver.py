@@ -123,9 +123,14 @@ class DualSolver:
             # Read primal data
             self._read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0)
 
-            # Assemble
-            dual_matrix = assemble(A, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains, exterior_facet_domains = exterior_boundary)
-            dual_vector = assemble(L, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains, exterior_facet_domains = exterior_boundary)
+            # Assemble matrix and vector
+            matrix = assemble(A,
+                              cell_domains = cell_domains,
+                              interior_facet_domains = interior_facet_domains,
+                              exterior_facet_domains = exterior_boundary)
+
+            #
+            vector = assemble(L, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains, exterior_facet_domains = exterior_boundary)
 
             # Apply bcs
             for bc in bcs:
