@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-16
+# Last changed: 2010-08-17
 
 from dolfin import *
 from subproblems import *
@@ -107,7 +107,7 @@ class DualSolver:
                           U_F1, P_F1, U_S1, P_S1, U_M1)
 
         # Create dual boundary conditions
-        bcs = self.problem.dual_boundary_conditions(W)
+        bcs = _create_boundary_conditions(self.problem, W)
 
         # Time-stepping
         p = Progress("Time-stepping")
@@ -173,6 +173,30 @@ class DualSolver:
 
             # Move to next time interval
             t += kn
+
+def _create_boundary_conditions(problem, W):
+    "Create boundary conditions for dual problem"
+
+    bcs = []
+
+    # Boundary conditions for dual velocity
+    for boundary in problem.fluid_velocity_dirichlet_boundaries():
+        bcs += [DirichletBC(W.sub(0), (0, 0), boundary)]
+    bcs += [DirichletBC(W.sub(0), (0, 0), problem.fsi_boundary, 1)]
+
+    # Boundary conditions for dual pressure
+    for boundary in problem.fluid_pressure_dirichlet_boundaries():
+        bcs += [DirichletBC(W.sub(1), 0, boundary)]
+
+    # Boundary conditions for dual structure displacement and velocity
+    for boundary in problem.structure_dirichlet_boundaries():
+        bcs += [DirichletBC(W.sub(2), (0, 0), boundary)]
+        bcs += [DirichletBC(W.sub(3), (0, 0), boundary)]
+
+    # Boundary conditions for dual mesh displacement
+    bcs += [DirichletBC(W.sub(4), (0, 0), DomainBoundary())]
+
+    return bcs
 
 def _get_primal_data(t):
     "Retrieve primal data"

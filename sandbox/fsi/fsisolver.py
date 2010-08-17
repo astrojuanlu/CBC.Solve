@@ -45,8 +45,8 @@ class FSISolver(CBCSolver):
 
             # Solve primal problem
             begin("Solving primal problem")
-            primal_solver = PrimalSolver(self.problem, self.parameters)
-            U = primal_solver.solve()
+            #primal_solver = PrimalSolver(self.problem, self.parameters)
+            #U = primal_solver.solve()
             end()
 
             # Solve dual problem
