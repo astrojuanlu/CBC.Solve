@@ -6,6 +6,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2010-08-17
 
+from numpy import append
 from dolfin import *
 from subproblems import *
 from dualproblem import dual_forms
@@ -107,20 +108,20 @@ class DualSolver:
                           U_F1, P_F1, U_S1, P_S1, U_M1)
 
         # Create dual boundary conditions
-        bcs = _create_boundary_conditions(self.problem, W)
+        bcs = self._create_boundary_conditions(W)
 
         # Time-stepping
         p = Progress("Time-stepping")
-        for t in t_range:
+        for i in reversed(range(len(self.timestep_range) - 1)):
 
-            print "*******************************************"
-            print "-------------------------------------------"
-            print "Solving the DUAL problem at t =", str(T - t)
-            print "-------------------------------------------"
-            print "*******************************************"
+            # Get current time and time step
+            t0 = self.timestep_range[i]
+            t1 = self.timestep_range[i + 1]
+            dt = t1 - t0
+            k.assign(dt)
 
-            # Get primal data
-            _get_primal_data(t)
+            # Read primal data
+            self._read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0)
 
             # Assemble
             dual_matrix = assemble(A, cell_domains = cell_domains, interior_facet_domains = interior_facet_domains, exterior_facet_domains = exterior_boundary)
@@ -174,88 +175,79 @@ class DualSolver:
             # Move to next time interval
             t += kn
 
-def _create_boundary_conditions(problem, W):
-    "Create boundary conditions for dual problem"
+    def _read_primal_data(self, U_F, P_F, U_S, P_S, U_M, t):
+        """Read primal data at given time. This includes reading the data
+        stored on file, transferring the data to the full domain, and
+        downsampling the velocity from P2 to P1."""
 
-    bcs = []
+        info("Reading primal data at t = %g" % t)
 
-    # Boundary conditions for dual velocity
-    for boundary in problem.fluid_velocity_dirichlet_boundaries():
-        bcs += [DirichletBC(W.sub(0), (0, 0), boundary)]
-    bcs += [DirichletBC(W.sub(0), (0, 0), problem.fsi_boundary, 1)]
+        # Create vectors for primal dof values on local meshes
+        local_vals_u_F = Vector()
+        local_vals_p_F = Vector()
+        local_vals_U_S = Vector()
+        local_vals_P_S = Vector()
+        local_vals_U_M = Vector()
 
-    # Boundary conditions for dual pressure
-    for boundary in problem.fluid_pressure_dirichlet_boundaries():
-        bcs += [DirichletBC(W.sub(1), 0, boundary)]
+        # Retrieve primal data
+        self.u_F_series.retrieve(local_vals_u_F, t)
+        self.p_F_series.retrieve(local_vals_p_F, t)
+        self.U_S_series.retrieve(local_vals_U_S, t)
+        self.P_S_series.retrieve(local_vals_P_S, t)
+        self.U_M_series.retrieve(local_vals_U_M, t)
 
-    # Boundary conditions for dual structure displacement and velocity
-    for boundary in problem.structure_dirichlet_boundaries():
-        bcs += [DirichletBC(W.sub(2), (0, 0), boundary)]
-        bcs += [DirichletBC(W.sub(3), (0, 0), boundary)]
+        # Get meshes
+        Omega   = self.problem.mesh()
+        Omega_F = self.problem.fluid_mesh()
+        Omega_S = self.problem.structure_mesh()
 
-    # Boundary conditions for dual mesh displacement
-    bcs += [DirichletBC(W.sub(4), (0, 0), DomainBoundary())]
+        # Get vertex mappings from local meshes to global mesh
+        vmap_F = Omega_F.data().mesh_function("global vertex indices").values()
+        vmap_S = Omega_S.data().mesh_function("global vertex indices").values()
 
-    return bcs
+        # Get the number of vertices and edges
+        Omega_F.init(1)
+        Nv   = Omega.num_vertices()
+        Nv_F = Omega_F.num_vertices()
+        Ne_F = Omega_F.num_edges()
 
-def _get_primal_data(t):
-    "Retrieve primal data"
+        # Compute mapping to global dofs
+        global_dofs_U_F = append(vmap_F, vmap_F + Nv)
+        global_dofs_P_F = vmap_F
+        global_dofs_U_S = append(vmap_S, vmap_S + Nv)
+        global_dofs_P_S = append(vmap_S, vmap_S + Nv)
+        global_dofs_U_M = append(vmap_F, vmap_F + Nv)
 
-    # Initialize edges on fluid sub mesh (needed for P2 elements)
-    Omega_F.init(1)
+        # Get rid of P2 dofs for u_F and create a P1 function
+        local_vals_u_F = append(local_vals_u_F[:Nv_F], local_vals_u_F[Nv_F + Ne_F: 2*Nv_F + Ne_F])
 
-    # Define number of vertices and edges
-    Nv = Omega.num_vertices()
-    Nv_F = Omega_F.num_vertices()
-    Ne_F = Omega_F.num_edges()
+        # Set degrees of freedom for primal functions
+        U_F.vector()[global_dofs_U_F] = local_vals_u_F
+        P_F.vector()[global_dofs_P_F] = local_vals_p_F
+        U_S.vector()[global_dofs_U_S] = local_vals_U_S
+        P_S.vector()[global_dofs_P_S] = local_vals_P_S
+        U_M.vector()[global_dofs_U_M] = local_vals_U_M
 
-    # Create vectors for primal dofs
-    u_F_subdofs = Vector()
-    p_F_subdofs = Vector()
-    U_S_subdofs = Vector()
-    P_S_subdofs = Vector()
-    U_M_subdofs = Vector()
+    def _create_boundary_conditions(self, W):
+        "Create boundary conditions for dual problem"
 
-    # Get primal data (note the "dual time shift")
-    primal_u_F.retrieve(u_F_subdofs, T - t)
-    primal_p_F.retrieve(p_F_subdofs, T - t)
-    primal_U_S.retrieve(U_S_subdofs, T - t)
-    primal_P_S.retrieve(P_S_subdofs, T - t)
-    primal_U_M.retrieve(U_M_subdofs, T - t)
+        bcs = []
 
-    # Create mapping from Omega_(F,S,M) to Omega (extend primal vectors with zeros)
-    global_vertex_indices_F = Omega_F.data().mesh_function("global vertex indices")
-    global_vertex_indices_S = Omega_S.data().mesh_function("global vertex indices")
-    global_vertex_indices_M = Omega_F.data().mesh_function("global vertex indices")
+        # Boundary conditions for dual velocity
+        for boundary in self.problem.fluid_velocity_dirichlet_boundaries():
+            bcs += [DirichletBC(W.sub(0), (0, 0), boundary)]
+        bcs += [DirichletBC(W.sub(0), (0, 0), self.problem.fsi_boundary, 1)]
 
-    # Create lists
-    F_global_index = zeros([global_vertex_indices_F.size()], "uint")
-    M_global_index = zeros([global_vertex_indices_M.size()], "uint")
-    S_global_index = zeros([global_vertex_indices_S.size()], "uint")
+        # Boundary conditions for dual pressure
+        for boundary in self.problem.fluid_pressure_dirichlet_boundaries():
+            bcs += [DirichletBC(W.sub(1), 0, boundary)]
 
-    # Extract global vertices
-    for j in range(global_vertex_indices_F.size()):
-        F_global_index[j] = global_vertex_indices_F[j]
-    for j in range(global_vertex_indices_M.size()):
-        M_global_index[j] = global_vertex_indices_M[j]
-    for j in range(global_vertex_indices_S.size()):
-        S_global_index[j] = global_vertex_indices_S[j]
+        # Boundary conditions for dual structure displacement and velocity
+        for boundary in self.problem.structure_dirichlet_boundaries():
+            bcs += [DirichletBC(W.sub(2), (0, 0), boundary)]
+            bcs += [DirichletBC(W.sub(3), (0, 0), boundary)]
 
-    # Get global dofs
-    U_F_global_dofs = append(F_global_index, F_global_index + Nv)
-    P_F_global_dofs = F_global_index
-    U_S_global_dofs = append(S_global_index, S_global_index + Nv)
-    P_S_global_dofs = append(S_global_index, S_global_index + Nv)
-    U_M_global_dofs = append(M_global_index, M_global_index + Nv)
+        # Boundary conditions for dual mesh displacement
+        bcs += [DirichletBC(W.sub(4), (0, 0), DomainBoundary())]
 
-    # Get rid of P2 dofs for u_F and create a P1 function
-    u_F_subdofs = append(u_F_subdofs[:Nv_F], u_F_subdofs[Nv_F + Ne_F: 2*Nv_F + Ne_F])
-
-    # Transfer the stored primal solutions on the dual mesh Omega
-    U_F.vector()[U_F_global_dofs] = u_F_subdofs
-    P_F.vector()[P_F_global_dofs] = p_F_subdofs
-    U_S.vector()[U_S_global_dofs] = U_S_subdofs
-    P_S.vector()[U_S_global_dofs] = P_S_subdofs
-    U_M.vector()[U_M_global_dofs] = U_M_subdofs
-
-    return U_F, P_F, U_S, P_S, U_M
+        return bcs

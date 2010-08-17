@@ -198,7 +198,7 @@ class PrimalSolver:
 
         # Get solution
         u_F, p_F = F.solution()
-        U_S, P_S = F.solution()
+        U_S, P_S = S.solution()
         U_M = M.solution()
 
         # Save to series

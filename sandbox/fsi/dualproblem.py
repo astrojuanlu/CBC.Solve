@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-11
+# Last changed: 2010-08-17
 
 from dolfin import *
 from operators import *
@@ -17,6 +17,8 @@ def dual_forms(Omega_F, Omega_S, k, problem,
                U_F1, P_F1, U_S1, P_S1, U_M1):
     "Return bilinear and linear forms for one time step."
 
+    info("Creating dual forms")
+
     # Get problem parameters
     rho_F   = problem.fluid_density()
     mu_F    = problem.fluid_viscosity()
@@ -27,8 +29,8 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     lmbda_M = problem.mesh_lmbda()
 
     # Define normals
-    N_S =  FacetNormal(Omega_S)
-    N =  N_S('+')
+    N_S = FacetNormal(Omega_S)
+    N   = N_S('+')
     N_F = FacetNormal(Omega_F)
 
     # Define identity matrix (2D)
@@ -140,5 +142,7 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     A_system = A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS
     A = lhs(A_system)
     L = rhs(A_system) + goal_functional
+
+    info("Dual forms created")
 
     return A, L
