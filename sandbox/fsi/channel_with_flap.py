@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-16
+# Last changed: 2010-08-17
 
 from fsiproblem import *
 
@@ -27,6 +27,7 @@ outflow = "x[0] > %g - DOLFIN_EPS && \
            x[1] > DOLFIN_EPS && \
            x[1] < %g - DOLFIN_EPS" % (channel_length, channel_height)
 noslip  = "on_boundary && !(%s) && !(%s)" % (inflow, outflow)
+fixed   = "x[1] < DOLFIN_EPS && x[0] > %g - DOLFIN_EPS && x[0] < %g + DOLFIN_EPS" % (structure_left, structure_right)
 
 # Define structure subdomain
 class Structure(SubDomain):
@@ -57,8 +58,8 @@ class ChannelWithFlap(FSI):
         D = self.Omega.topology().dim()
         cell_domains = MeshFunction("uint", self.Omega, D)
         cell_domains.set_all(0)
-        structure = Structure()
-        structure.mark(cell_domains, 1)
+        self.structure = Structure()
+        self.structure.mark(cell_domains, 1)
 
         # Extract submeshes for fluid and structure
         self.Omega_F = SubMesh(self.Omega, cell_domains, 0)
@@ -89,10 +90,10 @@ class ChannelWithFlap(FSI):
         bcs += [DirichletBC(W.sub(1), 0, interior_facet_domains, 1)]
 
         # Boundary conditions for dual structure displacement
-        bcs += [DirichletBC(W.sub(2), (0, 0), dirichlet_boundaries)]
+        bcs += [DirichletBC(W.sub(2), (0, 0), fixed)]
 
         # Boundary conditions for dual structure displacement velocity
-        bcs += [DirichletBC(W.sub(3), (0, 0), dirichlet_boundaries)]
+        bcs += [DirichletBC(W.sub(3), (0, 0), fixed)]
 
         # Boundary conditions for dual mesh displacement
         bcs += [DirichletBC(W.sub(4), (0, 0), DomainBoundary())]
@@ -172,7 +173,7 @@ class ChannelWithFlap(FSI):
         return [(0, 0)]
 
     def structure_dirichlet_boundaries(self):
-        return ["x[1] < DOLFIN_EPS"]
+        return [fixed]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"

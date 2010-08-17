@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-16
+# Last changed: 2010-08-17
 
 __all__ = ["FSISolver"]
 
@@ -45,8 +45,8 @@ class FSISolver(CBCSolver):
 
             # Solve primal problem
             begin("Solving primal problem")
-            #primal_solver = PrimalSolver(self.problem, self.parameters)
-            #U = primal_solver.solve()
+            primal_solver = PrimalSolver(self.problem, self.parameters)
+            U = primal_solver.solve()
             end()
 
             # Solve dual problem
