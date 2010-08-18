@@ -42,7 +42,8 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     Ev = grad(v_S)*Fu.T + Fu*grad(v_S).T
     Sv = grad(v_S)*(2*mu_S*Eu + lmbda_S*tr(Eu)*I) + Fu*(2*mu_S*Ev + lmbda_S*tr(Ev)*I)
 
-    # Fluid eq. linearized around fluid variables
+    #====DUAL FORMS=======================================================================
+
     A_FF01 = -(1/k)*inner((Z_F0 - Z_F), rho_F*J(U_M1)*v_F)*dx(0)
     A_FF02 =  inner(Z_F, rho_F*J(U_M1)*dot(dot(grad(v_F),inv(F(U_M1))), (U_F1 - (U_M0 - U_M1)*(1/k))))*dx(0)
     A_FF03 =  inner(Z_F, rho_F*J(U_M1)*dot(grad(U_F1) , dot(inv(F(U_M1)), v_F)))*dx(0)
@@ -51,35 +52,20 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     A_FF06 = -inner(grad(Z_F), J(U_M1)*q_F*inv(F(U_M1)).T)*dx(0)
     A_FF07 =  inner(Y_F, div(J(U_M1)*dot(inv(F(U_M1)),v_F)))*dx(0)
 
-    # Boundary terms (Neumann condition G_N_F, dS(2) = in, dS(3) = out)
-    # Note that we assume an infinte long channel -> grad(U_F) = 0
     G_FF_in_1  = -inner(Z_S('+'), dot(J(U_M1)('+')*mu_F*dot(inv(F(U_M1)).T('+') , dot(grad(v_F('+')).T, inv(F(U_M1)).T('+'))), N_F('+')))*dS(2)
     G_FF_in_2  =  inner(Z_S('+'), dot(J(U_M1)('+')*q_F('+')*inv(F(U_M1)).T('+'), N_F('+')))*dS(2)
     G_FF_out_1 = -inner(Z_S('+'), dot(J(U_M1)('+')*mu_F*dot(inv(F(U_M1)).T('+') , dot(grad(v_F('+')).T, inv(F(U_M1)).T('+'))), N_F('+')))*dS(3)
     G_FF_out_2 =  inner(Z_S('+'), dot(J(U_M1)('+')*q_F('+')*inv(F(U_M1)).T('+'), N_F('+')))*dS(3)
 
-    # Collect boundary terms
-    G_FF = G_FF_in_1 + G_FF_in_2 + G_FF_out_1 + G_FF_out_2
-
-    # Collect A_FF form
-    A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + G_FF
-
-    # Structure eq. linearized around the fluid variables
     A_SF01 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(v_F('+')), inv(F(U_M1))('+')), dot(inv(F(U_M1)).T('+'), N)))*dS(1)    
     A_SF02 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), grad(v_F('+')).T), dot(inv(F(U_M1)).T('+'), N)))*dS(1)
     A_SF03 =  inner(Z_S('+'), J(U_M1)('+')*q_F('+')*dot(I('+'), dot(inv(F(U_M1)).T('+'), N)))*dS(1) 
 
-    # Collect A_SF form
-    A_SF = A_SF01 + A_SF02 + A_SF03
-    
-    # Structure eq. linearized around structure variable (only one, see operators above)
     A_SS = - (1/k)*inner(Z_S0 - Z_S, rho_S*q_S)*dx(1) + inner(grad(Z_S), Sv)*dx(1) \
-        - (1/k)*inner(Y_S0 - Y_S, v_S)*dx(1) - inner(Y_S, q_S)*dx(1)
+           - (1/k)*inner(Y_S0 - Y_S, v_S)*dx(1) - inner(Y_S, q_S)*dx(1)
 
-    # Mesh eq. linearized around structure variable
     A_MS = - inner(Y_M('+'), q_S('+'))*dS(1)
 
-    # Fluid eq. linearized around mesh variable
     A_FM01 =  (1/k)*inner(Z_F, rho_F*DJ(U_M1, v_M)*(U_F0 - U_F1))*dx(0)
     A_FM02 =  inner(Z_F, rho_F*DJ(U_M1, v_M)*dot(grad(U_F1), dot(inv(F(U_M1)), (U_M1 - U_M0)*(1/k))))*dx(0)
     A_FM03 = -inner(Z_F,  rho_F*J(U_M1)*dot((dot(grad(U_F1), dot(inv(F(U_M1)), dot(grad(v_M),inv(F(U_M1)))))),(U_F1 - (U_M0 - U_M1)/k)))*dx(0)
@@ -93,8 +79,6 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     A_FM11 =  inner(Y_F, div(DJ(U_M1,v_M)*dot(inv(F(U_M1)), U_F1)))*dx(0)
     A_FM12 = -inner(Y_F, div(J(U_M1)*dot(dot(inv(F(U_M1)), grad(v_M)), dot(inv(F(U_M1)), U_F1))))*dx(0)
 
-    # Boundary terms (Neumann conditions G_N_F, dS(2) = in, dS(3) = out)
-    # Note that we assume an inifinte long channel -> grad(U_F1) = 0
     G_FM_in_1 = -inner(Z_F('+'), DJ(U_M1, v_M)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'),grad(U_F1('+')).T), dot(inv(F(U_M1)).T('+'), N_F('+'))))*dS(2)
     G_FM_in_2 =  inner(Z_F('+'), DJ(U_M1, v_M)('+')*dot(P_F1('+')*I('+'), N_F('+')))*dS(2)
     G_FM_in_3 =  inner(Z_F('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), dot(grad(v_M('+')).T, inv(F(U_M1)).T('+'))), dot(grad(U_F1('+')).T, dot(inv(F(U_M1)).T('+'), N_F('+') ))))*dS(2)
@@ -104,14 +88,6 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     G_FM_out_3 =  inner(Z_F('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), dot(grad(v_M('+')).T, inv(F(U_M1)).T('+'))), dot(grad(U_F1('+')).T, dot(inv(F(U_M1)).T('+'), N_F('+') ))))*dS(3)
     G_FM_out_4 =  inner(Z_F('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), dot(grad(U_F1('+')).T, inv(F(U_M1)).T('+'))), dot(grad(v_M('+')).T , dot(inv(F(U_M1)).T('+'),N_F('+')))))*dS(3)
 
-    # Collect boundary terms
-    G_FM = G_FM_in_1 + G_FM_in_2 + G_FM_in_3 + G_FM_in_4 + G_FM_out_1 + G_FM_out_2 + G_FM_out_3 + G_FM_out_4
-
-    # Collect A_FM form
-    A_FM =  A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + A_FM11 + A_FM12 + G_FM
-
-   
-    # Structure eq. linearized around mesh variable
     A_SM01 = -inner(Z_S('+'), DJ(U_M1,v_M)('+')*mu_F*dot(dot(grad(U_F1('+')), inv(F(U_F1))('+')), dot(inv(F(U_M1)).T('+'), N)))*dS(1) # FIXME: Replace with Sigma_F
     A_SM02 = -inner(Z_S('+'), DJ(U_M1,v_M)('+')*mu_F*dot(dot(inv(F(U_F1)).T('+'), grad(U_F1('+')).T), dot(inv(F(U_M1)).T('+'), N)))*dS(1)# FIXME: Replace with Sigma_F
     A_SM03 =  inner(Z_S('+'), DJ(U_M1,v_M)('+')*dot(P_F1('+')*I('+'), dot(inv(F(U_M1)).T('+'),N)))*dS(1)# FIXME: Replace with Sigma_F
@@ -121,17 +97,20 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     A_SM07 =  inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), grad(U_M1('+')).T),dot(inv(F(U_M1)).T('+'), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'),N)))))*dS(1)
     A_SM08 = -inner(Z_S('+'), J(U_M1)('+')*dot(dot(P_F1('+')*I('+'),inv(F(U_M1)).T('+')), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'), N))))*dS(1)
 
-    # Collect A_SM form
-    A_SM = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06 + A_SM07 + A_SM08
-
-    # Mesh eq. linearized around mesh variable
     A_MM01 = -(1/k)*inner(v_M, Z_M0 - Z_M)*dx(0) + inner(sym(grad(Z_M)), Sigma_M(v_M, mu_M, lmbda_M))*dx(0)
     A_MM02 = inner(Z_M('+'),v_M('+'))*dS(1)
     A_MM03 = inner(Y_M('+'),q_M('+'))*dS(1)
+    
+    #======================================================================================
 
-    # Collect A_MM form
+    # Collect forms
+    G_FF = G_FF_in_1 + G_FF_in_2 + G_FF_out_1 + G_FF_out_2
+    A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + G_FF
+    A_SF = A_SF01 + A_SF02 + A_SF03
     A_MM = A_MM01 + A_MM02 + A_MM03
-
+    G_FM = G_FM_in_1 + G_FM_in_2 + G_FM_in_3 + G_FM_in_4 + G_FM_out_1 + G_FM_out_2 + G_FM_out_3 + G_FM_out_4
+    A_FM =  A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + A_FM11 + A_FM12 + G_FM
+    A_SM = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06 + A_SM07 + A_SM08
 
     # FIXME: Goal functional should not be defined here
     # Define goal funtionals
