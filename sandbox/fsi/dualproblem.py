@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-17
+# Last changed: 2010-08-18
 
 from dolfin import *
 from operators import *
@@ -36,6 +36,12 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     # Define identity matrix (2D)
     I = Identity(2)
 
+    # Operators for A_SS 
+    Fu = F(U_S1)
+    Eu = Fu*Fu.T - I
+    Ev = grad(v_S)*Fu.T + Fu*grad(v_S).T
+    Sv = grad(v_S)*(2*mu_S*Eu + lmbda_S*tr(Eu)*I) + Fu*(2*mu_S*Ev + lmbda_S*tr(Ev)*I)
+
     # Fluid eq. linearized around fluid variables
     A_FF01 = -(1/k)*inner((Z_F0 - Z_F), rho_F*J(U_M1)*v_F)*dx(0)
     A_FF02 =  inner(Z_F, rho_F*J(U_M1)*dot(dot(grad(v_F),inv(F(U_M1))), (U_F1 - (U_M0 - U_M1)*(1/k))))*dx(0)
@@ -57,6 +63,21 @@ def dual_forms(Omega_F, Omega_S, k, problem,
 
     # Collect A_FF form
     A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + G_FF
+
+    # Structure eq. linearized around the fluid variables
+    A_SF01 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(v_F('+')), inv(F(U_M1))('+')), dot(inv(F(U_M1)).T('+'), N)))*dS(1)    
+    A_SF02 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), grad(v_F('+')).T), dot(inv(F(U_M1)).T('+'), N)))*dS(1)
+    A_SF03 =  inner(Z_S('+'), J(U_M1)('+')*q_F('+')*dot(I('+'), dot(inv(F(U_M1)).T('+'), N)))*dS(1) 
+
+    # Collect A_SF form
+    A_SF = A_SF01 + A_SF02 + A_SF03
+    
+    # Structure eq. linearized around structure variable (only one, see operators above)
+    A_SS = - (1/k)*inner(Z_S0 - Z_S, rho_S*q_S)*dx(1) + inner(grad(Z_S), Sv)*dx(1) \
+        - (1/k)*inner(Y_S0 - Y_S, v_S)*dx(1) - inner(Y_S, q_S)*dx(1)
+
+    # Mesh eq. linearized around structure variable
+    A_MS = - inner(Y_M('+'), q_S('+'))*dS(1)
 
     # Fluid eq. linearized around mesh variable
     A_FM01 =  (1/k)*inner(Z_F, rho_F*DJ(U_M1, v_M)*(U_F0 - U_F1))*dx(0)
@@ -89,24 +110,7 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     # Collect A_FM form
     A_FM =  A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + A_FM11 + A_FM12 + G_FM
 
-    # Structure eq. linearized around the fluid variables
-    A_SF01 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(v_F('+')), inv(F(U_M1))('+')), dot(inv(F(U_M1)).T('+'), N)))*dS(1)    
-    A_SF02 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), grad(v_F('+')).T), dot(inv(F(U_M1)).T('+'), N)))*dS(1)
-    A_SF03 =  inner(Z_S('+'), J(U_M1)('+')*q_F('+')*dot(I('+'), dot(inv(F(U_M1)).T('+'), N)))*dS(1) 
-
-    # Collect A_SF form
-    A_SF = A_SF01 + A_SF02 + A_SF03
-
-    # Operators for A_SS
-    Fu = F(U_S1)
-    Eu = Fu*Fu.T - I
-    Ev = grad(v_S)*Fu.T + Fu*grad(v_S).T
-    Sv = grad(v_S)*(2*mu_S*Eu + lmbda_S*tr(Eu)*I) + Fu*(2*mu_S*Ev + lmbda_S*tr(Ev)*I)
-
-    # Structure eq. linearized around structure variable
-    A_SS = - (1/k)*inner(Z_S0 - Z_S, rho_S*q_S)*dx(1) + inner(grad(Z_S), Sv)*dx(1) \
-        - (1/k)*inner(Y_S0 - Y_S, v_S)*dx(1) - inner(Y_S, q_S)*dx(1)
-
+   
     # Structure eq. linearized around mesh variable
     A_SM01 = -inner(Z_S('+'), DJ(U_M1,v_M)('+')*mu_F*dot(dot(grad(U_F1('+')), inv(F(U_F1))('+')), dot(inv(F(U_M1)).T('+'), N)))*dS(1) # FIXME: Replace with Sigma_F
     A_SM02 = -inner(Z_S('+'), DJ(U_M1,v_M)('+')*mu_F*dot(dot(inv(F(U_F1)).T('+'), grad(U_F1('+')).T), dot(inv(F(U_M1)).T('+'), N)))*dS(1)# FIXME: Replace with Sigma_F
@@ -128,8 +132,6 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     # Collect A_MM form
     A_MM = A_MM01 + A_MM02 + A_MM03
 
-    # Mesh eq. linearized around structure variable
-    A_MS = - inner(Y_M('+'), q_S('+'))*dS(1)
 
     # FIXME: Goal functional should not be defined here
     # Define goal funtionals
