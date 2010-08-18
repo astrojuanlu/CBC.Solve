@@ -66,7 +66,7 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     A_SS = - (1/k)*inner(Z_S0 - Z_S, rho_S*q_S)*dx_S + inner(grad(Z_S), Sv)*dx_S \
            - (1/k)*inner(Y_S0 - Y_S, v_S)*dx_S - inner(Y_S, q_S)*dx_S
 
-    A_MS = - inner(Y_M('+'), q_S('+'))*dS(1)
+    A_MS = - inner(Y_M('+'), q_S('+'))*d_FSI
 
     A_FM01 =  (1/k)*inner(Z_F, rho_F*DJ(U_M1, v_M)*(U_F0 - U_F1))*dx(0)
     A_FM02 =  inner(Z_F, rho_F*DJ(U_M1, v_M)*dot(grad(U_F1), dot(inv(F(U_M1)), (U_M1 - U_M0)*(1/k))))*dx_F
@@ -109,10 +109,9 @@ def dual_forms(Omega_F, Omega_S, k, problem,
 
     # FIXME: Goal functional should not be defined here
     # Define goal funtionals
-    n_F = FacetNormal(Omega_F)
     area = 0.2*0.5
     T = 1.0
-    goal_functional = (1/T)*(1.0/area)*v_S[0]*dx(1)
+    goal_functional = (1/T)*(1.0/area)*v_S[0]*dx_S
 
     # Define the dual rhs and lhs
     A = lhs(A_system)
