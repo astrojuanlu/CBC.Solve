@@ -38,9 +38,6 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     dx_S = dx(1)
     d_FSI = dS(1)
 
-    # Define identity matrix (2D)
-    I = Identity(2)
-
     # Operators for A_SS
     Fu = F(U_S1)
     Eu = Fu*Fu.T - I
