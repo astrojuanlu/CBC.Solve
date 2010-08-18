@@ -90,9 +90,9 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     A_FM =  A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + A_FM11 + A_FM12 + G_FM
 
     # Structure eq. linearized around the fluid variables
-    A_SF01 = -inner(Z_S('+'), mu_F*J(U_M1)('+')*dot(dot(grad(v_F('+')), inv(F(U_M1))('+')), dot(inv(F(U_M1)).T('+'), N)))*dS(1)
-    A_SF02 = -inner(Z_S('+'), mu_F*J(U_M1)('+')*dot(dot(inv(F(U_M1)).T('+'), grad(v_F('+')).T), dot(inv(F(U_M1)).T('+'), N)))*dS(1)
-    A_SF03 =  inner(Z_S('+'), mu_F*J(U_M1)('+')*q_F('+')*dot(I('+'), dot(inv(F(U_M1)).T('+'), N)))*dS(1)
+    A_SF01 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(v_F('+')), inv(F(U_M1))('+')), dot(inv(F(U_M1)).T('+'), N)))*dS(1)    
+    A_SF02 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), grad(v_F('+')).T), dot(inv(F(U_M1)).T('+'), N)))*dS(1)
+    A_SF03 =  inner(Z_S('+'), J(U_M1)('+')*q_F('+')*dot(I('+'), dot(inv(F(U_M1)).T('+'), N)))*dS(1) 
 
     # Collect A_SF form
     A_SF = A_SF01 + A_SF02 + A_SF03
