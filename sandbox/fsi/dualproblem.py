@@ -89,14 +89,14 @@ def dual_forms(Omega_F, Omega_S, k, problem,
     A_SM05 =  inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), grad(U_M1('+')).T),dot(inv(F(U_M1)).T('+'), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'),N)))))*d_FSI
     A_SM06 = -inner(Z_S('+'), J(U_M1)('+')*dot(dot(P_F1('+')*I('+'),inv(F(U_M1)).T('+')), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'), N))))*d_FSI
 
-    A_MM01 = -(1/k)*inner(v_M, Z_M0 - Z_M)*dx(0) + inner(sym(grad(Z_M)), Sigma_M(v_M, mu_M, lmbda_M))*dx_F
+    A_MM01 = -(1/k)*inner(v_M, Z_M0 - Z_M)*dx_F + inner(sym(grad(Z_M)), Sigma_M(v_M, mu_M, lmbda_M))*dx_F
     A_MM02 = inner(Z_M('+'),v_M('+'))*d_FSI
     A_MM03 = inner(Y_M('+'),q_M('+'))*d_FSI
     
     #==================================================================================================================================================
 
     # Collect forms to system
-    A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 #+ G_FF
+    A_FF    = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 #+ G_FF 
     A_SF = A_SF01 + A_SF02 + A_SF03
     G_FM = G_FM1  + G_FM2  + G_FM3
     A_FM = A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + A_FM11 + A_FM12 + G_FM
