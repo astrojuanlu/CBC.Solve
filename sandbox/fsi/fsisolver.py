@@ -2,9 +2,11 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-17
+# Last changed: 2010-09-06
 
 __all__ = ["FSISolver"]
+
+from time import time
 
 from dolfin import *
 from cbc.common import CBCSolver
@@ -46,6 +48,7 @@ class FSISolver(CBCSolver):
         U = 5*(None,)
 
         # Adaptive loop
+        cpu_time = time()
         while True:
 
             # Solve primal problem
@@ -87,6 +90,9 @@ class FSISolver(CBCSolver):
             mesh = None
             mesh = refine_mesh(mesh, indicators)
             end()
+
+        # Report elapsed time
+        info_blue("Solution computed in %g seconds." % (time() - cpu_time))
 
         # Return solution
         return U

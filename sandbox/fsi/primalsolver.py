@@ -6,7 +6,10 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2010-09-06
 
+from time import time
+
 from dolfin import *
+
 from subproblems import *
 from adaptivity import *
 
@@ -44,6 +47,9 @@ class PrimalSolver:
 
     def solve(self):
         "Solve the primal FSI problem"
+
+        # Record CPU time
+        cpu_time = time()
 
         # Get problem parameters
         T = self.problem.end_time()
@@ -169,6 +175,10 @@ class PrimalSolver:
             t += dt
 
             end()
+
+
+        # Report elapsed time
+        info_blue("Primal solution computed in %g seconds." % (time() - cpu_time))
 
         # Return solution
         return u_F, p_F, U_S, P_S, U_M

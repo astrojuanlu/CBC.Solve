@@ -4,7 +4,9 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-10
+# Last changed: 2010-09-06
+
+from dolfin import info
 
 def estimate_error():
     "Estimate error and compute error indicators"
@@ -44,7 +46,7 @@ def compute_timestep(R, S, TOL, dt, t, T):
         dt_new = T - t
         at_end = True
 
-    print "Changing time step: %g --> %g" % (dt, dt_new)
+    info("Changing time step: %g --> %g" % (dt, dt_new))
 
     return dt_new, at_end
 

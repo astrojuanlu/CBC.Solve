@@ -4,10 +4,13 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-17
+# Last changed: 2010-09-06
 
 from numpy import append
+from time import time
+
 from dolfin import *
+
 from subproblems import *
 from dualproblem import dual_forms
 
@@ -60,6 +63,9 @@ class DualSolver:
 
     def solve(self):
         "Solve the dual FSI problem"
+
+        # Record CPU time
+        cpu_time = time()
 
         # Get problem parameters
         T = self.problem.end_time()
@@ -169,6 +175,9 @@ class DualSolver:
             Z1.assign(Z0)
 
             end()
+
+        # Report elapsed time
+        info_blue("Dual solution computed in %g seconds." % (time() - cpu_time))
 
     def _read_primal_data(self, U_F, P_F, U_S, P_S, U_M, t):
         """Read primal data at given time. This includes reading the data
