@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-17
+# Last changed: 2010-09-06
 
 from dolfin import *
 from subproblems import *
@@ -181,7 +181,7 @@ class PrimalSolver:
 
         # Get solution
         u_F, p_F = F.solution()
-        U_S, P_S = F.solution()
+        U_S, P_S = S.solution()
         U_M = M.solution()
 
         # Save to file

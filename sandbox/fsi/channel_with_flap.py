@@ -58,7 +58,7 @@ class ChannelWithFlap(FSI):
         return self.Omega
 
     def end_time(self):
-        return 0.04
+        return 1.0
 
     def initial_time_step(self):
         return command_line_parameters["dt"]
