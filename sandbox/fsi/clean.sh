@@ -1,3 +1,2 @@
-rm *.bin
-rm *.vtu
-rm *.pvd
+rm -r bin
+rm -r pvd
