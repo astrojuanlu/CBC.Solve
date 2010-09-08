@@ -7,10 +7,8 @@ __license__  = "GNU GPL Version 3 or any later version"
 # Last changed: 2010-09-08
 
 from time import time
-
 from dolfin import *
-
-from storage import init_primal_data, init_dual_data, read_primal_data
+from storage import *
 from dualproblem import dual_forms
 
 class DualSolver:
@@ -57,8 +55,9 @@ class DualSolver:
             raise RuntimeError, "Missing primal data, unable to solve dual problem."
         self.timestep_range = t
 
-        # Store problem
+        # Store problem and parameters
         self.problem = problem
+        self.parameters = solver_parameters
 
     def solve(self):
         "Solve the dual FSI problem"
@@ -159,7 +158,7 @@ class DualSolver:
 
             # Save and plot solution
             self._save_solution(Z0)
-            self._save_series(Z0, t0)
+            write_dual_data(Z0, t0, self.parameters)
             self._plot_solution(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0)
 
             # Copy solution to previous interval (going backwards in time)
@@ -210,23 +209,6 @@ class DualSolver:
         self.Y_S_file << Y_S
         self.Z_M_file << Z_M
         self.Y_M_file << Y_M
-
-    def _save_series(self, Z, t):
-        "Save solution to time series"
-
-        # Check if we should save
-        if not self.save_series: return
-
-        # Extract sub functions (deep copy so we can get the vectors)
-        (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = Z.split(True)
-
-        # Save to series
-        self.Z_F_series.store(Z_F.vector(), t)
-        self.Y_F_series.store(Y_F.vector(), t)
-        self.Z_S_series.store(Z_S.vector(), t)
-        self.Y_S_series.store(Y_S.vector(), t)
-        self.Z_M_series.store(Z_M.vector(), t)
-        self.Y_M_series.store(Y_M.vector(), t)
 
     def _plot_solution(self, Z_F, Y_F, Z_S, Y_S, Z_M, Y_M):
         "Save solution to time series"

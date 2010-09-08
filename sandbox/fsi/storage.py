@@ -13,36 +13,30 @@ __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 from numpy import append
-
 from dolfin import *
 
 # Last changed: 2010-09-08
 
 # Time series for primal variables
-_u_F = None
-_p_F = None
-_U_S = None
-_P_S = None
-_U_M = None
+_u_F_data = None
+_p_F_data = None
+_U_S_data = None
+_P_S_data = None
+_U_M_data = None
 
 # Time series for dual variables
-_Z_F = None
-_Y_F = None
-_Z_S = None
-_Y_S = None
-_Z_M = None
-_Y_M = None
+_Z_data = None
 
 def init_primal_data(Omega):
     "Return primal variables on the full domain initialized to zero"
 
     # Open time series for primal solution
-    global _u_F, _p_F, _U_S, _P_S, _U_M
-    _u_F = TimeSeries("bin/u_F")
-    _p_F = TimeSeries("bin/p_F")
-    _U_S = TimeSeries("bin/U_S")
-    _P_S = TimeSeries("bin/P_S")
-    _U_M = TimeSeries("bin/U_M")
+    global _u_F_data, _p_F_data, _U_S_data, _P_S_data, _U_M_data
+    _u_F_data = TimeSeries("bin/u_F")
+    _p_F_data = TimeSeries("bin/p_F")
+    _U_S_data = TimeSeries("bin/U_S")
+    _P_S_data = TimeSeries("bin/P_S")
+    _U_M_data = TimeSeries("bin/U_M")
 
     # Create function spaces
     V_F = VectorFunctionSpace(Omega, "CG", 1)
@@ -64,13 +58,8 @@ def init_dual_data(Omega):
     "Return dual variables on the full domain initialized to zero"
 
     # Open time series for dual solution
-    global _Z_F, _Y_F, _Z_S, _Y_S, _Z_M, _Y_M
-    _Z_F = TimeSeries("bin/Z_F")
-    _Y_F = TimeSeries("bin/Y_F")
-    _Z_S = TimeSeries("bin/Z_S")
-    _Y_S = TimeSeries("bin/Y_S")
-    _Z_M = TimeSeries("bin/Z_M")
-    _Y_M = TimeSeries("bin/Y_M")
+    global _Z_data
+    _Z_data = TimeSeries("bin/Z")
 
     # Create function spaces
     V_F = VectorFunctionSpace(Omega, "CG", 2)
@@ -102,12 +91,12 @@ def read_primal_data(U_F, P_F, U_S, P_S, U_M, t,
     local_vals_U_M = Vector()
 
     # Retrieve primal data
-    global _u_F, _p_F, _U_S, _P_S, _U_M
-    _u_F.retrieve(local_vals_u_F, t)
-    _p_F.retrieve(local_vals_p_F, t)
-    _U_S.retrieve(local_vals_U_S, t)
-    _P_S.retrieve(local_vals_P_S, t)
-    _U_M.retrieve(local_vals_U_M, t)
+    global _u_F_data, _p_F_data, _U_S_data, _P_S_data, _U_M_data
+    _u_F_data.retrieve(local_vals_u_F, t)
+    _p_F_data.retrieve(local_vals_p_F, t)
+    _U_S_data.retrieve(local_vals_U_S, t)
+    _P_S_data.retrieve(local_vals_P_S, t)
+    _U_M_data.retrieve(local_vals_U_M, t)
 
     # Get vertex mappings from local meshes to global mesh
     vmap_F = Omega_F.data().mesh_function("global vertex indices").values()
@@ -135,3 +124,40 @@ def read_primal_data(U_F, P_F, U_S, P_S, U_M, t,
     U_S.vector()[global_dofs_U_S] = local_vals_U_S
     P_S.vector()[global_dofs_P_S] = local_vals_P_S
     U_M.vector()[global_dofs_U_M] = local_vals_U_M
+
+def read_dual_data(Z, t):
+    "Read dual solution at given time"
+
+    # Retrieve dual data
+    global _Z_data
+    _Z_data.retrieve(Z.vector(), t)
+
+def write_primal_data(u_F, p_F, U_S, P_S, U_M, t, parameters):
+    "Write primal data at given time"
+
+    # Check if we should store solution
+    if not parameters["save_series"]: return
+
+    # Check if we should initialize the series
+    global _u_F_data, _p_F_data, _U_S_data, _P_S_data, _U_M_data
+
+    # Save to series
+    _u_F_data.store(u_F.vector(), t)
+    _p_F_data.store(p_F.vector(), t)
+    _U_S_data.store(U_S.vector(), t)
+    _P_S_data.store(P_S.vector(), t)
+    _U_M_data.store(U_M.vector(), t)
+
+def write_dual_data(Z, t, parameters):
+    "Write dual solution at given time"
+
+    # Check if we should store solution
+    if not parameters["save_series"]: return
+
+    # Check if we should initialize the series
+    global _Z_data
+    if _Z_data is None:
+        _Z_data = TimeSeries("bin/Z")
+
+    # Save to series
+    _Z_data.store(Z.vector(), t)
