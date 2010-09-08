@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-06
+# Last changed: 2010-09-08
 
 from numpy import append
 from time import time
@@ -163,12 +163,9 @@ class DualSolver:
             # Solve linear system
             solve(matrix, Z0.vector(), vector)
 
-            # Extract sub functions (deep copy)
-            (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = Z0.split(True)
-
             # Save and plot solution
             self._save_solution(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0)
-            self._save_series(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0, t0)
+            self._save_series(Z0, t0)
             self._plot_solution(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0)
 
             # Copy solution to previous interval (going backwards in time)
@@ -270,11 +267,14 @@ class DualSolver:
         self.Z_M_file << Z_M
         self.Y_M_file << Y_M
 
-    def _save_series(self, Z_F, Y_F, Z_S, Y_S, Z_M, Y_M, t):
+    def _save_series(self, Z, t):
         "Save solution to time series"
 
         # Check if we should save
         if not self.save_series: return
+
+        # Extract sub functions (deep copy so we can get the vectors)
+        (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = Z.split(True)
 
         # Save to series
         self.Z_F_series.store(Z_F.vector(), t)
