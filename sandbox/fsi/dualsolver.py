@@ -6,12 +6,11 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2010-09-08
 
-from numpy import append
 from time import time
 
 from dolfin import *
 
-from subproblems import *
+from storage import init_primal_data, init_dual_data, read_primal_data
 from dualproblem import dual_forms
 
 class DualSolver:
@@ -89,20 +88,13 @@ class DualSolver:
         (v_F, q_F, v_S, q_S, v_M, q_M) = TestFunctions(W)
         (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = TrialFunctions(W)
 
-        # Create solution functions
-        Z0 = Function(W)
-        Z1 = Function(W)
-
-        # Extract sub functions (shallow copy)
-        (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = Z0.split()
-        (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = Z1.split()
+        # Create dual functions
+        Z0, (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = init_dual_data(Omega)
+        Z1, (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = init_dual_data(Omega)
 
         # Create primal functions
-        U_F0 = Function(V_F1); U_F1 = Function(V_F1)
-        P_F0 = Function(Q_F);  P_F1 = Function(Q_F)
-        U_S0 = Function(V_S);  U_S1 = Function(V_S)
-        P_S0 = Function(Q_S);  P_S1 = Function(Q_S)
-        U_M0 = Function(V_M);  U_M1 = Function(V_M)
+        U_F0, P_F0, U_S0, P_S0, U_M0 = init_primal_data(Omega)
+        U_F1, P_F1, U_S1, P_S1, U_M1 = init_primal_data(Omega)
 
         # Create time step (value set in each time step)
         k = Constant(0.0)
@@ -135,7 +127,9 @@ class DualSolver:
             info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
             # Read primal data
-            self._read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0)
+            #self._read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0)
+            read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0,
+                             Omega, Omega_F, Omega_S)
 
             # FIXME: Missing exterior_facet_domains, need to figure
             # FIXME: out why they are needed
@@ -164,7 +158,7 @@ class DualSolver:
             solve(matrix, Z0.vector(), vector)
 
             # Save and plot solution
-            self._save_solution(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0)
+            self._save_solution(Z0)
             self._save_series(Z0, t0)
             self._plot_solution(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0)
 
@@ -175,59 +169,6 @@ class DualSolver:
 
         # Report elapsed time
         info_blue("Dual solution computed in %g seconds." % (time() - cpu_time))
-
-    def _read_primal_data(self, U_F, P_F, U_S, P_S, U_M, t):
-        """Read primal data at given time. This includes reading the data
-        stored on file, transferring the data to the full domain, and
-        downsampling the velocity from P2 to P1."""
-
-        info("Reading primal data at t = %g" % t)
-
-        # Create vectors for primal dof values on local meshes
-        local_vals_u_F = Vector()
-        local_vals_p_F = Vector()
-        local_vals_U_S = Vector()
-        local_vals_P_S = Vector()
-        local_vals_U_M = Vector()
-
-        # Retrieve primal data
-        self.u_F_series.retrieve(local_vals_u_F, t)
-        self.p_F_series.retrieve(local_vals_p_F, t)
-        self.U_S_series.retrieve(local_vals_U_S, t)
-        self.P_S_series.retrieve(local_vals_P_S, t)
-        self.U_M_series.retrieve(local_vals_U_M, t)
-
-        # Get meshes
-        Omega   = self.problem.mesh()
-        Omega_F = self.problem.fluid_mesh()
-        Omega_S = self.problem.structure_mesh()
-
-        # Get vertex mappings from local meshes to global mesh
-        vmap_F = Omega_F.data().mesh_function("global vertex indices").values()
-        vmap_S = Omega_S.data().mesh_function("global vertex indices").values()
-
-        # Get the number of vertices and edges
-        Omega_F.init(1)
-        Nv   = Omega.num_vertices()
-        Nv_F = Omega_F.num_vertices()
-        Ne_F = Omega_F.num_edges()
-
-        # Compute mapping to global dofs
-        global_dofs_U_F = append(vmap_F, vmap_F + Nv)
-        global_dofs_P_F = vmap_F
-        global_dofs_U_S = append(vmap_S, vmap_S + Nv)
-        global_dofs_P_S = append(vmap_S, vmap_S + Nv)
-        global_dofs_U_M = append(vmap_F, vmap_F + Nv)
-
-        # Get rid of P2 dofs for u_F and create a P1 function
-        local_vals_u_F = append(local_vals_u_F[:Nv_F], local_vals_u_F[Nv_F + Ne_F: 2*Nv_F + Ne_F])
-
-        # Set degrees of freedom for primal functions
-        U_F.vector()[global_dofs_U_F] = local_vals_u_F
-        P_F.vector()[global_dofs_P_F] = local_vals_p_F
-        U_S.vector()[global_dofs_U_S] = local_vals_U_S
-        P_S.vector()[global_dofs_P_S] = local_vals_P_S
-        U_M.vector()[global_dofs_U_M] = local_vals_U_M
 
     def _create_boundary_conditions(self, W):
         "Create boundary conditions for dual problem"
@@ -253,11 +194,14 @@ class DualSolver:
 
         return bcs
 
-    def _save_solution(self, Z_F, Y_F, Z_S, Y_S, Z_M, Y_M):
+    def _save_solution(self, Z):
         "Save solution to VTK"
 
         # Check if we should save
         if not self.save_solution: return
+
+        # Extract sub functions (shallow copy)
+        (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = Z.split()
 
         # Save to file
         self.Z_F_file << Z_F
