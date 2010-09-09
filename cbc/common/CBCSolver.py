@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-16
+# Last changed: 2010-09-09
 
 from time import time
 from dolfin import info, error, Progress
@@ -69,7 +69,9 @@ def create_dirichlet_conditions(values, boundaries, function_space):
     info("Creating %d Dirichlet boundary conditions" % len(values))
     bcs = []
     for (i, value) in enumerate(values):
-        info("Creating Dirichlet boundary condition at %s" % str(boundaries[i]))
+        pretty_str = str(boundaries[i])
+        while "  " in pretty_str: pretty_str = pretty_str.replace("  ", " ")
+        info("Creating Dirichlet boundary condition at %s" % pretty_str)
         subdomain = compile_subdomains(boundaries[i])
         bc = DirichletBC(function_space, value, subdomain)
         bcs.append(bc)

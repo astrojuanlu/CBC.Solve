@@ -1,3 +1,4 @@
+* Move plotting and storing VTK to storage.py
 * Handle command-line parameters
 * Move goal functional from dualproblem.py
 * Check implementation of dual problem against paper
