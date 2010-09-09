@@ -15,7 +15,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from numpy import append
 from dolfin import *
 
-# Last changed: 2010-09-08
+# Last changed: 2010-09-09
 
 # Time series for primal variables
 _u_F_data = None
@@ -131,6 +131,21 @@ def read_dual_data(Z, t):
     # Retrieve dual data
     global _Z_data
     _Z_data.retrieve(Z.vector(), t)
+
+def read_timestep_range(problem):
+    "Read time step range"
+
+    # Get nodal points for primal time series
+    global _u_F_data
+    t = _u_F_data.vector_times()
+
+    # Check that time series is not empty and covers the interval
+    T = problem.end_time()
+    if not (len(t) > 1 and t[0] == 0.0 and t[-1] == T):
+        print "Nodal points for primal time series:", t
+        raise RuntimeError, "Missing primal data"
+
+    return t
 
 def write_primal_data(u_F, p_F, U_S, P_S, U_M, t, parameters):
     "Write primal data at given time"

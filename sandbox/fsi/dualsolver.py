@@ -49,14 +49,6 @@ class DualSolver:
         self.P_S_series = TimeSeries("bin/P_S")
         self.U_M_series = TimeSeries("bin/U_M")
 
-        # Get nodal points for primal time series
-        t = self.u_F_series.vector_times()
-        T = problem.end_time()
-        if not (len(t) > 1 and t[0] == 0.0 and t[-1] == T):
-            print "Nodal points for primal time series:", t
-            raise RuntimeError, "Missing primal data, unable to solve dual problem."
-        self.timestep_range = t
-
         # Store problem and parameters
         self.problem = problem
         self.parameters = solver_parameters
@@ -112,11 +104,12 @@ class DualSolver:
         bcs = self._create_boundary_conditions(W)
 
         # Time-stepping
-        for i in reversed(range(len(self.timestep_range) - 1)):
+        timestep_range = read_timestep_range(self.problem)
+        for i in reversed(range(len(timestep_range) - 1)):
 
             # Get current time and time step
-            t0 = self.timestep_range[i]
-            t1 = self.timestep_range[i + 1]
+            t0 = timestep_range[i]
+            t1 = timestep_range[i + 1]
             T  = self.problem.end_time()
             dt = t1 - t0
             k.assign(dt)
