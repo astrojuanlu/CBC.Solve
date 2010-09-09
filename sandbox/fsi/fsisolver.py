@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-08
+# Last changed: 2010-09-09
 
 __all__ = ["FSISolver"]
 
@@ -27,6 +27,7 @@ class FSISolver(CBCSolver):
         self.parameters = Parameters("solver_parameters")
         self.parameters.add("solve_primal", True)
         self.parameters.add("solve_dual", True)
+        self.parameters.add("estimate_error", True)
         self.parameters.add("plot_solution", False)
         self.parameters.add("save_solution", True)
         self.parameters.add("save_series", True)
@@ -69,18 +70,19 @@ class FSISolver(CBCSolver):
             else:
                 info("Not solving dual problem")
 
-            return U
-
-            # FIXME: Implement stuff below
-
             # Estimate error and compute error indicators
-            begin("Estimating error and computing error indicators")
-            error, indicators = estimate_error()
-            end()
+            if self.parameters["estimate_error"]:
+                begin("Estimating error and computing error indicators")
+                error, indicators = estimate_error(self.problem)
+                end()
+            else:
+                info("Not estimating error")
+                error = 0
 
             # Check if error is small enough
             begin("Checking error estimate")
-            if error < self.parameters["tolerance"]:
+            tolerance = self.parameters["tolerance"]
+            if error < tolerance:
                 info_green("Adaptive solver converged: error = %g < tolerance = %g" % (error, tolerance))
                 break
             end()

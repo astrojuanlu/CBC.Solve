@@ -4,12 +4,16 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-08
+# Last changed: 2010-09-09
 
 from dolfin import info
+from residuals import *
 
-def estimate_error():
+def estimate_error(problem):
     "Estimate error and compute error indicators"
+
+    # Evaluate space residuals
+    evaluate_space_residuals(problem)
 
     # Compute error indicators
     indicators = []
