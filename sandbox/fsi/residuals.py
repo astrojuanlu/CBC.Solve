@@ -101,6 +101,11 @@ def evaluate_space_residuals(problem):
     Rh_S = Rh_S1 + Rh_S2 + Rh_S3 + Rh_S4
     Rh_M = Rh_M1 + Rh_M2 + Rh_M3
 
+    # Reset vectors for assembly of residuals
+    rh_F = Vector(Omega.num_cells())
+    rh_S = Vector(Omega.num_cells())
+    rh_M = Vector(Omega.num_cells())
+
     # Sum residuals over time intervals
     timestep_range = read_timestep_range(problem)
     for i in range(1, len(timestep_range)):
@@ -125,22 +130,39 @@ def evaluate_space_residuals(problem):
         # Read dual data (pick value at right-hand side of interval)
         read_dual_data(Z, t1)
 
-        # Assemble residuals
-        rh_F = assemble(Rh_F, interior_facet_domains=problem.fsi_boundary)
-        rh_S = assemble(Rh_S, interior_facet_domains=problem.fsi_boundary)
-        rh_M = assemble(Rh_M, interior_facet_domains=problem.fsi_boundary)
+        # Extrapolate dual data
+        ZZ_F.extrapolate(Z_F)
+        YY_F.extrapolate(Y_F)
+        ZZ_S.extrapolate(Z_S)
+        YY_S.extrapolate(Y_S)
+        ZZ_M.extrapolate(Z_M)
+        YY_M.extrapolate(Y_M)
 
-        # Convert to mesh functions
-        rh_F = vector_to_meshfunction(rh_F, Omega)
-        rh_S = vector_to_meshfunction(rh_S, Omega)
-        rh_M = vector_to_meshfunction(rh_M, Omega)
+        # Assemble residuals
+        rh_F.axpy(dt, assemble(Rh_F, interior_facet_domains=problem.fsi_boundary))
+        rh_S.axpy(dt, assemble(Rh_S, interior_facet_domains=problem.fsi_boundary))
+        rh_M.axpy(dt, assemble(Rh_M, interior_facet_domains=problem.fsi_boundary))
 
         end()
+
+    # Compute sum of error indicators
+    rh = Vector(Omega.num_cells())
+    rh += rh_F
+    rh += rh_S
+    rh += rh_M
+
+    # Convert to mesh functions
+    rh_F = vector_to_meshfunction(rh_F, Omega)
+    rh_S = vector_to_meshfunction(rh_S, Omega)
+    rh_M = vector_to_meshfunction(rh_M, Omega)
+    rh   = vector_to_meshfunction(rh, Omega)
 
     # Plot residuals
     plot(rh_F, title="Fluid residuals")
     plot(rh_S, title="Structure residuals")
     plot(rh_M, title="Mesh residuals")
+
+    return rh
 
 def evaluate_time_residuals():
     "Evaluate residuals in time"

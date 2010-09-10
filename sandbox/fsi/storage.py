@@ -15,7 +15,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from numpy import append
 from dolfin import *
 
-# Last changed: 2010-09-09
+# Last changed: 2010-09-10
 
 # Time series for primal variables
 _u_F_data = None
@@ -127,6 +127,8 @@ def read_primal_data(U_F, P_F, U_S, P_S, U_M, t,
 
 def read_dual_data(Z, t):
     "Read dual solution at given time"
+
+    info("Reading dual data at t = %g" % t)
 
     # Retrieve dual data
     global _Z_data
