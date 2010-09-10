@@ -7,6 +7,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 # Last changed: 2010-09-10
 
 from dolfin import info
+from numpy import zeros, argsort
 
 from operators import Sigma_F as _Sigma_F
 from operators import Sigma_S as _Sigma_S
@@ -40,15 +41,24 @@ def refine_mesh(mesh, indicators):
     indices.reverse()
     sub_sum = 0.0
     total_sum = sum(indicators)
+    markers = CellFunction("bool", mesh)
+    markers.set_all(False)
     for i in indices:
         sub_sum += indicators[i]
-        markers[i] = True
+        markers[int(i)] = True
         if sub_sum >= fraction*total_sum:
             break
 
+    # Plot markers (convert to uint so it can be plotted)
+    plot_markers = CellFunction("uint", mesh)
+    plot_markers.set_all(0)
+    for i in range(plot_markers.size()):
+        if markers[i]:
+            plot_markers[i] = True
+    plot(plot_markers, title="Markers")
+
     # Refine mesh
     mesh = refine(mesh, markers)
-
     plot(mesh, "Refined mesh")
 
     return mesh
@@ -122,36 +132,31 @@ def compute_error_indicators_h(problem):
     Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
 
     # Fluid residual contributions
-    e_F1 = w*inner(ZZ_F - Z_F, Dt_U_F - div(Sigma_F))*dx
-    e_F2 = avg(w)*inner(ZZ_F('+') - Z_F('+'), jump(dot(Sigma_F, N_F)))*dS
-    e_F3 = w*inner(YY_F - Y_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx
+    E_F1 = w*inner(ZZ_F - Z_F, Dt_U_F - div(Sigma_F))*dx
+    E_F2 = avg(w)*inner(ZZ_F('+') - Z_F('+'), jump(dot(Sigma_F, N_F)))*dS
+    E_F3 = w*inner(YY_F - Y_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx
 
     # Structure residual contributions
-    e_S1 = w*inner(ZZ_S - Z_S, Dt_P_S - div(Sigma_S))*dx
-    e_S2 = avg(w)*inner(ZZ_S('+') - Z_S('+'), jump(dot(Sigma_S, N_S)))*dS
-    e_S3 = avg(w)*inner(ZZ_S - Z_S, dot(Sigma_S - Sigma_F, N_S))('+')*dS(1)
-    e_S4 = w*inner(YY_S - Y_S, Dt_U_S - P_S)*dx
+    E_S1 = w*inner(ZZ_S - Z_S, Dt_P_S - div(Sigma_S))*dx
+    E_S2 = avg(w)*inner(ZZ_S('+') - Z_S('+'), jump(dot(Sigma_S, N_S)))*dS
+    E_S3 = avg(w)*inner(ZZ_S - Z_S, dot(Sigma_S - Sigma_F, N_S))('+')*dS(1)
+    E_S4 = w*inner(YY_S - Y_S, Dt_U_S - P_S)*dx
 
     # Mesh residual contributions
-    e_M1 = w*inner(ZZ_M - Z_M, Dt_U_M - div(Sigma_M))*dx
-    e_M2 = avg(w)*inner(ZZ_M('+') - Z_M('+'), jump(dot(Sigma_M, N_F)))*dS
-    e_M3 = avg(w)*inner(YY_M - Y_M, U_M - U_S)('+')*dS(1)
-
-    # Collect residuals
-    e_F = e_F1 + e_F2 + e_F3
-    e_S = e_S1 + e_S2 + e_S3 + e_S4
-    e_M = e_M1 + e_M2 + e_M3
+    E_M1 = w*inner(ZZ_M - Z_M, Dt_U_M - div(Sigma_M))*dx
+    E_M2 = avg(w)*inner(ZZ_M('+') - Z_M('+'), jump(dot(Sigma_M, N_F)))*dS
+    E_M3 = avg(w)*inner(YY_M - Y_M, U_M - U_S)('+')*dS(1)
 
     # Reset vectors for assembly of residuals
-    eta_F = Vector(Omega.num_cells())
-    eta_S = Vector(Omega.num_cells())
-    eta_M = Vector(Omega.num_cells())
+    eta_F = zeros(Omega.num_cells())
+    eta_S = zeros(Omega.num_cells())
+    eta_M = zeros(Omega.num_cells())
 
     # Sum residuals over time intervals
     timestep_range = read_timestep_range(problem)
-    #for i in range(1, len(timestep_range)):
+    for i in range(1, len(timestep_range)):
     # FIXME: Temporary while testing
-    for i in range(len(timestep_range) / 2, len(timestep_range) / 2 + 1):
+    #for i in range(len(timestep_range) / 2, len(timestep_range) / 2 + 1):
 
         # Get current time and time step
         t0 = timestep_range[i - 1]
@@ -174,34 +179,44 @@ def compute_error_indicators_h(problem):
         read_dual_data(Z, t1)
 
         # Extrapolate dual data
-        #ZZ_F.extrapolate(Z_F)
-        #YY_F.extrapolate(Y_F)
-        #ZZ_S.extrapolate(Z_S)
-        #YY_S.extrapolate(Y_S)
-        #ZZ_M.extrapolate(Z_M)
-        #YY_M.extrapolate(Y_M)
+        info("Extrapolating dual solution")
+        ZZ_F.extrapolate(Z_F)
+        YY_F.extrapolate(Y_F)
+        ZZ_S.extrapolate(Z_S)
+        YY_S.extrapolate(Y_S)
+        ZZ_M.extrapolate(Z_M)
+        YY_M.extrapolate(Y_M)
 
-        # Assemble residuals
-        eta_F.axpy(dt, assemble(e_F, interior_facet_domains=problem.fsi_boundary))
-        eta_S.axpy(dt, assemble(e_S, interior_facet_domains=problem.fsi_boundary))
-        eta_M.axpy(dt, assemble(e_M, interior_facet_domains=problem.fsi_boundary))
+        # Assemble error indicator contributions
+        info("Assembling error contributions")
+        e_F1 = assemble(E_F1, interior_facet_domains=problem.fsi_boundary)
+        e_F2 = assemble(E_F2, interior_facet_domains=problem.fsi_boundary)
+        e_F3 = assemble(E_F3, interior_facet_domains=problem.fsi_boundary)
+        e_S1 = assemble(E_S1, interior_facet_domains=problem.fsi_boundary)
+        e_S2 = assemble(E_S2, interior_facet_domains=problem.fsi_boundary)
+        e_S3 = assemble(E_S3, interior_facet_domains=problem.fsi_boundary)
+        e_S4 = assemble(E_S4, interior_facet_domains=problem.fsi_boundary)
+        e_M1 = assemble(E_M1, interior_facet_domains=problem.fsi_boundary)
+        e_M2 = assemble(E_M2, interior_facet_domains=problem.fsi_boundary)
+        e_M3 = assemble(E_M3, interior_facet_domains=problem.fsi_boundary)
+
+        # Add error contributions
+        eta_F += dt * (abs(e_F1.array()) + abs(e_F2.array()) + abs(e_F3.array()))
+        eta_S += dt * (abs(e_S1.array()) + abs(e_S2.array()) + abs(e_S3.array()) + abs(e_S4.array()))
+        eta_M += dt * (abs(e_M1.array()) + abs(e_M2.array()) + abs(e_M3.array()))
 
         end()
 
     # Compute sum of error indicators
-    eta_K = Vector(Omega.num_cells())
-    eta_K += eta_F
-    eta_K += eta_S
-    eta_K += eta_M
+    eta_K = eta_F + eta_S + eta_M
 
     # Plot residuals
-    plot(vector_to_meshfunction(eta_F, Omega), title="Fluid error indicators")
-    plot(vector_to_meshfunction(eta_S, Omega), title="Structure error indicators")
-    plot(vector_to_meshfunction(eta_M, Omega), title="Mesh error indicators")
-    plot(vector_to_meshfunction(eta_K, Omega), title="Total error indicators")
-    interactive()
+    #plot(array_to_meshfunction(eta_F, Omega), title="Fluid error indicators")
+    #plot(array_to_meshfunction(eta_S, Omega), title="Structure error indicators")
+    #plot(array_to_meshfunction(eta_M, Omega), title="Mesh error indicators")
+    plot(array_to_meshfunction(eta_K, Omega), title="Total error indicators")
 
-    return eta_K.array()
+    return eta_K
 
 def compute_timestep(R, S, TOL, dt, t, T):
     """Compute new time step based on residual R, stability factor S,
@@ -218,7 +233,7 @@ def compute_timestep(R, S, TOL, dt, t, T):
     dt_new = safety_factor * TOL / (C*S*R)
 
     # FIXME: Temporary until we get real input
-    dt_new  = dt
+    dt_new = dt
 
     # Modify time step to avoid oscillations
     dt_new = (1.0 + conservation) * dt * dt_new / (dt + conservation * dt_new)

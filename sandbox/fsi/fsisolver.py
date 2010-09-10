@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-09
+# Last changed: 2010-09-10
 
 __all__ = ["FSISolver"]
 
@@ -81,15 +81,18 @@ class FSISolver(CBCSolver):
 
             # Check if error is small enough
             begin("Checking error estimate")
+
             tolerance = self.parameters["tolerance"]
-            if error < tolerance:
-                info_green("Adaptive solver converged: error = %g < tolerance = %g" % (error, tolerance))
+            if error <= tolerance:
+                info_green("Adaptive solver converged: error = %g <= tolerance = %g" % (error, tolerance))
                 break
+            else:
+                info_red("Error too large, need to refine: error = %g > tolerance = %g" % (error, tolerance))
             end()
 
             # Refine mesh
             begin("Refining mesh")
-            mesh = None
+            mesh = self.problem.mesh()
             mesh = refine_mesh(mesh, indicators)
             end()
 

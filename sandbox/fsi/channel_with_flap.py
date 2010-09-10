@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-09
+# Last changed: 2010-09-10
 
 from fsiproblem import *
 
@@ -147,5 +147,5 @@ problem.parameters["solver_parameters"]["solve_primal"] = False
 problem.parameters["solver_parameters"]["solve_dual"] = False
 problem.parameters["solver_parameters"]["estimate_error"] = True
 problem.parameters["solver_parameters"]["plot_solution"] = False
-problem.parameters["solver_parameters"]["tolerance"] = 1.0
+problem.parameters["solver_parameters"]["tolerance"] = 0.1
 u_F, p_F, U_S, P_S, U_M = problem.solve()
