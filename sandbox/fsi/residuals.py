@@ -17,6 +17,8 @@ def evaluate_space_residuals(problem):
 
     # Get problem parameters
     Omega   = problem.mesh()
+    Omega_F = problem.fluid_mesh()
+    Omega_S = problem.structure_mesh()
     rho_F   = problem.fluid_density()
     mu_F    = problem.fluid_viscosity()
     rho_S   = problem.structure_density()
@@ -26,21 +28,29 @@ def evaluate_space_residuals(problem):
     mu_M    = problem.mesh_mu()
     lmbda_M = problem.mesh_lmbda()
 
-    # Define projection spaces
-    V = VectorFunctionSpace(Omega, "DG", 0)
-    Q = FunctionSpace(Omega, "DG", 0)
-
-    # Define test/trial functions
-    v = TestFunction(V)
-    q = TestFunction(Q)
+    # Define projection space (piecewise constants)
+    W = FunctionSpace(Omega, "DG", 0)
+    w = TestFunction(W)
 
     # Initialize primal functions
     U_F0, P_F0, U_S0, P_S0, U_M0 = init_primal_data(Omega)
     U_F1, P_F1, U_S1, P_S1, U_M1 = init_primal_data(Omega)
 
     # Initialize dual functions
-    Z0, (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = init_dual_data(Omega)
-    Z1, (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = init_dual_data(Omega)
+    Z, (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = init_dual_data(Omega)
+
+    # Define function spaces for extrapolation
+    V2 = VectorFunctionSpace(Omega, "CG", 2)
+    V3 = VectorFunctionSpace(Omega, "CG", 3)
+    Q2 = FunctionSpace(Omega, "CG", 2)
+
+    # Define functions for extrapolation
+    ZZ_F = Function(V3)
+    YY_F = Function(Q2)
+    ZZ_S = Function(V2)
+    YY_S = Function(V2)
+    ZZ_M = Function(V2)
+    YY_M = Function(V2)
 
     # Define time step (value set in each time step)
     kn = Constant(0.0)
@@ -71,20 +81,66 @@ def evaluate_space_residuals(problem):
     Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
 
     # Fluid residuals
-    Rh_F1 = inner(v, Dt_U_F)*dx - inner(v, div(Sigma_F))*dx
-    Rh_F2 = inner(avg(v), jump(dot(Sigma_F, N_F)))*dS
-    Rh_F3 = inner(q, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx
+    Rh_F1 = w*inner(ZZ_F - Z_F, Dt_U_F - div(Sigma_F))*dx
+    Rh_F2 = avg(w)*inner(ZZ_F('+') - Z_F('+'), jump(dot(Sigma_F, N_F)))*dS
+    Rh_F3 = w*inner(YY_F - Y_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx
 
     # Structure residuals
-    Rh_S1 = inner(v, Dt_P_S)*dx - inner(v, div(Sigma_S))*dx
-    Rh_S2 = inner(avg(v), jump(dot(Sigma_S, N_S)))*dS
-    Rh_S3 = inner(v, dot(Sigma_S - Sigma_F, N_S))('+')*dS(1)
-    Rh_S4 = inner(v, Dt_U_S - P_S)*dx
+    Rh_S1 = w*inner(ZZ_S - Z_S, Dt_P_S - div(Sigma_S))*dx
+    Rh_S2 = avg(w)*inner(ZZ_S('+') - Z_S('+'), jump(dot(Sigma_S, N_S)))*dS
+    Rh_S3 = avg(w)*inner(ZZ_S - Z_S, dot(Sigma_S - Sigma_F, N_S))('+')*dS(1)
+    Rh_S4 = w*inner(YY_S - Y_S, Dt_U_S - P_S)*dx
 
     # Mesh residuals
-    Rh_M1 = inner(v, Dt_U_M)*dx - inner(v, div(Sigma_M))*dx
-    Rh_M2 = inner(avg(v), jump(dot(Sigma_M, N_F)))*dS
-    Rh_M4 = inner(v, U_M - U_S)('+')*dS(1)
+    Rh_M1 = w*inner(ZZ_M - Z_M, Dt_U_M - div(Sigma_M))*dx
+    Rh_M2 = avg(w)*inner(ZZ_M('+') - Z_M('+'), jump(dot(Sigma_M, N_F)))*dS
+    Rh_M3 = avg(w)*inner(YY_M - Y_M, U_M - U_S)('+')*dS(1)
+
+    # Collect residuals
+    Rh_F = Rh_F1 + Rh_F2 + Rh_F3
+    Rh_S = Rh_S1 + Rh_S2 + Rh_S3 + Rh_S4
+    Rh_M = Rh_M1 + Rh_M2 + Rh_M3
+
+    # Sum residuals over time intervals
+    timestep_range = read_timestep_range(problem)
+    for i in range(1, len(timestep_range)):
+
+        # Get current time and time step
+        t0 = timestep_range[i - 1]
+        t1 = timestep_range[i]
+        T  = problem.end_time()
+        dt = t1 - t0
+        kn.assign(dt)
+
+        # Display progress
+        info("")
+        info("-"*80)
+        begin("* Evaluating residuals on new time step")
+        info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
+
+        # Read primal data
+        read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0, Omega, Omega_F, Omega_S)
+        read_primal_data(U_F1, P_F1, U_S1, P_S1, U_M1, t1, Omega, Omega_F, Omega_S)
+
+        # Read dual data (pick value at right-hand side of interval)
+        read_dual_data(Z, t1)
+
+        # Assemble residuals
+        rh_F = assemble(Rh_F, interior_facet_domains=problem.fsi_boundary)
+        rh_S = assemble(Rh_S, interior_facet_domains=problem.fsi_boundary)
+        rh_M = assemble(Rh_M, interior_facet_domains=problem.fsi_boundary)
+
+        # Convert to mesh functions
+        rh_F = vector_to_meshfunction(rh_F, Omega)
+        rh_S = vector_to_meshfunction(rh_S, Omega)
+        rh_M = vector_to_meshfunction(rh_M, Omega)
+
+        end()
+
+    # Plot residuals
+    plot(rh_F, title="Fluid residuals")
+    plot(rh_S, title="Structure residuals")
+    plot(rh_M, title="Mesh residuals")
 
 def evaluate_time_residuals():
     "Evaluate residuals in time"
@@ -100,3 +156,13 @@ def init_time_residuals():
     "Initialize time residuals"
 
     pass
+
+def vector_to_meshfunction(x, Omega):
+    "Convert vector x to cell function on Omega"
+    f = CellFunction("double", Omega)
+    if not f.size() == x.size():
+        raise RuntimeError, "Size of vector does not match number of cells."
+    xx = x.array()
+    for i in range(x.size()):
+        f[i] = xx[i]
+    return f

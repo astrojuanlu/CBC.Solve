@@ -121,9 +121,8 @@ class DualSolver:
             info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
             # Read primal data
-            #self._read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0)
-            read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0,
-                             Omega, Omega_F, Omega_S)
+            read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0, Omega, Omega_F, Omega_S)
+            read_primal_data(U_F1, P_F1, U_S1, P_S1, U_M1, t1, Omega, Omega_F, Omega_S)
 
             # FIXME: Missing exterior_facet_domains, need to figure
             # FIXME: out why they are needed
