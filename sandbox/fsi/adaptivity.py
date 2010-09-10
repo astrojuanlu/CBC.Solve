@@ -32,6 +32,25 @@ def estimate_error(problem):
     return E, eta_K
 
 def refine_mesh(mesh, indicators):
+    "Refine mesh based on error indicators"
+
+    # Set cell markers using Dorfler marking
+    fraction = 0.5
+    indices = list(argsort(indicators))
+    indices.reverse()
+    sub_sum = 0.0
+    total_sum = sum(indicators)
+    for i in indices:
+        sub_sum += indicators[i]
+        markers[i] = True
+        if sub_sum >= fraction*total_sum:
+            break
+
+    # Refine mesh
+    mesh = refine(mesh, markers)
+
+    plot(mesh, "Refined mesh")
+
     return mesh
 
 def compute_error_indicators_h(problem):
