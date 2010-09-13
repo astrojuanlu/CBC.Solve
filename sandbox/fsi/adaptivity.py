@@ -4,15 +4,12 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-10
+# Last changed: 2010-09-13
 
 from dolfin import info
 from numpy import zeros, argsort
 
-from operators import Sigma_F as _Sigma_F
-from operators import Sigma_S as _Sigma_S
-from operators import Sigma_M as _Sigma_M
-from operators import F, J
+from residuals import *
 from storage import *
 from utils import *
 
@@ -66,18 +63,10 @@ def refine_mesh(mesh, indicators):
 def compute_error_indicators_h(problem):
     "Compute error indicators for space discretization error E_h"
 
-    # Get problem parameters
-    Omega   = problem.mesh()
+    # Get meshes
+    Omega = problem.mesh()
     Omega_F = problem.fluid_mesh()
     Omega_S = problem.structure_mesh()
-    rho_F   = problem.fluid_density()
-    mu_F    = problem.fluid_viscosity()
-    rho_S   = problem.structure_density()
-    mu_S    = problem.structure_mu()
-    lmbda_S = problem.structure_lmbda()
-    alpha_M = problem.mesh_alpha()
-    mu_M    = problem.mesh_mu()
-    lmbda_M = problem.mesh_lmbda()
 
     # Define projection space (piecewise constants)
     W = FunctionSpace(Omega, "DG", 0)
@@ -106,46 +95,12 @@ def compute_error_indicators_h(problem):
     # Define time step (value set in each time step)
     kn = Constant(0.0)
 
-    # Define normals
-    N = FacetNormal(Omega)
-    N_F = N
-    N_S = N
-
-    # Define midpoint values
-    U_F = 0.5 * (U_F0 + U_F1)
-    P_F = 0.5 * (P_F0 + P_F1)
-    U_S = 0.5 * (U_S0 + U_S1)
-    P_S = 0.5 * (P_S0 + P_S1)
-    U_M = 0.5 * (U_M0 + U_M1)
-
-    # Define time derivatives
-    dt_U_F = (1/kn) * (U_F1 - U_F0)
-    dt_U_M = (1/kn) * (U_M1 - U_M0)
-    Dt_U_F = rho_F * J(U_M) * (dt_U_F + dot(grad(U_F), dot(inv(F(U_M)), U_F - dt_U_M)))
-    Dt_U_S = (1/kn) * (U_S1 - U_S0)
-    Dt_P_S = rho_S * (1/kn) * (P_S1 - P_S0)
-    Dt_U_M = alpha_M * (1/kn) * (U_M1 - U_M0)
-
-    # Define stresses
-    Sigma_F = J(U_M)*dot(_Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T)
-    Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
-    Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
-
-    # Fluid residual contributions
-    E_F1 = w*inner(ZZ_F - Z_F, Dt_U_F - div(Sigma_F))*dx
-    E_F2 = avg(w)*inner(ZZ_F('+') - Z_F('+'), jump(dot(Sigma_F, N_F)))*dS
-    E_F3 = w*inner(YY_F - Y_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx
-
-    # Structure residual contributions
-    E_S1 = w*inner(ZZ_S - Z_S, Dt_P_S - div(Sigma_S))*dx
-    E_S2 = avg(w)*inner(ZZ_S('+') - Z_S('+'), jump(dot(Sigma_S, N_S)))*dS
-    E_S3 = avg(w)*inner(ZZ_S - Z_S, dot(Sigma_S - Sigma_F, N_S))('+')*dS(1)
-    E_S4 = w*inner(YY_S - Y_S, Dt_U_S - P_S)*dx
-
-    # Mesh residual contributions
-    E_M1 = w*inner(ZZ_M - Z_M, Dt_U_M - div(Sigma_M))*dx
-    E_M2 = avg(w)*inner(ZZ_M('+') - Z_M('+'), jump(dot(Sigma_M, N_F)))*dS
-    E_M3 = avg(w)*inner(YY_M - Y_M, U_M - U_S)('+')*dS(1)
+    # Get residuals
+    R_F, R_S, R_M = strong_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
+                                     U_F1, P_F1, U_S1, P_S1, U_M1,
+                                      Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
+                                     ZZ_F, YY_F, ZZ_S, YY_S, ZZ_M, YY_M,
+                                     w, kn, problem)
 
     # Reset vectors for assembly of residuals
     eta_F = zeros(Omega.num_cells())
@@ -189,21 +144,14 @@ def compute_error_indicators_h(problem):
 
         # Assemble error indicator contributions
         info("Assembling error contributions")
-        e_F1 = assemble(E_F1, interior_facet_domains=problem.fsi_boundary)
-        e_F2 = assemble(E_F2, interior_facet_domains=problem.fsi_boundary)
-        e_F3 = assemble(E_F3, interior_facet_domains=problem.fsi_boundary)
-        e_S1 = assemble(E_S1, interior_facet_domains=problem.fsi_boundary)
-        e_S2 = assemble(E_S2, interior_facet_domains=problem.fsi_boundary)
-        e_S3 = assemble(E_S3, interior_facet_domains=problem.fsi_boundary)
-        e_S4 = assemble(E_S4, interior_facet_domains=problem.fsi_boundary)
-        e_M1 = assemble(E_M1, interior_facet_domains=problem.fsi_boundary)
-        e_M2 = assemble(E_M2, interior_facet_domains=problem.fsi_boundary)
-        e_M3 = assemble(E_M3, interior_facet_domains=problem.fsi_boundary)
+        e_F = [assemble(R_Fi, interior_facet_domains=problem.fsi_boundary) for R_Fi in R_F]
+        e_S = [assemble(R_Si, interior_facet_domains=problem.fsi_boundary) for R_Si in R_S]
+        e_M = [assemble(R_Mi, interior_facet_domains=problem.fsi_boundary) for R_Mi in R_M]
 
         # Add error contributions
-        eta_F += dt * (abs(e_F1.array()) + abs(e_F2.array()) + abs(e_F3.array()))
-        eta_S += dt * (abs(e_S1.array()) + abs(e_S2.array()) + abs(e_S3.array()) + abs(e_S4.array()))
-        eta_M += dt * (abs(e_M1.array()) + abs(e_M2.array()) + abs(e_M3.array()))
+        eta_F += dt * sum(abs(e.array()) for e in e_F)
+        eta_S += dt * sum(abs(e.array()) for e in e_S)
+        eta_M += dt * sum(abs(e.array()) for e in e_M)
 
         end()
 
