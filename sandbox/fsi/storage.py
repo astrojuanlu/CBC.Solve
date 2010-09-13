@@ -15,7 +15,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from numpy import append
 from dolfin import *
 
-# Last changed: 2010-09-10
+# Last changed: 2010-09-13
 
 # Time series for primal variables
 _u_F_data = None

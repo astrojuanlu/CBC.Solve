@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-17
+# Last changed: 2010-09-13
 
 from dolfin import *
 from numpy import array, append
@@ -13,7 +13,7 @@ from fsisolver import FSISolver
 class FSI(CBCProblem):
     "Base class for all FSI problems"
 
-    def __init__(self, structure):
+    def __init__(self, mesh):
         "Create FSI problem"
 
         # Initialize base class
@@ -27,7 +27,7 @@ class FSI(CBCProblem):
         self.parameters.add(self.solver.parameters)
 
         # Create submeshes and mappings
-        self.init_meshes(structure)
+        self.init_meshes(mesh)
 
     def solve(self):
         "Solve and return computed solution (u_F, p_F, U_S, P_S, U_M, P_M)"
@@ -38,18 +38,19 @@ class FSI(CBCProblem):
         # Call solver
         return self.solver.solve()
 
-    def init_meshes(self, structure):
+    def init_meshes(self, Omega):
         "Create mappings between submeshes"
 
         info("Exracting fluid and structure submeshes")
 
-        # Get global mesh
-        Omega = self.mesh()
+        # Set global mesh
+        self.Omega = Omega
 
         # Create cell markers (0 = fluid, 1 = structure)
         D = Omega.topology().dim()
         cell_domains = MeshFunction("uint", self.Omega, D)
         cell_domains.set_all(0)
+        structure = self.structure()
         structure.mark(cell_domains, 1)
 
         # Extract submeshes for fluid and structure
@@ -118,10 +119,16 @@ class FSI(CBCProblem):
         self.fsi_boundary = fsi_boundary
         self.fsi_orientation = fsi_orientation
 
+    def mesh(self):
+        "Return mesh for full domain"
+        return self.Omega
+
     def fluid_mesh(self):
+        "Return mesh for fluid domain"
         return self.Omega_F
 
     def structure_mesh(self):
+        "Return mesh for structure domain"
         return self.Omega_S
 
     def add_f2s(self, xs, xf):

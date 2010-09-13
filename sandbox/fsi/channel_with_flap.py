@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-10
+# Last changed: 2010-09-13
 
 from fsiproblem import *
 
@@ -44,18 +44,12 @@ class ChannelWithFlap(FSI):
         # Create the complete mesh
         ny = command_line_parameters["ny"]
         nx = 4*ny
-        self.Omega = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
-
-        # Create structure
-        structure = Structure()
+        mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 
         # Initialize base class
-        FSI.__init__(self, structure)
+        FSI.__init__(self, mesh)
 
     #--- Common parameters ---
-
-    def mesh(self):
-        return self.Omega
 
     def end_time(self):
         return 1.0
@@ -112,6 +106,9 @@ class ChannelWithFlap(FSI):
 
     #--- Parameters for structure problem ---
 
+    def structure(self):
+        return Structure()
+
     def structure_density(self):
         return 15.0
 
@@ -147,5 +144,5 @@ problem.parameters["solver_parameters"]["solve_primal"] = False
 problem.parameters["solver_parameters"]["solve_dual"] = False
 problem.parameters["solver_parameters"]["estimate_error"] = True
 problem.parameters["solver_parameters"]["plot_solution"] = False
-problem.parameters["solver_parameters"]["tolerance"] = 0.1
+problem.parameters["solver_parameters"]["tolerance"] = 0.01
 u_F, p_F, U_S, P_S, U_M = problem.solve()

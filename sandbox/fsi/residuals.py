@@ -33,7 +33,7 @@ def weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
 
     # Structure residual
     R_S = inner(v_S, Dt_P_S)*dx + inner(grad(v_S), Sigma_S)*dx \
-        - inner(q_S, Sigma_F, N_S))('+')*dS(1) \
+        - inner(q_S, Sigma_F, N_S)('+')*dS(1) \
         + inner(q_S, Dt_U_S - P_S)*dx
 
     # Mesh residual contributions
