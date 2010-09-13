@@ -12,9 +12,35 @@ from operators import Sigma_S as _Sigma_S
 from operators import Sigma_M as _Sigma_M
 from operators import F, J
 
-def weak_residuals():
+def weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
+                   U_F1, P_F1, U_S1, P_S1, U_M1,
+                   Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
+                   ZZ_F, YY_F, ZZ_S, YY_S, ZZ_M, YY_M,
+                   w, kn, problem):
     "Return weak residuals"
-    return None
+
+    # Define stresses
+    Sigma_F = J(U_M)*dot(_Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T)
+    Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
+    Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
+
+    # FIXME: Missing G_F,N and B_F in R_F
+    # FIXME: Missing B_S in R_S
+
+    # Fluid residual
+    R_F = inner(v_F, Dt_U_F)*dx + inner(sym(grad(v_F)), Sigma_F)*dx \
+        + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx
+
+    # Structure residual
+    R_S = inner(v_S, Dt_P_S)*dx + inner(grad(v_S), Sigma_S)*dx \
+        - inner(q_S, Sigma_F, N_S))('+')*dS(1) \
+        + inner(q_S, Dt_U_S - P_S)*dx
+
+    # Mesh residual contributions
+    R_M = inner(v_M, Dt_U_M)*dx + inner(sym(grad(v_M)), Sigma_M)*dx \
+        + inner(q_M, U_M - U_S)('+')*dS(1)
+
+    return R_F, R_S, R_M
 
 def strong_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
                      U_F1, P_F1, U_S1, P_S1, U_M1,
