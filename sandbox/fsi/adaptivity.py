@@ -7,7 +7,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 # Last changed: 2010-09-13
 
 from dolfin import info
-from numpy import zeros, argsort
+from numpy import zeros, argsort, linalg
 
 from residuals import *
 from storage import *
@@ -22,12 +22,8 @@ def estimate_error(problem):
     "Estimate error and compute error indicators"
 
     # Compute error indicators
-    eta_K = compute_error_indicators(problem)
-
-    # FIXME: Compute stability factor
-
-    # Compute stability factor for time-stepping
-    S = 1.0
+    eta_K, ST = compute_error_indicators(problem)
+    info("Stability factor is S(T) = %g" % ST)
 
     # FIXME: Need to include E_k and E_c
 
@@ -37,7 +33,7 @@ def estimate_error(problem):
     E_c = 0.0
     E = E_h + E_k + E_c
 
-    return E, eta_K, S
+    return E, eta_K, ST
 
 def compute_error_indicators(problem):
     "Compute error indicators for space discretization error E_h"
@@ -56,7 +52,15 @@ def compute_error_indicators(problem):
     U_F1, P_F1, U_S1, P_S1, U_M1 = init_primal_data(Omega)
 
     # Initialize dual functions
-    Z, (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = init_dual_data(Omega)
+    Z0, (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = init_dual_data(Omega)
+    Z1, (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = init_dual_data(Omega)
+
+    # Define midpoint values for primal functions
+    U_F = 0.5 * (U_F0 + U_F1)
+    P_F = 0.5 * (P_F0 + P_F1)
+    U_S = 0.5 * (U_S0 + U_S1)
+    P_S = 0.5 * (P_S0 + P_S1)
+    U_M = 0.5 * (U_M0 + U_M1)
 
     # Define function spaces for extrapolation
     V2 = VectorFunctionSpace(Omega, "CG", 2)
@@ -77,7 +81,8 @@ def compute_error_indicators(problem):
     # Get residuals
     R_F, R_S, R_M = strong_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
                                      U_F1, P_F1, U_S1, P_S1, U_M1,
-                                      Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
+                                     U_F,  P_F,  U_S,  P_S,  U_M,
+                                     Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1,
                                      ZZ_F, YY_F, ZZ_S, YY_S, ZZ_M, YY_M,
                                      w, kn, problem)
 
@@ -85,6 +90,9 @@ def compute_error_indicators(problem):
     eta_F = zeros(Omega.num_cells())
     eta_S = zeros(Omega.num_cells())
     eta_M = zeros(Omega.num_cells())
+
+    # Reset stability factor
+    ST = 0.0
 
     # Sum residuals over time intervals
     timestep_range = read_timestep_range(problem)
@@ -109,17 +117,18 @@ def compute_error_indicators(problem):
         read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0, Omega, Omega_F, Omega_S)
         read_primal_data(U_F1, P_F1, U_S1, P_S1, U_M1, t1, Omega, Omega_F, Omega_S)
 
-        # Read dual data (pick value at right-hand side of interval)
-        read_dual_data(Z, t1)
+        # Read dual data
+        read_dual_data(Z0, t0)
+        read_dual_data(Z1, t1)
 
         # Extrapolate dual data
         info("Extrapolating dual solution")
-        ZZ_F.extrapolate(Z_F)
-        YY_F.extrapolate(Y_F)
-        ZZ_S.extrapolate(Z_S)
-        YY_S.extrapolate(Y_S)
-        ZZ_M.extrapolate(Z_M)
-        YY_M.extrapolate(Y_M)
+        ZZ_F.extrapolate(Z_F1)
+        YY_F.extrapolate(Y_F1)
+        ZZ_S.extrapolate(Z_S1)
+        YY_S.extrapolate(Y_S1)
+        ZZ_M.extrapolate(Z_M1)
+        YY_M.extrapolate(Y_M1)
 
         # Assemble error indicator contributions
         info("Assembling error contributions")
@@ -132,6 +141,9 @@ def compute_error_indicators(problem):
         eta_S += dt * sum(abs(e.array()) for e in e_S)
         eta_M += dt * sum(abs(e.array()) for e in e_M)
 
+        # Add to stability factor
+        ST += 0.5 * linalg.norm(Z0.vector().array() - Z1.vector().array(), 2)
+
         end()
 
     # Compute sum of error indicators
@@ -143,7 +155,7 @@ def compute_error_indicators(problem):
     #plot(array_to_meshfunction(eta_M, Omega), title="Mesh error indicators")
     plot(array_to_meshfunction(eta_K, Omega), title="Total error indicators")
 
-    return eta_K
+    return eta_K, ST
 
 def compute_time_residual(time_series, t0, t1, problem):
     "Compute size of time residual"

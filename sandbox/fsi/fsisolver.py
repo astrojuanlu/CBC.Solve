@@ -48,6 +48,9 @@ class FSISolver(CBCSolver):
         # Create empty solution (return value when primal is not solved)
         U = 5*(None,)
 
+        # Initial guess for stability factor
+        ST = 1.0
+
         # Adaptive loop
         cpu_time = time()
         while True:
@@ -56,7 +59,7 @@ class FSISolver(CBCSolver):
             if self.parameters["solve_primal"]:
                 begin("Solving primal problem")
                 primal_solver = PrimalSolver(self.problem, self.parameters)
-                U = primal_solver.solve()
+                U = primal_solver.solve(ST)
                 end()
             else:
                 info("Not solving primal problem")
@@ -73,7 +76,7 @@ class FSISolver(CBCSolver):
             # Estimate error and compute error indicators
             if self.parameters["estimate_error"]:
                 begin("Estimating error and computing error indicators")
-                error, indicators = estimate_error(self.problem)
+                error, indicators, ST = estimate_error(self.problem)
                 end()
             else:
                 info("Not estimating error")

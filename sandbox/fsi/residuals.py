@@ -68,6 +68,7 @@ def weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
 
 def strong_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
                      U_F1, P_F1, U_S1, P_S1, U_M1,
+                     U_F,  P_F,  U_S,  P_S,  U_M,
                      Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
                      ZZ_F, YY_F, ZZ_S, YY_S, ZZ_M, YY_M,
                      w, kn, problem):

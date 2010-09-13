@@ -25,6 +25,7 @@ class PrimalSolver:
         self.save_series = solver_parameters["save_series"]
         self.maxiter = solver_parameters["maxiter"]
         self.itertol = solver_parameters["itertol"]
+        self.tolerance = solver_parameters["tolerance"]
 
         # Create files for saving to VTK
         if self.save_solution:
@@ -45,7 +46,7 @@ class PrimalSolver:
         # Store problem
         self.problem = problem
 
-    def solve(self):
+    def solve(self, ST):
         "Solve the primal FSI problem"
 
         # Record CPU time
@@ -168,12 +169,8 @@ class PrimalSolver:
                 info("Finished time-stepping")
                 break
 
-            # FIXME: Compute these
-            Rk = 1.0
-            TOL = 0.1
-            ST = 1.0
-
             # Compute new time step
+            TOL = self.tolerance
             Rk = compute_time_residual(self.time_series, t0, t1, self.problem)
             (dt, at_end) = compute_timestep(Rk, ST, TOL, dt, t1, T)
             t0 = t1
