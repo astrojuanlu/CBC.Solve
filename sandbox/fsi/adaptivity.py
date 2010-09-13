@@ -13,11 +13,21 @@ from residuals import *
 from storage import *
 from utils import *
 
+# Variables for time residual
+U_F0 = P_F0 = U_S0 = P_S0 = U_M0 = None
+U_F1 = P_F1 = U_S1 = P_S1 = U_M1 = None
+v_F = q_F = v_S = q_S = v_M = q_M = None
+
 def estimate_error(problem):
     "Estimate error and compute error indicators"
 
     # Compute error indicators
-    eta_K = compute_error_indicators_h(problem)
+    eta_K = compute_error_indicators(problem)
+
+    # FIXME: Compute stability factor
+
+    # Compute stability factor for time-stepping
+    S = 1.0
 
     # FIXME: Need to include E_k and E_c
 
@@ -27,40 +37,9 @@ def estimate_error(problem):
     E_c = 0.0
     E = E_h + E_k + E_c
 
-    return E, eta_K
+    return E, eta_K, S
 
-def refine_mesh(mesh, indicators):
-    "Refine mesh based on error indicators"
-
-    # Set cell markers using Dorfler marking
-    fraction = 0.5
-    indices = list(argsort(indicators))
-    indices.reverse()
-    sub_sum = 0.0
-    total_sum = sum(indicators)
-    markers = CellFunction("bool", mesh)
-    markers.set_all(False)
-    for i in indices:
-        sub_sum += indicators[i]
-        markers[int(i)] = True
-        if sub_sum >= fraction*total_sum:
-            break
-
-    # Plot markers (convert to uint so it can be plotted)
-    plot_markers = CellFunction("uint", mesh)
-    plot_markers.set_all(0)
-    for i in range(plot_markers.size()):
-        if markers[i]:
-            plot_markers[i] = True
-    plot(plot_markers, title="Markers")
-
-    # Refine mesh
-    mesh = refine(mesh, markers)
-    plot(mesh, "Refined mesh")
-
-    return mesh
-
-def compute_error_indicators_h(problem):
+def compute_error_indicators(problem):
     "Compute error indicators for space discretization error E_h"
 
     # Get meshes
@@ -166,31 +145,107 @@ def compute_error_indicators_h(problem):
 
     return eta_K
 
-def compute_timestep(R, S, TOL, dt, t, T):
+def compute_time_residual(time_series, t0, t1, problem):
+    "Compute size of time residual"
+
+    info("Computing time residual")
+
+    # Get meshes
+    Omega = problem.mesh()
+    Omega_F = problem.fluid_mesh()
+    Omega_S = problem.structure_mesh()
+
+    # Initialize solution variables (only first time)
+    global U_F0, P_F0, U_S0, P_S0, U_M0
+    global U_F1, P_F1, U_S1, P_S1, U_M1
+    global v_F, q_F, v_S, q_S, v_M, q_M
+    if t0 == 0.0:
+
+        # Create primal variables
+        info("Initializing primal variables for time residual")
+        U_F0, P_F0, U_S0, P_S0, U_M0 = init_primal_data(Omega)
+        U_F1, P_F1, U_S1, P_S1, U_M1 = init_primal_data(Omega)
+
+        # Create dual function space and test functions
+        W = init_dual_space(Omega)
+        v_F, q_F, v_S, q_S, v_M, q_M = TestFunctions(W)
+
+    # Read solution data
+    read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0, Omega, Omega_F, Omega_S)
+    read_primal_data(U_F1, P_F1, U_S1, P_S1, U_M1, t1, Omega, Omega_F, Omega_S)
+
+    # Set time step
+    kn = Constant(t1 - t0)
+
+    # Get weak residuals
+    R_F, R_S, R_M = weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
+                                   U_F1, P_F1, U_S1, P_S1, U_M1,
+                                   U_F1, P_F1, U_S1, P_S1, U_M1,
+                                   v_F, q_F, v_S, q_S, v_M, q_M,
+                                   kn, problem)
+
+    # Assemble residual
+    R = assemble(R_F + R_S + R_M, interior_facet_domains=problem.fsi_boundary)
+
+    # Compute l^2 norm
+    Rk = norm(R, "l2")
+
+    info("Time residual is Rk = %g" % Rk)
+
+    return Rk
+
+def refine_mesh(mesh, indicators):
+    "Refine mesh based on error indicators"
+
+    # Set cell markers using Dorfler marking
+    fraction = 0.5
+    indices = list(argsort(indicators))
+    indices.reverse()
+    sub_sum = 0.0
+    total_sum = sum(indicators)
+    markers = CellFunction("bool", mesh)
+    markers.set_all(False)
+    for i in indices:
+        sub_sum += indicators[i]
+        markers[int(i)] = True
+        if sub_sum >= fraction*total_sum:
+            break
+
+    # Plot markers (convert to uint so it can be plotted)
+    plot_markers = CellFunction("uint", mesh)
+    plot_markers.set_all(0)
+    for i in range(plot_markers.size()):
+        if markers[i]:
+            plot_markers[i] = True
+    plot(plot_markers, title="Markers")
+
+    # Refine mesh
+    mesh = refine(mesh, markers)
+    plot(mesh, "Refined mesh")
+
+    return mesh
+
+def compute_timestep(Rk, ST, TOL, dt, t1, T):
     """Compute new time step based on residual R, stability factor S,
     tolerance TOL, and the previous time step dt. The time step is
     adjusted so that we will not step beyond the given end time."""
 
     # Parameters for adaptive time-stepping
-    C = 1.0               # interpolation constant
     safety_factor = 0.9   # safety factor for time step selection
     snap = 0.9            # snapping to end time when close
     conservation = 1.0    # time step conservation (high value means small change)
 
     # Compute new time step
-    dt_new = safety_factor * TOL / (C*S*R)
-
-    # FIXME: Temporary until we get real input
-    dt_new = dt
+    dt_new = safety_factor * TOL / (ST * Rk)
 
     # Modify time step to avoid oscillations
     dt_new = (1.0 + conservation) * dt * dt_new / (dt + conservation * dt_new)
 
     # Modify time step so we don't step beoynd end time
     at_end = False
-    if dt_new > snap * (T - t):
-        info("Close to t = T, snapping time step to end time: %g --> %g" % (dt_new, T - t))
-        dt_new = T - t
+    if dt_new > snap * (T - t1):
+        info("Close to t = T, snapping time step to end time: %g --> %g" % (dt_new, T - t1))
+        dt_new = T - t1
         at_end = True
 
     info("Changing time step: %g --> %g" % (dt, dt_new))

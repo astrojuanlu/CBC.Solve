@@ -9,9 +9,9 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-16
+# Last changed: 2010-09-13
 
-__all__ = ["FluidProblem", "StructureProblem", "MeshProblem"]
+__all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution"]
 
 from dolfin import *
 
@@ -296,3 +296,16 @@ class MeshProblem():
 
     def __str__(self):
         return "The mesh problem (M)"
+
+def extract_solution(F, S, M):
+    "Extract solution from sub problems"
+
+    # Extract solutions from subproblems
+    u_F, p_F = F.solution()
+    U_S, P_S = S.solution()
+    U_M = M.solution()
+
+    # Pack up solutions
+    U = (u_F, p_F, U_S, P_S, U_M)
+
+    return U

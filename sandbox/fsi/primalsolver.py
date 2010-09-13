@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-06
+# Last changed: 2010-09-13
 
 from time import time
 
@@ -28,19 +28,19 @@ class PrimalSolver:
 
         # Create files for saving to VTK
         if self.save_solution:
-            self.u_F_file = File("pvd/u_F.pvd")
-            self.p_F_file = File("pvd/p_F.pvd")
-            self.U_S_file = File("pvd/U_S.pvd")
-            self.P_S_file = File("pvd/P_S.pvd")
-            self.U_M_file = File("pvd/U_M.pvd")
+            self.files = (File("pvd/u_F.pvd"),
+                          File("pvd/p_F.pvd"),
+                          File("pvd/U_S.pvd"),
+                          File("pvd/P_S.pvd"),
+                          File("pvd/U_M.pvd"))
 
         # Create time series for storing solution
         if self.save_series:
-            self.u_F_series = TimeSeries("bin/u_F")
-            self.p_F_series = TimeSeries("bin/p_F")
-            self.U_S_series = TimeSeries("bin/U_S")
-            self.P_S_series = TimeSeries("bin/P_S")
-            self.U_M_series = TimeSeries("bin/U_M")
+            self.time_series = (TimeSeries("bin/u_F"),
+                                TimeSeries("bin/p_F"),
+                                TimeSeries("bin/U_S"),
+                                TimeSeries("bin/P_S"),
+                                TimeSeries("bin/U_M"))
 
         # Store problem
         self.problem = problem
@@ -68,11 +68,13 @@ class PrimalSolver:
         U_S0 = Function(V_S)
 
         # Save initial solution to file and series
-        self._save_solution(F, S, M)
-        self._save_series(F, S, M, 0.0)
+        U = extract_solution(F, S, M)
+        self._save_solution(U)
+        self._save_series(U, 0)
 
         # Time-stepping
-        t = dt
+        t0 = 0.0
+        t1 = dt
         at_end = False
         while True:
 
@@ -80,7 +82,7 @@ class PrimalSolver:
             info("")
             info("-"*80)
             begin("* Starting new time step")
-            info_blue("  * t = %g (T = %g, dt = %g)" % (t, T, dt))
+            info_blue("  * t = %g (T = %g, dt = %g)" % (t1, T, dt))
 
             # Fixed point iteration on FSI problem
             for iter in range(self.maxiter):
@@ -148,13 +150,14 @@ class PrimalSolver:
             self.problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, at_end)
 
             # Save solution and time series to file
-            self._save_solution(F, S, M)
-            self._save_series(F, S, M, t)
+            U = extract_solution(F, S, M)
+            self._save_solution(U)
+            self._save_series(U, t1)
 
             # Move to next time step
-            F.update(t)
+            F.update(t1)
             S.update()
-            M.update(t)
+            M.update(t1)
 
             # FIXME: This should be done automatically by the solver
             F.update_extra()
@@ -171,11 +174,12 @@ class PrimalSolver:
             ST = 1.0
 
             # Compute new time step
-            (dt, at_end) = compute_timestep(Rk, ST, TOL, dt, t, T)
-            t += dt
+            Rk = compute_time_residual(self.time_series, t0, t1, self.problem)
+            (dt, at_end) = compute_timestep(Rk, ST, TOL, dt, t1, T)
+            t0 = t1
+            t1 = t1 + dt
 
             end()
-
 
         # Report elapsed time
         info_blue("Primal solution computed in %g seconds." % (time() - cpu_time))
@@ -183,38 +187,22 @@ class PrimalSolver:
         # Return solution
         return u_F, p_F, U_S, P_S, U_M
 
-    def _save_solution(self, F, S, M):
+    def _save_solution(self, U):
         "Save solution to VTK"
 
         # Check if we should save
         if not self.save_solution: return
 
-        # Get solution
-        u_F, p_F = F.solution()
-        U_S, P_S = S.solution()
-        U_M = M.solution()
-
         # Save to file
-        self.u_F_file << u_F
-        self.p_F_file << p_F
-        self.U_S_file << U_S
-        self.P_S_file << P_S
-        self.U_M_file << U_M
+        for i in range(5):
+            self.files[i] << U[i]
 
-    def _save_series(self, F, S, M, t):
+    def _save_series(self, U, t):
         "Save solution to time series"
 
         # Check if we should save
         if not self.save_series: return
 
-        # Get solution
-        u_F, p_F = F.solution()
-        U_S, P_S = S.solution()
-        U_M = M.solution()
-
         # Save to series
-        self.u_F_series.store(u_F.vector(), t)
-        self.p_F_series.store(p_F.vector(), t)
-        self.U_S_series.store(U_S.vector(), t)
-        self.P_S_series.store(P_S.vector(), t)
-        self.U_M_series.store(U_M.vector(), t)
+        for i in range(5):
+            self.time_series[i].store(U[i].vector(), t)

@@ -12,10 +12,10 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
+# Last changed: 2010-09-13
+
 from numpy import append
 from dolfin import *
-
-# Last changed: 2010-09-13
 
 # Time series for primal variables
 _u_F_data = None
@@ -54,12 +54,8 @@ def init_primal_data(Omega):
 
     return U_F, P_F, U_S, P_S, U_M
 
-def init_dual_data(Omega):
-    "Return dual variables on the full domain initialized to zero"
-
-    # Open time series for dual solution
-    global _Z_data
-    _Z_data = TimeSeries("bin/Z")
+def init_dual_space(Omega):
+    "Return dual function space on the full domain"
 
     # Create function spaces
     V_F = VectorFunctionSpace(Omega, "CG", 2)
@@ -72,7 +68,17 @@ def init_dual_data(Omega):
     # Create mixed function space
     W = MixedFunctionSpace([V_F, Q_F, V_S, Q_S, V_M, Q_M])
 
+    return W
+
+def init_dual_data(Omega):
+    "Return dual variables on the full domain initialized to zero"
+
+    # Open time series for dual solution
+    global _Z_data
+    _Z_data = TimeSeries("bin/Z")
+
     # Create dual function
+    W = init_dual_space(Omega)
     Z = Function(W)
 
     return Z, Z.split(False)

@@ -14,10 +14,34 @@ from operators import F, J
 
 def weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
                    U_F1, P_F1, U_S1, P_S1, U_M1,
-                   Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
-                   ZZ_F, YY_F, ZZ_S, YY_S, ZZ_M, YY_M,
-                   w, kn, problem):
+                   U_F,  P_F,  U_S,  P_S,  U_M,
+                   v_F, q_F, v_S, q_S, v_M, q_M,
+                   kn, problem):
     "Return weak residuals"
+
+    # Get problem parameters
+    Omega   = problem.mesh()
+    rho_F   = problem.fluid_density()
+    mu_F    = problem.fluid_viscosity()
+    rho_S   = problem.structure_density()
+    mu_S    = problem.structure_mu()
+    lmbda_S = problem.structure_lmbda()
+    alpha_M = problem.mesh_alpha()
+    mu_M    = problem.mesh_mu()
+    lmbda_M = problem.mesh_lmbda()
+
+    # Define normals
+    N = FacetNormal(Omega)
+    N_F = N
+    N_S = N
+
+    # Define time derivatives
+    dt_U_F = (1/kn) * (U_F1 - U_F0)
+    dt_U_M = (1/kn) * (U_M1 - U_M0)
+    Dt_U_F = rho_F * J(U_M) * (dt_U_F + dot(grad(U_F), dot(inv(F(U_M)), U_F - dt_U_M)))
+    Dt_U_S = (1/kn) * (U_S1 - U_S0)
+    Dt_P_S = rho_S * (1/kn) * (P_S1 - P_S0)
+    Dt_U_M = alpha_M * (1/kn) * (U_M1 - U_M0)
 
     # Define stresses
     Sigma_F = J(U_M)*dot(_Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T)
@@ -33,7 +57,7 @@ def weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
 
     # Structure residual
     R_S = inner(v_S, Dt_P_S)*dx + inner(grad(v_S), Sigma_S)*dx \
-        - inner(q_S, Sigma_F, N_S)('+')*dS(1) \
+        - inner(q_S, dot(Sigma_F, N_S))('+')*dS(1) \
         + inner(q_S, Dt_U_S - P_S)*dx
 
     # Mesh residual contributions
