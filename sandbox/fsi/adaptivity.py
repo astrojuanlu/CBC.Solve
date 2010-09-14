@@ -49,6 +49,14 @@ def estimate_error(problem):
     P_S = 0.5 * (P_S0 + P_S1)
     U_M = 0.5 * (U_M0 + U_M1)
 
+    # Define midpoint values for dual functions
+    Z_F = 0.5 * (Z_F0 + Z_F1)
+    Y_F = 0.5 * (Y_F0 + Y_F1)
+    Z_S = 0.5 * (Z_S0 + Z_S1)
+    Y_S = 0.5 * (Y_S0 + Y_S1)
+    Z_M = 0.5 * (Z_M0 + Z_M1)
+    Y_M = 0.5 * (Y_M0 + Y_M1)
+
     # Define function spaces for extrapolation
     V2 = VectorFunctionSpace(Omega, "CG", 2)
     V3 = VectorFunctionSpace(Omega, "CG", 3)
@@ -65,28 +73,36 @@ def estimate_error(problem):
     # Define time step (value set in each time step)
     kn = Constant(0.0)
 
-    # Get strong residuals (for E_h)
-    R_F, R_S, R_M = strong_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
-                                     U_F1, P_F1, U_S1, P_S1, U_M1,
-                                     U_F,  P_F,  U_S,  P_S,  U_M,
-                                     Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1,
-                                     ZZ_F, YY_F, ZZ_S, YY_S, ZZ_M, YY_M,
-                                     dg, kn, problem)
+    # Get strong residuals for E_h
+    Rh_F, Rh_S, Rh_M = strong_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
+                                        U_F1, P_F1, U_S1, P_S1, U_M1,
+                                        U_F,  P_F,  U_S,  P_S,  U_M,
+                                        Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1,
+                                        ZZ_F, YY_F, ZZ_S, YY_S, ZZ_M, YY_M,
+                                        dg, kn, problem)
 
-    # Get weak residuals (for E_k)
-    r_F, r_S, r_M = weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
-                                   U_F1, P_F1, U_S1, P_S1, U_M1,
-                                   U_F1, P_F1, U_S1, P_S1, U_M1,
-                                   v_F, q_F, v_S, q_S, v_M, q_M,
-                                   kn, problem)
+    # Get weak residuals for E_k
+    Rk_F, Rk_S, Rk_M = weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
+                                      U_F1, P_F1, U_S1, P_S1, U_M1,
+                                      U_F1, P_F1, U_S1, P_S1, U_M1,
+                                      v_F, q_F, v_S, q_S, v_M, q_M,
+                                      kn, problem)
+
+    # Get weak residuals for E_c
+    Rc_F, Rc_S, Rc_M = weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
+                                      U_F1, P_F1, U_S1, P_S1, U_M1,
+                                      U_F,  P_F,  U_S,  P_S,  U_M,
+                                      Z_F, Y_F, Z_S, Y_S, Z_M, Y_M,
+                                      kn, problem)
 
     # Reset vectors for assembly of residuals
     eta_F = zeros(Omega.num_cells())
     eta_S = zeros(Omega.num_cells())
     eta_M = zeros(Omega.num_cells())
 
-    # Reset time discretization error E_k and stability factor ST
+    # Reset variables
     E_k = 0.0
+    E_c = 0.0
     ST = 0.0
 
     # Sum residuals over time intervals
@@ -127,13 +143,15 @@ def estimate_error(problem):
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
-        e_F = [assemble(R_Fi, interior_facet_domains=problem.fsi_boundary) for R_Fi in R_F]
-        e_S = [assemble(R_Si, interior_facet_domains=problem.fsi_boundary) for R_Si in R_S]
-        e_M = [assemble(R_Mi, interior_facet_domains=problem.fsi_boundary) for R_Mi in R_M]
+        e_F = [assemble(Rh_Fi, interior_facet_domains=problem.fsi_boundary) for Rh_Fi in Rh_F]
+        e_S = [assemble(Rh_Si, interior_facet_domains=problem.fsi_boundary) for Rh_Si in Rh_S]
+        e_M = [assemble(Rh_Mi, interior_facet_domains=problem.fsi_boundary) for Rh_Mi in Rh_M]
 
         # Assemble weak residuals for time discretization error
-        r = assemble(r_F + r_S + r_M, interior_facet_domains=problem.fsi_boundary)
-        r = norm(r)
+        Rk = norm(assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary))
+
+        # Assemble weak residuals for computational error
+        Rc = assemble(Rc_F + Rc_S + Rc_M, mesh=Omega, interior_facet_domains=problem.fsi_boundary)
 
         # Estimate interpolation error (local weight)
         s = 0.5 * linalg.norm(Z0.vector().array() - Z1.vector().array(), 2) / dt
@@ -144,7 +162,10 @@ def estimate_error(problem):
         eta_M += dt * sum(abs(e.array()) for e in e_M)
 
         # Add to E_k
-        E_k += dt * s * r
+        E_k += dt * s * Rk
+
+        # Add to E_c
+        E_c += dt * Rc
 
         # Add to stability factor
         ST += dt * s
@@ -157,11 +178,8 @@ def estimate_error(problem):
     # Compute space discretization error
     E_h = sum(eta_K)
 
-    # FIXME: Need to compute E_c
-    E_c = 0.0
-
     # Compute total error
-    E = E_h + E_k + E_c
+    E = E_h + E_k + abs(E_c)
 
     # Report results
     info("")
