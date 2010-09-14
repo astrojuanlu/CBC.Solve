@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-13
+# Last changed: 2010-09-14
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -21,31 +21,18 @@ v_F = q_F = v_S = q_S = v_M = q_M = None
 def estimate_error(problem):
     "Estimate error and compute error indicators"
 
-    # Compute error indicators
-    eta_K, ST = compute_error_indicators(problem)
-    info("Stability factor is S(T) = %g" % ST)
-
-    # FIXME: Need to include E_k and E_c
-
-    # Compute error estimate
-    E_h = sum(eta_K)
-    E_k = 0.0
-    E_c = 0.0
-    E = E_h + E_k + E_c
-
-    return E, eta_K, ST
-
-def compute_error_indicators(problem):
-    "Compute error indicators for space discretization error E_h"
-
     # Get meshes
     Omega = problem.mesh()
     Omega_F = problem.fluid_mesh()
     Omega_S = problem.structure_mesh()
 
     # Define projection space (piecewise constants)
-    W = FunctionSpace(Omega, "DG", 0)
-    w = TestFunction(W)
+    DG = FunctionSpace(Omega, "DG", 0)
+    dg = TestFunction(DG)
+
+    # Create dual function space and test functions
+    W = init_dual_space(Omega)
+    v_F, q_F, v_S, q_S, v_M, q_M = TestFunctions(W)
 
     # Initialize primal functions
     U_F0, P_F0, U_S0, P_S0, U_M0 = init_primal_data(Omega)
@@ -78,20 +65,28 @@ def compute_error_indicators(problem):
     # Define time step (value set in each time step)
     kn = Constant(0.0)
 
-    # Get residuals
+    # Get strong residuals (for E_h)
     R_F, R_S, R_M = strong_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
                                      U_F1, P_F1, U_S1, P_S1, U_M1,
                                      U_F,  P_F,  U_S,  P_S,  U_M,
                                      Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1,
                                      ZZ_F, YY_F, ZZ_S, YY_S, ZZ_M, YY_M,
-                                     w, kn, problem)
+                                     dg, kn, problem)
+
+    # Get weak residuals (for E_k)
+    r_F, r_S, r_M = weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
+                                   U_F1, P_F1, U_S1, P_S1, U_M1,
+                                   U_F1, P_F1, U_S1, P_S1, U_M1,
+                                   v_F, q_F, v_S, q_S, v_M, q_M,
+                                   kn, problem)
 
     # Reset vectors for assembly of residuals
     eta_F = zeros(Omega.num_cells())
     eta_S = zeros(Omega.num_cells())
     eta_M = zeros(Omega.num_cells())
 
-    # Reset stability factor
+    # Reset time discretization error E_k and stability factor ST
+    E_k = 0.0
     ST = 0.0
 
     # Sum residuals over time intervals
@@ -130,24 +125,54 @@ def compute_error_indicators(problem):
         ZZ_M.extrapolate(Z_M1)
         YY_M.extrapolate(Y_M1)
 
-        # Assemble error indicator contributions
+        # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
         e_F = [assemble(R_Fi, interior_facet_domains=problem.fsi_boundary) for R_Fi in R_F]
         e_S = [assemble(R_Si, interior_facet_domains=problem.fsi_boundary) for R_Si in R_S]
         e_M = [assemble(R_Mi, interior_facet_domains=problem.fsi_boundary) for R_Mi in R_M]
 
-        # Add error contributions
+        # Assemble weak residuals for time discretization error
+        r = assemble(r_F + r_S + r_M, interior_facet_domains=problem.fsi_boundary)
+        r = norm(r)
+
+        # Estimate interpolation error (local weight)
+        s = 0.5 * linalg.norm(Z0.vector().array() - Z1.vector().array(), 2) / dt
+
+        # Add to error indicators
         eta_F += dt * sum(abs(e.array()) for e in e_F)
         eta_S += dt * sum(abs(e.array()) for e in e_S)
         eta_M += dt * sum(abs(e.array()) for e in e_M)
 
+        # Add to E_k
+        E_k += dt * s * r
+
         # Add to stability factor
-        ST += 0.5 * linalg.norm(Z0.vector().array() - Z1.vector().array(), 2)
+        ST += dt * s
 
         end()
 
     # Compute sum of error indicators
     eta_K = eta_F + eta_S + eta_M
+
+    # Compute space discretization error
+    E_h = sum(eta_K)
+
+    # FIXME: Need to compute E_c
+    E_c = 0.0
+
+    # Compute total error
+    E = E_h + E_k + E_c
+
+    # Report results
+    info("")
+    info("Estimating error")
+    info("----------------")
+    info("E_h  = %g" % E_h)
+    info("E_k  = %g" % E_k)
+    info("E_c  = %g" % E_c)
+    info("E    = E_h + E_k + E_c = %g" % E)
+    info("S(T) = %g" % ST)
+    info("")
 
     # Plot residuals
     #plot(array_to_meshfunction(eta_F, Omega), title="Fluid error indicators")
@@ -155,7 +180,7 @@ def compute_error_indicators(problem):
     #plot(array_to_meshfunction(eta_M, Omega), title="Mesh error indicators")
     plot(array_to_meshfunction(eta_K, Omega), title="Total error indicators")
 
-    return eta_K, ST
+    return E, eta_K, ST
 
 def compute_time_residual(time_series, t0, t1, problem):
     "Compute size of time residual"
@@ -190,17 +215,17 @@ def compute_time_residual(time_series, t0, t1, problem):
     kn = Constant(t1 - t0)
 
     # Get weak residuals
-    R_F, R_S, R_M = weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
+    r_F, r_S, r_M = weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
                                    U_F1, P_F1, U_S1, P_S1, U_M1,
                                    U_F1, P_F1, U_S1, P_S1, U_M1,
                                    v_F, q_F, v_S, q_S, v_M, q_M,
                                    kn, problem)
 
     # Assemble residual
-    R = assemble(R_F + R_S + R_M, interior_facet_domains=problem.fsi_boundary)
+    r = assemble(r_F + r_S + r_M, interior_facet_domains=problem.fsi_boundary)
 
     # Compute l^2 norm
-    Rk = norm(R, "l2")
+    Rk = norm(r, "l2")
 
     info("Time residual is Rk = %g" % Rk)
 
