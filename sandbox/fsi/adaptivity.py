@@ -351,15 +351,10 @@ def save_indicators(eta_F, eta_S, eta_M, eta_K):
 
     global refinement_level
 
-    file_F = File("eta_F_%d.xml" % refinement_level)
-    file_S = File("eta_S_%d.xml" % refinement_level)
-    file_M = File("eta_M_%d.xml" % refinement_level)
-    file_K = File("eta_K_%d.xml" % refinement_level)
-
-    file_F << eta_F
-    file_S << eta_S
-    file_M << eta_M
-    file_K << eta_K
+    save_array(eta_F, "eta_F_%d.xml" % refinement_level)
+    save_array(eta_S, "eta_S_%d.xml" % refinement_level)
+    save_array(eta_M, "eta_M_%d.xml" % refinement_level)
+    save_array(eta_K, "eta_K_%d.xml" % refinement_level)
 
 def save_timestep(t1, Rk, dt):
     "Save time step to file"
@@ -367,5 +362,11 @@ def save_timestep(t1, Rk, dt):
     global refinement_level
 
     f = open("adaptivity/timesteps.txt", "a")
-    f.write("%d %g %g %g" % (refinement_level, t1, dt, Rk))
+    f.write("%d %g %g %g\n" % (refinement_level, t1, dt, Rk))
+    f.close()
+
+def save_array(x, filename):
+    "Save array to file"
+    f = open(filename, "w")
+    f.write(" ".join(str(xx) for xx in x))
     f.close()

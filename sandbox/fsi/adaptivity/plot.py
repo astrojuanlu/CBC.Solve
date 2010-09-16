@@ -13,10 +13,10 @@ def plot_time_steps():
 
     # Read file and get number of levels
     lines = open("timesteps.txt").read().split("\n")[:-1]
-    num_levels = max(l.split(" ")[0] for l in lines) + 1
+    num_levels = max(int(l.split(" ")[0]) for l in lines) + 1
 
     # Plot all adaptive time step sequences
-    for level in num_levels:
+    for level in range(num_levels):
         print "Plotting time steps for level %d" % level
 
         # Extract data
@@ -28,6 +28,10 @@ def plot_time_steps():
         # Plot
         figure(level)
         subplot(2, 1, 1); grid(True); plot(t, k)
-        ylabel("$k$")
+        ylabel("$k$"); title("Refinement level %d" % level)
         subplot(2, 1, 2); grid(True); plot(t, R)
-        ylabel('$R_k$')
+        ylabel('$R_k$'); xlabel("$t$")
+
+    show()
+
+plot_time_steps()
