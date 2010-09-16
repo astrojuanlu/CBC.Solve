@@ -20,6 +20,7 @@ v_F = q_F = v_S = q_S = v_M = q_M = None
 
 # Variables for storing adaptive data
 refinement_level = 0
+min_timestep = None
 
 def estimate_error(problem):
     "Estimate error and compute error indicators"
@@ -272,7 +273,7 @@ def refine_mesh(mesh, indicators):
 
     return refined_mesh
 
-def compute_timestep(Rk, ST, TOL, dt, t1, T):
+def compute_time_step(Rk, ST, TOL, dt, t1, T):
     """Compute new time step based on residual R, stability factor S,
     tolerance TOL, and the previous time step dt. The time step is
     adjusted so that we will not step beyond the given end time."""
@@ -295,12 +296,31 @@ def compute_timestep(Rk, ST, TOL, dt, t1, T):
         dt_new = T - t1
         at_end = True
 
+    # Store minimum time step
+    global min_timestep
+    if min_timestep is None or dt_new < min_timestep:
+        min_timestep = dt_new
+
     # Save time step
     save_timestep(t1, Rk, dt)
 
     info("Changing time step: %g --> %g" % (dt, dt_new))
 
     return dt_new, at_end
+
+def initial_timestep(problem):
+    "Return initial time step"
+
+    global min_timestep
+
+    # Get initial timestep for problem
+    dt = problem.initial_timestep()
+
+    # Use the smallest time step so far
+    if (not min_timestep is None) and min_timestep < dt:
+        dt = min_timestep
+
+    return dt
 
 def save_mesh(mesh, refined_mesh):
     "Save mesh to file"

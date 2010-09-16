@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Anders Logg, 2010
-# Last changed: 2010-08-16
+# Last changed: 2010-09-16
 
 from dolfin import *
 from cbc.common import *
@@ -269,6 +269,7 @@ class MomentumBalanceSolver(CBCSolver):
 
         # Store variables needed for time-stepping
         self.dt = dt
+        self.k = k
         self.t_range = t_range
         self.end_time = end_time
         self.a = a
@@ -314,6 +315,10 @@ class MomentumBalanceSolver(CBCSolver):
 
     def step(self, dt):
         """Setup and solve the problem at the current time step"""
+
+        # Update time step
+        self.dt = dt
+        self.k.assign(dt)
 
         # FIXME: Setup all stuff in the constructor and call assemble instead of VariationalProblem
         equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
@@ -490,6 +495,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
         # Store variables needed for time-stepping
         self.dt = dt
+        self.k = k
         self.t_range = t_range
         self.end_time = end_time
         self.a = a
@@ -528,6 +534,10 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
     def step(self, dt):
         """Setup and solve the problem at the current time step"""
+
+        # Update time step
+        self.dt = dt
+        self.k.assign(dt)
 
         equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
         equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-12

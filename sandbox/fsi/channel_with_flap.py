@@ -54,7 +54,7 @@ class ChannelWithFlap(FSI):
     def end_time(self):
         return 1.0
 
-    def initial_time_step(self):
+    def initial_timestep(self):
         return command_line_parameters["dt"]
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, at_end):

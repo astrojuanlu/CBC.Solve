@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-13
+# Last changed: 2010-09-16
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution"]
 
@@ -80,7 +80,8 @@ class FluidProblem(NavierStokes):
         return self.problem.end_time()
 
     def time_step(self):
-        return self.problem.initial_time_step()
+        # Time step will be selected elsewhere
+        return self.end_time()
 
     def compute_fluid_stress(self, u_F, p_F, U_M):
 
@@ -214,7 +215,8 @@ class StructureProblem(Hyperelasticity):
         return "CG1"
 
     def time_step(self):
-        return self.problem.initial_time_step()
+        # Time step will be selected elsewhere
+        return self.end_time()
 
     def end_time(self):
         return self.problem.end_time()
@@ -235,7 +237,7 @@ class MeshProblem():
         lmbda = problem.mesh_lmbda()
         alpha = problem.mesh_alpha()
         Omega_F = problem.fluid_mesh()
-        dt = problem.initial_time_step()
+        dt = 0.0
 
         # Define function spaces and functions
         V = VectorFunctionSpace(Omega_F, "CG", 1)
@@ -253,7 +255,7 @@ class MeshProblem():
             return 2.0*mu*sym(grad(v)) + lmbda*tr(grad(v))*Identity(v.cell().d)
 
         # Define cG(1) scheme for time-stepping
-        k = Constant(dt)
+        k = Constant(0)
         a = alpha*inner(v, u)*dx + 0.5*k*inner(sym(grad(v)), sigma(u))*dx
         L = alpha*inner(v, u0)*dx - 0.5*k*inner(sym(grad(v)), sigma(u0))*dx
 

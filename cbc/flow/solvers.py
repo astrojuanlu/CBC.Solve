@@ -2,7 +2,7 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-16
+# Last changed: 2010-09-16
 
 __all__ = ["NavierStokesSolver", "NavierStokesDualSolver"]
 
@@ -83,6 +83,7 @@ class NavierStokesSolver(CBCSolver):
 
         # Store variables needed for time-stepping
         self.dt = dt
+        self.k = k
         self.t_range = t_range
         self.bcu = bcu
         self.bcp = bcp
@@ -124,7 +125,11 @@ class NavierStokesSolver(CBCSolver):
     def step(self, dt):
         "Compute solution for new time step"
 
-        # FIXME: Need to update time step here and reassemble
+        # Check if we need to reassemble
+        if not dt == self.dt:
+            self.dt = dt
+            self.k.assign(dt)
+            self.reassemble()
 
         # Compute tentative velocity step
         begin("Computing tentative velocity")

@@ -54,7 +54,7 @@ class PrimalSolver:
 
         # Get problem parameters
         T = self.problem.end_time()
-        dt = self.problem.initial_time_step()
+        dt = initial_timestep(self.problem)
 
         # Define the three subproblems
         F = FluidProblem(self.problem)
@@ -169,7 +169,7 @@ class PrimalSolver:
             # Compute new time step
             TOL = self.tolerance
             Rk = compute_time_residual(self.time_series, t0, t1, self.problem)
-            (dt, at_end) = compute_timestep(Rk, ST, TOL, dt, t1, T)
+            (dt, at_end) = compute_time_step(Rk, ST, TOL, dt, t1, T)
             t0 = t1
             t1 = t1 + dt
 
