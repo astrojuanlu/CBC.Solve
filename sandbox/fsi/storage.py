@@ -84,14 +84,13 @@ def read_dual_data(Z, t, series):
     info("Reading dual data at t = %g" % t)
     series.retrieve(Z.vector(), t)
 
-def read_timestep_range(problem, series):
+def read_timestep_range(T, series):
     "Read time step range"
 
     # Get nodal points for primal time series
-    t = series.vector_times()
+    t = series[0].vector_times()
 
     # Check that time series is not empty and covers the interval
-    T = problem.end_time()
     if not (len(t) > 1 and t[0] == 0.0 and t[-1] == T):
         print "Nodal points for primal time series:", t
         raise RuntimeError, "Missing primal data"

@@ -8,6 +8,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from time import time
 from dolfin import *
+from spaces import *
 from storage import *
 from dualproblem import *
 
@@ -34,7 +35,7 @@ class DualSolver:
             self.Y_M_file = File("pvd/Y_M.pvd")
 
         # Create time series for storing solution
-        self.primal_series = create_dual_series()
+        self.primal_series = create_primal_series()
         self.dual_series = create_dual_series()
 
         # Store problem and parameters
@@ -83,13 +84,13 @@ class DualSolver:
         bcs = self._create_boundary_conditions(W)
 
         # Time-stepping
-        timestep_range = read_timestep_range(self.problem)
+        T  = self.problem.end_time()
+        timestep_range = read_timestep_range(T, self.primal_series)
         for i in reversed(range(len(timestep_range) - 1)):
 
             # Get current time and time step
             t0 = timestep_range[i]
             t1 = timestep_range[i + 1]
-            T  = self.problem.end_time()
             dt = t1 - t0
             k.assign(dt)
 
@@ -100,8 +101,8 @@ class DualSolver:
             info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
             # Read primal data
-            read_primal_data(U0, t0, Omega, Omega_F, Omega_S)
-            read_primal_data(U1, t1, Omega, Omega_F, Omega_S)
+            read_primal_data(U0, t0, Omega, Omega_F, Omega_S, self.primal_series)
+            read_primal_data(U1, t1, Omega, Omega_F, Omega_S, self.primal_series)
 
             # FIXME: Missing exterior_facet_domains, need to figure
             # FIXME: out why they are needed

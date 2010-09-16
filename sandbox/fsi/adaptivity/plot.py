@@ -27,9 +27,9 @@ def plot_time_steps():
 
         # Plot
         figure(level)
-        subplot(2, 1, 1); grid(True); plot(t, k)
+        subplot(2, 1, 1); grid(True); plot(t, k, '-o')
         ylabel("$k$"); title("Refinement level %d" % level)
-        subplot(2, 1, 2); grid(True); plot(t, R)
+        subplot(2, 1, 2); grid(True); plot(t, R, '-o')
         ylabel('$R_k$'); xlabel("$t$")
 
     show()
