@@ -1,7 +1,5 @@
-* Move plotting and storing VTK to storage.py
+* Record adaptive history
 * Handle command-line parameters
 * Move goal functional from dualproblem.py
 * Check implementation of dual problem against paper
-* Compute error indicators and refine mesh
 * Make sure primal CBC solvers (flow and twist) can handle adaptive time steps
-* Adaptive time steps

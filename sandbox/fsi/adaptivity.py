@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-14
+# Last changed: 2010-09-16
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -17,6 +17,9 @@ from utils import *
 U_F0 = P_F0 = U_S0 = P_S0 = U_M0 = None
 U_F1 = P_F1 = U_S1 = P_S1 = U_M1 = None
 v_F = q_F = v_S = q_S = v_M = q_M = None
+
+# Variables for storing adaptive data
+refinement_level = 0
 
 def estimate_error(problem):
     "Estimate error and compute error indicators"
@@ -182,21 +185,8 @@ def estimate_error(problem):
     E = E_h + E_k + abs(E_c)
 
     # Report results
-    info("")
-    info("Estimating error")
-    info("----------------")
-    info("E_h  = %g" % E_h)
-    info("E_k  = %g" % E_k)
-    info("E_c  = %g" % E_c)
-    info("E    = E_h + E_k + E_c = %g" % E)
-    info("S(T) = %g" % ST)
-    info("")
-
-    # Plot residuals
-    #plot(array_to_meshfunction(eta_F, Omega), title="Fluid error indicators")
-    #plot(array_to_meshfunction(eta_S, Omega), title="Structure error indicators")
-    #plot(array_to_meshfunction(eta_M, Omega), title="Mesh error indicators")
-    plot(array_to_meshfunction(eta_K, Omega), title="Total error indicators")
+    save_errors(E, E_h, E_k, E_c, ST)
+    save_indicators(eta_F, eta_S, eta_M, eta_K)
 
     return E, eta_K, ST
 
@@ -275,10 +265,12 @@ def refine_mesh(mesh, indicators):
     plot(plot_markers, title="Markers")
 
     # Refine mesh
-    mesh = refine(mesh, markers)
-    plot(mesh, "Refined mesh")
+    refined_mesh = refine(mesh, markers)
 
-    return mesh
+    # Save mesh to file
+    save_mesh(mesh, refined_mesh)
+
+    return refined_mesh
 
 def compute_timestep(Rk, ST, TOL, dt, t1, T):
     """Compute new time step based on residual R, stability factor S,
@@ -303,6 +295,77 @@ def compute_timestep(Rk, ST, TOL, dt, t1, T):
         dt_new = T - t1
         at_end = True
 
+    # Save time step
+    save_timestep(t1, Rk, dt)
+
     info("Changing time step: %g --> %g" % (dt, dt_new))
 
     return dt_new, at_end
+
+def save_mesh(mesh, refined_mesh):
+    "Save mesh to file"
+
+    global refinement_level
+
+    # Save initial mesh first time
+    if refinement_level == 0:
+        file = File("adaptivity/mesh_0.xml")
+        file << mesh
+
+    # Increase refinement level
+    refinement_level += 1
+
+    # Save refined mesh
+    file = File("adaptivity/mesh_%d.xml" % refinement_level)
+    file << refined_mesh
+
+def save_errors(E, E_h, E_k, E_c, ST):
+    "Save errors to file"
+
+    global refinement_level
+
+    # Summarize errors
+    summary = """
+
+Estimating error
+----------------
+level = %d
+E_h   = %g
+E_k   = %g
+E_c   = %g
+E     = E_h + E_k + E_c = %g
+S(T)  = %g
+
+""" % (refinement_level, E_h, E_k, E_c, E, ST)
+
+    # Print summary
+    info(s)
+
+    # Save to file
+    f = open("adaptivity/adaptivity.log", "a")
+    f.write(summary)
+    f.close()
+
+def save_indicators(eta_F, eta_S, eta_M, eta_K):
+    "Save indicators to file"
+
+    global refinement_level
+
+    file_F = File("eta_F_%d.xml" % refinement_level)
+    file_S = File("eta_S_%d.xml" % refinement_level)
+    file_M = File("eta_M_%d.xml" % refinement_level)
+    file_K = File("eta_K_%d.xml" % refinement_level)
+
+    file_F << eta_F
+    file_S << eta_S
+    file_M << eta_M
+    file_K << eta_K
+
+def save_timestep(t1, Rk, dt):
+    "Save time step to file"
+
+    global refinement_level
+
+    f = open("adaptivity/timesteps.txt", "a")
+    f.write("%d %g %g %g" % (refinement_level, t1, Rk, dt))
+    f.close()

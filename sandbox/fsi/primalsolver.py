@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-13
+# Last changed: 2010-09-16
 
 import pylab
 from time import time
@@ -77,7 +77,6 @@ class PrimalSolver:
         t0 = 0.0
         t1 = dt
         at_end = False
-        adaptive_data = []
         while True:
 
             # Display progress
@@ -173,12 +172,8 @@ class PrimalSolver:
             (dt, at_end) = compute_timestep(Rk, ST, TOL, dt, t1, T)
             t0 = t1
             t1 = t1 + dt
-            adaptive_data.append((t1, Rk, dt))
 
             end()
-
-        # Plot residual and time step sequence
-        self._plot_adaptivity(adaptive_data)
 
         # Report elapsed time
         info_blue("Primal solution computed in %g seconds." % (time() - cpu_time))
@@ -196,27 +191,6 @@ class PrimalSolver:
         plot(u_F,  title="Fluid velocity")
         plot(U_S0, title="Structure displacement", mode="displacement")
         plot(U_M,  title="Mesh displacement", mode="displacement")
-
-    def _plot_adaptivity(self, adaptive_data):
-        "Plot adaptive data"
-
-        # Check if we should plot
-        if not self.plot_solution: return
-
-        # Extract variables
-        t  = [d[0] for d in adaptive_data]
-        Rk = [d[1] for d in adaptive_data]
-        dt = [d[2] for d in adaptive_data]
-
-        # Plot
-        pylab.figure(1)
-        pylab.subplot(2, 1, 1)
-        pylab.plot(t, dt)
-        pylab.grid(True); pylab.ylabel("$k$")
-        pylab.subplot(2, 1, 2)
-        pylab.plot(t, Rk)
-        pylab.grid(True); pylab.xlabel("$t$"); pylab.ylabel("$R_k$")
-        pylab.show()
 
     def _save_solution(self, U):
         "Save solution to VTK"
