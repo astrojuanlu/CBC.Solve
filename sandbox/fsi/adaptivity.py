@@ -339,7 +339,7 @@ S(T)  = %g
 """ % (refinement_level, E_h, E_k, E_c, E, ST)
 
     # Print summary
-    info(s)
+    info(summary)
 
     # Save to file
     f = open("adaptivity/adaptivity.log", "a")
@@ -367,5 +367,5 @@ def save_timestep(t1, Rk, dt):
     global refinement_level
 
     f = open("adaptivity/timesteps.txt", "a")
-    f.write("%d %g %g %g" % (refinement_level, t1, Rk, dt))
+    f.write("%d %g %g %g" % (refinement_level, t1, dt, Rk))
     f.close()
