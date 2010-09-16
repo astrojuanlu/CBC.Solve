@@ -165,7 +165,7 @@ def estimate_error(problem):
         eta_M += dt * sum(abs(e.array()) for e in e_M)
 
         # Add to E_k
-        E_k += dt * s * Rk
+        E_k += dt * s * dt * Rk
 
         # Add to E_c
         E_c += dt * Rc
