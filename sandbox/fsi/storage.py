@@ -12,82 +12,31 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-13
+# Last changed: 2010-09-16
 
 from numpy import append
 from dolfin import *
 
-# Time series for primal variables
-_u_F_data = None
-_p_F_data = None
-_U_S_data = None
-_P_S_data = None
-_U_M_data = None
+def create_primal_series():
+    "Create time series for primal solution"
+    u_F = TimeSeries("bin/u_F")
+    p_F = TimeSeries("bin/p_F")
+    U_S = TimeSeries("bin/U_S")
+    P_S = TimeSeries("bin/P_S")
+    U_M = TimeSeries("bin/U_M")
+    return (u_F, p_F, U_S, P_S, U_M)
 
-# Time series for dual variables
-_Z_data = None
+def create_dual_series():
+    "Create time series for dual solution"
+    return TimeSeries("bin/Z")
 
-def init_primal_data(Omega):
-    "Return primal variables on the full domain initialized to zero"
-
-    # Open time series for primal solution
-    global _u_F_data, _p_F_data, _U_S_data, _P_S_data, _U_M_data
-    _u_F_data = TimeSeries("bin/u_F")
-    _p_F_data = TimeSeries("bin/p_F")
-    _U_S_data = TimeSeries("bin/U_S")
-    _P_S_data = TimeSeries("bin/P_S")
-    _U_M_data = TimeSeries("bin/U_M")
-
-    # Create function spaces
-    V_F = VectorFunctionSpace(Omega, "CG", 1)
-    Q_F = FunctionSpace(Omega, "CG", 1)
-    V_S = VectorFunctionSpace(Omega, "CG", 1)
-    Q_S = VectorFunctionSpace(Omega, "CG", 1)
-    V_M = VectorFunctionSpace(Omega, "CG", 1)
-
-    # Create primal functions
-    U_F = Function(V_F)
-    P_F = Function(Q_F)
-    U_S = Function(V_S)
-    P_S = Function(Q_S)
-    U_M = Function(V_M)
-
-    return U_F, P_F, U_S, P_S, U_M
-
-def init_dual_space(Omega):
-    "Return dual function space on the full domain"
-
-    # Create function spaces
-    V_F = VectorFunctionSpace(Omega, "CG", 2)
-    Q_F = FunctionSpace(Omega, "CG", 1)
-    V_S = VectorFunctionSpace(Omega, "CG", 1)
-    Q_S = VectorFunctionSpace(Omega, "CG", 1)
-    V_M = VectorFunctionSpace(Omega, "CG", 1)
-    Q_M = VectorFunctionSpace(Omega, "CG", 1)
-
-    # Create mixed function space
-    W = MixedFunctionSpace([V_F, Q_F, V_S, Q_S, V_M, Q_M])
-
-    return W
-
-def init_dual_data(Omega):
-    "Return dual variables on the full domain initialized to zero"
-
-    # Open time series for dual solution
-    global _Z_data
-    _Z_data = TimeSeries("bin/Z")
-
-    # Create dual function
-    W = init_dual_space(Omega)
-    Z = Function(W)
-
-    return Z, Z.split(False)
-
-def read_primal_data(U_F, P_F, U_S, P_S, U_M, t,
-                     Omega, Omega_F, Omega_S):
+def read_primal_data(U, t, Omega, Omega_F, Omega_S, series):
     "Read primal variables at given time"
 
     info("Reading primal data at t = %g" % t)
+
+    # Get primal variables
+    U_F, P_F, U_S, P_S, U_M = U
 
     # Create vectors for primal dof values on local meshes
     local_vals_u_F = Vector()
@@ -97,12 +46,11 @@ def read_primal_data(U_F, P_F, U_S, P_S, U_M, t,
     local_vals_U_M = Vector()
 
     # Retrieve primal data
-    global _u_F_data, _p_F_data, _U_S_data, _P_S_data, _U_M_data
-    _u_F_data.retrieve(local_vals_u_F, t)
-    _p_F_data.retrieve(local_vals_p_F, t)
-    _U_S_data.retrieve(local_vals_U_S, t)
-    _P_S_data.retrieve(local_vals_P_S, t)
-    _U_M_data.retrieve(local_vals_U_M, t)
+    series[0].retrieve(local_vals_u_F, t)
+    series[1].retrieve(local_vals_p_F, t)
+    series[2].retrieve(local_vals_U_S, t)
+    series[3].retrieve(local_vals_P_S, t)
+    series[4].retrieve(local_vals_U_M, t)
 
     # Get vertex mappings from local meshes to global mesh
     vmap_F = Omega_F.data().mesh_function("global vertex indices").values()
@@ -131,21 +79,16 @@ def read_primal_data(U_F, P_F, U_S, P_S, U_M, t,
     P_S.vector()[global_dofs_P_S] = local_vals_P_S
     U_M.vector()[global_dofs_U_M] = local_vals_U_M
 
-def read_dual_data(Z, t):
+def read_dual_data(Z, t, series):
     "Read dual solution at given time"
-
     info("Reading dual data at t = %g" % t)
+    series.retrieve(Z.vector(), t)
 
-    # Retrieve dual data
-    global _Z_data
-    _Z_data.retrieve(Z.vector(), t)
-
-def read_timestep_range(problem):
+def read_timestep_range(problem, series):
     "Read time step range"
 
     # Get nodal points for primal time series
-    global _u_F_data
-    t = _u_F_data.vector_times()
+    t = series.vector_times()
 
     # Check that time series is not empty and covers the interval
     T = problem.end_time()
@@ -155,32 +98,10 @@ def read_timestep_range(problem):
 
     return t
 
-def write_primal_data(u_F, p_F, U_S, P_S, U_M, t, parameters):
+def write_primal_data(U, t, series):
     "Write primal data at given time"
+    [series[i].store(U[i].vector(), t) for i in range(5)]
 
-    # Check if we should store solution
-    if not parameters["save_series"]: return
-
-    # Check if we should initialize the series
-    global _u_F_data, _p_F_data, _U_S_data, _P_S_data, _U_M_data
-
-    # Save to series
-    _u_F_data.store(u_F.vector(), t)
-    _p_F_data.store(p_F.vector(), t)
-    _U_S_data.store(U_S.vector(), t)
-    _P_S_data.store(P_S.vector(), t)
-    _U_M_data.store(U_M.vector(), t)
-
-def write_dual_data(Z, t, parameters):
+def write_dual_data(Z, t, series):
     "Write dual solution at given time"
-
-    # Check if we should store solution
-    if not parameters["save_series"]: return
-
-    # Check if we should initialize the series
-    global _Z_data
-    if _Z_data is None:
-        _Z_data = TimeSeries("bin/Z")
-
-    # Save to series
-    _Z_data.store(Z.vector(), t)
+    series.store(Z.vector(), t)

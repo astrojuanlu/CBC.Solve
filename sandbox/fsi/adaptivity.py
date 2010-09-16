@@ -11,12 +11,11 @@ from numpy import zeros, argsort, linalg
 
 from residuals import *
 from storage import *
+from spaces import *
 from utils import *
 
 # Variables for time residual
-U_F0 = P_F0 = U_S0 = P_S0 = U_M0 = None
-U_F1 = P_F1 = U_S1 = P_S1 = U_M1 = None
-v_F = q_F = v_S = q_S = v_M = q_M = None
+U0 = U1 = w = None
 
 # Variables for storing adaptive data
 refinement_level = 0
@@ -36,30 +35,23 @@ def estimate_error(problem):
 
     # Create dual function space and test functions
     W = init_dual_space(Omega)
-    v_F, q_F, v_S, q_S, v_M, q_M = TestFunctions(W)
+    w = TestFunctions(W)
 
-    # Initialize primal functions
-    U_F0, P_F0, U_S0, P_S0, U_M0 = init_primal_data(Omega)
-    U_F1, P_F1, U_S1, P_S1, U_M1 = init_primal_data(Omega)
+    # Create time series
+    primal_series = create_primal_series()
+    dual_series = create_dual_series()
 
-    # Initialize dual functions
-    Z0, (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = init_dual_data(Omega)
-    Z1, (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = init_dual_data(Omega)
+    # Create primal functions
+    U0 = create_primal_functions(Omega)
+    U1 = create_primal_funtions(Omega)
 
-    # Define midpoint values for primal functions
-    U_F = 0.5 * (U_F0 + U_F1)
-    P_F = 0.5 * (P_F0 + P_F1)
-    U_S = 0.5 * (U_S0 + U_S1)
-    P_S = 0.5 * (P_S0 + P_S1)
-    U_M = 0.5 * (U_M0 + U_M1)
+    # Create dual functions
+    ZZ0, Z0 = create_dual_functions(Omega)
+    ZZ0, Z1 = create_dual_functions(Omega)
 
-    # Define midpoint values for dual functions
-    Z_F = 0.5 * (Z_F0 + Z_F1)
-    Y_F = 0.5 * (Y_F0 + Y_F1)
-    Z_S = 0.5 * (Z_S0 + Z_S1)
-    Y_S = 0.5 * (Y_S0 + Y_S1)
-    Z_M = 0.5 * (Z_M0 + Z_M1)
-    Y_M = 0.5 * (Y_M0 + Y_M1)
+    # Define midpoint values for primal and dual functions
+    U = [0.5 * (U0[i] + U1[i]) for i in range(5)]
+    Z = [0.5 * (Z0[i] + Z1[i]) for i in range(6)]
 
     # Define function spaces for extrapolation
     V2 = VectorFunctionSpace(Omega, "CG", 2)
@@ -67,37 +59,19 @@ def estimate_error(problem):
     Q2 = FunctionSpace(Omega, "CG", 2)
 
     # Define functions for extrapolation
-    ZZ_F = Function(V3)
-    YY_F = Function(Q2)
-    ZZ_S = Function(V2)
-    YY_S = Function(V2)
-    ZZ_M = Function(V2)
-    YY_M = Function(V2)
+    EZ_F = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
 
     # Define time step (value set in each time step)
     kn = Constant(0.0)
 
     # Get strong residuals for E_h
-    Rh_F, Rh_S, Rh_M = strong_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
-                                        U_F1, P_F1, U_S1, P_S1, U_M1,
-                                        U_F,  P_F,  U_S,  P_S,  U_M,
-                                        Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1,
-                                        ZZ_F, YY_F, ZZ_S, YY_S, ZZ_M, YY_M,
-                                        dg, kn, problem)
+    Rh_F, Rh_S, Rh_M = strong_residuals(U0, U1, U, Z, EZ, dg, kn, problem)
 
     # Get weak residuals for E_k
-    Rk_F, Rk_S, Rk_M = weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
-                                      U_F1, P_F1, U_S1, P_S1, U_M1,
-                                      U_F1, P_F1, U_S1, P_S1, U_M1,
-                                      v_F, q_F, v_S, q_S, v_M, q_M,
-                                      kn, problem)
+    Rk_F, Rk_S, Rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
 
     # Get weak residuals for E_c
-    Rc_F, Rc_S, Rc_M = weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
-                                      U_F1, P_F1, U_S1, P_S1, U_M1,
-                                      U_F,  P_F,  U_S,  P_S,  U_M,
-                                      Z_F, Y_F, Z_S, Y_S, Z_M, Y_M,
-                                      kn, problem)
+    Rc_F, Rc_S, Rc_M = weak_residuals(U0, U1, U, Z, kn, problem)
 
     # Reset vectors for assembly of residuals
     eta_F = zeros(Omega.num_cells())
@@ -110,7 +84,7 @@ def estimate_error(problem):
     ST = 0.0
 
     # Sum residuals over time intervals
-    timestep_range = read_timestep_range(problem)
+    timestep_range = read_timestep_range(problem, primal_series)
     #for i in range(1, len(timestep_range)):
     # FIXME: Temporary while testing
     for i in range(len(timestep_range) / 2, len(timestep_range) / 2 + 1):
@@ -129,21 +103,16 @@ def estimate_error(problem):
         info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
         # Read primal data
-        read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0, Omega, Omega_F, Omega_S)
-        read_primal_data(U_F1, P_F1, U_S1, P_S1, U_M1, t1, Omega, Omega_F, Omega_S)
+        read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series)
+        read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series)
 
         # Read dual data
-        read_dual_data(Z0, t0)
-        read_dual_data(Z1, t1)
+        read_dual_data(Z0, t0, dual_series)
+        read_dual_data(Z1, t1, dual_series)
 
         # Extrapolate dual data
         info("Extrapolating dual solution")
-        ZZ_F.extrapolate(Z_F1)
-        YY_F.extrapolate(Y_F1)
-        ZZ_S.extrapolate(Z_S1)
-        YY_S.extrapolate(Y_S1)
-        ZZ_M.extrapolate(Z_M1)
-        YY_M.extrapolate(Y_M1)
+        [EZ[i].extrapolate(Z1[i]) for i in range(6)]
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
@@ -191,7 +160,7 @@ def estimate_error(problem):
 
     return E, eta_K, ST
 
-def compute_time_residual(time_series, t0, t1, problem):
+def compute_time_residual(primal_series, t0, t1, problem):
     "Compute size of time residual"
 
     info("Computing time residual")
@@ -202,33 +171,27 @@ def compute_time_residual(time_series, t0, t1, problem):
     Omega_S = problem.structure_mesh()
 
     # Initialize solution variables (only first time)
-    global U_F0, P_F0, U_S0, P_S0, U_M0
-    global U_F1, P_F1, U_S1, P_S1, U_M1
-    global v_F, q_F, v_S, q_S, v_M, q_M
+    global U0, U1, w
     if t0 == 0.0:
 
         # Create primal variables
         info("Initializing primal variables for time residual")
-        U_F0, P_F0, U_S0, P_S0, U_M0 = init_primal_data(Omega)
-        U_F1, P_F1, U_S1, P_S1, U_M1 = init_primal_data(Omega)
+        U0 = create_primal_functions(Omega)
+        U1 = create_primal_functions(Omega)
 
         # Create dual function space and test functions
-        W = init_dual_space(Omega)
-        v_F, q_F, v_S, q_S, v_M, q_M = TestFunctions(W)
+        W = create_dual_space(Omega)
+        w = TestFunctions(W)
 
     # Read solution data
-    read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0, Omega, Omega_F, Omega_S)
-    read_primal_data(U_F1, P_F1, U_S1, P_S1, U_M1, t1, Omega, Omega_F, Omega_S)
+    read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series)
+    read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series)
 
     # Set time step
     kn = Constant(t1 - t0)
 
     # Get weak residuals
-    r_F, r_S, r_M = weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
-                                   U_F1, P_F1, U_S1, P_S1, U_M1,
-                                   U_F1, P_F1, U_S1, P_S1, U_M1,
-                                   v_F, q_F, v_S, q_S, v_M, q_M,
-                                   kn, problem)
+    r_F, r_S, r_M = weak_residuals(U0, U1, U1, w, kn, problem)
 
     # Assemble residual
     r = assemble(r_F + r_S + r_M, interior_facet_domains=problem.fsi_boundary)

@@ -12,6 +12,7 @@ from dolfin import *
 
 from subproblems import *
 from adaptivity import *
+from storage import *
 
 class PrimalSolver:
     "Primal FSI solver"
@@ -22,7 +23,6 @@ class PrimalSolver:
         # Get solver parameters
         self.plot_solution = solver_parameters["plot_solution"]
         self.save_solution = solver_parameters["save_solution"]
-        self.save_series = solver_parameters["save_series"]
         self.maxiter = solver_parameters["maxiter"]
         self.itertol = solver_parameters["itertol"]
         self.tolerance = solver_parameters["tolerance"]
@@ -36,12 +36,7 @@ class PrimalSolver:
                           File("pvd/U_M.pvd"))
 
         # Create time series for storing solution
-        if self.save_series:
-            self.time_series = (TimeSeries("bin/u_F"),
-                                TimeSeries("bin/p_F"),
-                                TimeSeries("bin/U_S"),
-                                TimeSeries("bin/P_S"),
-                                TimeSeries("bin/U_M"))
+        self.time_series = create_primal_series()
 
         # Store problem
         self.problem = problem
@@ -71,7 +66,7 @@ class PrimalSolver:
         # Save initial solution to file and series
         U = extract_solution(F, S, M)
         self._save_solution(U)
-        self._save_series(U, 0)
+        write_primal_data(U, 0, self.time_series)
 
         # Time-stepping
         t0 = 0.0
@@ -150,7 +145,7 @@ class PrimalSolver:
             # Save solution and time series to file
             U = extract_solution(F, S, M)
             self._save_solution(U)
-            self._save_series(U, t1)
+            write_primal_data(U, t1, self.time_series)
 
             # Move to next time step
             F.update(t1)
@@ -201,13 +196,3 @@ class PrimalSolver:
         # Save to file
         for i in range(5):
             self.files[i] << U[i]
-
-    def _save_series(self, U, t):
-        "Save solution to time series"
-
-        # Check if we should save
-        if not self.save_series: return
-
-        # Save to series
-        for i in range(5):
-            self.time_series[i].store(U[i].vector(), t)

@@ -4,12 +4,12 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-09
+# Last changed: 2010-09-16
 
 from time import time
 from dolfin import *
 from storage import *
-from dualproblem import dual_forms
+from dualproblem import *
 
 # FIXME: alpha_M missing
 
@@ -34,20 +34,8 @@ class DualSolver:
             self.Y_M_file = File("pvd/Y_M.pvd")
 
         # Create time series for storing solution
-        if self.save_series:
-            self.Z_F_series = TimeSeries("bin/Z_F")
-            self.Y_F_series = TimeSeries("bin/Y_F")
-            self.Z_S_series = TimeSeries("bin/Z_S")
-            self.Y_S_series = TimeSeries("bin/Y_S")
-            self.Z_M_series = TimeSeries("bin/Z_M")
-            self.Y_M_series = TimeSeries("bin/Y_M")
-
-        # Open time series for primal solution
-        self.u_F_series = TimeSeries("bin/u_F")
-        self.p_F_series = TimeSeries("bin/p_F")
-        self.U_S_series = TimeSeries("bin/U_S")
-        self.P_S_series = TimeSeries("bin/P_S")
-        self.U_M_series = TimeSeries("bin/U_M")
+        self.primal_series = create_dual_series()
+        self.dual_series = create_dual_series()
 
         # Store problem and parameters
         self.problem = problem
@@ -65,40 +53,31 @@ class DualSolver:
         Omega_F = self.problem.fluid_mesh()
         Omega_S = self.problem.structure_mesh()
 
-        # Define function spaces defined on the whole domain
-        V_F1 = VectorFunctionSpace(Omega, "CG", 1)
-        V_F2 = VectorFunctionSpace(Omega, "CG", 2)
-        Q_F  = FunctionSpace(Omega, "CG", 1)
-        V_S  = VectorFunctionSpace(Omega, "CG", 1)
-        Q_S  = VectorFunctionSpace(Omega, "CG", 1)
-        V_M  = VectorFunctionSpace(Omega, "CG", 1)
-        Q_M  = VectorFunctionSpace(Omega, "CG", 1)
-
         # Create mixed function space
-        W = MixedFunctionSpace([V_F2, Q_F, V_S, Q_S, V_M, Q_M])
+        W = create_dual_space(Omega)
 
         # Create test and trial functions
         (v_F, q_F, v_S, q_S, v_M, q_M) = TestFunctions(W)
         (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = TrialFunctions(W)
 
         # Create dual functions
-        Z0, (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = init_dual_data(Omega)
-        Z1, (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = init_dual_data(Omega)
+        Z0, (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = create_dual_functions(Omega)
+        Z1, (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = create_dual_functions(Omega)
 
         # Create primal functions
-        U_F0, P_F0, U_S0, P_S0, U_M0 = init_primal_data(Omega)
-        U_F1, P_F1, U_S1, P_S1, U_M1 = init_primal_data(Omega)
+        U_F0, P_F0, U_S0, P_S0, U_M0 = U0 = create_primal_functions(Omega)
+        U_F1, P_F1, U_S1, P_S1, U_M1 = U1 = create_primal_functions(Omega)
 
         # Create time step (value set in each time step)
         k = Constant(0.0)
 
         # Create variational forms for dual problem
-        A, L = dual_forms(Omega_F, Omega_S, k, self.problem,
-                          v_F,  q_F,  v_S,  q_S,  v_M,  q_M,
-                          Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
-                          Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0,
-                          U_F0, P_F0, U_S0, P_S0, U_M0,
-                          U_F1, P_F1, U_S1, P_S1, U_M1)
+        A, L = create_dual_forms(Omega_F, Omega_S, k, self.problem,
+                                 v_F,  q_F,  v_S,  q_S,  v_M,  q_M,
+                                 Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
+                                 Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0,
+                                 U_F0, P_F0, U_S0, P_S0, U_M0,
+                                 U_F1, P_F1, U_S1, P_S1, U_M1)
 
         # Create dual boundary conditions
         bcs = self._create_boundary_conditions(W)
@@ -121,8 +100,8 @@ class DualSolver:
             info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
             # Read primal data
-            read_primal_data(U_F0, P_F0, U_S0, P_S0, U_M0, t0, Omega, Omega_F, Omega_S)
-            read_primal_data(U_F1, P_F1, U_S1, P_S1, U_M1, t1, Omega, Omega_F, Omega_S)
+            read_primal_data(U0, t0, Omega, Omega_F, Omega_S)
+            read_primal_data(U1, t1, Omega, Omega_F, Omega_S)
 
             # FIXME: Missing exterior_facet_domains, need to figure
             # FIXME: out why they are needed
@@ -152,7 +131,7 @@ class DualSolver:
 
             # Save and plot solution
             self._save_solution(Z0)
-            write_dual_data(Z0, t0, self.parameters)
+            write_dual_data(Z0, t0, self.dual_series)
             self._plot_solution(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0)
 
             # Copy solution to previous interval (going backwards in time)
@@ -205,7 +184,7 @@ class DualSolver:
         self.Y_M_file << Y_M
 
     def _plot_solution(self, Z_F, Y_F, Z_S, Y_S, Z_M, Y_M):
-        "Save solution to time series"
+        "Plot solution"
 
         # Check if we should plot
         if not self.plot_solution: return

@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-13
+# Last changed: 2010-09-16
 
 from dolfin import *
 from operators import Sigma_F as _Sigma_F
@@ -12,12 +12,14 @@ from operators import Sigma_S as _Sigma_S
 from operators import Sigma_M as _Sigma_M
 from operators import F, J
 
-def weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
-                   U_F1, P_F1, U_S1, P_S1, U_M1,
-                   U_F,  P_F,  U_S,  P_S,  U_M,
-                   v_F, q_F, v_S, q_S, v_M, q_M,
-                   kn, problem):
+def weak_residuals(U0, U1, U, w, kn, problem):
     "Return weak residuals"
+
+    # Extract variables
+    U_F0, P_F0, U_S0, P_S0, U_M0 = U0
+    U_F1, P_F1, U_S1, P_S1, U_M1 = U1
+    U_F,  P_F,  U_S,  P_S,  U_M  = U
+    v_F, q_F, v_S, q_S, v_M, q_M = w
 
     # Get problem parameters
     Omega   = problem.mesh()
@@ -66,13 +68,15 @@ def weak_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
 
     return R_F, R_S, R_M
 
-def strong_residuals(U_F0, P_F0, U_S0, P_S0, U_M0,
-                     U_F1, P_F1, U_S1, P_S1, U_M1,
-                     U_F,  P_F,  U_S,  P_S,  U_M,
-                     Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
-                     ZZ_F, YY_F, ZZ_S, YY_S, ZZ_M, YY_M,
-                     w, kn, problem):
+def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     "Return strong residuals (integrated by parts)"
+
+    # Extract variables
+    U_F0, P_F0, U_S0, P_S0, U_M0       = U0
+    U_F1, P_F1, U_S1, P_S1, U_M1       = U1
+    U_F,  P_F,  U_S,  P_S,  U_M        = U
+    Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M  = Z
+    EZ_F, EY_F, EZ_S, EY_S, EZ_M, YY_M = EZ
 
     # Get problem parameters
     Omega   = problem.mesh()
