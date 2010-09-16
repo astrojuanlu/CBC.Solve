@@ -85,9 +85,9 @@ def estimate_error(problem):
 
     # Sum residuals over time intervals
     timestep_range = read_timestep_range(problem.end_time(), primal_series)
-    #for i in range(1, len(timestep_range)):
+    for i in range(1, len(timestep_range)):
     # FIXME: Temporary while testing
-    for i in range(len(timestep_range) / 2, len(timestep_range) / 2 + 1):
+    #for i in range(len(timestep_range) / 2, len(timestep_range) / 2 + 1):
 
         # Get current time and time step
         t0 = timestep_range[i - 1]

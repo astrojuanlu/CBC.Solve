@@ -140,8 +140,8 @@ class ChannelWithFlap(FSI):
 
 # Solve problem
 problem = ChannelWithFlap()
-problem.parameters["solver_parameters"]["solve_primal"] = False
-problem.parameters["solver_parameters"]["solve_dual"] = False
+problem.parameters["solver_parameters"]["solve_primal"] = True
+problem.parameters["solver_parameters"]["solve_dual"] = True
 problem.parameters["solver_parameters"]["estimate_error"] = True
 problem.parameters["solver_parameters"]["plot_solution"] = False
 problem.parameters["solver_parameters"]["tolerance"] = 1.0
