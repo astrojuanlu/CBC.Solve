@@ -76,7 +76,7 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     U_F1, P_F1, U_S1, P_S1, U_M1       = U1
     U_F,  P_F,  U_S,  P_S,  U_M        = U
     Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M  = Z
-    EZ_F, EY_F, EZ_S, EY_S, EZ_M, YY_M = EZ
+    EZ_F, EY_F, EZ_S, EY_S, EZ_M, EY_M = EZ
 
     # Get problem parameters
     Omega   = problem.mesh()
@@ -117,19 +117,19 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
 
     # Fluid residual contributions
-    R_F0 = w*inner(ZZ_F - Z_F, Dt_U_F - div(Sigma_F))*dx
-    R_F1 = avg(w)*inner(ZZ_F('+') - Z_F('+'), jump(dot(Sigma_F, N_F)))*dS
-    R_F2 = w*inner(YY_F - Y_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx
+    R_F0 = w*inner(EZ_F - Z_F, Dt_U_F - div(Sigma_F))*dx
+    R_F1 = avg(w)*inner(EZ_F('+') - Z_F('+'), jump(dot(Sigma_F, N_F)))*dS
+    R_F2 = w*inner(EY_F - Y_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx
 
     # Structure residual contributions
-    R_S0 = w*inner(ZZ_S - Z_S, Dt_P_S - div(Sigma_S))*dx
-    R_S1 = avg(w)*inner(ZZ_S('+') - Z_S('+'), jump(dot(Sigma_S, N_S)))*dS
-    R_S2 = avg(w)*inner(ZZ_S - Z_S, dot(Sigma_S - Sigma_F, N_S))('+')*dS(1)
-    R_S3 = w*inner(YY_S - Y_S, Dt_U_S - P_S)*dx
+    R_S0 = w*inner(EZ_S - Z_S, Dt_P_S - div(Sigma_S))*dx
+    R_S1 = avg(w)*inner(EZ_S('+') - Z_S('+'), jump(dot(Sigma_S, N_S)))*dS
+    R_S2 = avg(w)*inner(EZ_S - Z_S, dot(Sigma_S - Sigma_F, N_S))('+')*dS(1)
+    R_S3 = w*inner(EY_S - Y_S, Dt_U_S - P_S)*dx
 
     # Mesh residual contributions
-    R_M0 = w*inner(ZZ_M - Z_M, Dt_U_M - div(Sigma_M))*dx
-    R_M1 = avg(w)*inner(ZZ_M('+') - Z_M('+'), jump(dot(Sigma_M, N_F)))*dS
-    R_M2 = avg(w)*inner(YY_M - Y_M, U_M - U_S)('+')*dS(1)
+    R_M0 = w*inner(EZ_M - Z_M, Dt_U_M - div(Sigma_M))*dx
+    R_M1 = avg(w)*inner(EZ_M('+') - Z_M('+'), jump(dot(Sigma_M, N_F)))*dS
+    R_M2 = avg(w)*inner(EY_M - Y_M, U_M - U_S)('+')*dS(1)
 
     return (R_F0, R_F1, R_F2), (R_S0, R_S1, R_S2, R_S3), (R_M0, R_M1, R_M2)

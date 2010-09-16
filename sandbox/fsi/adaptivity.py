@@ -34,7 +34,7 @@ def estimate_error(problem):
     dg = TestFunction(DG)
 
     # Create dual function space and test functions
-    W = init_dual_space(Omega)
+    W = create_dual_space(Omega)
     w = TestFunctions(W)
 
     # Create time series
@@ -43,11 +43,11 @@ def estimate_error(problem):
 
     # Create primal functions
     U0 = create_primal_functions(Omega)
-    U1 = create_primal_funtions(Omega)
+    U1 = create_primal_functions(Omega)
 
     # Create dual functions
     ZZ0, Z0 = create_dual_functions(Omega)
-    ZZ0, Z1 = create_dual_functions(Omega)
+    ZZ1, Z1 = create_dual_functions(Omega)
 
     # Define midpoint values for primal and dual functions
     U = [0.5 * (U0[i] + U1[i]) for i in range(5)]
@@ -59,7 +59,7 @@ def estimate_error(problem):
     Q2 = FunctionSpace(Omega, "CG", 2)
 
     # Define functions for extrapolation
-    EZ_F = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
+    EZ = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
 
     # Define time step (value set in each time step)
     kn = Constant(0.0)
@@ -107,8 +107,8 @@ def estimate_error(problem):
         read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series)
 
         # Read dual data
-        read_dual_data(Z0, t0, dual_series)
-        read_dual_data(Z1, t1, dual_series)
+        read_dual_data(ZZ0, t0, dual_series)
+        read_dual_data(ZZ1, t1, dual_series)
 
         # Extrapolate dual data
         info("Extrapolating dual solution")
@@ -127,7 +127,7 @@ def estimate_error(problem):
         Rc = assemble(Rc_F + Rc_S + Rc_M, mesh=Omega, interior_facet_domains=problem.fsi_boundary)
 
         # Estimate interpolation error (local weight)
-        s = 0.5 * linalg.norm(Z0.vector().array() - Z1.vector().array(), 2) / dt
+        s = 0.5 * linalg.norm(ZZ0.vector().array() - ZZ1.vector().array(), 2) / dt
 
         # Add to error indicators
         eta_F += dt * sum(abs(e.array()) for e in e_F)
@@ -226,7 +226,7 @@ def refine_mesh(mesh, indicators):
     for i in range(plot_markers.size()):
         if markers[i]:
             plot_markers[i] = True
-    plot(plot_markers, title="Markers")
+    #plot(plot_markers, title="Markers")
 
     # Refine mesh
     refined_mesh = refine(mesh, markers)
