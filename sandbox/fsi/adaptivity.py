@@ -334,10 +334,10 @@ def save_indicators(eta_F, eta_S, eta_M, eta_K):
 
     global refinement_level
 
-    save_array(eta_F, "eta_F_%d.xml" % refinement_level)
-    save_array(eta_S, "eta_S_%d.xml" % refinement_level)
-    save_array(eta_M, "eta_M_%d.xml" % refinement_level)
-    save_array(eta_K, "eta_K_%d.xml" % refinement_level)
+    save_array(eta_F, "adaptivity/eta_F_%d.xml" % refinement_level)
+    save_array(eta_S, "adaptivity/eta_S_%d.xml" % refinement_level)
+    save_array(eta_M, "adaptivity/eta_M_%d.xml" % refinement_level)
+    save_array(eta_K, "adaptivity/eta_K_%d.xml" % refinement_level)
 
 def save_timestep(t1, Rk, dt):
     "Save time step to file"
