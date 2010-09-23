@@ -13,6 +13,7 @@ application_parameters.add("dt", 0.02)
 application_parameters.add("T", 0.06)
 application_parameters.add("mesh_alpha", 1.0)
 application_parameters.add("smooth", 50)
+application_parameters.add("dorfler_fraction", 0.5)
 application_parameters.parse()
 
 # Print command-line option string
@@ -63,6 +64,9 @@ class ChannelWithFlap(FSI):
     def initial_timestep(self):
         return application_parameters["dt"]
 
+    def dorfler_fraction(self):
+        return application_parameters["dorfler_fraction"]
+
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, at_end):
 
         # Only evaluate functional at the end time
@@ -80,7 +84,7 @@ class ChannelWithFlap(FSI):
         info_blue("Functional 1 (displacement): %g", displacement)
         info_blue("Functional 2 (velocity):     %g", velocity)
         info("")
-
+        
     def __str__(self):
         return "Channel with flap FSI problem"
 
@@ -147,8 +151,8 @@ class ChannelWithFlap(FSI):
 # Solve problem
 problem = ChannelWithFlap()
 problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"] = False
-problem.parameters["solver_parameters"]["estimate_error"] = False
-problem.parameters["solver_parameters"]["plot_solution"] = True
+problem.parameters["solver_parameters"]["solve_dual"] = True
+problem.parameters["solver_parameters"]["estimate_error"] = True
+problem.parameters["solver_parameters"]["plot_solution"] = False
 problem.parameters["solver_parameters"]["tolerance"] = 0.01
 u_F, p_F, U_S, P_S, U_M = problem.solve()
