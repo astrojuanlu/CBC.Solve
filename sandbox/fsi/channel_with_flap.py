@@ -2,15 +2,22 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-16
+# Last changed: 2010-09-23
 
 from fsiproblem import *
 
-# Command-line parameters
-command_line_parameters = Parameters("command_line_parameters")
-command_line_parameters.add("ny", 20)
-command_line_parameters.add("dt", 0.02)
-command_line_parameters.parse()
+# Create application parameters set
+application_parameters = Parameters("application_parameters")
+application_parameters.add("ny", 20)
+application_parameters.add("dt", 0.02)
+application_parameters.add("T", 0.06)
+application_parameters.add("mesh_alpha", 1.0)
+application_parameters.add("smooth", 50)
+application_parameters.parse()
+
+# Print command-line option string
+print "\nCommand-line option string"
+print application_parameters.option_string()
 
 # Constants related to the geometry of the channel and the obstruction
 channel_length  = 4.0
@@ -41,8 +48,7 @@ class ChannelWithFlap(FSI):
 
     def __init__(self):
 
-        # Create the complete mesh
-        ny = command_line_parameters["ny"]
+        ny = application_parameters["ny"]
         nx = 4*ny
         mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 
@@ -52,10 +58,10 @@ class ChannelWithFlap(FSI):
     #--- Common parameters ---
 
     def end_time(self):
-        return 1.0
+        return application_parameters["T"]
 
     def initial_timestep(self):
-        return command_line_parameters["dt"]
+        return application_parameters["dt"]
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, at_end):
 
@@ -136,13 +142,13 @@ class ChannelWithFlap(FSI):
         return 5.76
 
     def mesh_alpha(self):
-        return 1.0
+        return application_parameters["mesh_alpha"]
 
 # Solve problem
 problem = ChannelWithFlap()
 problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"] = True
-problem.parameters["solver_parameters"]["estimate_error"] = True
-problem.parameters["solver_parameters"]["plot_solution"] = False
-problem.parameters["solver_parameters"]["tolerance"] = 1.0
+problem.parameters["solver_parameters"]["solve_dual"] = False
+problem.parameters["solver_parameters"]["estimate_error"] = False
+problem.parameters["solver_parameters"]["plot_solution"] = True
+problem.parameters["solver_parameters"]["tolerance"] = 0.01
 u_F, p_F, U_S, P_S, U_M = problem.solve()
