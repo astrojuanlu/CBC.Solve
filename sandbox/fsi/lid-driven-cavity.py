@@ -2,23 +2,19 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-23
+# Last changed: 2010-09-25
 
 from fsiproblem import *
 
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
-application_parameters.add("ny", 20)
+application_parameters.add("ny", 40)
 application_parameters.add("dt", 0.02)
 application_parameters.add("T", 0.06)
 application_parameters.add("mesh_alpha", 1.0)
 #application_parameters.add("smooth", 50)
-application_parameters.add("dorfler_fraction", 0.5)
+application_parameters.add("dorfler_fraction", 0.6)
 application_parameters.parse()
-
-# Print command-line option string
-print "\nCommand-line option string"
-print application_parameters.option_string()
 
 # Constants related to the geometry of the channel and the obstruction
 cavity_length  = 2.0
@@ -104,7 +100,7 @@ class LidDrivenCavity(FSI):
         info("")
         
     def __str__(self):
-        return "Channel with flap FSI problem"
+        return "Lid Driven Cavity with an Elastic Bottom" 
 
     #--- Parameters for fluid problem ---
 
@@ -138,13 +134,13 @@ class LidDrivenCavity(FSI):
         return Structure()
 
     def structure_density(self):
-        return 15.0
+        return 1.0
 
     def structure_mu(self):
-        return 75.0
+        return 2.0
 
     def structure_lmbda(self):
-        return 125.0
+        return 1.0
 
     def structure_dirichlet_values(self):
         return [(0,0), (0,0)]
@@ -169,9 +165,9 @@ class LidDrivenCavity(FSI):
 # Solve problem
 problem = LidDrivenCavity()
 problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"]  = True
-problem.parameters["solver_parameters"]["estimate_error"] = True
+problem.parameters["solver_parameters"]["solve_dual"]  =  False
+problem.parameters["solver_parameters"]["estimate_error"] = False
 problem.parameters["solver_parameters"]["plot_solution"] = True
-problem.parameters["solver_parameters"]["tolerance"] = 0.01
+problem.parameters["solver_parameters"]["tolerance"] = 0.0001
 u_F, p_F, U_S, P_S, U_M = problem.solve()
 
