@@ -8,9 +8,9 @@ from fsiproblem import *
 
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
-application_parameters.add("ny", 40)
+application_parameters.add("ny", 20)
 application_parameters.add("dt", 0.02)
-application_parameters.add("T", 0.06)
+application_parameters.add("T", 1.5)
 application_parameters.add("mesh_alpha", 1.0)
 #application_parameters.add("smooth", 50)
 application_parameters.add("dorfler_fraction", 0.6)
@@ -44,8 +44,8 @@ inflow  = "x[0] > DOLFIN_EPS && \
 outflow = "x[0] > %g - DOLFIN_EPS && \
            x[1] > %g - DOLFIN_EPS"  % (cavity_length, cavity_height)
 noslip  = "on_boundary && !(%s) && !(%s)" % (inflow, outflow)
-fixed_left   = "x[0] > DOLFIN_EPS && x[1] < %g - DOLFIN_EPS" % structure_top
-fixed_right  = "x[0] > %g -DOLFIN_EPS  && x[1] < %g - DOLFIN_EPS" % (structure_top, structure_top) 
+fixed_left   = "x[0] == 0.0  && x[1] >= DOFLIN_EPS" 
+fixed_right  = "x[0] > %g - DOLFIN_EPS  && x[1] >= 0.0" % structure_right
 
 
 # "x[1] < DOLFIN_EPS && x[0] > %g - DOLFIN_EPS && x[0] < %g + DOLFIN_EPS" % (structure_left, structure_right)
@@ -134,13 +134,13 @@ class LidDrivenCavity(FSI):
         return Structure()
 
     def structure_density(self):
-        return 1.0
+        return 0.25*15.0
 
     def structure_mu(self):
-        return 2.0
+        return 0.25*75.0
 
     def structure_lmbda(self):
-        return 1.0
+        return 0.25*125.0
 
     def structure_dirichlet_values(self):
         return [(0,0), (0,0)]
