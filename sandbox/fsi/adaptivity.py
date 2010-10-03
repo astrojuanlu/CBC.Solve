@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-16
+# Last changed: 2010-10-03
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -151,11 +151,16 @@ def estimate_error(problem):
     # Compute space discretization error
     E_h = sum(eta_K)
 
-    # Compute total error
-    E = E_h + E_k + abs(E_c)
+    # Retrieve weights
+    W_h = problem.space_error_weight()
+    W_k = problem.time_error_weight()
+    W_c = problem.non_galerkin_error_weight() 
 
+    # Compute total weigted error
+    E = E_h * W_h + E_k * W_k + E_c * W_c
+        
     # Report results
-    save_errors(E, E_h, E_k, E_c, ST)
+    save_errors(E, E_h, E_k, E_c, ST, W_h, W_k, W_c)
     save_indicators(eta_F, eta_S, eta_M, eta_K)
 
     return E, eta_K, ST
@@ -236,7 +241,7 @@ def refine_mesh(problem, mesh, indicators):
 
     return refined_mesh
 
-def compute_time_step(Rk, ST, TOL, dt, t1, T):
+def compute_time_step(problem, Rk, ST, TOL, dt, t1, T):
     """Compute new time step based on residual R, stability factor S,
     tolerance TOL, and the previous time step dt. The time step is
     adjusted so that we will not step beyond the given end time."""
@@ -247,7 +252,7 @@ def compute_time_step(Rk, ST, TOL, dt, t1, T):
     conservation = 1.0    # time step conservation (high value means small change)
 
     # Compute new time step
-    dt_new = safety_factor * TOL / (ST * Rk)
+    dt_new = safety_factor * TOL * problem.time_error_weight() / (ST * Rk)
 
     # Modify time step to avoid oscillations
     dt_new = (1.0 + conservation) * dt * dt_new / (dt + conservation * dt_new)
@@ -289,6 +294,7 @@ def save_mesh(mesh, refined_mesh):
     "Save mesh to file"
 
     global refinement_level
+   
 
     # Save initial mesh first time
     if refinement_level == 0:
@@ -302,24 +308,27 @@ def save_mesh(mesh, refined_mesh):
     file = File("adaptivity/mesh_%d.xml" % refinement_level)
     file << refined_mesh
 
-def save_errors(E, E_h, E_k, E_c, ST):
+def save_errors(E, E_h, E_k, E_c, ST, W_h, W_k, W_c):
     "Save errors to file"
 
     global refinement_level
-
+    
     # Summarize errors
     summary = """
 
-Estimating error
-----------------
-level = %d
-E_h   = %g
-E_k   = %g
-E_c   = %g
-E     = E_h + E_k + E_c = %g
+Estimating weighted error
+-------------------------
+Adaptive loop no. = %d
+-------------------------
+
+E_h * %g = %g
+E_k * %g = %g  
+E_c * %g = %g
+  
+E_tot = %g 
 S(T)  = %g
 
-""" % (refinement_level, E_h, E_k, E_c, E, ST)
+""" % (refinement_level, W_h, E_h, W_k, E_k, W_c, E_c, E, ST)
 
     # Print summary
     info(summary)

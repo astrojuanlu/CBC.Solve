@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-13
+# Last changed: 2010-09-23
 
 __all__ = ["FSISolver"]
 
@@ -97,7 +97,7 @@ class FSISolver(CBCSolver):
             begin("Refining mesh")
             mesh = refine_mesh(self.problem, self.problem.mesh(), indicators)
             self.problem.init_meshes(mesh)
-            end()
+            end() 
 
         # Report elapsed time
         info_blue("Solution computed in %g seconds." % (time() - cpu_time))

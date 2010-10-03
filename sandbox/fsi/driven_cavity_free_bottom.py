@@ -29,11 +29,14 @@ from fsiproblem import *
 
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
-application_parameters.add("ny", 20)
-application_parameters.add("dt", 0.02)
-application_parameters.add("T", 0.5)
+application_parameters.add("ny", 40)
+application_parameters.add("dt", 0.01)
+application_parameters.add("T", 0.05)
 application_parameters.add("mesh_alpha", 1.0)
 application_parameters.add("dorfler_fraction", 0.6)
+application_parameters.add("space_error_weight", 0.85) 
+application_parameters.add("time_error_weight", 0.10)
+application_parameters.add("non_galerkin_error_weight", 0.15)
 application_parameters.parse()
 
 # Constants related to the geometry of the problem
@@ -84,6 +87,15 @@ class DrivenCavityFreeBottom(FSI):
 
     def dorfler_fraction(self):
         return application_parameters["dorfler_fraction"]
+
+    def space_error_weight(self):
+        return application_parameters["space_error_weight"]
+
+    def time_error_weight(self):
+        return application_parameters["time_error_weight"]
+
+    def non_galerkin_error_weight(self):
+        return application_parameters["non_galerkin_error_weight"]
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, at_end):
         # Only evaluate functional at the end time

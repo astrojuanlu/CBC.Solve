@@ -164,7 +164,7 @@ class PrimalSolver:
             # Compute new time step
             TOL = self.tolerance
             Rk = compute_time_residual(self.time_series, t0, t1, self.problem)
-            (dt, at_end) = compute_time_step(Rk, ST, TOL, dt, t1, T)
+            (dt, at_end) = compute_time_step(self.problem, Rk, ST, TOL, dt, t1, T)
             t0 = t1
             t1 = t1 + dt
 
