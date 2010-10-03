@@ -137,7 +137,7 @@ def estimate_error(problem):
         # Add to E_k
         E_k += dt * s * dt * Rk
 
-        # Add to E_c
+        # Add to E_c 
         E_c += dt * Rc
 
         # Add to stability factor
@@ -157,7 +157,7 @@ def estimate_error(problem):
     W_c = problem.non_galerkin_error_weight() 
 
     # Compute total weigted error
-    E = E_h * W_h + E_k * W_k + E_c * W_c
+    E = E_h * W_h + E_k * W_k + abs(E_c) * W_c
         
     # Report results
     save_errors(E, E_h, E_k, E_c, ST, W_h, W_k, W_c)
