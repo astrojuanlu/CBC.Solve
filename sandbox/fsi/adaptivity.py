@@ -252,7 +252,7 @@ def compute_time_step(problem, Rk, ST, TOL, dt, t1, T):
     conservation = 1.0    # time step conservation (high value means small change)
 
     # Compute new time step
-    dt_new = safety_factor * TOL * problem.time_error_weight() / (ST * Rk)
+    dt_new = safety_factor * TOL / (problem.time_error_weight() * (ST * Rk))
 
     # Modify time step to avoid oscillations
     dt_new = (1.0 + conservation) * dt * dt_new / (dt + conservation * dt_new)
