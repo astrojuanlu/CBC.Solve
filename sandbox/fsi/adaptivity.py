@@ -328,7 +328,7 @@ E_c * %g = %g
 E_tot = %g 
 S(T)  = %g
 
-""" % (refinement_level, W_h, E_h, W_k, E_k, W_c, E_c, E, ST)
+""" % (refinement_level, W_h, E_h, W_k, E_k, W_c, abs(E_c), E, ST)
 
     # Print summary
     info(summary)
