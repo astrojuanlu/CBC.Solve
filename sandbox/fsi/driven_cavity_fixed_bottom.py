@@ -33,7 +33,10 @@ application_parameters.add("ny", 20)
 application_parameters.add("dt", 0.02)
 application_parameters.add("T", 0.5)
 application_parameters.add("mesh_alpha", 1.0)
+application_parameters.add("space_error_weight", 0.85) 
 application_parameters.add("dorfler_fraction", 0.6)
+application_parameters.add("time_error_weight", 0.10)
+application_parameters.add("non_galerkin_error_weight", 0.15)
 application_parameters.parse()
 
 # Constants related to the geometry of the problem
@@ -84,6 +87,15 @@ class DrivenCavityFixedBottom(FSI):
 
     def dorfler_fraction(self):
         return application_parameters["dorfler_fraction"]
+
+    def space_error_weight(self):
+        return application_parameters["space_error_weight"]
+
+    def time_error_weight(self):
+        return application_parameters["time_error_weight"]
+
+    def non_galerkin_error_weight(self):
+        return application_parameters["non_galerkin_error_weight"]
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, at_end):
         # Only evaluate functional at the end time
@@ -164,9 +176,9 @@ class DrivenCavityFixedBottom(FSI):
 # Solve problem
 problem = DrivenCavityFixedBottom()
 problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"]  =  False
-problem.parameters["solver_parameters"]["estimate_error"] = False
-problem.parameters["solver_parameters"]["plot_solution"] = True
+problem.parameters["solver_parameters"]["solve_dual"]  =  True
+problem.parameters["solver_parameters"]["estimate_error"] = True
+problem.parameters["solver_parameters"]["plot_solution"] = False
 problem.parameters["solver_parameters"]["tolerance"] = 0.1
 u_F, p_F, U_S, P_S, U_M = problem.solve()
 
