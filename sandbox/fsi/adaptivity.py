@@ -111,8 +111,9 @@ def estimate_error(problem):
         read_dual_data(ZZ1, t1, dual_series)
 
         # Extrapolate dual data
+        # FIXME: Why is only Z1 extrapolated (Kristoffer) ?
         info("Extrapolating dual solution")
-        [EZ[i].extrapolate(Z1[i]) for i in range(6)]
+        [EZ[j].extrapolate(Z1[j]) for j in range(6)]
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
