@@ -10,10 +10,12 @@ from fsiproblem import *
 application_parameters = Parameters("application_parameters")
 application_parameters.add("ny", 20)
 application_parameters.add("dt", 0.02)
-application_parameters.add("T", 0.06)
+application_parameters.add("T", 0.5)
 application_parameters.add("mesh_alpha", 1.0)
-application_parameters.add("smooth", 50)
-application_parameters.add("dorfler_fraction", 0.5)
+application_parameters.add("dorfler_fraction", 0.85)
+application_parameters.add("space_error_weight", 0.90) 
+application_parameters.add("time_error_weight", 0.05)
+application_parameters.add("non_galerkin_error_weight", 0.05)
 application_parameters.parse()
 
 # Print command-line option string
@@ -67,18 +69,27 @@ class ChannelWithFlap(FSI):
     def dorfler_fraction(self):
         return application_parameters["dorfler_fraction"]
 
+    def space_error_weight(self):
+        return application_parameters["space_error_weight"]
+
+    def time_error_weight(self):
+        return application_parameters["time_error_weight"]
+
+    def non_galerkin_error_weight(self):
+        return application_parameters["non_galerkin_error_weight"]
+
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, at_end):
 
         # Only evaluate functional at the end time
         if not at_end: return
-
+        
         # Compute average displacement
         structure_area = (structure_right - structure_left) * structure_top
         displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh=U_S.function_space().mesh())
 
         # Compute velocity at outflow
         velocity = u_F((4.0, 0.5))[0]
-
+        
         # Print values of functionals
         info("")
         info_blue("Functional 1 (displacement): %g", displacement)
@@ -120,13 +131,13 @@ class ChannelWithFlap(FSI):
         return Structure()
 
     def structure_density(self):
-        return 15.0
+        return 0.25*15.0
 
     def structure_mu(self):
-        return 75.0
+        return 0.25*75.0
 
     def structure_lmbda(self):
-        return 125.0
+        return 0.25*125.0
 
     def structure_dirichlet_values(self):
         return [(0, 0)]
