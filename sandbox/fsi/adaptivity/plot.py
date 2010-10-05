@@ -34,6 +34,9 @@ def plot_time_steps():
    
    
     def plot_error_estimates():
+        "Plot error estimates"
+        
+        # Extract data
         lines = open("error_estimates.txt").read().split("\n")[:-1]
         level_lines = [l for l in lines]
         ref = [float(l.split(" ")[0]) for l in level_lines]
@@ -42,6 +45,7 @@ def plot_time_steps():
         E_k = [float(l.split(" ")[3]) for l in level_lines]
         E_c = [float(l.split(" ")[4]) for l in level_lines]
 
+        # Plot
         figure()
         subplot(4, 1, 1); plot(ref, E, '-or');grid(True)
         title("Weighted error estimate ",  fontsize=30)	
@@ -57,9 +61,14 @@ def plot_time_steps():
 
 
         def plot_goal_functional():
+            "Plot goal functional"
+            
+            # Extract data
             lines = open("goal_functional.txt").read().split("\n")[:-1]
             level_lines = [l for l in lines]
             M = [float(l.split(" ")[0]) for l in level_lines]
+
+            # Plot
             figure()
             grid(True)
             plot(M, 'og-')
