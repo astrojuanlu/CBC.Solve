@@ -105,7 +105,12 @@ class DrivenCavityFixedBottom(FSI):
         structure_area = (structure_right - structure_left) * structure_top
         displacement = (1.0/structure_area)*assemble(U_S[1]*dx, mesh=U_S.function_space().mesh())
 
-          # Print values of functionals
+        # Write to file
+        f = open("adaptivity/goal_functional.txt", "a")
+        f.write("%g \n" % (displacement))
+        f.close()
+
+        # Print values of functionals
         info("")
         info_blue("Functional  (displacement): %g", displacement)
         info("")

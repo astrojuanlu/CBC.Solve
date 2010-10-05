@@ -87,6 +87,11 @@ class ChannelWithFlap(FSI):
         structure_area = (structure_right - structure_left) * structure_top
         displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh=U_S.function_space().mesh())
 
+        # Write to file
+        f = open("adaptivity/goal_functional.txt", "a")
+        f.write("%g \n" % (displacement))
+        f.close()
+        
         # Compute velocity at outflow
         velocity = u_F((4.0, 0.5))[0]
         
@@ -165,5 +170,5 @@ problem.parameters["solver_parameters"]["solve_primal"] = True
 problem.parameters["solver_parameters"]["solve_dual"] = True
 problem.parameters["solver_parameters"]["estimate_error"] = True
 problem.parameters["solver_parameters"]["plot_solution"] = False
-problem.parameters["solver_parameters"]["tolerance"] = 0.01
+problem.parameters["solver_parameters"]["tolerance"] = 0.05
 u_F, p_F, U_S, P_S, U_M = problem.solve()

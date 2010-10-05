@@ -104,6 +104,8 @@ class DrivenCavityFreeBottom(FSI):
         # Compute average displacement in x1-direction
         structure_area = (structure_right - structure_left) * structure_top
         displacement = (1.0/structure_area)*assemble(U_S[1]*dx, mesh=U_S.function_space().mesh())
+    
+        # Write to file
         f = open("adaptivity/goal_functional.txt", "a")
         f.write("%g \n" % (displacement))
         f.close()
