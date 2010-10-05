@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-16
+# Last changed: 2010-10-05
 
 from pylab import *
 
@@ -28,10 +28,49 @@ def plot_time_steps():
         # Plot
         figure(level)
         subplot(2, 1, 1); grid(True); plot(t, k, '-o')
-        ylabel("$k$"); title("Refinement level %d" % level)
+        ylabel("$k$", fontsize=30); title("Refinement level, %d" %level, fontsize=30)
         subplot(2, 1, 2); grid(True); plot(t, R, '-o')
-        ylabel('$R_k$'); xlabel("$t$")
+        ylabel('$R_k$', fontsize=30); xlabel("$t$", fontsize=30)
+   
+   
+    def plot_error_estimates():
+        lines = open("error_estimates.txt").read().split("\n")[:-1]
+        level_lines = [l for l in lines]
+        ref = [float(l.split(" ")[0]) for l in level_lines]
+        E   = [float(l.split(" ")[1]) for l in level_lines]
+        E_h = [float(l.split(" ")[2]) for l in level_lines]
+        E_k = [float(l.split(" ")[3]) for l in level_lines]
+        E_c = [float(l.split(" ")[4]) for l in level_lines]
 
+        figure()
+        subplot(4, 1, 1); plot(ref, E, '-or');grid(True)
+        title("Weighted error estimate ",  fontsize=30)	
+        legend('E');
+        subplot(4, 1, 2); plot(ref, E_h, 'dg-');grid(True)
+        legend('h');
+        subplot(4, 1, 3); plot(ref, E_k, 'p-');grid(True)
+        legend('k');
+        subplot(4, 1, 4); plot(ref, E_c,'-sk');grid(True)
+        legend('c');
+        xlabel('Refinement level', fontsize=30);
+               
+
+
+        def plot_goal_functional():
+            lines = open("goal_functional.txt").read().split("\n")[:-1]
+            level_lines = [l for l in lines]
+            M = [float(l.split(" ")[0]) for l in level_lines]
+            figure()
+            grid(True)
+            plot(M, 'og-')
+            title('Goal functional', fontsize=30)
+            xlabel('Refinement level', fontsize=30);
+            ylabel('$\mathcal{M}(u^h)$',fontsize=36); 
+               
+        plot_goal_functional()
+   
+    plot_error_estimates()
+    
     show()
 
 plot_time_steps()
