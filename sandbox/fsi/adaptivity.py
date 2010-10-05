@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-10-03
+# Last changed: 2010-10-05
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -13,6 +13,7 @@ from residuals import *
 from storage import *
 from spaces import *
 from utils import *
+from sys import exit
 
 # Variables for time residual
 U0 = U1 = w = None
@@ -142,7 +143,7 @@ def estimate_error(problem):
         E_c += dt * Rc
 
         # Add to stability factor
-        ST += dt * s
+        ST  += dt * s
 
         end()
 
@@ -163,6 +164,9 @@ def estimate_error(problem):
     # Report results
     save_errors(E, E_h, E_k, E_c, ST, W_h, W_k, W_c)
     save_indicators(eta_F, eta_S, eta_M, eta_K)
+    
+    # Report stability factor (for plotting only)
+    save_stability_factor(T, ST)
 
     return E, eta_K, ST
 
@@ -334,10 +338,16 @@ S(T)  = %g
     # Print summary
     info(summary)
 
-    # Save to file
+    # Save to log file
     f = open("adaptivity/adaptivity.log", "a")
     f.write(summary)
     f.close()
+
+    # Save to file (for plotting)
+    g = open("adaptivity/error_estimates.txt", "a")
+    g.write("%d %g %g %g %g \n" %(refinement_level, E, E_h*W_h, E_k*W_k, E_c*W_c))
+    g.close()
+
 
 def save_indicators(eta_F, eta_S, eta_M, eta_K):
     "Save indicators to file"
@@ -357,6 +367,18 @@ def save_timestep(t1, Rk, dt):
     f = open("adaptivity/timesteps.txt", "a")
     f.write("%d %g %g %g\n" % (refinement_level, t1, dt, Rk))
     f.close()
+
+def save_stability_factor(T, ST):
+    "Save Galerkin stability factor"
+
+    global refinement_level
+
+    f = open("adaptivity/stability_factor.txt", "a")
+    f.write("%g %g\n" % (T, ST))
+    f.close()
+#     print "Saving stability factor and exit ..."
+#     exit(True)
+    
 
 def save_array(x, filename):
     "Save array to file"

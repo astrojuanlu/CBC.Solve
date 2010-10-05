@@ -29,14 +29,14 @@ from fsiproblem import *
 
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
-application_parameters.add("ny", 40)
-application_parameters.add("dt", 0.01)
-application_parameters.add("T", 0.05)
+application_parameters.add("ny", 20)
+application_parameters.add("dt", 0.02)
+application_parameters.add("T", 1.25)
 application_parameters.add("mesh_alpha", 1.0)
-application_parameters.add("dorfler_fraction", 0.6)
-application_parameters.add("space_error_weight", 0.85) 
-application_parameters.add("time_error_weight", 0.10)
-application_parameters.add("non_galerkin_error_weight", 0.15)
+application_parameters.add("dorfler_fraction", 0.45)
+application_parameters.add("space_error_weight", 0.01) 
+application_parameters.add("time_error_weight", 0.98)
+application_parameters.add("non_galerkin_error_weight", 0.01)
 application_parameters.parse()
 
 # Constants related to the geometry of the problem
@@ -104,8 +104,11 @@ class DrivenCavityFreeBottom(FSI):
         # Compute average displacement in x1-direction
         structure_area = (structure_right - structure_left) * structure_top
         displacement = (1.0/structure_area)*assemble(U_S[1]*dx, mesh=U_S.function_space().mesh())
-
-          # Print values of functionals
+        f = open("adaptivity/goal_functional.txt", "a")
+        f.write("%g \n" % (displacement))
+        f.close()
+        
+      # Print values of functionals
         info("")
         info_blue("Functional  (displacement): %g", displacement)
         info("")
@@ -179,6 +182,6 @@ problem.parameters["solver_parameters"]["solve_primal"] = True
 problem.parameters["solver_parameters"]["solve_dual"]  =  True
 problem.parameters["solver_parameters"]["estimate_error"] = True
 problem.parameters["solver_parameters"]["plot_solution"] = False
-problem.parameters["solver_parameters"]["tolerance"] = 0.1
+problem.parameters["solver_parameters"]["tolerance"] = 1.0
 u_F, p_F, U_S, P_S, U_M = problem.solve()
 
