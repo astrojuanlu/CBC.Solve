@@ -154,12 +154,13 @@ def estimate_error(problem):
     E_h = sum(eta_K)
 
     # Retrieve weights
+    # FIXME: move, can be defined elsewhere
     W_h = problem.space_error_weight()
     W_k = problem.time_error_weight()
     W_c = problem.non_galerkin_error_weight() 
 
-    # Compute total weigted error
-    E = E_h * W_h + E_k * W_k + abs(E_c) * W_c
+    # Compute total error
+    E = E_h + E_k + abs(E_c) 
         
     # Report results
     save_errors(E, E_h, E_k, E_c, ST, W_h, W_k, W_c)
@@ -168,7 +169,7 @@ def estimate_error(problem):
     # Report stability factor (for plotting only)
     save_stability_factor(T, ST)
 
-    return E, eta_K, ST, E_h, E_k, E_c
+    return E, eta_K, ST, E_h, E_k, E_c, W_h, W_k, W_c
 
 def compute_time_residual(primal_series, t0, t1, problem):
     "Compute size of time residual"

@@ -76,7 +76,7 @@ class FSISolver(CBCSolver):
             # Estimate error and compute error indicators
             if self.parameters["estimate_error"]:
                 begin("Estimating error and computing error indicators")
-                error, indicators, ST, E_h, E_k, E_c = estimate_error(self.problem)
+                error, indicators, ST, E_h, E_k, E_c, W_h, W_k, W_c = estimate_error(self.problem)
                 end()
             else:
                 info("Not estimating error")
@@ -93,11 +93,20 @@ class FSISolver(CBCSolver):
                 info_red("Error too large, need to refine: error = %g > tolerance = %g" % (error, tolerance))
             end()
 
-            # Refine mesh
-            begin("Refining mesh")
-            mesh = refine_mesh(self.problem, self.problem.mesh(), indicators)
-            self.problem.init_meshes(mesh)
-            end() 
+            # Check if mesh error is small enough
+            begin("Checking space error estimate")
+
+            mesh_tolerance = tolerance * self.problem.space_error_weight()
+            if mesh_tolerance <= E_h:
+                info_blue("Freeze the current mesh:   E_h = %g <= TOL_h = %g" % (E_h, mesh_tolerance)) 
+                continue 
+
+            else:
+                # Refine mesh
+                begin("Refining mesh")
+                mesh = refine_mesh(self.problem, self.problem.mesh(), indicators)
+                self.problem.init_meshes(mesh)
+                end() 
 
         # Report elapsed time
         info_blue("Solution computed in %g seconds." % (time() - cpu_time))
