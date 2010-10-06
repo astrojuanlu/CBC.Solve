@@ -97,17 +97,32 @@ class FSISolver(CBCSolver):
             begin("Checking space error estimate")
 
             mesh_tolerance = tolerance * self.problem.space_error_weight()
-            if mesh_tolerance <= E_h:
+            if E_h <= mesh_tolerance:
                 info_blue("Freeze the current mesh: E_h = %g <= TOL_h = %g" % (E_h, mesh_tolerance)) 
-                continue 
 
             else:
                 # Refine mesh
                 begin("Refining mesh")
                 mesh = refine_mesh(self.problem, self.problem.mesh(), indicators)
                 self.problem.init_meshes(mesh)
-                end() 
+            end() 
 
+# FIXE: Add support for not changing the time steps 
+
+#             # Chek if the time error is small enough
+#             begin("Checking time error estimate")    
+            
+#             time_tolerance = tolerance * self.problem.time_error_weight()
+#             if E_k <= time_tolerance:
+#                 info("Keep the current time steps,  E_k = %g  <= TOL_k = %g"  %(E_k, time_tolerance)) 
+            
+#             else:
+#                 # Compute new range of time steps
+#                 begin("Computing new time step")
+#                 dt_new = compute_time_step(self.problem, Rk, ST, tolerance, dt, t1, self.problem.end_time())
+#                 self.dt = dt_new
+#             end()
+                
         # Report elapsed time
         info_blue("Solution computed in %g seconds." % (time() - cpu_time))
 
