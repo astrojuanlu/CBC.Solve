@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-23
+# Last changed: 2010-10-06
 
 __all__ = ["FSISolver"]
 
@@ -76,7 +76,7 @@ class FSISolver(CBCSolver):
             # Estimate error and compute error indicators
             if self.parameters["estimate_error"]:
                 begin("Estimating error and computing error indicators")
-                error, indicators, ST, E_h, E_k, E_c, W_h, W_k, W_c = estimate_error(self.problem)
+                error, indicators, ST, E_h, E_k = estimate_error(self.problem)
                 end()
             else:
                 info("Not estimating error")
@@ -87,10 +87,10 @@ class FSISolver(CBCSolver):
 
             tolerance = self.parameters["tolerance"]
             if error <= tolerance:
-                info_green("Adaptive solver converged: error = %g <= tolerance = %g" % (error, tolerance))
+                info_green("Adaptive solver converged: error = %g <= TOL = %g" % (error, tolerance))
                 break
             else:
-                info_red("Error too large, need to refine: error = %g > tolerance = %g" % (error, tolerance))
+                info_red("Error too large, need to refine: error = %g > TOL = %g" % (error, tolerance))
             end()
 
             # Check if mesh error is small enough
@@ -98,7 +98,7 @@ class FSISolver(CBCSolver):
 
             mesh_tolerance = tolerance * self.problem.space_error_weight()
             if mesh_tolerance <= E_h:
-                info_blue("Freeze the current mesh:   E_h = %g <= TOL_h = %g" % (E_h, mesh_tolerance)) 
+                info_blue("Freeze the current mesh: E_h = %g <= TOL_h = %g" % (E_h, mesh_tolerance)) 
                 continue 
 
             else:

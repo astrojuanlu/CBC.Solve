@@ -169,7 +169,7 @@ def estimate_error(problem):
     # Report stability factor (for plotting only)
     save_stability_factor(T, ST)
 
-    return E, eta_K, ST, E_h, E_k, E_c, W_h, W_k, W_c
+    return E, eta_K, ST, E_h, E_k
 
 def compute_time_residual(primal_series, t0, t1, problem):
     "Compute size of time residual"
