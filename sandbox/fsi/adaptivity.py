@@ -153,17 +153,11 @@ def estimate_error(problem):
     # Compute space discretization error
     E_h = sum(eta_K)
 
-    # Retrieve weights
-    # FIXME: move, can be defined elsewhere
-    W_h = problem.space_error_weight()
-    W_k = problem.time_error_weight()
-    W_c = problem.non_galerkin_error_weight() 
-
     # Compute total error
     E = E_h + E_k + abs(E_c) 
         
     # Report results
-    save_errors(E, E_h, E_k, E_c, ST, W_h, W_k, W_c)
+    save_errors(E, E_h, E_k, E_c, ST)
     save_indicators(eta_F, eta_S, eta_M, eta_K)
     
     # Report stability factor (for plotting only)
@@ -314,7 +308,7 @@ def save_mesh(mesh, refined_mesh):
     file = File("adaptivity/mesh_%d.xml" % refinement_level)
     file << refined_mesh
 
-def save_errors(E, E_h, E_k, E_c, ST, W_h, W_k, W_c):
+def save_errors(E, E_h, E_k, E_c, ST):
     "Save errors to file"
 
     global refinement_level
@@ -327,14 +321,14 @@ Estimating weighted error
 Adaptive loop no. = %d
 -------------------------
 
-E_h * %g = %g
-E_k * %g = %g  
-E_c * %g = %g
+E_h  = %g
+E_k  = %g  
+E_c  = %g
   
 E_tot = %g 
 S(T)  = %g
 
-""" % (refinement_level, W_h, E_h*W_h, W_k, E_k*W_k, W_c, abs(E_c)*W_c, E, ST)
+""" % (refinement_level, E_h, E_k, abs(E_c), E, ST)
 
     # Print summary
     info(summary)
@@ -346,7 +340,7 @@ S(T)  = %g
 
     # Save to file (for plotting)
     g = open("adaptivity/error_estimates.txt", "a")
-    g.write("%d %g %g %g %g \n" %(refinement_level, E, E_h*W_h, E_k*W_k, E_c*W_c))
+    g.write("%d %g %g %g %g \n" %(refinement_level, E, E_h, E_k, abs(E_c)))
     g.close()
 
 
