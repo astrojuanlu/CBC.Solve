@@ -76,7 +76,7 @@ class FSISolver(CBCSolver):
             # Estimate error and compute error indicators
             if self.parameters["estimate_error"]:
                 begin("Estimating error and computing error indicators")
-                error, indicators, ST = estimate_error(self.problem)
+                error, indicators, ST, E_h, E_k, E_c = estimate_error(self.problem)
                 end()
             else:
                 info("Not estimating error")
