@@ -316,7 +316,7 @@ def save_errors(E, E_h, E_k, E_c, ST):
     # Summarize errors
     summary = """
 
-Estimating weighted error
+Estimating error
 -------------------------
 Adaptive loop no. = %d
 -------------------------
@@ -325,7 +325,7 @@ E_h  = %g
 E_k  = %g  
 E_c  = %g
   
-E_tot = %g 
+E_tot = %g
 S(T)  = %g
 
 """ % (refinement_level, E_h, E_k, abs(E_c), E, ST)
