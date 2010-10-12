@@ -131,16 +131,17 @@ class PrimalSolver:
                     info_green("    Increment = %g (tolerance = %g), converged after %d iterations" % \
                                    (increment, self.itertol, iter + 1))
                     end()
+                    
+                    # Evaluate user goal functional
+                    self.problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, t1)
                     break
+
                 elif iter == self.maxiter - 1:
                     raise RuntimeError, "FSI iteration failed to converge after %d iterations." % self.maxiter
                 else:
                     info("")
                     info_red("    Increment = %g (tolerance = %g), iteration %d" % (increment, self.itertol, iter + 1))
                     end()
-
-            # Evaluate user functional
-            self.problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, at_end)
 
             # Save solution and time series to file
             U = extract_solution(F, S, M)
