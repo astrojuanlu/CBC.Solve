@@ -20,7 +20,7 @@ def plot_stability_factor():
     grid(True); plot(t, SGT, '-o')
     xlabel('$t$', fontsize=36);
     ylabel('$\mathcal{S}(T)$',fontsize=36 ); 
-    title("Driven Cavity Free Bottom ",  fontsize=26)
+    title("Galerkin stability factor ",  fontsize=26)
     show()
 
 plot_stability_factor()

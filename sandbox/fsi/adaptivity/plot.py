@@ -8,6 +8,8 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from pylab import *
 
+
+
 def plot_time_steps():
     "Plot adaptive time steps"
 
@@ -28,10 +30,9 @@ def plot_time_steps():
         # Plot
         figure(level)
         subplot(2, 1, 1); grid(True); plot(t, k, '-o')
-        ylabel("$k$", fontsize=30); title("Refinement level, %d" %level, fontsize=30)
+        ylabel("$k_n(t)$", fontsize=30); title("Refinement level, %d" %level, fontsize=30)
         subplot(2, 1, 2); grid(True); plot(t, R, '-o')
         ylabel('$R_k$', fontsize=30); xlabel("$t$", fontsize=30)
-   
    
     def plot_error_estimates():
         "Plot error estimates"
@@ -48,7 +49,7 @@ def plot_time_steps():
         # Plot
         figure()
         subplot(4, 1, 1); plot(ref, E, '-or');grid(True)
-        title("Weighted error estimate ",  fontsize=30)	
+        title("Error estimate ",  fontsize=30)	
         legend('E');
         subplot(4, 1, 2); plot(ref, E_h, 'dg-');grid(True)
         legend('h');
@@ -57,8 +58,6 @@ def plot_time_steps():
         subplot(4, 1, 4); plot(ref, E_c,'-sk');grid(True)
         legend('c');
         xlabel('Refinement level', fontsize=30);
-               
-
 
         def plot_goal_functional():
             "Plot goal functional"
@@ -77,9 +76,8 @@ def plot_time_steps():
             ylabel('$\mathcal{M}(u^h)$',fontsize=36); 
                
         plot_goal_functional()
-   
     plot_error_estimates()
-    
-    show()
-
 plot_time_steps()
+
+show()
+
