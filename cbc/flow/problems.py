@@ -50,22 +50,6 @@ class NavierStokes(CBCProblem):
         "Return current solution values"
         return self.solver.solution()
 
-    def cauchy_stress(self, u, p):
-        epsilon = 0.5*(grad(u) + grad(u).T)
-        mu = self.viscosity()
-        sigma = 2.0*mu*epsilon - p*Identity(u.cell().d)
-        return sigma
-
-    def viscous_stress(self, u):
-        epsilon = 0.5*(grad(u) + grad(u).T)
-        mu = self.viscosity()
-        fluid_stress_u = 2.0*nu*epsilon
-        return fluid_stress_u
-
-    def pressure_stress(self, u, p):
-        fluid_stress_p = - p*Identity(u.cell().d)
-        return fluid_stress_p
-
     #--- Functions that must be overloaded by subclasses ---
 
     def mesh(self):

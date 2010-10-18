@@ -58,21 +58,39 @@ class NavierStokesSolver(CBCSolver):
         p1 = interpolate(p0, Q)
 
         # Coefficients
-        #nu = Constant(problem.viscosity()) # Kinematic viscosity [m^2/s]
         mu = Constant(problem.viscosity())  # Dynamic viscosity [Ps x s]
         rho = Constant(problem.density())   # Density [kg/m^3]
+        n = FacetNormal(mesh)
         k = Constant(dt)
         f = problem.body_force(V1)
         w = problem.mesh_velocity(V1)
 
-        # Tentative velocity step
-        U = 0.5*(u0 + u)
-        F1 = rho*(1/k)*inner(v, u - u0)*dx + rho*inner(v, grad(u0)*(u0 - w))*dx \
-            + mu*inner(grad(v), grad(U))*dx + inner(v, grad(p0))*dx \
-            - inner(v, f)*dx
+        # Define Cauchy stress tensor
+        def sigma(v,w):
+            return 2.0*mu*0.5*(grad(v) + grad(v).T)  - w*Identity(v.cell().d)
+
+        # Define symmetric gradient
+        def epsilon(v):
+            return  0.5*(grad(v) + grad(v).T)
+
+        # Tentative velocity step (sigma formulation)
+        U = 0.5*(u0 +u)                                                                                                                                     
+        F1 = (1/k)*inner(v, u - u0)*dx + inner(v, grad(u0)*u0)*dx \
+            + inner(epsilon(v), sigma(U, p0))*dx \
+            + inner(v,p0*n)*ds - mu*inner(grad(U).T*n, v)*ds \
+            - inner(v, f)*dx   
         a1 = lhs(F1)
         L1 = rhs(F1)
 
+#         # Tentative velocity step OLD LAPLACE FORMULATION
+#         U = 0.5*(u0 + u)
+#         F1 = rho*(1/k)*inner(v, u - u0)*dx + rho*inner(v, grad(u0)*(u0 - w))*dx \
+#             + mu*inner(grad(v), grad(U))*dx + inner(v, grad(p0))*dx \
+#             - inner(v, f)*dx
+#         a1 = lhs(F1)
+#         L1 = rhs(F1)
+
+        
         # Pressure correction
         a2 = inner(grad(q), k*grad(p))*dx
         L2 = inner(grad(q), k*grad(p0))*dx - q*div(u1)*dx
