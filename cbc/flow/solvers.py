@@ -75,7 +75,7 @@ class NavierStokesSolver(CBCSolver):
 
         # Tentative velocity step (sigma formulation)
         U = 0.5*(u0 +u)                                                                                                                                     
-        F1 = (1/k)*inner(v, u - u0)*dx + inner(v, grad(u0)*u0)*dx \
+        F1 = rho*(1/k)*inner(v, u - u0)*dx + rho*inner(v, grad(u0)*u0)*dx \
             + inner(epsilon(v), sigma(U, p0))*dx \
             + inner(v,p0*n)*ds - mu*inner(grad(U).T*n, v)*ds \
             - inner(v, f)*dx   
