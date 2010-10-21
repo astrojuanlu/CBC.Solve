@@ -2,11 +2,12 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-04-28
+# Last changed: 2010-10-21
 
 from cbc.flow import *
 
 class BoundaryValue(Expression):
+
     def eval(self, values, x):
         if x[0] > DOLFIN_EPS and x[0] < 1.0 - DOLFIN_EPS and x[1] > 1.0 - DOLFIN_EPS:
             values[0] = 1.0
@@ -14,6 +15,9 @@ class BoundaryValue(Expression):
         else:
             values[0] = 0.0
             values[1] = 0.0
+
+    def value_shape(self):
+        return (2,)
 
 class DrivenCavity(NavierStokes):
 
@@ -23,17 +27,21 @@ class DrivenCavity(NavierStokes):
     def viscosity(self):
         return 1.0 / 1000.0
 
-    def boundary_conditions(self, V, Q):
-        element = VectorElement("CG", triangle, 1)
-        self.g = BoundaryValue(element=element)
-        bc = DirichletBC(V, self.g, DomainBoundary())
-        return [bc], []
+    def velocity_dirichlet_values(self):
+        self.g = BoundaryValue()
+        return [self.g]
+
+    def velocity_dirichlet_boundaries(self):
+        return [DomainBoundary()]
+
+    def velocity_initial_condition(self):
+        return (0, 0)
+
+    def pressure_initial_condition(self):
+        return 0
 
     def end_time(self):
         return 1.0
-
-    def max_velocity(self):
-        return 1.5
 
     def functional(self, u, p):
         return u((0.75, 0.75))[0]

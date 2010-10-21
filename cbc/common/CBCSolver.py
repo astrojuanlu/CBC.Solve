@@ -2,11 +2,11 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-09
+# Last changed: 2010-10-21
 
 from time import time
 from dolfin import info, error, Progress
-from dolfin import compile_subdomains, interpolate, Progress, DirichletBC, Constant, Expression
+from dolfin import compile_subdomains, interpolate, SubDomain, DirichletBC, Constant, Expression
 from dolfin.cpp import GenericFunction
 
 class CBCSolver:
@@ -72,7 +72,9 @@ def create_dirichlet_conditions(values, boundaries, function_space):
         pretty_str = str(boundaries[i])
         while "  " in pretty_str: pretty_str = pretty_str.replace("  ", " ")
         info("Creating Dirichlet boundary condition at %s" % pretty_str)
-        subdomain = compile_subdomains(boundaries[i])
+        subdomain = boundaries[i]
+        if not isinstance(subdomain, SubDomain):
+            subdomain = compile_subdomains(subdomain)
         bc = DirichletBC(function_space, value, subdomain)
         bcs.append(bc)
 
