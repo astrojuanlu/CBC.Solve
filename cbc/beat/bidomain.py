@@ -8,11 +8,11 @@ def Dt(u, u0, dt):
     return (1.0/dt)*(u - u0)
 
 # Parameters for time
-T = 5.0
+T = 2.0
 dt = 0.01
 
 # Parameters for space
-n = 10
+n = 32
 mesh = UnitSquare(n, n)
 
 # Definition of numerical scheme
@@ -20,15 +20,15 @@ V = FunctionSpace(mesh, "CG", 1)
 Q = FunctionSpace(mesh, "CG", 1)
 S = FunctionSpace(mesh, "DG", 0)
 R = FunctionSpace(mesh, "R", 0)
-W = MixedFunctionSpace([V, Q, S, R, R])
+W = MixedFunctionSpace([V, Q, S, R])
 
 y = Function(W)
 
 # Unknowns
-(v, u, s, c_v, c_u) = split(y)
+(v, u, s, c_u) = split(y)
 
 # Test functions
-(w, q, r, d_v, d_u) = TestFunctions(W)
+(w, q, r, d_u) = TestFunctions(W)
 
 # Initial conditions:
 v0 = Function(V)
@@ -61,7 +61,7 @@ F1 = (inner(M_i(grad(v)), grad(q)) + inner(M_ie(grad(u)), grad(q))
 F2 = (Dt(s, s0, dt)*r - F(v, s)*r)*dx
 
 # Non-singularize (ground system)
-F3 = (v*d_v + w*c_v + u*d_u + q*c_u)*dx
+F3 = (u*d_u + q*c_u)*dx
 
 # Full system
 E = F0 + F1 + F2 + F3
@@ -87,7 +87,7 @@ while (t <= T):
     pde.solve(y)
 
     # Extract interesting variables
-    (v, u, s, c_v, c_u) = y.split()
+    (v, u, s, c_u) = y.split()
 
     # Plot/Store solutions
     #plot(v, title="Membrane potential")
