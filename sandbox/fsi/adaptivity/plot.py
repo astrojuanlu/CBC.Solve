@@ -65,12 +65,13 @@ def plot_time_steps():
             # Extract data
             lines = open("goal_functional.txt").read().split("\n")[:-1]
             level_lines = [l for l in lines]
-            M = [float(l.split(" ")[0]) for l in level_lines]
+            t = [float(l.split(" ")[0]) for l in level_lines]
+            M = [float(l.split(" ")[1]) for l in level_lines]
 
             # Plot
             figure()
             grid(True)
-            plot(M, 'og-')
+            plot(t, M, 'og-')
             title('Goal functional', fontsize=30)
             xlabel('Refinement level', fontsize=30);
             ylabel('$\mathcal{M}(u^h)$',fontsize=36); 
