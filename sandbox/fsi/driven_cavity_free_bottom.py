@@ -6,7 +6,6 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from fsiproblem import *
 
-
 #   REGULIZED VELOCITY PROFILE     
 #  
 #   ------------------------->
@@ -31,12 +30,12 @@ from fsiproblem import *
 application_parameters = Parameters("application_parameters")
 application_parameters.add("ny", 20)
 application_parameters.add("dt", 0.02)
-application_parameters.add("T", 1.25)
+application_parameters.add("T", 1.0)
 application_parameters.add("mesh_alpha", 1.0)
 application_parameters.add("dorfler_fraction", 0.45)
-application_parameters.add("space_error_weight", 0.01) 
-application_parameters.add("time_error_weight", 0.98)
-application_parameters.add("non_galerkin_error_weight", 0.01)
+application_parameters.add("space_error_weight", 0.1) 
+application_parameters.add("time_error_weight", 0.9)
+application_parameters.add("non_galerkin_error_weight", 0.1)
 application_parameters.parse()
 
 # Constants related to the geometry of the problem
@@ -66,6 +65,7 @@ class Structure(SubDomain):
             x[0] < structure_right + DOLFIN_EPS and \
             x[1] < structure_top   + DOLFIN_EPS
 
+# Define problem
 class DrivenCavityFreeBottom(FSI):
 
     def __init__(self):
@@ -97,20 +97,19 @@ class DrivenCavityFreeBottom(FSI):
     def non_galerkin_error_weight(self):
         return application_parameters["non_galerkin_error_weight"]
 
-    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, at_end):
-        # Only evaluate functional at the end time
-        if not at_end: return
-        
+    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
+
         # Compute average displacement in x1-direction
         structure_area = (structure_right - structure_left) * structure_top
         displacement = (1.0/structure_area)*assemble(U_S[1]*dx, mesh=U_S.function_space().mesh())
     
         # Write to file
+#        f = open("sandbox/fsi/adaptivity/test2.txt", "a")
         f = open("adaptivity/goal_functional.txt", "a")
-        f.write("%g \n" % (displacement))
+        f.write("%g %g \n" % (dt, displacement))
         f.close()
         
-      # Print values of functionals
+        # Print values of functionals
         info("")
         info_blue("Functional  (displacement): %g", displacement)
         info("")
@@ -181,9 +180,9 @@ class DrivenCavityFreeBottom(FSI):
 # Solve problem
 problem = DrivenCavityFreeBottom()
 problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"]  =  True
-problem.parameters["solver_parameters"]["estimate_error"] = True
+problem.parameters["solver_parameters"]["solve_dual"]  = True
+problem.parameters["solver_parameters"]["estimate_error"] =True
 problem.parameters["solver_parameters"]["plot_solution"] = False
-problem.parameters["solver_parameters"]["tolerance"] = 1.0
+problem.parameters["solver_parameters"]["tolerance"] = 0.5
 u_F, p_F, U_S, P_S, U_M = problem.solve()
 

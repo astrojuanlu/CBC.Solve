@@ -24,7 +24,7 @@ from fsiproblem import *
 # FIXED  |      STRUCTURE         | FIXED 
 #        |                        |
 #        -------------------------- (3.0, 3.0)
-#                FIXED
+#                  FREE
 
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
@@ -104,12 +104,6 @@ class LeakyDrivenCavityFreeBottom(FSI):
         structure_area = (structure_right - structure_left) * structure_top
         displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh=U_S.function_space().mesh())
 
-     
-        # Write to file
-        f = open("adaptivity/goal_functional.txt", "a")
-        f.write("%g \n" % (displacement))
-        f.close()
-        
         # Print values of functionals
         info("")
         info_blue("Functional (displacement): %g", displacement)
@@ -181,9 +175,9 @@ class LeakyDrivenCavityFreeBottom(FSI):
 # Solve problem
 problem = LeakyDrivenCavityFreeBottom()
 problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"]  =  True
-problem.parameters["solver_parameters"]["estimate_error"] = True
+problem.parameters["solver_parameters"]["solve_dual"]  =  False
+problem.parameters["solver_parameters"]["estimate_error"] = False
 problem.parameters["solver_parameters"]["plot_solution"] = False
-problem.parameters["solver_parameters"]["tolerance"] = 0.1
+problem.parameters["solver_parameters"]["tolerance"] = 0.5
 u_F, p_F, U_S, P_S, U_M = problem.solve()
 

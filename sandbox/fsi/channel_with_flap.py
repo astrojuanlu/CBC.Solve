@@ -13,8 +13,8 @@ application_parameters.add("dt", 0.02)
 application_parameters.add("T", 0.5)
 application_parameters.add("mesh_alpha", 1.0)
 application_parameters.add("dorfler_fraction", 0.85)
-application_parameters.add("space_error_weight", 0.90) 
-application_parameters.add("time_error_weight", 0.05)
+application_parameters.add("space_error_weight", 0.05) 
+application_parameters.add("time_error_weight", 0.9)
 application_parameters.add("non_galerkin_error_weight", 0.05)
 application_parameters.parse()
 
@@ -167,8 +167,8 @@ class ChannelWithFlap(FSI):
 # Solve problem
 problem = ChannelWithFlap()
 problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"] = True
-problem.parameters["solver_parameters"]["estimate_error"] = True
+problem.parameters["solver_parameters"]["solve_dual"] = False
+problem.parameters["solver_parameters"]["estimate_error"] = False
 problem.parameters["solver_parameters"]["plot_solution"] = False
-problem.parameters["solver_parameters"]["tolerance"] = 0.05
+problem.parameters["solver_parameters"]["tolerance"] = 0.1
 u_F, p_F, U_S, P_S, U_M = problem.solve()

@@ -74,7 +74,7 @@ mesh = SubMesh(mesh, sub_domains, 0)
 mesh.snap_boundary(hole)
 
 # Refine and snap mesh
-refine_hole= 1.0
+refine_hole= 1
 for i in range(refine_hole):
 
     # Mark cells for refinement
@@ -89,7 +89,6 @@ for i in range(refine_hole):
 
     # Snap boundary
     mesh.snap_boundary(hole)
-   # plot(mesh, interactive=True)
 
 class CylinderChannelWithFlap(FSI):
 
@@ -157,7 +156,7 @@ class CylinderChannelWithFlap(FSI):
         return (0, 0)
 
     def fluid_pressure_initial_condition(self):
-        return (0, 0)
+        return 0
 
     #--- Parameters for structure problem ---
 
