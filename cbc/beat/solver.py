@@ -116,7 +116,7 @@ class FullyImplicit(DynamicBidomainSolver):
             (v, u, s) = y.split()[0:3]
 
             # Plot/Store solutions
-            plot(v, title="Membrane potential")
+            #plot(v, title="Membrane potential")
             file << v
 
             # Update solutions at previous time-step

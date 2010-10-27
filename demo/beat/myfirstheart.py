@@ -25,7 +25,10 @@ class MyFirstHeart(Heart):
 
     def mesh(self):
         n = 10
-        return Rectangle(0, 0, 4, 2, n, n)
+        return Rectangle(0, 0, 4, 2, 2*n, n)
+
+    def end_time(self):
+        return 2.0
 
     def boundary_current(self):
         return BoundaryStimulus()
