@@ -99,7 +99,8 @@ class FullyImplicit(DynamicBidomainSolver):
 
         t = 0.0
         T = heart.end_time()
-        file = File("membrane.pvd")
+        file = File("beat_generated_data/membrane.pvd")
+        sfile = File("beat_generated_data/state.pvd")
         while (t <= T):
 
             # Update sources
@@ -118,6 +119,7 @@ class FullyImplicit(DynamicBidomainSolver):
             # Plot/Store solutions
             #plot(v, title="Membrane potential")
             file << v
+            sfile << s
 
             # Update solutions at previous time-step
             v0.assign(v)
