@@ -29,14 +29,14 @@ from fsiproblem import *
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
 application_parameters.add("ny", 20)
-application_parameters.add("T", 5.0)
+application_parameters.add("T", 1.0)
 application_parameters.add("dt", 0.02)
-application_parameters.add("w_h", 0.05) 
-application_parameters.add("w_k", 0.9)
-application_parameters.add("w_c", 0.05)
+application_parameters.add("w_h", 0.45) 
+application_parameters.add("w_k", 0.45)
+application_parameters.add("w_c", 0.1)
 application_parameters.add("mesh_alpha", 1.0)
 application_parameters.add("dorfler_fraction", 0.5)
-application_parameters.add("adaptive_tolerance", 43.8)
+application_parameters.add("adaptive_tolerance", 0.5)
 application_parameters.parse()
 
 # Save parameters to file
