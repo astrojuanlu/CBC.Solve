@@ -19,6 +19,7 @@ problem_names = ["channel_with_flap", "driven_cavity_free_bottom", "driven_cavit
 problem = problem_names[1]
 
 # Define TOL parameters
+TOL = 0.5
 w_h = 0.5
 w_k = 0.4
 w_c = 0.1
@@ -30,12 +31,8 @@ ny  = 20
 
 # Define time parameters
 dt  = 0.04
-T   = 0.1
+T   = 0.06
 
 # Define and submit job 
-jobs =("python"+" "+ str(problem)+".py"+" "+"--w_h"+" "+ str(w_h)+" "+"--w_k"+" "+ str(w_k) +" "+"--w_c"+" "+ str(w_c) +" "+"--T"+" "+ str(T)  +" "+"--dt"+" "+ str(dt)  +" "+"--dorfler_fraction"+" "+ str(d_f) +" "+"--mesh_alpha"+" "+ str(m_a) )
+jobs =("python"+" "+ str(problem)+".py"+" "+"--w_h"+" "+ str(w_h)+" "+"--w_k"+" "+ str(w_k) +" "+"--w_c"+" "+ str(w_c) +" "+"--T"+" "+ str(T)  +" "+"--dt"+" "+ str(dt)  +" "+"--dorfler_fraction"+" "+ str(d_f) +" "+"--mesh_alpha"+" "+ str(m_a)+" "+"--adaptive_tolerance"+" "+ str(TOL))
 submit(jobs, nodes=1, ppn=8,  keep_environment=True, walltime=24*days, dryrun=False)
-
-
- 
-# +" "+"--T"+" "+ str(T)
