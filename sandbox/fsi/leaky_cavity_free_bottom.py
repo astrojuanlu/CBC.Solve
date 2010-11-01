@@ -2,11 +2,11 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-10-01
+# Last changed: 2010-11-01
 
 from fsiproblem import *
 
-#            WALL (NOSLIP)
+#            WALL (NOSLIP) Change this?
 #        __________________________
 #     ----->                     -----> u_max = (1,0)
 #     ---> INFLOW                --->
@@ -31,12 +31,19 @@ application_parameters = Parameters("application_parameters")
 application_parameters.add("ny", 30)
 application_parameters.add("dt", 0.02)
 application_parameters.add("T", 0.5)
-application_parameters.add("mesh_alpha", 1.0)
-application_parameters.add("space_error_weight", 0.85) 
-application_parameters.add("time_error_weight", 0.10)
-application_parameters.add("non_galerkin_error_weight", 0.15)
+application_parameters.add("w_h", 0.85) 
+application_parameters.add("w_k", 0.10)
+application_parameters.add("w_c", 0.15)
 application_parameters.add("dorfler_fraction", 0.6)
+application_parameters.add("mesh_alpha", 1.0)
 application_parameters.parse()
+
+# Save parameters to file
+parameter_info = application_parameters.option_string()
+f = open("adaptivity/leaky_cavity_free_parameters.txt", "w")
+f.write("Leaky Cavity Free Bottom \n \n ")
+f.write(parameter_info)
+f.close()
 
 # Constants related to the geometry of the problem
 cavity_length  = 3.0
@@ -87,23 +94,25 @@ class LeakyDrivenCavityFreeBottom(FSI):
         return application_parameters["dorfler_fraction"]
 
     def space_error_weight(self):
-        return application_parameters["space_error_weight"]
+        return application_parameters["w_h"]
 
     def time_error_weight(self):
-        return application_parameters["time_error_weight"]
+        return application_parameters["w_k"]
 
     def non_galerkin_error_weight(self):
-        return application_parameters["non_galerkin_error_weight"]
+        return application_parameters["w_c"]
 
-    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, at_end):
+    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
 
-        # Only evaluate functional at the end time
-        if not at_end: return
-        
         # Compute average displacement
         structure_area = (structure_right - structure_left) * structure_top
         displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh=U_S.function_space().mesh())
 
+        # Write to file
+        f = open("adaptivity/goal_functional.txt", "a")
+        f.write("%g \n" % (displacement))
+        f.close()
+        
         # Print values of functionals
         info("")
         info_blue("Functional (displacement): %g", displacement)
