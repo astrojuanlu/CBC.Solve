@@ -31,11 +31,12 @@ application_parameters = Parameters("application_parameters")
 application_parameters.add("ny", 30)
 application_parameters.add("dt", 0.02)
 application_parameters.add("T", 0.5)
-application_parameters.add("w_h", 0.85) 
-application_parameters.add("w_k", 0.10)
-application_parameters.add("w_c", 0.15)
+application_parameters.add("w_h", 0.45) 
+application_parameters.add("w_k", 0.45)
+application_parameters.add("w_c", 0.1)
 application_parameters.add("mesh_alpha", 1.0)
-application_parameters.add("dorfler_fraction", 0.6)
+application_parameters.add("dorfler_fraction", 0.5)
+application_parameters.add("adaptive_tolerance", 0.5)
 application_parameters.parse()
 
 # Save parameters to file
@@ -91,9 +92,6 @@ class LeakyDrivenCavityFixedBottom(FSI):
     def initial_timestep(self):
         return application_parameters["dt"]
 
-    def dorfler_fraction(self):
-        return application_parameters["dorfler_fraction"]
-
     def space_error_weight(self):
         return application_parameters["w_h"]
 
@@ -102,6 +100,12 @@ class LeakyDrivenCavityFixedBottom(FSI):
 
     def non_galerkin_error_weight(self):
         return application_parameters["w_c"]
+
+    def dorfler_fraction(self):
+        return application_parameters["dorfler_fraction"]
+
+    def adaptive_tolerance(self):
+        return application_parameters["adaptive_tolerance"]
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
 
@@ -185,9 +189,9 @@ class LeakyDrivenCavityFixedBottom(FSI):
 # Solve problem
 problem = LeakyDrivenCavityFixedBottom()
 problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"]  =  False
-problem.parameters["solver_parameters"]["estimate_error"] = False
+problem.parameters["solver_parameters"]["solve_dual"]  =  True
+problem.parameters["solver_parameters"]["estimate_error"] = True
 problem.parameters["solver_parameters"]["plot_solution"] =  False
-problem.parameters["solver_parameters"]["tolerance"] = 0.1
+problem.parameters["solver_parameters"]["tolerance"] = problem.adaptive_tolerance()
 u_F, p_F, U_S, P_S, U_M = problem.solve()
 
