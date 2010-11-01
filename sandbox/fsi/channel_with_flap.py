@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-23
+# Last changed: 2010-11-01
 
 from fsiproblem import *
 
@@ -11,16 +11,19 @@ application_parameters = Parameters("application_parameters")
 application_parameters.add("ny", 20)
 application_parameters.add("dt", 0.02)
 application_parameters.add("T", 0.5)
+application_parameters.add("w_h", 0.05) 
+application_parameters.add("w_k", 0.9)
+application_parameters.add("w_c", 0.05)
 application_parameters.add("mesh_alpha", 1.0)
 application_parameters.add("dorfler_fraction", 0.85)
-application_parameters.add("space_error_weight", 0.05) 
-application_parameters.add("time_error_weight", 0.9)
-application_parameters.add("non_galerkin_error_weight", 0.05)
 application_parameters.parse()
 
-# Print command-line option string
-print "\nCommand-line option string"
-print application_parameters.option_string()
+# Save parameters to file
+parameter_info = application_parameters.option_string()
+f = open("adaptivity/channel_flap_parameters.txt", "w")
+f.write("Channel with Flap \n \n ")
+f.write(parameter_info)
+f.close()
 
 # Constants related to the geometry of the channel and the obstruction
 channel_length  = 4.0
@@ -70,13 +73,13 @@ class ChannelWithFlap(FSI):
         return application_parameters["dorfler_fraction"]
 
     def space_error_weight(self):
-        return application_parameters["space_error_weight"]
+        return application_parameters["w_h"]
 
     def time_error_weight(self):
-        return application_parameters["time_error_weight"]
+        return application_parameters["w_k"]
 
     def non_galerkin_error_weight(self):
-        return application_parameters["non_galerkin_error_weight"]
+        return application_parameters["w_c"]
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, at_end):
 
@@ -167,8 +170,8 @@ class ChannelWithFlap(FSI):
 # Solve problem
 problem = ChannelWithFlap()
 problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"] = False
-problem.parameters["solver_parameters"]["estimate_error"] = False
+problem.parameters["solver_parameters"]["solve_dual"] = True
+problem.parameters["solver_parameters"]["estimate_error"] = True
 problem.parameters["solver_parameters"]["plot_solution"] = False
-problem.parameters["solver_parameters"]["tolerance"] = 0.1
+problem.parameters["solver_parameters"]["tolerance"] = 0.5
 u_F, p_F, U_S, P_S, U_M = problem.solve()
