@@ -85,10 +85,7 @@ class ChannelWithFlap(FSI):
     def adaptive_tolerance(self):
         return application_parameters["adaptive_tolerance"]
 
-    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, at_end):
-
-        # Only evaluate functional at the end time
-        if not at_end: return
+    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
         
         # Compute average displacement
         structure_area = (structure_right - structure_left) * structure_top
@@ -96,7 +93,7 @@ class ChannelWithFlap(FSI):
 
         # Write to file
         f = open("adaptivity/goal_functional.txt", "a")
-        f.write("%g \n" % (displacement))
+        f.write("%g %g \n" % (dt, displacement))
         f.close()
         
         # Compute velocity at outflow
