@@ -190,8 +190,8 @@ class DrivenCavityFreeBottom(FSI):
 # Solve problem
 problem = DrivenCavityFreeBottom()
 problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"]  = False
-problem.parameters["solver_parameters"]["estimate_error"] = False
+problem.parameters["solver_parameters"]["solve_dual"]  = True
+problem.parameters["solver_parameters"]["estimate_error"] = True
 problem.parameters["solver_parameters"]["plot_solution"] = False
 problem.parameters["solver_parameters"]["tolerance"] = problem.adaptive_tolerance()
 problem.parameters["solver_parameters"]["itertol"] = problem.adaptive_tolerance() * problem.non_galerkin_error_weight()
