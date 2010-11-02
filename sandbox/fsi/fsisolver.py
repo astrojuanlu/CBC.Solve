@@ -33,7 +33,7 @@ class FSISolver(CBCSolver):
         self.parameters.add("save_series", True)
         self.parameters.add("tolerance", 0.1)
         self.parameters.add("maxiter", 100)
-        self.parameters.add("itertol", 1e-10)
+        self.parameters.add("itertol", 1e-5)
         self.parameters.add("num_smoothings", 50)
 
         # Set DOLFIN parameters
