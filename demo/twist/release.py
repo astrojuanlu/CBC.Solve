@@ -33,10 +33,10 @@ class Release(Hyperelasticity):
         return u0, v0
 
     def dirichlet_values(self):
-        return (0, 0, 0)
+        return [(0, 0, 0)]
 
     def dirichlet_boundaries(self):
-        return "x[0] == 0.0"
+        return ["x[0] == 0.0"]
 
     def material_model(self):
         mu    = 3.8461
