@@ -115,7 +115,7 @@ class DrivenCavityFixedBottom(FSI):
 
         # Write to file
         f = open("adaptivity/goal_functional.txt", "a")
-        f.write("%g \n" % (displacement))
+        f.write("%g %g \n" % (dt, displacement))
         f.close()
 
         # Print values of functionals
@@ -158,13 +158,13 @@ class DrivenCavityFixedBottom(FSI):
         return Structure()
 
     def structure_density(self):
-        return 10.0
+        return 1.0
 
     def structure_mu(self):
-        return 5.0
+        return 3.0
 
     def structure_lmbda(self):
-        return 5.0
+        return 3.0
 
     def structure_dirichlet_values(self):
         return [(0,0), (0,0), (0,0)]
