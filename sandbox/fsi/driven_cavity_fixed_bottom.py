@@ -158,13 +158,13 @@ class DrivenCavityFixedBottom(FSI):
         return Structure()
 
     def structure_density(self):
-        return 1.0
+        return 5.0 
 
     def structure_mu(self):
-        return 3.0
+        return 1.5
 
     def structure_lmbda(self):
-        return 3.0
+        return 15.0
 
     def structure_dirichlet_values(self):
         return [(0,0), (0,0), (0,0)]
