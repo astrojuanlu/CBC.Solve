@@ -104,7 +104,9 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     # Define goal funtionals
     area = 0.2*0.5
     T = 1.0
-    goal_functional = (1/T)*(1.0/area)*v_S[0]*dx_S
+#    goal_functional = (1/T)*(1.0/area)*v_S[0]*dx_S
+#    goal_functional = 10*q_M[1]*dx_F
+    goal_functional = v_S[1]*dx_S
 
     # Define the dual rhs and lhs
     A = lhs(A_system)
