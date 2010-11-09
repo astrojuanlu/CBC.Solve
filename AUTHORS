@@ -1,5 +1,12 @@
+Authors/contributors, ordered according to[1]:
+
 Kristoffer Selim
 Anders Logg
 Harish Narayanan
 Marie E. Rognes
 Aron Wahlberg
+
+[1] bzr log -n0 | grep committer | sed -e 's/^.*committer: //g' | \
+    sed -e 's/<.*>//g' | sed -s 's/selim/Kristoffer Selim/g' | \
+    sort | uniq -c | sort -k 2,2n -r | gawk '{print $2" "$3}'
+
