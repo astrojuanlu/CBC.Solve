@@ -236,9 +236,6 @@ def refine_mesh(problem, mesh, indicators):
     # Refine mesh
     refined_mesh = refine(mesh, markers)
 
-    # Save mesh to file
-    save_mesh(mesh, refined_mesh)
-
     return refined_mesh
 
 def compute_time_step(problem, Rk, ST, TOL, dt, t1, T):
