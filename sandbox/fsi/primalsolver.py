@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-16
+# Last changed: 2010-11-09
 
 import pylab
 from time import time
@@ -24,7 +24,6 @@ class PrimalSolver:
         self.plot_solution = solver_parameters["plot_solution"]
         self.save_solution = solver_parameters["save_solution"]
         self.maxiter = solver_parameters["maxiter"]
-        self.itertol = solver_parameters["itertol"]
         self.tolerance = solver_parameters["tolerance"]
 
         # Create files for saving to VTK
@@ -50,6 +49,8 @@ class PrimalSolver:
         # Get problem parameters
         T = self.problem.end_time()
         dt = initial_timestep(self.problem)
+        TOL = self.tolerance
+        w_c = self.problem.non_galerkin_error_weight()
 
         # Define the three subproblems
         F = FluidProblem(self.problem)
@@ -79,6 +80,9 @@ class PrimalSolver:
             info("-"*80)
             begin("* Starting new time step")
             info_blue("  * t = %g (T = %g, dt = %g)" % (t1, T, dt))
+
+            # Compute tolerance for FSI iterations
+            itertol = compute_itertol(w_c, TOL, dt)
 
             # Fixed point iteration on FSI problem
             for iter in range(self.maxiter):
@@ -126,12 +130,12 @@ class PrimalSolver:
                 self._plot_solution(u_F, U_S0, U_M)
 
                 # Check convergence
-                if increment < self.itertol:
+                if increment < itertol:
                     info("")
                     info_green("    Increment = %g (tolerance = %g), converged after %d iterations" % \
-                                   (increment, self.itertol, iter + 1))
+                                   (increment, itertol, iter + 1))
                     end()
-                    
+
                     # Evaluate user goal functional
                     self.problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, t1)
                     break
@@ -140,7 +144,7 @@ class PrimalSolver:
                     raise RuntimeError, "FSI iteration failed to converge after %d iterations." % self.maxiter
                 else:
                     info("")
-                    info_red("    Increment = %g (tolerance = %g), iteration %d" % (increment, self.itertol, iter + 1))
+                    info_red("    Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, iter + 1))
                     end()
 
             # Save solution and time series to file
@@ -163,7 +167,6 @@ class PrimalSolver:
                 break
 
             # Compute new time step
-            TOL = self.tolerance
             Rk = compute_time_residual(self.time_series, t0, t1, self.problem)
             (dt, at_end) = compute_time_step(self.problem, Rk, ST, TOL, dt, t1, T)
             t0 = t1

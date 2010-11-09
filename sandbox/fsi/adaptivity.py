@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-10-05
+# Last changed: 2010-11-09
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -139,7 +139,7 @@ def estimate_error(problem):
         # Add to E_k
         E_k += dt * s * dt * Rk
 
-        # Add to E_c 
+        # Add to E_c
         E_c += dt * Rc
 
         # Add to stability factor
@@ -154,12 +154,12 @@ def estimate_error(problem):
     E_h = sum(eta_K)
 
     # Compute total error
-    E = E_h + E_k + abs(E_c) 
-        
+    E = E_h + E_k + abs(E_c)
+
     # Report results
     save_errors(E, E_h, E_k, E_c, ST)
     save_indicators(eta_F, eta_S, eta_M, eta_K)
-    
+
     # Report stability factor (for plotting only)
     save_stability_factor(T, ST)
 
@@ -290,11 +290,17 @@ def initial_timestep(problem):
 
     return dt
 
+def compute_itertol(w_c, TOL, dt):
+    "Compute tolerance for FSI iterations"
+    S_c = 1 # not computed
+    tol = w_c * TOL * dt / S_c
+    info("Changing tolerance for FSI iterations to %g" % tol)
+    return tol
+
 def save_mesh(mesh, refined_mesh):
     "Save mesh to file"
 
     global refinement_level
-   
 
     # Save initial mesh first time
     if refinement_level == 0:
@@ -312,7 +318,7 @@ def save_errors(E, E_h, E_k, E_c, ST):
     "Save errors to file"
 
     global refinement_level
-    
+
     # Summarize errors
     summary = """
 
@@ -322,9 +328,9 @@ Adaptive loop no. = %d
 -------------------------
 
 E_h  = %g
-E_k  = %g  
+E_k  = %g
 E_c  = %g
-  
+
 E_tot = %g
 S(T)  = %g
 
@@ -373,7 +379,6 @@ def save_stability_factor(T, ST):
     f.close()
 #     print "Saving stability factor and exit ..."
 #     exit(True)
-    
 
 def save_array(x, filename):
     "Save array to file"
