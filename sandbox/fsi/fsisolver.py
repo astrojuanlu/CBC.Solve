@@ -13,7 +13,7 @@ from cbc.common import CBCSolver
 
 from primalsolver import PrimalSolver
 from dualsolver import DualSolver
-from adaptivity import estimate_error, refine_mesh
+from adaptivity import estimate_error, refine_mesh, save_mesh
 
 class FSISolver(CBCSolver):
 
@@ -33,7 +33,6 @@ class FSISolver(CBCSolver):
         self.parameters.add("save_series", True)
         self.parameters.add("tolerance", 0.1)
         self.parameters.add("maxiter", 100)
-        self.parameters.add("itertol", 1e-5)
         self.parameters.add("num_smoothings", 50)
 
         # Set DOLFIN parameters
@@ -97,15 +96,15 @@ class FSISolver(CBCSolver):
             mesh_tolerance = tolerance * self.problem.space_error_weight()
             if E_h <= mesh_tolerance:
                 info_blue("Freezing current mesh: E_h = %g <= TOL_h = %g" % (E_h, mesh_tolerance))
-                refined_mesh = mesh
+                refined_mesh = self.problem.mesh()
             else:
                 begin("Refining mesh")
                 refined_mesh = refine_mesh(self.problem, self.problem.mesh(), indicators)
                 self.problem.init_meshes(refined_mesh)
-                end()
+            end()
 
             # Save mesh to file and update
-            save_mesh(mesh, refined_mesh)
+            save_mesh(self.problem.mesh(), refined_mesh)
             mesh = refined_mesh
 
         # Report elapsed time
