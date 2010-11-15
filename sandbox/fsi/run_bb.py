@@ -16,22 +16,22 @@ problem_names = ["channel_with_flap", "driven_cavity_free_bottom", "driven_cavit
 #-----------------------------------------------
 
 # Define problem
-problem = problem_names[1]
+problem = problem_names[2]
 
 # Define TOL parameters
 TOL = 0.1
-w_h = 0.5
-w_k = 0.9
+w_h = 0.1
+w_k = 0.8
 w_c = 0.1
 
 # Define mesh parameters
-d_f = 0.65  # Dorfler fraction
+d_f = 0.5  # Dorfler fraction
 m_a = 1.0   # Mesh constant 
 ny  = 20   
 
 # Define time parameters
-dt  = 0.04
-T   = 0.5
+dt  = 0.02
+T   = 5.0
 
 # Define and submit job (and clear old data)
 clean = ("./clean.sh")

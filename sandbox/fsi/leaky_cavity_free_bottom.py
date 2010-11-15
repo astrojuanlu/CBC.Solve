@@ -192,6 +192,5 @@ problem.parameters["solver_parameters"]["solve_dual"]  =  False
 problem.parameters["solver_parameters"]["estimate_error"] = False
 problem.parameters["solver_parameters"]["plot_solution"] = False
 problem.parameters["solver_parameters"]["tolerance"] = 0.5
-problem.parameters["solver_parameters"]["itertol"] = problem.adaptive_tolerance() * problem.non_galerkin_error_weight()
 u_F, p_F, U_S, P_S, U_M = problem.solve()
 
