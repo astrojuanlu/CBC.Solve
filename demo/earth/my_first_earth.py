@@ -10,7 +10,7 @@ rho = 1.0  # kg/m^3
 g = 9.81   # m/s^2
 
 # Body force
-b = Expression(("0.0", "- rho*g"))
+b = Expression(("0.0", "rho*g"))
 b.rho = rho
 b.g = g
 
@@ -26,7 +26,6 @@ h = Expression(("0.0", "0.0"))
 
 # End time
 T = 1.0
-t = 0.0
 Delta_t = 0.1
 
 def tau_prime(tau, v):
@@ -37,12 +36,14 @@ V = VectorFunctionSpace(mesh, "CG", 2)
 Q = FunctionSpace(mesh, "CG", 1)
 W = V * Q
 
+S = TensorFunctionSpace(mesh, "Quadrature", 2)
+
 solution = Function(W)
-(v, p) = split(solution)
+(v, p) = (as_vector((solution[0], solution[1])), solution[2])
 
 # Define equations:
-nu = Constant(1.0)
-mu = Constant(2.0)
+nu = Constant(10.0)
+mu = Constant(20.0)
 
 # Define effective viscosity
 nu_eff = (nu*mu*Delta_t)/(nu + mu*Delta_t)
@@ -52,7 +53,7 @@ def D_eff(v, v0, tau0):
     # The strain rate is the sum of three contributions:
     a = strain(v)
     b = (1.0/(2*mu*Delta_t))*tau0
-    c = - (1.0/2*mu)*tau_prime(tau0, v0)
+    c = - (1.0/(2*mu))*tau_prime(tau0, v0)
 
     return a + b + c
 
@@ -63,8 +64,9 @@ def deviatoric_stress(v, v0, tau0):
 # Initial/previous velocity
 v0 = Function(V)
 
-# Initial/previous deviatoric stress
-tau0 = 2.0*nu*strain(v0) # !!!
+# Initial/previous deviatoric stress (or compute from elastic stress)
+#tau0 = project(2.0*nu*strain(v0), S)
+tau0 = Function(S)
 
 # Define tau as the deviatoric stress as a function of velocity (v) at
 # this time and velocity at previous time (v0)
@@ -85,13 +87,14 @@ F = eq1 + eq2
 
 dw = TrialFunction(W)
 
-uleft = Expression(("-1.0", "0.0"))
-uright = Expression(("1.0", "0.0"))
-bcs = [DirichletBC(W.sub(0), uright, "x[0] == 1.0"),
+uleft = Expression(("0.0", "0.0"))
+uright = Expression(("0.0", "0.0"))
+bcs = [DirichletBC(W.sub(0), uright, "x[0] == 30.0"),
        DirichletBC(W.sub(0), uleft, "x[0] == 0.0"),
        DirichletBC(W.sub(0).sub(1), 0.0, "x[1] == 0.0")]
 
-t = t + Delta_t
+# Start at t = \Delta t
+t = Delta_t
 while (t <= T):
 
     # Update coefficients to new time
@@ -103,21 +106,24 @@ while (t <= T):
     # Solve system
     pde.solve(solution)
 
-    # Do a split
-    (v, p) = solution.split()
+    # Split computed solution into components
+    (v_n, p_n) = solution.split()
+
+    # Compute tau
+    tau_n = project(tau, S)
 
     # Update previous velocity and stress
-    v0.assign(v)
+    v0.assign(v_n)
+    tau0.assign(tau_n)
 
-    # Convert tau(v) to "tau"
-    #???
+    # FIXME: Move mesh?
 
-    # Update tau0
-    tau0.assign(tau)
+    # FIXME: Update v0 and tau0 to new mesh
 
     # Update time
-    t += timestep
+    t += Delta_t
 
-    # Move mesh?
+    plot(tau0[0][1])
 
+interactive()
 
