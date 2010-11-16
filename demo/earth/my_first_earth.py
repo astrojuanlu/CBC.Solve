@@ -26,7 +26,8 @@ h = Expression(("0.0", "0.0"))
 
 # End time
 T = 1.0
-Delta_t = 0.1
+timestep = 0.01
+Delta_t = Constant(timestep)
 
 def tau_prime(tau, v):
     W = spin(v)
@@ -77,7 +78,7 @@ tau = deviatoric_stress(v, v0, tau0)
 
 # Define balance of momentum equation
 eq1 = (- inner(tau, grad(w)) + p*div(w) - dot(b, w))*dx \
-         + dot(h, w)*ds
+         - dot(h, w)*ds
 
 # Define additional equation (incompressiblity for now).
 eq2 = dot(div(v), q)*dx
@@ -94,7 +95,10 @@ bcs = [DirichletBC(W.sub(0), uright, "x[0] == 30.0"),
        DirichletBC(W.sub(0).sub(1), 0.0, "x[1] == 0.0")]
 
 # Start at t = \Delta t
-t = Delta_t
+t = timestep
+
+file = File("stress_tensor.pvd")
+
 while (t <= T):
 
     # Update coefficients to new time
@@ -109,22 +113,28 @@ while (t <= T):
     # Split computed solution into components
     (v_n, p_n) = solution.split()
 
-    # Compute tau
+    # Compute tau at this timestep
     tau_n = project(tau, S)
 
     # Update previous velocity and stress
     v0.assign(v_n)
     tau0.assign(tau_n)
 
-    # FIXME: Move mesh?
-    move(mesh, v_n, Delta_t)
+    # Write mesh to file
+    file << mesh
+
+    # Plot pressure
+    plot(p_n)
+
+    # Move mesh
+    move(mesh, v_n, timestep)
 
     # FIXME: Update v0 and tau0 to new mesh
+    # Note: v0 is "automatically updated"
 
     # Update time
-    t += Delta_t
+    t += timestep
 
-    plot(tau0[0][1])
 
 interactive()
 
