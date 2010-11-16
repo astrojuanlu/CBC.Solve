@@ -1,2 +1,1 @@
-from dolfin import *
-
+from earth import *
