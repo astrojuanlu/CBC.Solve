@@ -117,6 +117,7 @@ while (t <= T):
     tau0.assign(tau_n)
 
     # FIXME: Move mesh?
+    move(mesh, v_n, Delta_t)
 
     # FIXME: Update v0 and tau0 to new mesh
 

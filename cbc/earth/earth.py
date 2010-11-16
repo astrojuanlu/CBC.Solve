@@ -1,35 +1,30 @@
 from dolfin import *
-
-def Dt(tau, tau0, timestep):
-
-    return (tau - tau0)/timestep
-
-
-def JaumannDerivative(tau, W0, tau0):
-    """
-
-    triangle tau = d tau/ dt + tau'
-
-    where
-
-    tau' = grad tau * v + tau*W - W*tau
-
-    where
-
-    W = 0.5*(grad(v) - grad(v).T)
-
-    and for now we skip grad tau part
-    """
-    return Dt(tau, tau0) + tau0*W0 - W0*tau0
-
-def second_invariant(A):
-    return 0.5*(tr(A)**2 - tr(A*A))
+from pylab import array
 
 def strain(v):
     return sym(grad(v))
 
 def spin(v):
     return 0.5*(grad(v) - grad(v).T)
+
+def move(mesh, velocity, timestep):
+
+    # Extract mesh coordinates
+    x = mesh.coordinates()
+
+    # Interpolate velocity onto P1
+    P1 = VectorFunctionSpace(mesh, "CG", 1)
+    v = interpolate(velocity, P1)
+    dofs = v.vector().array()
+
+    # Update mesh coordinates based on v
+    num_vertices = mesh.num_vertices()
+    for i in range(num_vertices):
+        for k in range(mesh.geometry().dim()):
+            x[i][k] += timestep*dofs[k*num_vertices + i]
+
+
+# -----------------------------------------------------------------------------
 
 def power_law_viscosity(v, p, T, n, E, V, R):
     """
@@ -61,4 +56,29 @@ def power_law_viscosity(v, p, T, n, E, V, R):
 
 def viscosity(v):
     power_law_viscosity(v)
+
+def Dt(tau, tau0, timestep):
+
+    return (tau - tau0)/timestep
+
+
+def JaumannDerivative(tau, W0, tau0):
+    """
+
+    triangle tau = d tau/ dt + tau'
+
+    where
+
+    tau' = grad tau * v + tau*W - W*tau
+
+    where
+
+    W = 0.5*(grad(v) - grad(v).T)
+
+    and for now we skip grad tau part
+    """
+    return Dt(tau, tau0) + tau0*W0 - W0*tau0
+
+def second_invariant(A):
+    return 0.5*(tr(A)**2 - tr(A*A))
 
