@@ -8,6 +8,11 @@ def spin(v):
     return 0.5*(grad(v) - grad(v).T)
 
 def move(mesh, velocity, timestep):
+    """
+    Move mesh according to timestep*velocity.
+
+    Note that mesh is changed.
+    """
 
     # Extract mesh coordinates
     x = mesh.coordinates()

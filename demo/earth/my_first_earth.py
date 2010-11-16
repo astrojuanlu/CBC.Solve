@@ -78,7 +78,7 @@ tau = deviatoric_stress(v, v0, tau0)
 
 # Define balance of momentum equation
 eq1 = (- inner(tau, grad(w)) + p*div(w) - dot(b, w))*dx \
-         - dot(h, w)*ds
+         + dot(h, w)*ds
 
 # Define additional equation (incompressiblity for now).
 eq2 = dot(div(v), q)*dx
