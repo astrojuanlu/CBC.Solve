@@ -1,4 +1,4 @@
-from cbc.earth import *
+from earth import *
 
 # Define domain
 mesh = Mesh("shortening.xml")

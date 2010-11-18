@@ -3,7 +3,12 @@ cbc.earth:
    Model and solver collection for earthly problems.
 
 
+Go to demo directory and do:
+
+  export PYTHONPATH=${PYTHONPATH}:../
+
 Authors:
 
 	Lyuda Vynnytska
 	Marie E. Rognes
+
