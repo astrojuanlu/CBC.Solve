@@ -11,18 +11,44 @@ def plot_interface(n, length, lamda, delta_A):
 
 class Density(Expression):
 
-    def __init__(self, amplitude, wavelength, nu0, nu1):
+    def __init__(self, amplitude, wavelength, rho0, rho1):
         self.amplitude = amplitude
         self.wavelength = wavelength
-        self.nu0 = nu0
-        self.nu1 = nu1
+        self.rho0 = rho0
+        self.rho1 = rho1
 
     def eval(self, values, x):
-        interface = - self.amplitude*sin(2*pi/self.wavelength*x[0])
-        if x[1] > interface:
-            values[0] = self.nu1
+        k = 2*pi/self.wavelength
+        interface = - self.amplitude*sin(k*x[0])
+        if x[1] >= interface:
+            values[0] = self.rho1
         else:
-            values[0] = self.nu0
+            values[0] = self.rho0
+
+def snap_mesh_to_interface(mesh, amplitude, wavelength):
+
+    # Extract mesh coordinates
+    x = mesh.coordinates()
+
+    k = 2*pi/wavelength
+
+    # Update mesh coordinates based on v
+    num_vertices = mesh.num_vertices()
+
+    for i in range(num_vertices):
+
+        # Distance to interface:
+        y = amplitude*sin(k*x[i][0])
+
+        distance = x[i][1] - y
+
+        if x[i][1] <= 0.0:
+            f = pow((x[i][1]/(-h1) - 1), 2)
+            x[i][1] += f*distance
+        else:
+            f = pow((x[i][1]/(h2) - 1), 2)
+            x[i][1] += f*distance
+
 
 if __name__ == "__main__":
 
@@ -41,18 +67,21 @@ if __name__ == "__main__":
     amplitude = 0.1
 
     # Density at bottom
-    nu0 = 1.0
+    rho0 = 1.0
 
     # Density at top:
-    nu1 = 2.0
+    rho1 = 2.0
 
-    # Number of mesh points
-    n = 100
+    # Number of cells (in each direction)
+    n = 50
 
     mesh = Rectangle(0, -h1, length, h2, n, n)
 
-    nu = Density(amplitude, wavelength, nu0, nu1)
+    snap_mesh_to_interface(mesh, amplitude, wavelength)
 
-    plot(nu, mesh=mesh, interactive=True)
+    plot(mesh, title="snapped", interactive=True)
+
+    rho = Density(amplitude, wavelength, rho0, rho1)
+    plot(rho, mesh=mesh, interactive=True)
 
 
