@@ -25,7 +25,8 @@ class PrimalSolver:
         self.save_solution = solver_parameters["save_solution"]
         self.maxiter = solver_parameters["maxiter"]
         self.tolerance = solver_parameters["tolerance"]
-
+        self.uniform_timestep = solver_parameters["uniform_timestep"]
+        
         # Create files for saving to VTK
         if self.save_solution:
             self.files = (File("pvd/u_F.pvd"),
@@ -113,7 +114,7 @@ class PrimalSolver:
 
                 # Solve mesh equation
                 begin("* Solving mesh subproblem (M)")
-                U_M = M.step(dt)
+                U_M = M.step(dt)                    
                 end()
 
                 # Transfer mesh displacement to fluid
@@ -159,18 +160,28 @@ class PrimalSolver:
 
             # FIXME: This should be done automatically by the solver
             F.update_extra()
-
+            
             # Check if we have reached the end time
             if at_end:
                 end()
                 info("Finished time-stepping")
                 break
 
-            # Compute new time step
-            Rk = compute_time_residual(self.time_series, t0, t1, self.problem)
-            (dt, at_end) = compute_time_step(self.problem, Rk, ST, TOL, dt, t1, T)
-            t0 = t1
-            t1 = t1 + dt
+            # Use constant time step
+            if self.uniform_timestep:
+                t0 = t1
+                t1 = t1 + dt
+                
+                if t1 > T:
+                    info("Finished time-stepping with constant time step size")
+                    break
+  
+            # Compute new adaptive time step 
+            else:
+                Rk = compute_time_residual(self.time_series, t0, t1, self.problem)
+                (dt, at_end) = compute_time_step(self.problem, Rk, ST, TOL, dt, t1, T)
+                t0 = t1
+                t1 = t1 + dt
 
             end()
 

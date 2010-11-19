@@ -34,6 +34,7 @@ class FSISolver(CBCSolver):
         self.parameters.add("tolerance", 0.1)
         self.parameters.add("maxiter", 100)
         self.parameters.add("num_smoothings", 50)
+        self.parameters.add("uniform_timestep", False)
 
         # Set DOLFIN parameters
         parameters["form_compiler"]["cpp_optimize"] = True
