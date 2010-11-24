@@ -83,7 +83,7 @@ class PrimalSolver:
             info_blue("  * t = %g (T = %g, dt = %g)" % (t1, T, dt))
 
             # Compute tolerance for FSI iterations
-            itertol = compute_itertol(w_c, TOL, dt)
+            itertol = compute_itertol(w_c, TOL, dt, t1)
 
             # Fixed point iteration on FSI problem
             for iter in range(self.maxiter):
@@ -135,10 +135,13 @@ class PrimalSolver:
                     info("")
                     info_green("    Increment = %g (tolerance = %g), converged after %d iterations" % \
                                    (increment, itertol, iter + 1))
-                    end()
+
+                    # Saving number of FSI iterations 
+                    save_no_FSI_iter(t1, iter + 1)
+                    end()                                       
 
                     # Evaluate user goal functional
-                    self.problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, t1)
+                    self.problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, t1, refinement_level)
                     break
 
                 elif iter == self.maxiter - 1:
