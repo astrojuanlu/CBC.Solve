@@ -6,14 +6,13 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from fsiproblem import *
 
-#
 #     -------------------------------> u_max = (1,0)
 #     ---> INFLOW                --->
 #     -->                        -->   u_min = (0.0)
 #        |                        |
 #        |                        |
 #        |                        |
-#        |       FLUID            |
+#        |         FLUID          |
 #        |                        |
 #        |                        |
 #        |                        |  
@@ -23,19 +22,19 @@ from fsiproblem import *
 # FIXED  |      STRUCTURE         | FIXED 
 #        |                        |
 #        -------------------------- (3.0, 3.0)
-#               FREE
+#                 FREE
 
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
 application_parameters.add("ny", 30)
 application_parameters.add("dt", 0.02)
-application_parameters.add("T", 0.5)
+application_parameters.add("T", 1.0)
 application_parameters.add("w_h", 0.00005) 
 application_parameters.add("w_k", 0.85)
-application_parameters.add("w_c", 0.1)
+application_parameters.add("w_c", 0.3)
+application_parameters.add("TOL", 0.5)
 application_parameters.add("mesh_alpha", 1.0)
 application_parameters.add("dorfler_fraction", 0.2)
-application_parameters.add("adaptive_tolerance", 0.5)
 application_parameters.parse()
 
 # Save parameters to file
@@ -54,15 +53,15 @@ structure_top   = 0.5
 inflow_top = 3.0
 inflow_bottom = 2.5
 
+
 # Define boundaries
-inflow  = "x[0] > DOLFIN_EPS && x[1] > %g + DOLFIN_EPS && x[1] < %g - DOLFIN_EPS" %(inflow_bottom, inflow_top)
-outflow = "x[0] > %g - DOLFIN_EPS && \
-           x[1] > %g - DOLFIN_EPS && x[1] < %g - DOLFIN_EPS"  % (cavity_length, inflow_bottom, inflow_top)
-fixed_left   = "x[0] == 0.0  && x[1] >= DOFLIN_EPS" 
-fixed_right  = "x[0] > %g - DOLFIN_EPS  && x[1] >= 0.0" % structure_right
-fixed_bottom = "x[0] == 0.0" 
-flow_top = "x[0] > DOLFIN_EPS && x[1] == %g" %cavity_height
-noslip  = "on_boundary && !(%s) && !(%s) && !(%s) " % (inflow, outflow, flow_top)
+inflow        = "x[1] > %g + DOLFIN_EPS &&  x[1] < %g - DOLFIN_EPS" %(inflow_bottom, inflow_top)
+outflow       = "x[1] > %g + DOLFIN_EPS &&  x[1] < %g - DOLFIN_EPS"  % (inflow_bottom, inflow_top)
+fixed_left    = "x[0] == 0.0  && x[1] >= DOFLIN_EPS" 
+fixed_right   = "x[0] > %g - DOLFIN_EPS  && x[1] >= 0.0" % structure_right
+fixed_bottom  = "x[0] == 0.0" 
+flow_top      = "x[1] == %g" %cavity_height
+noslip        = "on_boundary && !(%s) && !(%s) && !(%s) " % (inflow, outflow, flow_top)
 
 # Define structure subdomain
 class Structure(SubDomain):
@@ -103,24 +102,16 @@ class Paper1(FSI):
     def dorfler_fraction(self):
         return application_parameters["dorfler_fraction"]
 
-    def adaptive_tolerance(self):
-        return application_parameters["adaptive_tolerance"]
+    def TOL(self):
+        return application_parameters["TOL"]
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
 
         # Compute average displacement
         structure_area = (structure_right - structure_left) * structure_top
-        displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh=U_S.function_space().mesh())
-        
-        # Write to file
-        f = open("adaptivity/goal_functional.txt", "a")
-        f.write("%g \n" % (displacement))
-        f.close()
+        displacement = (1.0/structure_area)*assemble(U_S[0]*dx + U_S[1]*dx, mesh=U_S.function_space().mesh())
 
-        # Print values of functionals
-        info("")
-        info_blue("Functional (displacement): %g", displacement)
-        info("")
+        return displacement
         
     def __str__(self):
         return "Paper I" 
@@ -134,7 +125,7 @@ class Paper1(FSI):
         return 1.0
 
     def fluid_velocity_dirichlet_values(self):
-        return [(0,0), Expression(("x[1]*(x[1] - 2.5)*(2.0/3.0)", "0.0")), (1.0 ,0.0)]
+        return [(0.0, 0.0), Expression(("x[1]*(x[1] - 2.5)*(2.0/3.0)", "0.0")), (1.0 ,0.0)]
 
     def fluid_velocity_dirichlet_boundaries(self):
         return [noslip, inflow, flow_top]
@@ -188,10 +179,10 @@ class Paper1(FSI):
 # Solve problem
 problem = Paper1()
 problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"]  =  False
-problem.parameters["solver_parameters"]["estimate_error"] = False
+problem.parameters["solver_parameters"]["solve_dual"]  =  True
+problem.parameters["solver_parameters"]["estimate_error"] = True
 problem.parameters["solver_parameters"]["plot_solution"] =  False
-problem.parameters["solver_parameters"]["tolerance"] = problem.adaptive_tolerance()
-problem.parameters["solver_parameters"]["uniform_timestep"]  = True
+problem.parameters["solver_parameters"]["uniform_timestep"]  = False
+problem.parameters["solver_parameters"]["tolerance"] = problem.TOL()
 u_F, p_F, U_S, P_S, U_M = problem.solve()
 
