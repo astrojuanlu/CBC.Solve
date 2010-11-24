@@ -135,13 +135,16 @@ class PrimalSolver:
                     info("")
                     info_green("    Increment = %g (tolerance = %g), converged after %d iterations" % \
                                    (increment, itertol, iter + 1))
+                    end()
 
                     # Saving number of FSI iterations 
                     save_no_FSI_iter(t1, iter + 1)
-                    end()                                       
-
+                    
                     # Evaluate user goal functional
-                    self.problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, t1, refinement_level)
+                    goal_functional = self.problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, t1)
+                    
+                    # Save goal functional
+                    save_goal_functional(t1, goal_functional)
                     break
 
                 elif iter == self.maxiter - 1:
