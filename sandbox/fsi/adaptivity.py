@@ -292,6 +292,10 @@ def compute_itertol(w_c, TOL, dt):
     S_c = 1 # not computed
     tol = w_c * TOL * dt / S_c
     info("Changing tolerance for FSI iterations to %g" % tol)
+   
+    # Save FSI iteration tolerance
+    save_itertol(dt, tol)
+
     return tol
 
 def save_mesh(mesh, refined_mesh):
@@ -376,6 +380,17 @@ def save_stability_factor(T, ST):
     f.close()
 #     print "Saving stability factor and exit ..."
 #     exit(True)
+
+
+def save_itertol(dt, tol):
+    "Save FSI iteration tolerance"
+
+    global refinment_level 
+    
+    f = open("adaptivity/fsi_tolerance.txt", "a")
+    f.write("%d %g %g \n" % (refinement_level, dt, tol))
+    f.close()
+    
 
 def save_array(x, filename):
     "Save array to file"
