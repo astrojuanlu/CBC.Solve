@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-11-09
+# Last changed: 2010-11-24
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -287,14 +287,14 @@ def initial_timestep(problem):
 
     return dt
 
-def compute_itertol(w_c, TOL, dt):
+def compute_itertol(w_c, TOL, dt, t1):
     "Compute tolerance for FSI iterations"
-    S_c = 1 # not computed
+    S_c = 1.0 # not computed
     tol = w_c * TOL * dt / S_c
     info("Changing tolerance for FSI iterations to %g" % tol)
    
     # Save FSI iteration tolerance
-    save_itertol(dt, tol)
+    save_itertol(t1, tol)
 
     return tol
 
@@ -382,16 +382,24 @@ def save_stability_factor(T, ST):
 #     exit(True)
 
 
-def save_itertol(dt, tol):
+def save_itertol(t1, tol):
     "Save FSI iteration tolerance"
 
     global refinment_level 
     
     f = open("adaptivity/fsi_tolerance.txt", "a")
-    f.write("%d %g %g \n" % (refinement_level, dt, tol))
+    f.write("%d %g %g \n" % (refinement_level, t1, tol))
+    f.close()
+
+def save_no_FSI_iter(t1, no):   
+    "Save number of FSI iterations"
+
+    global refinement_level
+
+    f = open("adaptivity/no_iterations.txt", "a")
+    f.write("%d %g %g \n" % (refinement_level, t1, no))
     f.close()
     
-
 def save_array(x, filename):
     "Save array to file"
     f = open(filename, "w")
