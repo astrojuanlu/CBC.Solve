@@ -50,6 +50,8 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
     Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
 
+    # FIXME: Need to map the G_FN terms to the reference domain!
+    
     # Fluid residual
     R_F = inner(v_F, Dt_U_F)*dx + inner(sym(grad(v_F)), Sigma_F)*dx \
         + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx \
