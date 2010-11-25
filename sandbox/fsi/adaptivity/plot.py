@@ -7,7 +7,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 # Last changed: 2010-11-25
 
 from pylab import *
-from numpy import trapz
+from numpy import trapz, ones
 import sys 
 
 print ""
@@ -50,7 +50,7 @@ for arg in sys.argv[1:]:
 def plots():
     "Plot adaptive time steps"
 
-    # Read files and get number of levels
+    # Read files
     lines      =  open("timesteps.txt").read().split("\n")[:-1]
     lines_tol  =  open("fsi_tolerance.txt").read().split("\n")[:-1]
     lines_iter =  open("no_iterations.txt").read().split("\n")[:-1]
@@ -77,7 +77,7 @@ def plots():
             ylabel("$k_n(t)$", fontsize=30); title("Time steps & residual,  level %d" %level, fontsize=30)
             subplot(2, 1, 2); grid(True); plot(t, R, '-r', linewidth=4)
             ylabel('$|r_k|$', fontsize=30)
-            xlabel("$k_n(t)$", fontsize=30)
+            xlabel("$t$", fontsize=30)
 
     # Plot FSI tolerance and number of FSI iterations
     if plot_FSI_tol == True:
@@ -94,14 +94,18 @@ def plots():
             level_lines_iter = [l_iter for l_iter in lines_iter if int(l_iter.split(" ")[0]) == level]
             t_iter = [float(l_iter.split(" ")[1]) for l_iter in level_lines_iter]
             iter = [float(l_iter.split(" ")[2]) for l_iter in level_lines_iter]
- 
+            
             # Plot FSI tolerance and no. of FSI iterations
             figure((level + 100)) 
             subplot(2, 1, 1); grid(True); plot(t_tol, tol, '-k', linewidth=4)
             ylabel("$TOL_{fSM}$", fontsize=30); title("FSI tolerance & # iter., level %d" %level, fontsize=30)
-            subplot(2, 1, 2); grid(True); plot(t_iter, iter,'-r', linewidth=4)
+            subplot(2, 1, 2); grid(True); 
+            axhspan(0.0, max(iter), xmin=0, xmax=max(t_iter), color='w')
+            plot(t_iter, iter,'or', linewidth=1)
+            vlines(t_iter, iter, 1.0, color='k', linestyles='-',  linewidth=0.5)
+#            plot(t_iter, ones(len(t_iter)), 'r')
             ylabel("#iter.", fontsize=30)
-            xlabel("$k_n(t)$", fontsize=30)
+            xlabel("$t$", fontsize=30)
 
     # Plot goal functional as a function of time 
     for level in range(num_levels):
@@ -113,7 +117,7 @@ def plots():
             
         # Compute integral goal functional
         M_ave = trapz(t_goal, M)
-            
+         
         # Write to file (does not matter if the data is duplicated!!!)
         f = open("M_ave.txt", "a")
         f.write("%d %g \n" % (level, M_ave))
