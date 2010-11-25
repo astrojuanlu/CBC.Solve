@@ -50,12 +50,10 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
     Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
 
-    # FIXME: Missing G_F,N and B_F in R_F
-    # FIXME: Missing B_S in R_S
-
     # Fluid residual
     R_F = inner(v_F, Dt_U_F)*dx + inner(sym(grad(v_F)), Sigma_F)*dx \
-        + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx
+        + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx \
+        - inner(v_F, mu_F*dot(grad(U_F).T, N_F))*ds + inner(v_F, P_F*N_F)*ds
 
     # Structure residual
     R_S = inner(v_S, Dt_P_S)*dx + inner(grad(v_S), Sigma_S)*dx \
