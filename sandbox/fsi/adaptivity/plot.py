@@ -99,10 +99,10 @@ def plots():
             figure((level + 100)) 
             subplot(2, 1, 1); grid(True); plot(t_tol, tol, '-k', linewidth=4)
             ylabel("$TOL_{fSM}$", fontsize=30); title("FSI tolerance & # iter., level %d" %level, fontsize=30)
-            subplot(2, 1, 2); grid(True); 
+            subplot(2, 1, 2); grid(False); 
             axhspan(0.0, max(iter), xmin=0, xmax=max(t_iter), color='w')
             plot(t_iter, iter,'or', linewidth=1)
-            vlines(t_iter, iter, 1.0, color='k', linestyles='-',  linewidth=0.5)
+            vlines(t_iter, iter, 1.0, color='k', linestyles='-',  linewidth=1.5)
 #            plot(t_iter, ones(len(t_iter)), 'r')
             ylabel("#iter.", fontsize=30)
             xlabel("$t$", fontsize=30)
@@ -130,8 +130,8 @@ def plots():
             figure((level + 200))
             plot(t_goal, M, '-m', linewidth=4); grid(True)
             title("Goal Functional vs time, level %d" %level, fontsize=30)
-            ylabel('$\mathcal{M}(u^h)$',fontsize=36); 
-            xlabel("$k_n(t)$", fontsize=30)
+            ylabel('$\mathcal{M}^t$',fontsize=36); 
+            xlabel("$t$", fontsize=30)
 
         # Extract data for integrated goal functional
         lines_M = open("M_ave.txt").read().split("\n")[:-1]
