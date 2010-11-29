@@ -26,7 +26,7 @@ from fsiproblem import *
 
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
-application_parameters.add("T", 2.5)
+application_parameters.add("end_time", 2.5)
 application_parameters.add("dt", 0.05)
 application_parameters.add("ny", 30)
 application_parameters.add("TOL", 0.5)
@@ -108,7 +108,7 @@ class Paper1(FSI):
     #--- Common parameters ---
 
     def end_time(self):
-        return application_parameters["T"]
+        return application_parameters["end_time"]
 
     def TOL(self):
         return application_parameters["TOL"]
