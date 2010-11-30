@@ -48,28 +48,29 @@ for arg in sys.argv[1:]:
 
 # Define plots
 def plots():
-    "Plot adaptive time steps"
 
-    # Read files
-    lines      =  open("timesteps.txt").read().split("\n")[:-1]
-    lines_tol  =  open("fsi_tolerance.txt").read().split("\n")[:-1]
+    # Read files (these files are always created)
     lines_iter =  open("no_iterations.txt").read().split("\n")[:-1]
+    lines_tol  =  open("fsi_tolerance.txt").read().split("\n")[:-1]
     lines_goal =  open("goal_functional.txt").read().split("\n")[:-1]
 
-    # Determine the number of refinement leves to plot
-    num_levels = max(int(l.split(" ")[0]) for l in lines) + 1
+    # Determine the number of refinement levels to plot
+    num_levels = max(int(l_iter.split(" ")[0]) for l_iter in lines_iter) + 1
 
-    # Plot all adaptive time step sequences 
+    # Plot time step sequences 
     if plot_time_step == True:
+        
+        # Read file (only created when an adaptive time step is used)
+        lines_time = open("timesteps.txt").read().split("\n")[:-1]
 
         for level in range(num_levels):
             print "Plotting time steps (k=1) for level %d" % level
 
             # Extract data for time steps
-            level_lines = [l for l in lines if int(l.split(" ")[0]) == level]
-            t   =  [float(l.split(" ")[1]) for l in level_lines]
-            k   =  [float(l.split(" ")[2]) for l in level_lines]
-            R   =  [float(l.split(" ")[3]) for l in level_lines]
+            level_lines_time = [l_time for l_time in lines_time if int(l_time.split(" ")[0]) == level]
+            t   =  [float(l_time.split(" ")[1]) for l_time in level_lines_time]
+            k   =  [float(l_time.split(" ")[2]) for l_time in level_lines_time]
+            R   =  [float(l_time.split(" ")[3]) for l_time in level_lines_time]
 
             # Plot time step and time residual
             figure(level)
@@ -100,14 +101,15 @@ def plots():
             subplot(2, 1, 1); grid(True); plot(t_tol, tol, '-k', linewidth=4)
             ylabel("$TOL_{fSM}$", fontsize=30); title("FSI tolerance & # iter., level %d" %level, fontsize=30)
             subplot(2, 1, 2); grid(False); 
-            axhspan(0.0, max(iter), xmin=0, xmax=max(t_iter), color='w')
-            plot(t_iter, iter,'or', linewidth=1)
-            vlines(t_iter, iter, 1.0, color='k', linestyles='-',  linewidth=1.5)
-#            plot(t_iter, ones(len(t_iter)), 'r')
+            
+            # FIXME: axhspan/vlines  do not work on BB
+#             axhspan(0.0, max(iter), xmin=0, xmax=max(t_iter), color='w')
+#             vlines(t_iter, iter, 1.0, color='k', linestyles='-',  linewidth=1.5)
+            plot(t_iter, iter, '-or', linewidth=2); grid(True)
             ylabel("#iter.", fontsize=30)
             xlabel("$t$", fontsize=30)
 
-    # Plot goal functional as a function of time 
+    # Process goal functional data
     for level in range(num_levels):
            
         # Extract data for goal functional
@@ -135,9 +137,9 @@ def plots():
 
         # Extract data for integrated goal functional
         lines_M = open("M_ave.txt").read().split("\n")[:-1]
-        level_lines_M = [l for l in lines_M]
-        ref_level = [float(l.split(" ")[0]) for l in level_lines_M]
-        M_int = [float(l.split(" ")[1]) for l in level_lines_M]
+        level_lines_M = [l_M for l_M in lines_M]
+        ref_level = [float(l_M.split(" ")[0]) for l_M in level_lines_M]
+        M_int = [float(l_M.split(" ")[1]) for l_M in level_lines_M]
             
     # Plot integrated goal functional
     if plot_goal_functional == True:
