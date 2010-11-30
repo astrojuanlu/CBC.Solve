@@ -27,7 +27,8 @@ class PrimalSolver:
         self.maxiter = solver_parameters["maxiter"]
         self.tolerance = solver_parameters["tolerance"]
         self.uniform_timestep = solver_parameters["uniform_timestep"]
-        
+        self.fsi_tolerance = solver_parameters["fixed_point_tol"]
+
         # Create files for saving to VTK
         if self.save_solution:
             self.files = (File("pvd/u_F.pvd"),
@@ -95,7 +96,7 @@ class PrimalSolver:
             info_blue("  * t = %g (T = %g, dt = %g)" % (t1, T, dt))
 
             # Compute tolerance for FSI iterations
-            itertol = compute_itertol(w_c, TOL, dt, t1)
+            itertol = compute_itertol(self.problem, w_c, TOL, dt, t1)
 
             # Fixed point iteration on FSI problem
             for iter in range(self.maxiter):

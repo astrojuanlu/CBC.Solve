@@ -39,6 +39,7 @@ application_parameters.add("solve_primal", True)
 application_parameters.add("solve_dual", True)
 application_parameters.add("estimate_error", True)
 application_parameters.add("uniform_timestep", False)
+application_parameters.add("fixed_point_tol", 1e-7)
 application_parameters.parse()
 
 # Collect parameters
@@ -128,6 +129,9 @@ class Paper1(FSI):
     def dorfler_fraction(self):
         return application_parameters["dorfler_fraction"]
 
+    def fixed_point_tol(self):
+        return application_parameters["fixed_point_tol"]
+
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
 
         # Compute average displacement
@@ -205,8 +209,9 @@ problem = Paper1()
 problem.parameters["solver_parameters"]["solve_primal"] = problem.solve_primal()
 problem.parameters["solver_parameters"]["solve_dual"] = problem.solve_dual() 
 problem.parameters["solver_parameters"]["estimate_error"] = problem.estimate_error()
-problem.parameters["solver_parameters"]["plot_solution"] =  False
+#problem.parameters["solver_parameters"]["plot_solution"] =  False
 problem.parameters["solver_parameters"]["uniform_timestep"]  = problem.uniform_timestep()
 problem.parameters["solver_parameters"]["tolerance"] = problem.TOL()
+problem.parameters["solver_parameters"]["fixed_point_tol"] = problem.fixed_point_tol()
 u_F, p_F, U_S, P_S, U_M = problem.solve()
 

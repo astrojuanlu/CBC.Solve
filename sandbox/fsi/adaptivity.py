@@ -287,13 +287,23 @@ def initial_timestep(problem):
 
     return dt
 
-def compute_itertol(w_c, TOL, dt, t1):
+def compute_itertol(problem, w_c, TOL, dt, t1):
     "Compute tolerance for FSI iterations"
-    S_c = 1.0 # not computed
-    tol = w_c * TOL * dt / S_c
-    info("Changing tolerance for FSI iterations to %g" % tol)
-   
-    # Save FSI iteration tolerance
+    
+    if problem.uniform_timestep():
+        tol = problem.fixed_point_tol()
+        info("")
+        info_blue("  * Tolerance for (f)-(S)-(M) iteration is fixed to %g" % tol)
+        end()
+
+    else:
+        S_c = 1.0 # not computed
+        tol = w_c * TOL * dt / S_c
+        info("")
+        info_blue("  * Changing tolerance for (f)-(S)-(M) iteration to %g" % tol)
+        end()
+        
+    # Save FSI iteration tolerance to file
     save_itertol(t1, tol)
 
     return tol
