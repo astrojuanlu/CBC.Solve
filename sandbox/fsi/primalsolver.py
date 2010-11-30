@@ -185,7 +185,7 @@ class PrimalSolver:
                 t1 = t1 + dt
                 
                 # Check if we have reached the end time
-                if t1 == T:
+                if t1 > max(dt_uniform_range):
                     at_end = True
                                 
             # Compute new adaptive time step 
