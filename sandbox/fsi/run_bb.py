@@ -32,6 +32,7 @@ TOL = 0.1
 w_h = 0.1
 w_k = 0.1
 w_c = 0.1
+fp_tol = 88888e-11 
 
 # Define mesh parameters
 d_f = 0.5  # Dorfler fraction
@@ -45,7 +46,7 @@ dt  = 0.0233333333333
 
 # Define and submit job (and clear old data)
 clean = ("./clean.sh")
-jobs =("python"+" "+ str(problem)+".py"+" "+"--solve_primal" + " " + str(solve_primal) + " " + "--solve_dual" + " " + str(solve_dual) + " " + "--estimate_error" + " " + str(estimate_error) + " " + "--uniform_timestep" + " " + str(uniform_timestep) + " " + "--TOL" + " " + str(TOL) + " " + "--w_h" + " " + str(w_h) + " " + "--w_k" + " " + str(w_k) + " " + "--w_c" + " " + str(w_c) + " " + "--dorfler_fraction" + " " + str(d_f) + " " + "--mesh_alpha" + " " + str(m_a) + " " + "--ny" + " " + str(ny) + " " + "--end_time" + " " + str(end_time) + " " + "--dt" + " " + str(dt))
+jobs =("python"+" "+ str(problem)+".py"+" "+"--solve_primal" + " " + str(solve_primal) + " " + "--solve_dual" + " " + str(solve_dual) + " " + "--estimate_error" + " " + str(estimate_error) + " " + "--uniform_timestep" + " " + str(uniform_timestep) + " " + "--TOL" + " " + str(TOL) + " " + "--w_h" + " " + str(w_h) + " " + "--w_k" + " " + str(w_k) + " " + "--w_c" + " " + str(w_c) + " " + "--dorfler_fraction" + " " + str(d_f) + " " + "--mesh_alpha" + " " + str(m_a) + " " + "--ny" + " " + str(ny) + " " + "--end_time" + " " + str(end_time) + " " + "--dt" + " " + str(dt) + " " + "--fixed_point_tol" + " " + str(fp_tol))
 submit(clean, nodes=1, ppn=8,  keep_environment=True, walltime=24*days, dryrun=False)
 sleep(1)
 submit(jobs, nodes=1, ppn=8,  keep_environment=True, walltime=24*days, dryrun=False)
