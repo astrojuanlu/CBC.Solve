@@ -102,7 +102,8 @@ class PrimalSolver:
 
                 info("")
                 begin("* Starting nonlinear iteration")
-
+                end()
+                
                 # Solve fluid subproblem
                 begin("* Solving fluid subproblem (F)")
                 u_F, p_F = F.step(dt)
