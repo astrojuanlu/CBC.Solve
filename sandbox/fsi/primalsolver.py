@@ -10,6 +10,7 @@ import pylab
 from time import time
 from dolfin import *
 
+from cbc.common.utils import timestep_range 
 from subproblems import *
 from adaptivity import *
 from storage import *
@@ -69,11 +70,22 @@ class PrimalSolver:
         U = extract_solution(F, S, M)
         self._save_solution(U)
         write_primal_data(U, 0, self.time_series)
+               
+        # Check if uniform time step is used and fix the time step range
+        if self.uniform_timestep:
+            dt_uniform, dt_uniform_range = timestep_range(T, dt)
+            t0 = 0.0
+            dt = dt_uniform
+            t1 = dt
+            at_end = False
 
-        # Time-stepping
-        t0 = 0.0
-        t1 = dt
-        at_end = False
+        # Else use adpative time stepping (starting at intital dt)
+        else: 
+            t0 = 0.0
+            t1 = dt
+            at_end = False
+     
+        # Time-stepping loop
         while True:
 
             # Display progress
@@ -166,22 +178,16 @@ class PrimalSolver:
 
             # FIXME: This should be done automatically by the solver
             F.update_extra()
-            
-            # Check if we have reached the end time
-            if at_end:
-                end()
-                info("Finished time-stepping")
-                break
 
             # Use constant time step
             if self.uniform_timestep:
                 t0 = t1
                 t1 = t1 + dt
                 
-                if t1 > T:
-                    info("Finished time-stepping with constant time step size")
-                    break
-  
+                # Check if we have reached the end time
+                if t1 == T:
+                    at_end = True
+                                
             # Compute new adaptive time step 
             else:
                 Rk = compute_time_residual(self.time_series, t0, t1, self.problem)
@@ -189,11 +195,16 @@ class PrimalSolver:
                 t0 = t1
                 t1 = t1 + dt
 
-            end()
+            # Check if we have reached the end time 
+            if at_end:
+                info("")
+                info_green("Finished time-stepping")
+                end()
+                break
 
         # Report elapsed time
         info_blue("Primal solution computed in %g seconds." % (time() - cpu_time))
-
+        
         # Return solution
         return u_F, p_F, U_S, P_S, U_M
 
