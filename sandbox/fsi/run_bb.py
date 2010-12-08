@@ -32,7 +32,7 @@ TOL = 0.1
 w_h = 0.1
 w_k = 0.1
 w_c = 0.1
-fp_tol = 88888e-11 
+fp_tol = 1e-12
 
 # Define mesh parameters
 d_f = 0.5  # Dorfler fraction
@@ -40,8 +40,8 @@ m_a = 1.0   # Mesh constant
 ny  = 30
 
 # Define time parameters
-end_time = 8.33333333
-dt  = 0.0233333333333
+end_time = 0.25
+dt  = 0.01
 
 
 # Define and submit job (and clear old data)
