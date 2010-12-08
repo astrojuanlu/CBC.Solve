@@ -72,20 +72,15 @@ class PrimalSolver:
         self._save_solution(U)
         write_primal_data(U, 0, self.time_series)
                
-        # Check if uniform time step is used and fix the time step range
+        # Change time step if uniform
         if self.uniform_timestep:
-            dt_uniform, dt_uniform_range = timestep_range(T, dt)
-            t0 = 0.0
-            dt = dt_uniform
-            t1 = dt
-            at_end = False
+            dt, dt_range = timestep_range(T, dt)
 
-        # Else use adpative time stepping (starting at intital dt)
-        else: 
-            t0 = 0.0
-            t1 = dt
-            at_end = False
-     
+        # Initialize time-stepping
+        t0 = 0.0
+        t1 = dt
+        at_end = False
+
         # Time-stepping loop
         while True:
 
@@ -181,14 +176,18 @@ class PrimalSolver:
             # FIXME: This should be done automatically by the solver
             F.update_extra()
 
+            # Check if we have reached the end time 
+            if at_end:
+                info("")
+                info_green("Finished time-stepping")
+                end()
+                break
+
             # Use constant time step
             if self.uniform_timestep:
                 t0 = t1
                 t1 = t1 + dt
-                
-                # Check if we have reached the end time
-                if t1 > max(dt_uniform_range):
-                    at_end = True
+                at_end = t1 > T - DOLFIN_EPS
                                 
             # Compute new adaptive time step 
             else:
@@ -196,13 +195,6 @@ class PrimalSolver:
                 (dt, at_end) = compute_time_step(self.problem, Rk, ST, TOL, dt, t1, T)
                 t0 = t1
                 t1 = t1 + dt
-
-            # Check if we have reached the end time 
-            if at_end:
-                info("")
-                info_green("Finished time-stepping")
-                end()
-                break
 
         # Report elapsed time
         info_blue("Primal solution computed in %g seconds." % (time() - cpu_time))
