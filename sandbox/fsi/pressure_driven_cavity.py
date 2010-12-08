@@ -8,7 +8,9 @@ from fsiproblem import *
 
 # ------------------------------------------ 
 #                 NOSLIP
-# p = 1                            p = 0 
+#  p = 1                            p = 0
+#                         
+#  NOSLIP                           NOSLIP
 # -------                          ---------
 #        |                        |
 #        |                        |
@@ -30,7 +32,7 @@ application_parameters = Parameters("application_parameters")
 application_parameters.add("end_time", 0.25)
 application_parameters.add("dt", 0.02)
 application_parameters.add("ny", 30)
-application_parameters.add("TOL", 0.1)
+application_parameters.add("TOL", 0.01)
 application_parameters.add("w_h", 0.1) 
 application_parameters.add("w_k", 0.85)
 application_parameters.add("w_c", 0.05)
@@ -40,7 +42,7 @@ application_parameters.add("solve_primal", True)
 application_parameters.add("solve_dual", True)
 application_parameters.add("estimate_error", True)
 application_parameters.add("uniform_timestep", False)
-application_parameters.add("fixed_point_tol", 1e-7)
+application_parameters.add("fixed_point_tol", 1e-12)
 application_parameters.parse()
 
 # Collect parameters
@@ -61,8 +63,6 @@ outflow       = "x[0] > %g - DOLFIN_EPS && \
                  x[1] > %g - DOLFIN_EPS && x[1] < %g - DOLFIN_EPS"  %(cavity_length, inflow_bottom, inflow_top)
 fixed_left    = "x[0] == 0.0  && x[1] >= DOFLIN_EPS" 
 fixed_right   = "x[0] > %g - DOLFIN_EPS  && x[1] >= 0.0" %structure_right
-fixed_bottom  = "x[0] == 0.0" 
-flow_top      = "x[1] == %g" %cavity_height
 noslip        = "on_boundary && !(%s) && !(%s) " %(inflow, outflow)
 
 # Define structure subdomain
@@ -74,17 +74,17 @@ class Structure(SubDomain):
             x[1] < structure_top   + DOLFIN_EPS
 
 # Define problem class
-class Paper1(FSI):
+class PressureDrivenCavity(FSI):
     def __init__(self):
 
         ny = application_parameters["ny"]
-        nx = ny
+        nx = int(ny * 0.75)
         mesh = Rectangle(0.0, 0.0, cavity_length, cavity_height, nx, ny)
 
         # Report problem parameters
         mesh_size = mesh.hmin()
-        f = open("adaptivity/paper1.txt", "w")
-        f.write("=========PAPER I ========= \n \n \n")
+        f = open("adaptivity/pressure_driven_cavity.txt", "w")
+        f.write("=========PRESSURE DRIVEN CAVITY ========= \n \n \n")
         f.write(str("Mesh size:  ") + (str(mesh_size)) + "\n \n")
         f.write(parameter_info)
         f.close()
@@ -143,7 +143,7 @@ class Paper1(FSI):
         return displacement
 
     def __str__(self):
-        return "Paper I" 
+        return "Pressure driven cavity with an elastic bottom" 
 
     #--- Parameters for fluid problem ---
 
@@ -178,13 +178,13 @@ class Paper1(FSI):
         return Structure()
 
     def structure_density(self):
-        return 0.25*15.0
+        return 3.0
 
     def structure_mu(self):
-        return 0.25*75.0
+        return 3.0
 
     def structure_lmbda(self):
-        return 0.25*125.0
+        return 3.0
 
     def structure_dirichlet_values(self):
         return [(0.0, 0.0), (0.0, 0.0)]
@@ -207,11 +207,10 @@ class Paper1(FSI):
         return application_parameters["mesh_alpha"]
 
 # Solve problem
-problem = Paper1()
+problem = PressureDrivenCavity()
 problem.parameters["solver_parameters"]["solve_primal"] = problem.solve_primal()
 problem.parameters["solver_parameters"]["solve_dual"] = problem.solve_dual() 
 problem.parameters["solver_parameters"]["estimate_error"] = problem.estimate_error()
-#problem.parameters["solver_parameters"]["plot_solution"] =  False
 problem.parameters["solver_parameters"]["uniform_timestep"]  = problem.uniform_timestep()
 problem.parameters["solver_parameters"]["tolerance"] = problem.TOL()
 problem.parameters["solver_parameters"]["fixed_point_tol"] = problem.fixed_point_tol()
