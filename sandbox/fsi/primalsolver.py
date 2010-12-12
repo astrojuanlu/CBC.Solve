@@ -79,6 +79,8 @@ class PrimalSolver:
         # Change time step if uniform
         if self.uniform_timestep:
             dt, dt_range = timestep_range(T, dt)
+            num_timesteps = len(dt_range)
+            save_num_timesteps(num_timesteps)
 
         # Initialize time-stepping
         t0 = 0.0

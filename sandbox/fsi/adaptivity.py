@@ -423,11 +423,18 @@ def save_num_dofs(num_dofs_FSM):
     "Save number of dofs"
 
     global refinement_level
-
+ 
     f = open("adaptivity/num_dofs.txt", "a")
     f.write("%d %g \n" % (refinement_level, num_dofs_FSM))
     f.close()
-    
+   
+def save_num_timesteps(num_timesteps):
+    "Save number of time steps used in the simulation"
+
+    f = open("adaptivity/num_timesteps.txt", "a")
+    f.write("%g \n" %num_timesteps)
+    f.close()
+
 def save_array(x, filename):
     "Save array to file"
     f = open(filename, "w")
