@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-11-24
+# Last changed: 2010-12-12
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -417,6 +417,15 @@ def save_no_FSI_iter(t1, no):
 
     f = open("adaptivity/no_iterations.txt", "a")
     f.write("%d %g %g \n" % (refinement_level, t1, no))
+    f.close()
+
+def save_num_dofs(num_dofs_FSM):   
+    "Save number of dofs"
+
+    global refinement_level
+
+    f = open("adaptivity/num_dofs.txt", "a")
+    f.write("%d %g \n" % (refinement_level, num_dofs_FSM))
     f.close()
     
 def save_array(x, filename):

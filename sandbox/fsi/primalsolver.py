@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-11-09
+# Last changed: 2010-12-12
 
 import pylab
 from time import time
@@ -60,6 +60,10 @@ class PrimalSolver:
         S = StructureProblem(self.problem)
         M = MeshProblem(self.problem)
 
+        # Extract and save number of dofs
+        num_dofs_FSM = extract_num_dofs(F, S, M)
+        save_num_dofs(num_dofs_FSM)
+
         # Get initial mesh displacement
         U_M = M.update(0)
 
@@ -71,7 +75,7 @@ class PrimalSolver:
         U = extract_solution(F, S, M)
         self._save_solution(U)
         write_primal_data(U, 0, self.time_series)
-               
+
         # Change time step if uniform
         if self.uniform_timestep:
             dt, dt_range = timestep_range(T, dt)

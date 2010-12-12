@@ -9,9 +9,10 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-16
+# Last changed: 2010-12-12
 
-__all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution"]
+__all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution", 
+           "extract_num_dofs"]
 
 from dolfin import *
 
@@ -37,6 +38,9 @@ class FluidProblem(NavierStokes):
         self.Q = FunctionSpace(self.Omega_F, "CG", 1)
         self.U_F = Function(self.V)
         self.P_F = Function(self.Q)
+
+        # Calculate number of dofs 
+        self.num_dofs = self.U_F.vector().size() + self.P_F.vector().size()  
 
         # Initialize base class
         NavierStokes.__init__(self)
@@ -165,6 +169,9 @@ class StructureProblem(Hyperelasticity):
         self.G_S = Function(self.V_S)
         self.N_F = FacetNormal(Omega_F)
 
+        # Calculate number of dofs 
+        self.num_dofs = 2 * self.G_S.vector().size()
+
         # Initialize base class
         Hyperelasticity.__init__(self)
 
@@ -246,6 +253,9 @@ class MeshProblem():
         u0 = Function(V)
         u1 = Function(V)
 
+        # Calculate number of dofs 
+        self.num_dofs = u0.vector().size()
+
         # Define boundary condition
         displacement = Function(V)
         bc = DirichletBC(V, displacement, DomainBoundary())
@@ -298,6 +308,17 @@ class MeshProblem():
 
     def __str__(self):
         return "The mesh problem (M)"
+
+def extract_num_dofs(F, S, M):
+    "Extract the number of dofs"
+    
+    # Extract number of dofs
+    F_dofs = F.num_dofs
+    S_dofs = S.num_dofs
+    M_dofs = M.num_dofs
+    num_dofs_FSM = F_dofs + S_dofs + M_dofs
+
+    return num_dofs_FSM
 
 def extract_solution(F, S, M):
     "Extract solution from sub problems"
