@@ -419,20 +419,18 @@ def save_no_FSI_iter(t1, no):
     f.write("%d %g %g \n" % (refinement_level, t1, no))
     f.close()
 
-def save_num_dofs(num_dofs_FSM):   
-    "Save number of dofs"
+def save_dofs(num_dofs_FSM, timestep_counter):
+    "Save number of total number of dofs"
 
     global refinement_level
- 
-    f = open("adaptivity/num_dofs.txt", "a")
-    f.write("%d %g \n" % (refinement_level, num_dofs_FSM))
-    f.close()
-   
-def save_num_timesteps(num_timesteps):
-    "Save number of time steps used in the simulation"
+    
+    # Calculate total number of dofs
+    space_dofs = num_dofs_FSM
+    time_dofs  = timestep_counter
+    dofs       = space_dofs * time_dofs
 
-    f = open("adaptivity/num_timesteps.txt", "a")
-    f.write("%g \n" %num_timesteps)
+    f = open("adaptivity/num_dofs.txt", "a")
+    f.write("%d %g %g %g \n" %(refinement_level, dofs, space_dofs, time_dofs))
     f.close()
 
 def save_array(x, filename):

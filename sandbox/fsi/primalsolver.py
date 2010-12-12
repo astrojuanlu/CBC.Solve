@@ -49,6 +49,9 @@ class PrimalSolver:
         # Record CPU time
         cpu_time = time()
 
+        # Record number of time steps
+        timestep_counter = 0
+
         # Get problem parameters
         T = self.problem.end_time()
         dt = initial_timestep(self.problem)
@@ -60,10 +63,9 @@ class PrimalSolver:
         S = StructureProblem(self.problem)
         M = MeshProblem(self.problem)
 
-        # Extract and save number of dofs
+        # Extract number of dofs
         num_dofs_FSM = extract_num_dofs(F, S, M)
-        save_num_dofs(num_dofs_FSM)
-
+      
         # Get initial mesh displacement
         U_M = M.update(0)
 
@@ -79,9 +81,7 @@ class PrimalSolver:
         # Change time step if uniform
         if self.uniform_timestep:
             dt, dt_range = timestep_range(T, dt)
-            num_timesteps = len(dt_range)
-            save_num_timesteps(num_timesteps)
-
+        
         # Initialize time-stepping
         t0 = 0.0
         t1 = dt
@@ -179,6 +179,9 @@ class PrimalSolver:
             S.update()
             M.update(t1)
 
+            # Update time step counter
+            timestep_counter += 1
+            
             # FIXME: This should be done automatically by the solver
             F.update_extra()
 
@@ -186,6 +189,7 @@ class PrimalSolver:
             if at_end:
                 info("")
                 info_green("Finished time-stepping")
+                save_dofs(num_dofs_FSM, timestep_counter)
                 end()
                 break
 
