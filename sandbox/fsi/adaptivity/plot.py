@@ -41,7 +41,7 @@ for arg in sys.argv[1:]:
     elif key == "tol":
         plot_FSI_tol = int(val)
     elif key == "M":
-        plot_goal_level = int(val)
+        plot_goal_vs_level = int(val)
     elif key == "Mt":
         plot_goal_vs_time = int(val)
     elif key == "E":
@@ -129,7 +129,7 @@ def plots():
         M_ave = trapz(t_goal, M)
 
         # Write M_ave to file 
-        f = open("M_ave.txt", "w")
+        f = open("M_ave.txt", "a")
         f.write("%d %g \n" % (level, M_ave))
         f.close()
 
