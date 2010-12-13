@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-11-25
+# Last changed: 2010-12-13
 
 from pylab import *
 from numpy import trapz, ones, abs
@@ -13,7 +13,7 @@ import sys
 print ""
 print ""
 print "*************************************"
-print "Default: M=1, (Md, Mt, E, k, tol)=0"
+print "Default: Mt=0, (M, Md, E, k, tol)=0"
 print "*************************************"
 print ""
 print "M  = Goal Functional,                Md = Goal Functional vs # dof"
@@ -25,9 +25,9 @@ print ""
 # Define default plot settings
 plot_time_step       = 0
 plot_FSI_tol         = 0
-plot_goal_vs_level   = 1
+plot_goal_vs_level   = 0
 plot_goal_vs_dofs    = 0
-plot_goal_vs_time    = 0
+plot_goal_vs_time    = 1
 plot_error_estimate  = 0
 
 
@@ -36,7 +36,9 @@ for arg in sys.argv[1:]:
     if not "=" in arg: continue
     key, val = arg.split("=")
 
-    if key == "k":
+    if key == "E":
+        plot_error_estimate = int(val)
+    elif key == "k":
          plot_time_step= int(val)
     elif key == "tol":
         plot_FSI_tol = int(val)
@@ -44,21 +46,18 @@ for arg in sys.argv[1:]:
         plot_goal_vs_level = int(val)
     elif key == "Mt":
         plot_goal_vs_time = int(val)
-    elif key == "E":
-        plot_error_estimate = int(val)
     elif key == "Md":
         plot_goal_vs_dofs = int(val)
 
 # Define plots
 def plots():
 
-    # Read files (on the run data)
+    # Read files ("on the run data")
     lines_iter =  open("no_iterations.txt").read().split("\n")[:-1]
     lines_tol  =  open("fsi_tolerance.txt").read().split("\n")[:-1]
     lines_goal =  open("goal_functional.txt").read().split("\n")[:-1]
-    lines_dofs =  open("num_dofs.txt").read().split("\n")[:-1]
-
-    # Determine the number of refinement levels for "on the run" data
+    
+    # Determine the number of refinement levels for on the run data
     num_levels = max(int(l_iter.split(" ")[0]) for l_iter in lines_iter) + 1
 
     # Plot time step sequences 
@@ -113,66 +112,6 @@ def plots():
             ylabel("#iter.", fontsize=30)
             xlabel("$t$", fontsize=30)
 
-    # Process goal functional data
-    for level in range(num_levels):
-           
-        # Extract data for goal functional
-        level_lines_goal = [l_goal for l_goal in lines_goal if int(l_goal.split(" ")[0]) == level]
-        t_goal = [float(l_goal.split(" ")[1]) for l_goal in level_lines_goal]
-        M = [float(l_goal.split(" ")[2]) for l_goal in level_lines_goal]
-
-        # Extract number of dofs
-        level_lines_dofs = [l_dofs for l_dofs in lines_dofs if int(l_dofs.split(" ")[0]) == level]
-        dofs = [float(l_dofs.split(" ")[1]) for l_dofs in level_lines_dofs]
-         
-        # Compute integral goal functional
-        M_ave = trapz(t_goal, M)
-
-        # Write M_ave to file 
-        f = open("M_ave.txt", "a")
-        f.write("%d %g \n" % (level, M_ave))
-        f.close()
-
-        # Plot goal functional vs time 
-        if plot_goal_vs_time == True:
-            print "Plotting goal functional vs time (Mt=1) for level %d" % level
-
-            # Plot goal functional as a function of time
-            figure((level + 200))
-            plot(t_goal, M, '-m', linewidth=4); grid(True)
-            title("Goal Functional vs time, level %d" %level, fontsize=30)
-            ylabel('$\mathcal{M}^t$',fontsize=36); 
-            xlabel("$t$", fontsize=30)
-            
-    # Plot integrated goal functional vs refinement level
-    if plot_goal_vs_level == True:
-        print "Plotting integrated goal functional vs refinenment level (M=1)"
-        
-        # Extract data for integrated goal functional
-        lines_M = open("M_ave.txt").read().split("\n")[:-1]
-        level_lines_M = [l_M for l_M in lines_M]
-        ref_level = [float(l_M.split(" ")[0]) for l_M in level_lines_M]
-        M_int = [float(l_M.split(" ")[1]) for l_M in level_lines_M]
-
-        # FIXME: Add reference values
-        figure((level + 300))
-        title("Goal Functional", fontsize=30)
-        plot(ref_level, M_int, '-dk'); grid(True)
-        ylabel('$\int_0^T \mathcal{M}^t dt$',fontsize=36); 
-        xlabel("Refinment level", fontsize=30)
-
-    # Plot integrated goal functional vs number of dofs
-    if plot_goal_vs_dofs == True:
-        print "Plotting goal functional vs #dofs (Md=1)"
-        
-        # FIXME: Add reference values
-        figure((level + 900))
-        title("Convergence of Goal Functional", fontsize=30)
-        semilogx(dofs, abs(M_int), '-dk'); grid(True)
-        ylabel('$\int_0^T \mathcal{M}^t dt$',fontsize=36); 
-        xlabel("# Dofs", fontsize=30)
-        legend(["Adaptive"], loc='best')
-
     # Plot error estimate
     if plot_error_estimate == True:
         print "Plotting error estimates (E=1)"
@@ -199,10 +138,86 @@ def plots():
         legend(["E_c"], loc='best');
         xlabel('Refinement level', fontsize=30);
 
+
+    # Process goal functional data 
+    for level in range(num_levels):
+           
+        # Extract data for goal functional
+        level_lines_goal = [l_goal for l_goal in lines_goal if int(l_goal.split(" ")[0]) == level]
+        t_goal = [float(l_goal.split(" ")[1]) for l_goal in level_lines_goal]
+        M = [float(l_goal.split(" ")[2]) for l_goal in level_lines_goal]
+
+        # Compute integral goal functional
+        M_ave = trapz(t_goal, M)
+
+        # Write M_ave to file 
+        f = open("M_ave.txt", "a")
+        f.write("%d %g \n" % (level, M_ave))
+        f.close()
+
+        # Plot goal functional vs time 
+        if plot_goal_vs_time == True:
+            print "Plotting goal functional vs time (Mt=1) for level %d" % level
+
+            # Plot goal functional as a function of time
+            figure((level + 200))
+            plot(t_goal, M, '-m', linewidth=4); grid(True)
+            title("Goal Functional vs time, level %d" %level, fontsize=30)
+            ylabel('$\mathcal{M}(u)$',fontsize=36); 
+            xlabel("$t$", fontsize=30)
+            
+    # Process and plot goal functional as a function of end time T
+
+    # Extract data for dofs
+    lines_dofs =  open("num_dofs.txt").read().split("\n")[:-1]
+    level_lines_dofs = [l_dofs for l_dofs in lines_dofs]
+    dofs  = [float(l_dofs.split(" ")[1]) for l_dofs in level_lines_dofs]
+    space_dofs = [float(l_dofs.split(" ")[2]) for l_dofs in level_lines_dofs]
+    time_dofs = [float(l_dofs.split(" ")[3]) for l_dofs in level_lines_dofs]
+
+    # Extract data for goal functional 
+    lines_MT   =  open("M_ave.txt").read().split("\n")[:-1]
+    level_lines_MT = [l_MT for l_MT in lines_MT]
+    ref_level_temp = [float(l_MT.split(" ")[0]) for l_MT in level_lines_MT]
+    MT_temp = [float(l_MT.split(" ")[1]) for l_MT in level_lines_MT]
+    
+    # Create empty sets (for sorting out uncompleted calculations)
+    MT = []
+    ref_level = []
+
+    # Determine the number of complete cycles computed
+    cycles = max(int(l.split(" ")[0]) for l in lines_dofs) + 1
+
+    # Extract goal functionals at end time T
+    for j in range(cycles):
+        MT.append(MT_temp[j])
+        ref_level.append(ref_level_temp[j])
+           
+    # Plot integrated goal functional vs refinement level
+    if plot_goal_vs_level == True:
+        print "Plotting integrated goal functional vs refinenment level (M=1)"
+          
+        # FIXME: Add reference values
+        figure((level + 300))
+        title("Goal Functional", fontsize=30)
+        plot(ref_level, MT, '-dk'); grid(True)
+        ylabel('$\mathcal{M}^t$',fontsize=36); 
+        xlabel("Refinment level", fontsize=30)
+
+    # Plot integrated goal functional vs number of dofs
+    if plot_goal_vs_dofs == True:
+        print "Plotting goal functional vs #dofs (Md=1)"
+
+        # FIXME: Add reference values
+        figure((level + 900))
+        title("Convergence of Goal Functional", fontsize=30)
+        plot(dofs, abs(MT), '-dk'); grid(True)
+        ylabel('$\mathcal{M}^t$',fontsize=36); 
+        xlabel("# Dofs", fontsize=30)
+        legend(["Adaptive"], loc='best')
+
     show()
 plots()
 
-# Clear data in M_ave.txt
-f = open("M_ave.txt", "w")
-f.close()
+
 
