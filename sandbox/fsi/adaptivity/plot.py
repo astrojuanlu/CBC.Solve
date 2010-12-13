@@ -52,13 +52,13 @@ for arg in sys.argv[1:]:
 # Define plots
 def plots():
 
-    # Read files (these files are always created)
+    # Read files (on the run data)
     lines_iter =  open("no_iterations.txt").read().split("\n")[:-1]
     lines_tol  =  open("fsi_tolerance.txt").read().split("\n")[:-1]
     lines_goal =  open("goal_functional.txt").read().split("\n")[:-1]
     lines_dofs =  open("num_dofs.txt").read().split("\n")[:-1]
 
-    # Determine the number of refinement levels to plot
+    # Determine the number of refinement levels for "on the run" data
     num_levels = max(int(l_iter.split(" ")[0]) for l_iter in lines_iter) + 1
 
     # Plot time step sequences 
@@ -107,7 +107,7 @@ def plots():
             subplot(2, 1, 2); grid(False); 
             
             # FIXME: axhspan/vlines  do not work on BB
-#             axhspan(0.0, max(iter), xmin=0, xmax=max(t_iter), color='w')
+#            axhspan(0.0, max(iter), xmin=0, xmax=max(t_iter), color='w')
 #             vlines(t_iter, iter, 1.0, color='k', linestyles='-',  linewidth=1.5)
             plot(t_iter, iter, '-or', linewidth=2); grid(True)
             ylabel("#iter.", fontsize=30)
@@ -133,6 +133,7 @@ def plots():
         f.write("%d %g \n" % (level, M_ave))
         f.close()
 
+        # Plot goal functional vs time 
         if plot_goal_vs_time == True:
             print "Plotting goal functional vs time (Mt=1) for level %d" % level
 
@@ -142,16 +143,16 @@ def plots():
             title("Goal Functional vs time, level %d" %level, fontsize=30)
             ylabel('$\mathcal{M}^t$',fontsize=36); 
             xlabel("$t$", fontsize=30)
-
+            
+    # Plot integrated goal functional vs refinement level
+    if plot_goal_vs_level == True:
+        print "Plotting integrated goal functional vs refinenment level (M=1)"
+        
         # Extract data for integrated goal functional
         lines_M = open("M_ave.txt").read().split("\n")[:-1]
         level_lines_M = [l_M for l_M in lines_M]
         ref_level = [float(l_M.split(" ")[0]) for l_M in level_lines_M]
         M_int = [float(l_M.split(" ")[1]) for l_M in level_lines_M]
-            
-    # Plot integrated goal functional vs refinement level
-    if plot_goal_vs_level == True:
-        print "Plotting goal functional vs refinenment level (M=1)"
 
         # FIXME: Add reference values
         figure((level + 300))
@@ -200,4 +201,8 @@ def plots():
 
     show()
 plots()
+
+# Clear data in M_ave.txt
+f = open("M_ave.txt", "w")
+f.close()
 
