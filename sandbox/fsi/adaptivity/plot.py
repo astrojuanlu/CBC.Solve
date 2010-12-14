@@ -12,14 +12,14 @@ import sys
 
 print ""
 print ""
-print "*********************************************"
-print "Default: Mt=1, (M, Md, E, k, tol, I, UA)=0"
-print "*********************************************"
+print "***********************************************"
+print "* Default: Mt=1, (M, Md, E, k, tol, I, UA)=0  * " 
+print "***********************************************"
 print ""
-print "M  = Goal Functional vs refinement,  Md = Goal Functional vs #dofs"
-print "Mt = Goal Functional vs Time,         E = Error Estimate"
-print "k  = Time Steps & Residuals,        tol = FSI Tolerance & #iterations"
-print "I  = Efficiency Index,               DT = #dofs and time steps vs refinemnet level "
+print "M  = Goal Functional vs refinement,     Md = Goal Functional vs #dofs"
+print "Mt = Goal Functional vs Time,            E = Error Estimate"
+print "k  = Time Steps & Residuals,           tol = FSI Tolerance & #iterations"
+print "I  = Efficiency Index,                  DT = #dofs and time steps vs refinemnet level "
 print "UA = Uniform/Adaptive error vs #dofs"
 print ""
 print ""
@@ -188,6 +188,7 @@ def plots():
 
 
 
+
     # --Process reference value--------------------------------------- 
 
     # Extract data
@@ -218,6 +219,7 @@ def plots():
 
 
 
+
     # --Process error estimate--------------------------------------- 
 
     # Extract data
@@ -237,6 +239,7 @@ def plots():
 
 
 
+
     # --Plot error estimates and goal functional----------------------
 
     # Plot error estimate
@@ -246,14 +249,14 @@ def plots():
         figure(88888) 
         subplot(4, 1, 1); plot(refinment_level, E, '-or');grid(True)
         title("Error estimate ",  fontsize=30)	
-        legend(["$\sum$ E "], loc='best');
+        legend(["$\sum$ E "], loc='best')
         subplot(4, 1, 2); plot(refinment_level, E_h, 'dg-');grid(True)
-        legend(["E_h"], loc='best');
+        legend(["E_h"], loc='best')
         subplot(4, 1, 3); plot(refinment_level, E_k, 'p-');grid(True)
-        legend(["E_h"], loc='best');
+        legend(["E_h"], loc='best')
         subplot(4, 1, 4); plot(refinment_level, E_c,'-sk');grid(True)
-        legend(["E_c"], loc='best');
-        xlabel('Refinement level', fontsize=30);
+        legend(["E_c"], loc='best')
+        xlabel('Refinement level', fontsize=30)
 
     # Plot uniform error vs adaptive error 
     if plot_error_adaptive_vs_uniform == True:
@@ -263,8 +266,9 @@ def plots():
         title("Error ", fontsize=30)
         semilogy(dofs_reference, E_uniform, '-dg', linewidth=3); grid(True)
         semilogy(dofs, Me, '-or', linewidth=3); grid(True)   
-        legend(["Uniform", "Adaptive"], loc='best');
-        xlabel('#dofs ', fontsize=30);
+        legend(["Uniform", "Adaptive"], loc='best')
+        ylabel("log(E)", fontsize=30)
+        xlabel('#dofs ', fontsize=30)
 
     # Plot time integrated goal functional vs refinement level
     if plot_goal_vs_level == True:
@@ -273,7 +277,7 @@ def plots():
         figure(400)
         title("Goal Functional", fontsize=30)
         plot(ref_level_T, MT, '-dk'); grid(True)
-        ylabel('$\mathcal{M}^T$', fontsize=36); 
+        ylabel('$\mathcal{M}^T$', fontsize=36)
         xlabel("Refinment level", fontsize=30)
 
     # Plot integrated goal functional vs number of dofs
@@ -284,7 +288,7 @@ def plots():
         title("Convergence of Goal Functional", fontsize=30)
         semilogx(dofs, MT, '-dr'); grid(True)
         semilogx(dofs_reference, MT_reference, '-ok'); grid(True)
-        ylabel('$\mathcal{M}^T$', fontsize=36); 
+        ylabel('$\mathcal{M}^T$', fontsize=36)
         xlabel("#dofs", fontsize=30)
         legend(["Adaptive", "Uniform"], loc='best')
 
@@ -295,10 +299,10 @@ def plots():
         figure(600)        
         title("Efficieny Index", fontsize=30)
         semilogx(dofs, E_index, '-dg', linewidth=3); grid(True)
-        legend(["E / |M(e)|"], loc='best');
+        legend(["E / |M(e)|"], loc='best')
         ettor = ones(len(dofs))
         semilogx(dofs, ettor, 'b', linewidth=8); grid(True)   
-        xlabel('#dofs', fontsize=30);
+        xlabel('#dofs', fontsize=30)
 
     # Plot number of (space) dofs and number of time steps
     if plot_dofs_vs_level == True:
@@ -308,8 +312,8 @@ def plots():
         title("#dofs vs refinement level", fontsize=30)
         semilogy(ref_level_T, space_dofs, '--dg', linewidth=3); grid(True)
         semilogy(ref_level_T, time_dofs, '--or', linewidth=3); grid(True)   
-        legend(["Space dofs", "Time steps"], loc='best');
-        xlabel('Refinement level', fontsize=30);
+        legend(["Space dofs", "Time steps"], loc='best')
+        xlabel('Refinement level', fontsize=30)
 
     show()
 plots()
