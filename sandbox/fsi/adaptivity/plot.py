@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-12-13
+# Last changed: 2010-12-14
 
 from pylab import *
 from numpy import trapz, ones, abs
@@ -12,24 +12,26 @@ import sys
 
 print ""
 print ""
-print "*************************************"
-print "Default: Mt=0, (M, Md, E, k, tol)=0"
-print "*************************************"
+print "***************************************"
+print "Default: Mt=1, (M, Md, E, k, tol, I)=0"
+print "***************************************"
 print ""
-print "M  = Goal Functional,                Md = Goal Functional vs # dof"
-print "Mt = Goal Functional vs Time          E = Error Estimate"
-print "k  = Time Steps & Residuals,        tol = FSI Tolerance & # iterations"
+print "M  = Goal Functional vs refinement,   Md = Goal Functional vs #dof"
+print "Mt = Goal Functional vs Time,         E = Error Estimate"
+print "k  = Time Steps & Residuals,        tol = FSI Tolerance & #iterations"
+print "I  = Efficiency Index,               DT = Number of dofs and time steps "
 print ""
 print ""
 
 # Define default plot settings
-plot_time_step       = 0
-plot_FSI_tol         = 0
-plot_goal_vs_level   = 0
-plot_goal_vs_dofs    = 0
-plot_goal_vs_time    = 1
-plot_error_estimate  = 0
-
+plot_time_step        = 0
+plot_FSI_tol          = 0
+plot_goal_vs_level    = 0
+plot_goal_vs_dofs     = 0
+plot_goal_vs_time     = 1
+plot_error_estimate   = 0
+plot_efficiency_index = 0
+plot_dofs_vs_level    = 0
 
 # Get command-line parameters
 for arg in sys.argv[1:]:
@@ -39,15 +41,19 @@ for arg in sys.argv[1:]:
     if key == "E":
         plot_error_estimate = int(val)
     elif key == "k":
-         plot_time_step= int(val)
+         plot_time_step = int(val)
     elif key == "tol":
         plot_FSI_tol = int(val)
+    elif key == "I":
+         plot_efficiency_index = int(val)
     elif key == "M":
         plot_goal_vs_level = int(val)
     elif key == "Mt":
         plot_goal_vs_time = int(val)
     elif key == "Md":
         plot_goal_vs_dofs = int(val)
+    elif key == "DT":
+        plot_dofs_vs_level = int(val)
 
 # Define plots
 def plots():
@@ -59,6 +65,10 @@ def plots():
     
     # Determine the number of refinement levels for on the run data
     num_levels = max(int(l_iter.split(" ")[0]) for l_iter in lines_iter) + 1
+
+    # Empty old file
+    f = open("M_ave.txt", "w")
+    f.close()
 
     # Plot time step sequences 
     if plot_time_step == True:
@@ -102,12 +112,13 @@ def plots():
             # Plot FSI tolerance and no. of FSI iterations
             figure((level + 100)) 
             subplot(2, 1, 1); grid(True); plot(t_tol, tol, '-k', linewidth=4)
-            ylabel("$TOL_{fSM}$", fontsize=30); title("FSI tolerance & # iter., level %d" %level, fontsize=30)
+            ylabel("$TOL_{fSM}$", fontsize=30)
+            title("FSI tolerance & # iter., level %d" %level, fontsize=30)
             subplot(2, 1, 2); grid(False); 
             
             # FIXME: axhspan/vlines  do not work on BB
 #            axhspan(0.0, max(iter), xmin=0, xmax=max(t_iter), color='w')
-#             vlines(t_iter, iter, 1.0, color='k', linestyles='-',  linewidth=1.5)
+#            vlines(t_iter, iter, 1.0, color='k', linestyles='-',  linewidth=1.5)
             plot(t_iter, iter, '-or', linewidth=2); grid(True)
             ylabel("#iter.", fontsize=30)
             xlabel("$t$", fontsize=30)
@@ -129,7 +140,7 @@ def plots():
         figure(666)
         subplot(4, 1, 1); plot(ref, E, '-or');grid(True)
         title("Error estimate ",  fontsize=30)	
-        legend(["E"], loc='best');
+        legend(["$\sum$ E "], loc='best');
         subplot(4, 1, 2); plot(ref, E_h, 'dg-');grid(True)
         legend(["E_h"], loc='best');
         subplot(4, 1, 3); plot(ref, E_k, 'p-');grid(True)
@@ -163,7 +174,7 @@ def plots():
             figure((level + 200))
             plot(t_goal, M, '-m', linewidth=4); grid(True)
             title("Goal Functional vs time, level %d" %level, fontsize=30)
-            ylabel('$\mathcal{M}(u)$',fontsize=36); 
+            ylabel('$\mathcal{M}(u^h)$', fontsize=36); 
             xlabel("$t$", fontsize=30)
             
     # Process and plot goal functional as a function of end time T
@@ -181,11 +192,11 @@ def plots():
     ref_level_temp = [float(l_MT.split(" ")[0]) for l_MT in level_lines_MT]
     MT_temp = [float(l_MT.split(" ")[1]) for l_MT in level_lines_MT]
     
-    # Create empty sets (for sorting out uncompleted calculations)
+    # Create empty sets 
     MT = []
     ref_level = []
 
-    # Determine the number of complete cycles computed
+    # Determine the number of complete computed cycles 
     cycles = max(int(l.split(" ")[0]) for l in lines_dofs) + 1
 
     # Extract goal functionals at end time T
@@ -201,7 +212,7 @@ def plots():
         figure((level + 300))
         title("Goal Functional", fontsize=30)
         plot(ref_level, MT, '-dk'); grid(True)
-        ylabel('$\mathcal{M}^t$',fontsize=36); 
+        ylabel('$\mathcal{M}^T$', fontsize=36); 
         xlabel("Refinment level", fontsize=30)
 
     # Plot integrated goal functional vs number of dofs
@@ -211,13 +222,31 @@ def plots():
         # FIXME: Add reference values
         figure((level + 900))
         title("Convergence of Goal Functional", fontsize=30)
-        plot(dofs, abs(MT), '-dk'); grid(True)
-        ylabel('$\mathcal{M}^t$',fontsize=36); 
-        xlabel("# Dofs", fontsize=30)
+        semilogx(dofs, abs(MT), '-dk'); grid(True)
+        ylabel('$\mathcal{M}^T$', fontsize=36); 
+        xlabel("#dofs", fontsize=30)
         legend(["Adaptive"], loc='best')
+
+    # Plot number of (space) dofs and number of time steps
+    if plot_dofs_vs_level == True:
+        print "Plotting  #dofs and #time steps (DT=1)"
+
+        figure(level + 1200)        
+        title("#dofs vs refinement level", fontsize=30)
+        semilogy(ref_level, space_dofs, '--dg', linewidth=3); grid(True)
+        semilogy(ref_level, time_dofs, '--or', linewidth=3); grid(True)   
+        legend(["dofs", "Time steps"], loc='best');
+        xlabel('Refinement level', fontsize=30);
+ 
+
+    # Plot efficiency index
+    if plot_efficiency_index == True:
+        print " Implement!!!  "
+
 
     show()
 plots()
+
 
 
 
