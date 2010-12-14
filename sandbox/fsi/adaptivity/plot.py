@@ -16,10 +16,10 @@ print "*********************************************"
 print "Default: Mt=1, (M, Md, E, k, tol, I, UA)=0"
 print "*********************************************"
 print ""
-print "M  = Goal Functional vs refinement,   Md = Goal Functional vs #dof"
+print "M  = Goal Functional vs refinement,  Md = Goal Functional vs #dofs"
 print "Mt = Goal Functional vs Time,         E = Error Estimate"
 print "k  = Time Steps & Residuals,        tol = FSI Tolerance & #iterations"
-print "I  = Efficiency Index,               DT = Number of dofs and time steps "
+print "I  = Efficiency Index,               DT = #dofs and time steps vs refinemnet level "
 print "UA = Uniform/Adaptive error vs #dofs"
 print ""
 print ""
@@ -67,8 +67,6 @@ def plots():
     lines_tol  =  open("fsi_tolerance.txt").read().split("\n")[:-1]
     lines_goal =  open("goal_functional.txt").read().split("\n")[:-1]
   
-    # FIXME: Add reference values here!!!
-
     # Determine the number of refinement levels for on the run data
     num_levels = max(int(l.split(" ")[0]) for l in lines_iter) + 1
 
@@ -99,6 +97,7 @@ def plots():
             ylabel('$|r_k|$', fontsize=30)
             xlabel("$t$", fontsize=30)
 
+
     # Plot FSI tolerance and number of FSI iterations for each adaptive loop
     if plot_FSI_tol == True:
 
@@ -128,6 +127,9 @@ def plots():
             plot(t_iter, iter, '-or', linewidth=2); grid(True)
             ylabel("#iter.", fontsize=30)
             xlabel("$t$", fontsize=30)
+
+
+
 
     # --Process goal functional---------------------------------------------- 
     for level in range(num_levels):
@@ -185,6 +187,7 @@ def plots():
     MT_array = array(MT)
 
 
+
     # --Process reference value--------------------------------------- 
 
     # Extract data
@@ -195,6 +198,12 @@ def plots():
     dofs_reference    = [float(l.split(" ")[2]) for l in level_lines_reference]
     h_dofs_reference  = [float(l.split(" ")[3]) for l in level_lines_reference]
     dt_dofs_reference = [float(l.split(" ")[4]) for l in level_lines_reference]
+
+#     figure()
+#     plot(dofs_reference , MT_reference, '-ok', linewidth=2); grid(True)
+#     title("Goal Functional; uniform ref.",fontsize=30)
+#     ylabel("M(u^h)", fontsize=30)
+#     xlabel("#dofs (h+k)", fontsize=30)
     
     # Extract reference value
     last = len(MT_reference) - 1
@@ -203,9 +212,11 @@ def plots():
     # Compute uniform error 
     MT_reference_array = array(MT_reference)
     E_uniform = abs(MT_reference_array - goal_reference)
-
+    
     # Compute error in goal functional (|M(u^h) - M(u)|)
     Me = abs(MT_array - goal_reference)
+
+
 
     # --Process error estimate--------------------------------------- 
 
@@ -224,14 +235,15 @@ def plots():
     # Compute efficiency index
     E_index = E_array / Me
 
+
+
     # --Plot error estimates and goal functional----------------------
 
     # Plot error estimate
     if plot_error_estimate == True:
         print "Plotting error estimates (E=1)"
 
-        # Plot error estimates 
-        figure(88888)
+        figure(88888) 
         subplot(4, 1, 1); plot(refinment_level, E, '-or');grid(True)
         title("Error estimate ",  fontsize=30)	
         legend(["$\sum$ E "], loc='best');
@@ -245,7 +257,9 @@ def plots():
 
     # Plot uniform error vs adaptive error 
     if plot_error_adaptive_vs_uniform == True:
-        figure(600)        
+        print "Plotting uniform errors and adaptive error vs #dofs (UA=1)"
+  
+        figure(300)        
         title("Error ", fontsize=30)
         semilogy(dofs_reference, E_uniform, '-dg', linewidth=3); grid(True)
         semilogy(dofs, Me, '-or', linewidth=3); grid(True)   
@@ -256,8 +270,7 @@ def plots():
     if plot_goal_vs_level == True:
         print "Plotting integrated goal functional vs refinenment level (M=1)"
           
-        # FIXME: Add reference values
-        figure(300)
+        figure(400)
         title("Goal Functional", fontsize=30)
         plot(ref_level_T, MT, '-dk'); grid(True)
         ylabel('$\mathcal{M}^T$', fontsize=36); 
@@ -267,7 +280,7 @@ def plots():
     if plot_goal_vs_dofs == True:
         print "Plotting goal functional vs #dofs (Md=1)"
 
-        figure(400)
+        figure(500)
         title("Convergence of Goal Functional", fontsize=30)
         semilogx(dofs, MT, '-dr'); grid(True)
         semilogx(dofs_reference, MT_reference, '-ok'); grid(True)
@@ -279,7 +292,7 @@ def plots():
     if plot_efficiency_index == True:
         print "Plotting efficiency index (I=1)"
 
-        figure(500)        
+        figure(600)        
         title("Efficieny Index", fontsize=30)
         semilogx(dofs, E_index, '-dg', linewidth=3); grid(True)
         legend(["E / |M(e)|"], loc='best');
@@ -287,16 +300,15 @@ def plots():
         semilogx(dofs, ettor, 'b', linewidth=8); grid(True)   
         xlabel('#dofs', fontsize=30);
 
-
     # Plot number of (space) dofs and number of time steps
     if plot_dofs_vs_level == True:
-        print "Plotting #dofs and #time steps (DT=1)"
+        print "Plotting # (space) dofs and #time steps (DT=1)"
         
         figure(700)        
         title("#dofs vs refinement level", fontsize=30)
         semilogy(ref_level_T, space_dofs, '--dg', linewidth=3); grid(True)
         semilogy(ref_level_T, time_dofs, '--or', linewidth=3); grid(True)   
-        legend(["dofs", "Time steps"], loc='best');
+        legend(["Space dofs", "Time steps"], loc='best');
         xlabel('Refinement level', fontsize=30);
 
     show()
@@ -304,10 +316,4 @@ plots()
 
 
 
-
-#     figure()
-#     plot(dofs_ref, MT_ref, '-ok', linewidth=2); grid(True)
-#     title("Goal Functional; uniform ref.",fontsize=30)
-#     ylabel("M(u^h)", fontsize=30)
-#     xlabel("#dofs (h+k)", fontsize=30)
 
