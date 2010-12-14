@@ -12,14 +12,15 @@ import sys
 
 print ""
 print ""
-print "***************************************"
-print "Default: Mt=1, (M, Md, E, k, tol, I)=0"
-print "***************************************"
+print "*********************************************"
+print "Default: Mt=1, (M, Md, E, k, tol, I, UA)=0"
+print "*********************************************"
 print ""
 print "M  = Goal Functional vs refinement,   Md = Goal Functional vs #dof"
 print "Mt = Goal Functional vs Time,         E = Error Estimate"
 print "k  = Time Steps & Residuals,        tol = FSI Tolerance & #iterations"
 print "I  = Efficiency Index,               DT = Number of dofs and time steps "
+print "UA = Uniform/Adaptive error vs #dofs"
 print ""
 print ""
 
@@ -32,6 +33,7 @@ plot_goal_vs_time     = 1
 plot_error_estimate   = 0
 plot_efficiency_index = 0
 plot_dofs_vs_level    = 0
+plot_error_adaptive_vs_uniform = 0
 
 # Get command-line parameters
 for arg in sys.argv[1:]:
@@ -54,6 +56,8 @@ for arg in sys.argv[1:]:
         plot_goal_vs_dofs = int(val)
     elif key == "DT":
         plot_dofs_vs_level = int(val)
+    elif key == "UA":
+        plot_error_adaptive_vs_uniform = int(val)
 
 # Define plots
 def plots():
@@ -66,7 +70,7 @@ def plots():
     # FIXME: Add reference values here!!!
 
     # Determine the number of refinement levels for on the run data
-    num_levels = max(int(l_iter.split(" ")[0]) for l_iter in lines_iter) + 1
+    num_levels = max(int(l.split(" ")[0]) for l in lines_iter) + 1
 
     # Empty old file
     f = open("M_ave.txt", "w")
@@ -82,10 +86,10 @@ def plots():
             print "Plotting time steps (k=1) for level %d" % level
 
             # Extract data for time steps
-            level_lines_time = [l_time for l_time in lines_time if int(l_time.split(" ")[0]) == level]
-            t   =  [float(l_time.split(" ")[1]) for l_time in level_lines_time]
-            k   =  [float(l_time.split(" ")[2]) for l_time in level_lines_time]
-            R   =  [float(l_time.split(" ")[3]) for l_time in level_lines_time]
+            level_lines_time = [l for l in lines_time if int(l.split(" ")[0]) == level]
+            t   =  [float(l.split(" ")[1]) for l in level_lines_time]
+            k   =  [float(l.split(" ")[2]) for l in level_lines_time]
+            R   =  [float(l.split(" ")[3]) for l in level_lines_time]
 
             # Plot time step and time residual
             figure(level)
@@ -102,14 +106,14 @@ def plots():
             print "Plotting FSI tolerance and no. of itrations (tol=1) for level %d" % level
 
             # Extract data for FSI tolerance 
-            level_lines_tol = [l_tol for l_tol in lines_tol if int(l_tol.split(" ")[0]) == level]
-            t_tol = [float(l_tol.split(" ")[1]) for l_tol in level_lines_tol]
-            tol = [float(l_tol.split(" ")[2]) for l_tol in level_lines_tol]
+            level_lines_tol = [l for l in lines_tol if int(l.split(" ")[0]) == level]
+            t_tol = [float(l.split(" ")[1]) for l in level_lines_tol]
+            tol   = [float(l.split(" ")[2]) for l in level_lines_tol]
 
             # Extract data for no. of iterations
-            level_lines_iter = [l_iter for l_iter in lines_iter if int(l_iter.split(" ")[0]) == level]
-            t_iter = [float(l_iter.split(" ")[1]) for l_iter in level_lines_iter]
-            iter = [float(l_iter.split(" ")[2]) for l_iter in level_lines_iter]
+            level_lines_iter = [l for l in lines_iter if int(l.split(" ")[0]) == level]
+            t_iter = [float(l.split(" ")[1]) for l in level_lines_iter]
+            iter   = [float(l.split(" ")[2]) for l in level_lines_iter]
             
             # Plot FSI tolerance and no. of FSI iterations
             figure((level + 100)) 
@@ -129,11 +133,11 @@ def plots():
     for level in range(num_levels):
            
         # Extract data for goal functional
-        level_lines_goal = [l_goal for l_goal in lines_goal if int(l_goal.split(" ")[0]) == level]
-        t_goal = [float(l_goal.split(" ")[1]) for l_goal in level_lines_goal]
-        M = [float(l_goal.split(" ")[2]) for l_goal in level_lines_goal]
+        level_lines_goal = [l for l in lines_goal if int(l.split(" ")[0]) == level]
+        t_goal = [float(l.split(" ")[1]) for l in level_lines_goal]
+        M      = [float(l.split(" ")[2]) for l in level_lines_goal]
 
-        # Compute integral goal functional
+        # Compute time integrated goal functional
         M_ave = trapz(t_goal, M)
 
         # Write M_ave to file 
@@ -154,20 +158,20 @@ def plots():
    
     # Extract data for dofs
     lines_dofs =  open("num_dofs.txt").read().split("\n")[:-1]
-    level_lines_dofs = [l_dofs for l_dofs in lines_dofs]
-    dofs  = [float(l_dofs.split(" ")[1]) for l_dofs in level_lines_dofs]
-    space_dofs = [float(l_dofs.split(" ")[2]) for l_dofs in level_lines_dofs]
-    time_dofs = [float(l_dofs.split(" ")[3]) for l_dofs in level_lines_dofs]
+    level_lines_dofs = [l for l in lines_dofs]
+    dofs       = [float(l.split(" ")[1]) for l in level_lines_dofs]
+    space_dofs = [float(l.split(" ")[2]) for l in level_lines_dofs]
+    time_dofs  = [float(l.split(" ")[3]) for l in level_lines_dofs]
 
     # Extract data for goal functional 
     lines_MT   =  open("M_ave.txt").read().split("\n")[:-1]
-    level_lines_MT = [l_MT for l_MT in lines_MT]
-    ref_level_temp = [float(l_MT.split(" ")[0]) for l_MT in level_lines_MT]
-    MT_temp = [float(l_MT.split(" ")[1]) for l_MT in level_lines_MT]
+    level_lines_MT = [l for l in lines_MT]
+    ref_level_temp = [float(l.split(" ")[0]) for l in level_lines_MT]
+    MT_temp        = [float(l.split(" ")[1]) for l in level_lines_MT]
     
     # Create empty sets 
     MT = []
-    ref_level = []
+    ref_level_T = []
 
     # Determine the number of complete computed cycles 
     cycles = max(int(l.split(" ")[0]) for l in lines_dofs) + 1
@@ -175,40 +179,50 @@ def plots():
     # Extract goal functionals at end time T
     for j in range(cycles):
         MT.append(MT_temp[j])
-        ref_level.append(ref_level_temp[j])
+        ref_level_T.append(ref_level_temp[j])
          
+    # Create an array for MT (used in efficiency index)
+    MT_array = array(MT)
+
 
     # --Process reference value--------------------------------------- 
 
     # Extract data
-    lines_ref = open("reference_paper1.txt").read().split("\n")[:-1]
-    level_lines_ref = [l for l in lines_ref]
-    ny_ref      = [float(l.split(" ")[0]) for l in level_lines_ref]
-    MT_ref      = [float(l.split(" ")[1]) for l in level_lines_ref]
-    dofs_ref    = [float(l.split(" ")[2]) for l in level_lines_ref]
-    h_dofs_ref  = [float(l.split(" ")[3]) for l in level_lines_ref]
-    dt_dofs_ref = [float(l.split(" ")[4]) for l in level_lines_ref]
+    lines_reference = open("reference_paper1.txt").read().split("\n")[:-1]
+    level_lines_reference  = [l for l in lines_reference]
+    ny_reference      = [float(l.split(" ")[0]) for l in level_lines_reference]
+    MT_reference      = [float(l.split(" ")[1]) for l in level_lines_reference]
+    dofs_reference    = [float(l.split(" ")[2]) for l in level_lines_reference]
+    h_dofs_reference  = [float(l.split(" ")[3]) for l in level_lines_reference]
+    dt_dofs_reference = [float(l.split(" ")[4]) for l in level_lines_reference]
     
     # Extract reference value
-    last = len(MT_ref) - 1
-    goal_reference = MT_ref[last]
+    last = len(MT_reference) - 1
+    goal_reference = MT_reference[last]
 
     # Compute uniform error 
-    MT_ref_array = array(MT_ref)
-    E_uniform = abs(MT_ref_array - goal_reference)
+    MT_reference_array = array(MT_reference)
+    E_uniform = abs(MT_reference_array - goal_reference)
 
+    # Compute error in goal functional (|M(u^h) - M(u)|)
+    Me = abs(MT_array - goal_reference)
 
     # --Process error estimate--------------------------------------- 
 
     # Extract data
     lines_error = open("error_estimates.txt").read().split("\n")[:-1]
     level_lines_error = [l for l in lines_error]
-    ref = [float(l.split(" ")[0]) for l in level_lines_error]
+    refinment_level = [float(l.split(" ")[0]) for l in level_lines_error]
     E   = [float(l.split(" ")[1]) for l in level_lines_error]
     E_h = [float(l.split(" ")[2]) for l in level_lines_error]
     E_k = [float(l.split(" ")[3]) for l in level_lines_error]
     E_c = [float(l.split(" ")[4]) for l in level_lines_error]
 
+    # Create an array for E (used in efficiency index)
+    E_array = array(E)
+
+    # Compute efficiency index
+    E_index = E_array / Me
 
     # --Plot error estimates and goal functional----------------------
 
@@ -218,16 +232,25 @@ def plots():
 
         # Plot error estimates 
         figure(88888)
-        subplot(4, 1, 1); plot(ref, E, '-or');grid(True)
+        subplot(4, 1, 1); plot(refinment_level, E, '-or');grid(True)
         title("Error estimate ",  fontsize=30)	
         legend(["$\sum$ E "], loc='best');
-        subplot(4, 1, 2); plot(ref, E_h, 'dg-');grid(True)
+        subplot(4, 1, 2); plot(refinment_level, E_h, 'dg-');grid(True)
         legend(["E_h"], loc='best');
-        subplot(4, 1, 3); plot(ref, E_k, 'p-');grid(True)
+        subplot(4, 1, 3); plot(refinment_level, E_k, 'p-');grid(True)
         legend(["E_h"], loc='best');
-        subplot(4, 1, 4); plot(ref, E_c,'-sk');grid(True)
+        subplot(4, 1, 4); plot(refinment_level, E_c,'-sk');grid(True)
         legend(["E_c"], loc='best');
         xlabel('Refinement level', fontsize=30);
+
+    # Plot uniform error vs adaptive error 
+    if plot_error_adaptive_vs_uniform == True:
+        figure(600)        
+        title("Error ", fontsize=30)
+        semilogy(dofs_reference, E_uniform, '-dg', linewidth=3); grid(True)
+        semilogy(dofs, Me, '-or', linewidth=3); grid(True)   
+        legend(["Uniform", "Adaptive"], loc='best');
+        xlabel('#dofs ', fontsize=30);
 
     # Plot time integrated goal functional vs refinement level
     if plot_goal_vs_level == True:
@@ -236,7 +259,7 @@ def plots():
         # FIXME: Add reference values
         figure(300)
         title("Goal Functional", fontsize=30)
-        plot(ref_level, MT, '-dk'); grid(True)
+        plot(ref_level_T, MT, '-dk'); grid(True)
         ylabel('$\mathcal{M}^T$', fontsize=36); 
         xlabel("Refinment level", fontsize=30)
 
@@ -247,7 +270,7 @@ def plots():
         figure(400)
         title("Convergence of Goal Functional", fontsize=30)
         semilogx(dofs, MT, '-dr'); grid(True)
-        semilogx(dofs_ref, MT_ref, '-ok'); grid(True)
+        semilogx(dofs_reference, MT_reference, '-ok'); grid(True)
         ylabel('$\mathcal{M}^T$', fontsize=36); 
         xlabel("#dofs", fontsize=30)
         legend(["Adaptive", "Uniform"], loc='best')
@@ -258,24 +281,24 @@ def plots():
 
         figure(500)        
         title("Efficieny Index", fontsize=30)
-        plot(ref_level, dofs, '--dg', linewidth=3); grid(True)
-        plot(ref_level, time_dofs, '--or', linewidth=3); grid(True)   
-        legend(["E", "|M(e)|"], loc='best');
-        ettor = ones(len(ref_level))
-        plot(ref_level, ettor, 'k', linewidth=8); grid(True)   
+        semilogx(dofs, E_index, '-dg', linewidth=3); grid(True)
+        legend(["E / |M(e)|"], loc='best');
+        ettor = ones(len(dofs))
+        semilogx(dofs, ettor, 'b', linewidth=8); grid(True)   
         xlabel('#dofs', fontsize=30);
+
 
     # Plot number of (space) dofs and number of time steps
     if plot_dofs_vs_level == True:
         print "Plotting #dofs and #time steps (DT=1)"
         
-        figure(600)        
+        figure(700)        
         title("#dofs vs refinement level", fontsize=30)
-        semilogy(ref_level, space_dofs, '--dg', linewidth=3); grid(True)
-        semilogy(ref_level, time_dofs, '--or', linewidth=3); grid(True)   
+        semilogy(ref_level_T, space_dofs, '--dg', linewidth=3); grid(True)
+        semilogy(ref_level_T, time_dofs, '--or', linewidth=3); grid(True)   
         legend(["dofs", "Time steps"], loc='best');
         xlabel('Refinement level', fontsize=30);
- 
+
     show()
 plots()
 
