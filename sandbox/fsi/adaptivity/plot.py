@@ -62,14 +62,16 @@ def plots():
     lines_iter =  open("no_iterations.txt").read().split("\n")[:-1]
     lines_tol  =  open("fsi_tolerance.txt").read().split("\n")[:-1]
     lines_goal =  open("goal_functional.txt").read().split("\n")[:-1]
-    
+  
+    # FIXME: Add reference values here!!!
+
     # Determine the number of refinement levels for on the run data
     num_levels = max(int(l_iter.split(" ")[0]) for l_iter in lines_iter) + 1
 
     # Empty old file
     f = open("M_ave.txt", "w")
     f.close()
-
+  
     # Plot time step sequences 
     if plot_time_step == True:
         
@@ -150,7 +152,7 @@ def plots():
         xlabel('Refinement level', fontsize=30);
 
 
-    # Process goal functional data 
+    # Process goal functional data and reference values
     for level in range(num_levels):
            
         # Extract data for goal functional
@@ -203,7 +205,28 @@ def plots():
     for j in range(cycles):
         MT.append(MT_temp[j])
         ref_level.append(ref_level_temp[j])
-           
+    
+    # Process reference value
+
+    # Extract data
+    lines_ref = open("reference_paper1.txt").read().split("\n")[:-1]
+    level_lines_ref = [l for l in lines_ref]
+    ny_ref      = [float(l.split(" ")[0]) for l in level_lines_ref]
+    MT_ref      = [float(l.split(" ")[1]) for l in level_lines_ref]
+    dofs_ref    = [float(l.split(" ")[2]) for l in level_lines_ref]
+    h_dofs_ref  = [float(l.split(" ")[3]) for l in level_lines_ref]
+    dt_dofs_ref = [float(l.split(" ")[4]) for l in level_lines_ref]
+    
+    # Extract reference value
+    last = len(MT_ref) - 1
+    goal_reference = MT_ref[last]
+
+#     figure()
+#     plot(dofs_ref, MT_ref, '-ok', linewidth=2); grid(True)
+#     title("Goal Functional; uniform ref.",fontsize=30)
+#     ylabel("M(u^h)", fontsize=30)
+#     xlabel("#dofs (h+k)", fontsize=30)
+
     # Plot integrated goal functional vs refinement level
     if plot_goal_vs_level == True:
         print "Plotting integrated goal functional vs refinenment level (M=1)"
@@ -219,31 +242,38 @@ def plots():
     if plot_goal_vs_dofs == True:
         print "Plotting goal functional vs #dofs (Md=1)"
 
-        # FIXME: Add reference values
         figure((level + 900))
         title("Convergence of Goal Functional", fontsize=30)
-        semilogx(dofs, abs(MT), '-dk'); grid(True)
+        semilogx(dofs, MT, '-dr'); grid(True)
+        semilogx(dofs_ref, MT_ref, '-ok'); grid(True)
         ylabel('$\mathcal{M}^T$', fontsize=36); 
         xlabel("#dofs", fontsize=30)
-        legend(["Adaptive"], loc='best')
+        legend(["Adaptive", "Uniform"], loc='best')
+
+    # Plot efficiency index
+    if plot_efficiency_index == True:
+        print "Plotting efficiency index (I=1)"
+
+        figure(level + 1200)        
+        title("Efficieny Index", fontsize=30)
+        plot(ref_level, dofs, '--dg', linewidth=3); grid(True)
+        plot(ref_level, time_dofs, '--or', linewidth=3); grid(True)   
+        legend(["E", "|M(e)|"], loc='best');
+        ettor = ones(len(ref_level))
+        plot(ref_level, ettor, 'k', linewidth=8); grid(True)   
+        xlabel('#dofs', fontsize=30);
 
     # Plot number of (space) dofs and number of time steps
     if plot_dofs_vs_level == True:
-        print "Plotting  #dofs and #time steps (DT=1)"
-
-        figure(level + 1200)        
+        print "Plotting #dofs and #time steps (DT=1)"
+        
+        figure(level + 1600)        
         title("#dofs vs refinement level", fontsize=30)
         semilogy(ref_level, space_dofs, '--dg', linewidth=3); grid(True)
         semilogy(ref_level, time_dofs, '--or', linewidth=3); grid(True)   
         legend(["dofs", "Time steps"], loc='best');
         xlabel('Refinement level', fontsize=30);
  
-
-    # Plot efficiency index
-    if plot_efficiency_index == True:
-        print " Implement!!!  "
-
-
     show()
 plots()
 
