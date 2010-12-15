@@ -20,7 +20,7 @@ print "M  = Goal Functional vs refinement,     Md = Goal Functional vs #dofs"
 print "Mt = Goal Functional vs Time,            E = Error Estimate"
 print "k  = Time Steps & Residuals,           tol = FSI Tolerance & #iterations"
 print "I  = Efficiency Index,                  DT = #dofs and time steps vs refinemnet level "
-print "UA = Uniform/Adaptive error vs #dofs"
+print "UA = Uniform/Adaptive error vs #dofs,   BIG_KAHUNA = plot all!"
 print ""
 print ""
 
@@ -58,6 +58,17 @@ for arg in sys.argv[1:]:
         plot_dofs_vs_level = int(val)
     elif key == "UA":
         plot_error_adaptive_vs_uniform = int(val)
+    elif key == "BIG_KAHUNA":
+        plot_time_step        = 1
+        plot_FSI_tol          = 1
+        plot_goal_vs_level    = 1
+        plot_goal_vs_dofs     = 1
+        plot_goal_vs_time     = 1
+        plot_error_estimate   = 1
+        plot_efficiency_index = 1
+        plot_dofs_vs_level    = 1
+        plot_error_adaptive_vs_uniform = 1
+
 
 # Define plots
 def plots():
@@ -121,7 +132,7 @@ def plots():
             title("FSI tolerance & # iter., level %d" %level, fontsize=30)
             subplot(2, 1, 2); grid(False); 
             
-            # FIXME: axhspan/vlines  do not work on BB
+            # FIXME: axhspan/vlines do not work on BB
 #            axhspan(0.0, max(iter), xmin=0, xmax=max(t_iter), color='w')
 #            vlines(t_iter, iter, 1.0, color='k', linestyles='-',  linewidth=1.5)
             plot(t_iter, iter, '-or', linewidth=2); grid(True)
@@ -161,9 +172,9 @@ def plots():
     # Extract data for dofs
     lines_dofs =  open("num_dofs.txt").read().split("\n")[:-1]
     level_lines_dofs = [l for l in lines_dofs]
-    dofs       = [float(l.split(" ")[1]) for l in level_lines_dofs]
-    space_dofs = [float(l.split(" ")[2]) for l in level_lines_dofs]
-    time_dofs  = [float(l.split(" ")[3]) for l in level_lines_dofs]
+    dofs    = [float(l.split(" ")[1]) for l in level_lines_dofs]
+    h_dofs  = [float(l.split(" ")[2]) for l in level_lines_dofs]
+    dt_dofs = [float(l.split(" ")[3]) for l in level_lines_dofs]
 
     # Extract data for goal functional 
     lines_MT   =  open("M_ave.txt").read().split("\n")[:-1]
@@ -212,7 +223,7 @@ def plots():
 
     # Compute uniform error 
     MT_reference_array = array(MT_reference)
-    E_uniform = abs(MT_reference_array - goal_reference)
+    E_uniform = abs(MT_reference_array - goal_reference) 
     
     # Compute error in goal functional (|M(u^h) - M(u)|)
     Me = abs(MT_array - goal_reference)
@@ -288,7 +299,7 @@ def plots():
         title("Convergence of Goal Functional", fontsize=30)
         semilogx(dofs, MT, '-dr'); grid(True)
         semilogx(dofs_reference, MT_reference, '-ok'); grid(True)
-        ylabel('$\mathcal{M}^T$', fontsize=36)
+        ylabel('$\int_0^T \mathcal{M}^t dt$', fontsize=36)
         xlabel("#dofs", fontsize=30)
         legend(["Adaptive", "Uniform"], loc='best')
 
@@ -310,8 +321,8 @@ def plots():
         
         figure(700)        
         title("#dofs vs refinement level", fontsize=30)
-        semilogy(ref_level_T, space_dofs, '--dg', linewidth=3); grid(True)
-        semilogy(ref_level_T, time_dofs, '--or', linewidth=3); grid(True)   
+        semilogy(ref_level_T, h_dofs, '--dg', linewidth=3); grid(True)
+        semilogy(ref_level_T, dt_dofs, '--or', linewidth=3); grid(True)   
         legend(["Space dofs", "Time steps"], loc='best')
         xlabel('Refinement level', fontsize=30)
 
