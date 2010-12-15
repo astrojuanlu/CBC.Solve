@@ -12,9 +12,9 @@ import sys
 
 print ""
 print ""
-print "***********************************************"
-print "* Default: Mt=1, (M, Md, E, k, tol, I, UA)=0  * " 
-print "***********************************************"
+print "***************************************************"
+print "* Default: Mt=1, (M, Md, E, k, tol, I, DT, UA)=0  * " 
+print "***************************************************"
 print ""
 print "M  = Goal Functional vs refinement,     Md = Goal Functional vs #dofs"
 print "Mt = Goal Functional vs Time,            E = Error Estimate"
@@ -176,6 +176,11 @@ def plots():
     h_dofs  = [float(l.split(" ")[2]) for l in level_lines_dofs]
     dt_dofs = [float(l.split(" ")[3]) for l in level_lines_dofs]
 
+    # Create extra set of dofs
+    # In some cases this is needed for efficiency index (I)
+    # and uniform/adaptive error (UA)
+    dofs_index = [float(l.split(" ")[1]) for l in level_lines_dofs]
+
     # Extract data for goal functional 
     lines_MT   =  open("M_ave.txt").read().split("\n")[:-1]
     level_lines_MT = [l for l in lines_MT]
@@ -188,7 +193,7 @@ def plots():
 
     # Determine the number of complete computed cycles 
     cycles = max(int(l.split(" ")[0]) for l in lines_dofs) + 1
-
+    
     # Extract goal functionals at end time T
     for j in range(cycles):
         MT.append(MT_temp[j])
@@ -196,8 +201,6 @@ def plots():
          
     # Create an array for MT (used in efficiency index)
     MT_array = array(MT)
-
-
 
 
     # --Process reference value--------------------------------------- 
@@ -230,7 +233,6 @@ def plots():
 
 
 
-
     # --Process error estimate--------------------------------------- 
 
     # Extract data
@@ -245,9 +247,32 @@ def plots():
     # Create an array for E (used in efficiency index)
     E_array = array(E)
 
+    # Check if the error estimate is obtained at the current level
+    # Often, the dual/residual is still computing at the 
+    # current level and the goal functional is already obtained
+    if len(E_array) < len(Me):
+        print " "
+        print "Waiting for error estimate on level %d" %(len(Me) - 1)
+        print " => can only plot efficiency index (I) up to level %d" %(len(Me) - 2)
+        print " => can only plot uniform/adaptive error (UA) up to level %d" %(len(Me) - 2)
+        print " "
+     
+        # Create empty sets
+        Me_temp =  []
+        dofs_index_temp = []
+        
+        # Remove the last value
+        for j in range(len(Me) - 1):
+            Me_temp.append(Me[j])
+            dofs_index_temp.append(dofs_index[j])
+
+        # Update Me and dofs_index
+        Me = array(Me_temp)
+        dofs_index = array(dofs_index_temp)
+
+
     # Compute efficiency index
     E_index = E_array / Me
-
 
 
 
@@ -260,7 +285,7 @@ def plots():
         figure(88888) 
         subplot(4, 1, 1); plot(refinment_level, E, '-or');grid(True)
         title("Error estimate ",  fontsize=30)	
-        legend(["$\sum$ E "], loc='best')
+        legend(["E"], loc='best')
         subplot(4, 1, 2); plot(refinment_level, E_h, 'dg-');grid(True)
         legend(["E_h"], loc='best')
         subplot(4, 1, 3); plot(refinment_level, E_k, 'p-');grid(True)
@@ -276,7 +301,7 @@ def plots():
         figure(300)        
         title("Error ", fontsize=30)
         semilogy(dofs_reference, E_uniform, '-dg', linewidth=3); grid(True)
-        semilogy(dofs, Me, '-or', linewidth=3); grid(True)   
+        semilogy(dofs_index, Me, '-or', linewidth=3); grid(True)   
         legend(["Uniform", "Adaptive"], loc='best')
         ylabel("log(E)", fontsize=30)
         xlabel('#dofs ', fontsize=30)
@@ -309,10 +334,10 @@ def plots():
 
         figure(600)        
         title("Efficieny Index", fontsize=30)
-        semilogx(dofs, E_index, '-dg', linewidth=3); grid(True)
+        semilogx(dofs_index, E_index, '-dg', linewidth=3); grid(True)
         legend(["E / |M(e)|"], loc='best')
-        ettor = ones(len(dofs))
-        semilogx(dofs, ettor, 'b', linewidth=8); grid(True)   
+        ettor = ones(len(dofs_index))
+        semilogx(dofs_index, ettor, 'b', linewidth=8); grid(True)   
         xlabel('#dofs', fontsize=30)
 
     # Plot number of (space) dofs and number of time steps
@@ -321,8 +346,8 @@ def plots():
         
         figure(700)        
         title("#dofs vs refinement level", fontsize=30)
-        semilogy(ref_level_T, h_dofs, '--dg', linewidth=3); grid(True)
-        semilogy(ref_level_T, dt_dofs, '--or', linewidth=3); grid(True)   
+        semilogy(ref_level_T, h_dofs, '-dg', linewidth=3); grid(True)
+        semilogy(ref_level_T, dt_dofs, '-or', linewidth=3); grid(True)   
         legend(["Space dofs", "Time steps"], loc='best')
         xlabel('Refinement level', fontsize=30)
 
