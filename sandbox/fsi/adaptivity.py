@@ -268,6 +268,8 @@ def compute_time_step(problem, Rk, ST, TOL, dt, t1, T):
 
     # Save time step
     save_timestep(t1, Rk, dt)
+    if at_end:
+        save_timestep(T, Rk, dt_new)
 
     info("Changing time step: %g --> %g" % (dt, dt_new))
 
