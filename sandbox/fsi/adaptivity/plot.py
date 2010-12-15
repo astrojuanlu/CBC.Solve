@@ -290,14 +290,14 @@ def plots():
         print "Plotting error estimates (E=1)"
 
         figure(88888) 
-        subplot(4, 1, 1); plot(refinment_level, E, '-or');grid(True)
+        subplot(4, 1, 1); plot(refinment_level, E, '-ok');grid(True)
         title("Error estimate ",  fontsize=30)	
         legend(["E"], loc='best')
-        subplot(4, 1, 2); plot(refinment_level, E_h, 'dg-');grid(True)
+        subplot(4, 1, 2); plot(refinment_level, E_h, 'db-');grid(True)
         legend(["E_h"], loc='best')
-        subplot(4, 1, 3); plot(refinment_level, E_k, 'p-');grid(True)
+        subplot(4, 1, 3); plot(refinment_level, E_k, '-pr');grid(True)
         legend(["E_k"], loc='best')
-        subplot(4, 1, 4); plot(refinment_level, E_c,'-sk');grid(True)
+        subplot(4, 1, 4); plot(refinment_level, E_c,'-sm');grid(True)
         legend(["E_c"], loc='best')
         xlabel('Refinement level', fontsize=30)
 
@@ -308,7 +308,7 @@ def plots():
         figure(300)        
         title("Error ", fontsize=30)
         semilogy(dofs_reference, E_uniform, '-dg', linewidth=3); grid(True)
-        semilogy(dofs_index, Me, '-or', linewidth=3); grid(True)   
+        semilogy(dofs_index, Me, '-ok', linewidth=3); grid(True)   
         legend(["Uniform", "Adaptive"], loc='best')
         ylabel("log(E)", fontsize=30)
         xlabel('#dofs ', fontsize=30)
@@ -336,8 +336,8 @@ def plots():
 
         figure(500)
         title("Convergence of Goal Functional", fontsize=30)
-        semilogx(dofs, MT, '-dr'); grid(True)
-        semilogx(dofs_reference, MT_reference, '-ok'); grid(True)
+        semilogx(dofs, MT, '-dk'); grid(True)
+        semilogx(dofs_reference, MT_reference, '-og'); grid(True)
         ylabel('$\int_0^T \mathcal{M}^t dt$', fontsize=36)
         xlabel("#dofs", fontsize=30)
         legend(["Adaptive", "Uniform"], loc='best')
@@ -348,10 +348,10 @@ def plots():
 
         figure(600)        
         title("Efficieny Index", fontsize=30)
-        semilogx(dofs_index, E_index, '-dg', linewidth=3); grid(True)
+        semilogx(dofs_index, E_index, '-dk', linewidth=3); grid(True)
         legend(["E / |M(e)|"], loc='best')
         ettor = ones(len(dofs_index))
-        semilogx(dofs_index, ettor, 'b', linewidth=8); grid(True)   
+        semilogx(dofs_index, ettor, 'g', linewidth=8); grid(True)   
         xlabel('#dofs', fontsize=30)
 
     # Plot number of (space) dofs and number of time steps
@@ -360,7 +360,7 @@ def plots():
         
         figure(700)        
         title("#dofs vs refinement level", fontsize=30)
-        semilogy(ref_level_T, h_dofs, '-dg', linewidth=3); grid(True)
+        semilogy(ref_level_T, h_dofs, '-db', linewidth=3); grid(True)
         semilogy(ref_level_T, dt_dofs, '-or', linewidth=3); grid(True)   
         legend(["Space dofs", "Time steps"], loc='best')
         xlabel('Refinement level', fontsize=30)
