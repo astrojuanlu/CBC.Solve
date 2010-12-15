@@ -9,18 +9,25 @@ __license__  = "GNU GPL Version 3 or any later version"
 from pylab import *
 from numpy import trapz, ones, abs, array
 import sys 
+from dolfin import warning
+
+print""
+warning("A full adaptive loop has to be completed in order to plot") 
+warning("A key has to be assigned a value, for example M=1") 
 
 print ""
 print ""
-print "***************************************************"
-print "* Default: Mt=1, (M, Md, E, k, tol, I, DT, UA)=0  * " 
-print "***************************************************"
+print "M   =  Goal Functional vs refinement"     
+print "Md  =  Goal Functional vs #dofs"
+print "Mt  =  Goal Functional vs Time "
+print "E   =  Error Estimate"
+print "AU  =  Uniform/Adaptive error vs #dofs"
+print "I   =  Efficiency Index"
+print "DT  =  #dofs and time steps vs refinemnet level "
+print "k   =  Time Steps & Residuals"
+print "tol =  tol = FSI Tolerance & #iterations"
 print ""
-print "M  = Goal Functional vs refinement,     Md = Goal Functional vs #dofs"
-print "Mt = Goal Functional vs Time,            E = Error Estimate"
-print "k  = Time Steps & Residuals,           tol = FSI Tolerance & #iterations"
-print "I  = Efficiency Index,                  DT = #dofs and time steps vs refinemnet level "
-print "UA = Uniform/Adaptive error vs #dofs,   BIG_KAHUNA = plot all!"
+print "BIG_KAHUNA = plot all!"
 print ""
 print ""
 
@@ -29,7 +36,7 @@ plot_time_step        = 0
 plot_FSI_tol          = 0
 plot_goal_vs_level    = 0
 plot_goal_vs_dofs     = 0
-plot_goal_vs_time     = 1
+plot_goal_vs_time     = 0
 plot_error_estimate   = 0
 plot_efficiency_index = 0
 plot_dofs_vs_level    = 0
@@ -289,7 +296,7 @@ def plots():
         subplot(4, 1, 2); plot(refinment_level, E_h, 'dg-');grid(True)
         legend(["E_h"], loc='best')
         subplot(4, 1, 3); plot(refinment_level, E_k, 'p-');grid(True)
-        legend(["E_h"], loc='best')
+        legend(["E_k"], loc='best')
         subplot(4, 1, 4); plot(refinment_level, E_c,'-sk');grid(True)
         legend(["E_c"], loc='best')
         xlabel('Refinement level', fontsize=30)
@@ -309,11 +316,18 @@ def plots():
     # Plot time integrated goal functional vs refinement level
     if plot_goal_vs_level == True:
         print "Plotting integrated goal functional vs refinenment level (M=1)"
-          
+
+        # Create list for reference
+        goal_reference_list = []
+        for j in range(len(ref_level_T)):
+            goal_reference_list.append(goal_reference)
+            
         figure(400)
         title("Goal Functional", fontsize=30)
         plot(ref_level_T, MT, '-dk'); grid(True)
-        ylabel('$\mathcal{M}^T$', fontsize=36)
+        plot(ref_level_T, goal_reference_list, '-g', linewidth=6)
+        legend(['Adaptive', 'Reference Value'])
+        ylabel('$\int_0^T \mathcal{M}^t dt$', fontsize=36)
         xlabel("Refinment level", fontsize=30)
 
     # Plot integrated goal functional vs number of dofs
