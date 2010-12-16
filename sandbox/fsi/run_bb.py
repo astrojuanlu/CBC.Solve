@@ -5,10 +5,10 @@ os.environ['PYTHONPATH'] = "..:../..:" + os.environ['PYTHONPATH']
 days = 20
 
 # Define problem names
-problem_names = ["paper1", "channel_with_flap", "driven_cavity_free_bottom", "driven_cavity_fixed_bottom" , "leaky_cavity_free_bottom", "leaky_cavity_fixed_bottom"]
+problem_names = ["pressure_driven_cavity", "channel_with_flap", "driven_cavity_free_bottom", "driven_cavity_fixed_bottom" , "leaky_cavity_free_bottom", "leaky_cavity_fixed_bottom"]
 
 #-----------------------------------------------
-# problem_names[0] = paper1
+# problem_names[0] = pressure_driven_cavity
 # problem_names[1] = channel_with_flap * 
 # problem_names[2] = driven_cavity_free_bottom *
 # problem_names[3] = driven_cavity_fixed_bottom *
