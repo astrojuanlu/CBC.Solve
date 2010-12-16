@@ -9,25 +9,27 @@ __license__  = "GNU GPL Version 3 or any later version"
 from pylab import *
 from numpy import trapz, ones, abs, array
 import sys 
-from dolfin import warning
-
-print""
-warning("A full adaptive loop has to be completed in order to plot") 
-warning("A key has to be assigned a value, for example M=1") 
+from dolfin import info_red, info_blue
 
 print ""
+info_red("A full adaptive loop has to be completed in order to plot") 
+info_blue("A key has to be assigned a value, for example M=1") 
+
 print ""
-print "M   =  Goal Functional vs refinement"     
-print "Md  =  Goal Functional vs #dofs"
-print "Mt  =  Goal Functional vs Time "
-print "E   =  Error Estimate"
-print "AU  =  Uniform/Adaptive error vs #dofs"
-print "I   =  Efficiency Index"
-print "DT  =  #dofs and time steps vs refinemnet level "
-print "k   =  Time Steps & Residuals"
-print "tol =  tol = FSI Tolerance & #iterations"
 print ""
-print "BIG_KAHUNA = plot all!"
+info_blue("M    =  Goal Functional vs refinement")
+info_blue("Md   =  Goal Functional vs #dofs")
+info_blue("Mdh  =  Goal Functional vs #space dofs")
+info_blue("Mt   =  Goal Functional vs Time")
+info_blue("E    =  Error Estimate")
+info_blue("UA   =  Uniform/Adaptive error vs #dofs")
+info_blue("UAd  =  Uniform/Adaptive error vs #space dofs")
+info_blue("I    =  Efficiency Index")
+info_blue("DT   =  #dofs and time steps vs refinemnet level ")
+info_blue("k    =  Time Steps & Residuals")
+info_blue("tol  =  tol = FSI Tolerance & #iterations")
+print ""
+info_blue("BIG_KAHUNA =  plot all!")
 print ""
 print ""
 
@@ -40,7 +42,9 @@ plot_goal_vs_time     = 0
 plot_error_estimate   = 0
 plot_efficiency_index = 0
 plot_dofs_vs_level    = 0
+plot_goal_vs_space_dofs  = 0
 plot_error_adaptive_vs_uniform = 0
+plot_error_adaptive_vs_uniform_space_dofs = 0
 
 # Get command-line parameters
 for arg in sys.argv[1:]:
@@ -61,10 +65,14 @@ for arg in sys.argv[1:]:
         plot_goal_vs_time = int(val)
     elif key == "Md":
         plot_goal_vs_dofs = int(val)
+    elif key == "Mdh":
+        plot_goal_vs_space_dofs = int(val)
     elif key == "DT":
         plot_dofs_vs_level = int(val)
     elif key == "UA":
         plot_error_adaptive_vs_uniform = int(val)
+    elif key == "UAh":
+        plot_error_adaptive_vs_uniform_space_dofs= int(val)
     elif key == "BIG_KAHUNA":
         plot_time_step        = 1
         plot_FSI_tol          = 1
@@ -74,8 +82,9 @@ for arg in sys.argv[1:]:
         plot_error_estimate   = 1
         plot_efficiency_index = 1
         plot_dofs_vs_level    = 1
+        plot_goal_vs_space_dofs  = 1
         plot_error_adaptive_vs_uniform = 1
-
+        plot_error_adaptive_vs_uniform_space_dofs = 1
 
 # Define plots
 def plots():
@@ -186,7 +195,8 @@ def plots():
     # Create extra set of dofs
     # In some cases this is needed for efficiency index (I)
     # and uniform/adaptive error (UA)
-    dofs_index = [float(l.split(" ")[1]) for l in level_lines_dofs]
+    dofs_index    = [float(l.split(" ")[1]) for l in level_lines_dofs]
+    h_dofs_index  = [float(l.split(" ")[2]) for l in level_lines_dofs]
 
     # Extract data for goal functional 
     lines_MT   =  open("M_ave.txt").read().split("\n")[:-1]
@@ -212,7 +222,7 @@ def plots():
 
     # --Process reference value--------------------------------------- 
 
-    # Extract data
+    # Extract uniform refinement data (reference data)
     lines_reference = open("reference_paper1.txt").read().split("\n")[:-1]
     level_lines_reference  = [l for l in lines_reference]
     ny_reference      = [float(l.split(" ")[0]) for l in level_lines_reference]
@@ -227,15 +237,15 @@ def plots():
 #     ylabel("M(u^h)", fontsize=30)
 #     xlabel("#dofs (h+k)", fontsize=30)
     
-    # Extract reference value
+    # Extract reference value (last one with largest amount of dofs)
     last = len(MT_reference) - 1
     goal_reference = MT_reference[last]
 
-    # Compute uniform error 
+    # Compute uniform error (|M(u_uni.) - M(u_reference_value)|)
     MT_reference_array = array(MT_reference)
     E_uniform = abs(MT_reference_array - goal_reference) 
     
-    # Compute error in goal functional (|M(u^h) - M(u)|)
+    # Compute error in goal functional (|M(u^h) - M(u_reference_value)|)
     Me = abs(MT_array - goal_reference)
 
 
@@ -256,7 +266,7 @@ def plots():
 
     # Check if the error estimate is obtained at the current level
     # Often, the dual/residual is still computing at the 
-    # current level and the goal functional is already obtained
+    # current level while the goal functional is already obtained
     if len(E_array) < len(Me):
         print " "
         print "Waiting for error estimate on level %d" %(len(Me) - 1)
@@ -267,15 +277,18 @@ def plots():
         # Create empty sets
         Me_temp =  []
         dofs_index_temp = []
+        h_dofs_index_temp = []
         
         # Remove the last value
         for j in range(len(Me) - 1):
             Me_temp.append(Me[j])
             dofs_index_temp.append(dofs_index[j])
+            h_dofs_index_temp.append(h_dofs_index[j])
 
         # Update Me and dofs_index
         Me = array(Me_temp)
         dofs_index = array(dofs_index_temp)
+        h_dofs_index = array(h_dofs_index_temp)
 
 
     # Compute efficiency index
@@ -301,7 +314,7 @@ def plots():
         legend(["E_c"], loc='best')
         xlabel('Refinement level', fontsize=30)
 
-    # Plot uniform error vs adaptive error 
+    # Plot uniform error vs adaptive error (dofs) 
     if plot_error_adaptive_vs_uniform == True:
         print "Plotting uniform errors and adaptive error vs #dofs (UA=1)"
   
@@ -310,8 +323,20 @@ def plots():
         semilogy(dofs_reference, E_uniform, '-dg', linewidth=3); grid(True)
         semilogy(dofs_index, Me, '-ok', linewidth=3); grid(True)   
         legend(["Uniform", "Adaptive"], loc='best')
-        ylabel("log(E)", fontsize=30)
+        ylabel("log(E)", fontsize=25)
         xlabel('#dofs ', fontsize=30)
+
+    # Plot uniform error vs adaptive error (dofs) 
+    if plot_error_adaptive_vs_uniform_space_dofs == True:
+        print "Plotting uniform errors and adaptive error vs #space dofs (UAh=1)"
+  
+        figure(400)        
+        title("Error ", fontsize=30)
+        semilogy(h_dofs_reference, E_uniform, '-dg', linewidth=3); grid(True)
+        semilogy(h_dofs_index, Me, '-ok', linewidth=3); grid(True)   
+        legend(["Uniform", "Adaptive"], loc='best')
+        ylabel("log(E)", fontsize=25)
+        xlabel('#space dofs ', fontsize=30)
 
     # Plot time integrated goal functional vs refinement level
     if plot_goal_vs_level == True:
@@ -322,7 +347,7 @@ def plots():
         for j in range(len(ref_level_T)):
             goal_reference_list.append(goal_reference)
             
-        figure(400)
+        figure(500)
         title("Goal Functional", fontsize=30)
         plot(ref_level_T, MT, '-dk'); grid(True)
         plot(ref_level_T, goal_reference_list, '-g', linewidth=6)
@@ -334,7 +359,7 @@ def plots():
     if plot_goal_vs_dofs == True:
         print "Plotting goal functional vs #dofs (Md=1)"
 
-        figure(500)
+        figure(600)
         title("Convergence of Goal Functional", fontsize=30)
         semilogx(dofs, MT, '-dk'); grid(True)
         semilogx(dofs_reference, MT_reference, '-og'); grid(True)
@@ -342,11 +367,23 @@ def plots():
         xlabel("#dofs", fontsize=30)
         legend(["Adaptive", "Uniform"], loc='best')
 
+    # Plot integrated goal functional vs number of space dofs
+    if plot_goal_vs_space_dofs == True:
+        print "Plotting goal functional vs #space dofs (Mdh=1)"
+
+        figure(700)
+        title("Convergence of Goal Functional", fontsize=30)
+        semilogx(h_dofs, MT, '-dk'); grid(True)
+        semilogx(h_dofs_reference, MT_reference, '-og'); grid(True)
+        ylabel('$\int_0^T \mathcal{M}^t dt$', fontsize=36)
+        xlabel("#space dofs", fontsize=30)
+        legend(["Adaptive", "Uniform"], loc='best')
+
     # Plot efficiency index
     if plot_efficiency_index == True:
         print "Plotting efficiency index (I=1)"
 
-        figure(600)        
+        figure(800)        
         title("Efficieny Index", fontsize=30)
         semilogx(dofs_index, E_index, '-dk', linewidth=3); grid(True)
         legend(["E / |M(e)|"], loc='best')
@@ -358,7 +395,7 @@ def plots():
     if plot_dofs_vs_level == True:
         print "Plotting # (space) dofs and #time steps (DT=1)"
         
-        figure(700)        
+        figure(900)        
         title("#dofs vs refinement level", fontsize=30)
         semilogy(ref_level_T, h_dofs, '-db', linewidth=3); grid(True)
         semilogy(ref_level_T, dt_dofs, '-or', linewidth=3); grid(True)   
