@@ -32,11 +32,11 @@ application_parameters = Parameters("application_parameters")
 application_parameters.add("end_time", 0.25)
 application_parameters.add("dt", 0.02)
 application_parameters.add("ny", 30)
-application_parameters.add("TOL", 0.01)
+application_parameters.add("TOL", 0.1)
 application_parameters.add("w_h", 0.1) 
 application_parameters.add("w_k", 0.85)
 application_parameters.add("w_c", 0.05)
-application_parameters.add("dorfler_fraction", 0.2)
+application_parameters.add("dorfler_fraction", 0.5)
 application_parameters.add("mesh_alpha", 1.0)
 application_parameters.add("solve_primal", True)
 application_parameters.add("solve_dual", True)
@@ -135,10 +135,8 @@ class PressureDrivenCavity(FSI):
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
 
-        # Compute average displacement
-#        structure_area = (structure_right - structure_left) * structure_top
-        structure_area = 1.0
-        displacement = (1.0/structure_area)*assemble(U_S[0]*dx + U_S[1]*dx, mesh=U_S.function_space().mesh())
+        # Compute displacement
+        displacement = assemble(U_S[1]*dx, mesh=U_S.function_space().mesh())
 
         return displacement
 
