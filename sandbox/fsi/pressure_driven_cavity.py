@@ -31,7 +31,7 @@ from fsiproblem import *
 application_parameters = Parameters("application_parameters")
 application_parameters.add("end_time", 0.25)
 application_parameters.add("dt", 0.02)
-application_parameters.add("ny", 30)
+application_parameters.add("ny", 1)
 application_parameters.add("TOL", 0.1)
 application_parameters.add("w_h", 0.1) 
 application_parameters.add("w_k", 0.85)
@@ -77,9 +77,10 @@ class Structure(SubDomain):
 class PressureDrivenCavity(FSI):
     def __init__(self):
 
-        ny = application_parameters["ny"]
-        nx = int(ny * 0.75)
-        mesh = Rectangle(0.0, 0.0, cavity_length, cavity_height, nx, ny)
+        scale_factor = application_parameters["ny"]
+        ny = 30 * scale_factor
+        nx = 20 * scale_factor
+        mesh = Rectangle(0.0, 0.0, cavity_length, cavity_height, nx, ny, "crossed")
 
         # Report problem parameters
         mesh_size = mesh.hmin()
