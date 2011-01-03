@@ -27,7 +27,7 @@ info_blue("UAh  =  Uniform/Adaptive error vs #space dofs")
 info_blue("I    =  Efficiency Index")
 info_blue("DT   =  #dofs and time steps vs refinemnet level ")
 info_blue("k    =  Time Steps & Residuals")
-info_blue("tol  =  tol = FSI Tolerance & #iterations")
+info_blue("tol, at_level  =  tol = FSI Tolerance & #iterations ")
 print ""
 info_blue("BIG_KAHUNA =  plot all!")
 print ""
@@ -36,6 +36,7 @@ print ""
 # Define default plot settings
 plot_time_step        = 0
 plot_FSI_tol          = 0
+at_level              = 0
 plot_goal_vs_level    = 0
 plot_goal_vs_dofs     = 0
 plot_goal_vs_time     = 0
@@ -45,6 +46,7 @@ plot_dofs_vs_level    = 0
 plot_goal_vs_space_dofs  = 0
 plot_error_adaptive_vs_uniform = 0
 plot_error_adaptive_vs_uniform_space_dofs = 0
+
 
 # Get command-line parameters
 for arg in sys.argv[1:]:
@@ -73,9 +75,12 @@ for arg in sys.argv[1:]:
         plot_error_adaptive_vs_uniform = int(val)
     elif key == "UAh":
         plot_error_adaptive_vs_uniform_space_dofs= int(val)
+    elif key == "at_level":
+        at_level = int(val)
     elif key == "BIG_KAHUNA":
         plot_time_step        = 1
         plot_FSI_tol          = 1
+        at_level              = 0
         plot_goal_vs_level    = 1
         plot_goal_vs_dofs     = 1
         plot_goal_vs_time     = 1
@@ -85,6 +90,7 @@ for arg in sys.argv[1:]:
         plot_goal_vs_space_dofs  = 1
         plot_error_adaptive_vs_uniform = 1
         plot_error_adaptive_vs_uniform_space_dofs = 1
+        
 
 # Define plots
 def plots():
@@ -117,10 +123,10 @@ def plots():
             R   =  [float(l.split(" ")[3]) for l in level_lines_time]
 
             # Plot time step and time residual
-            figure(level)
-            subplot(2, 1, 1); grid(True); plot(t, k, '-g',linewidth=4)
-            ylabel("$k_n(t)$", fontsize=30); title("Time steps & residual,  level %d" %level, fontsize=30)
-            subplot(2, 1, 2); grid(True); plot(t, R, '-r', linewidth=4)
+            figure(1)
+            subplot(2, 1, 1); grid(True); plot(t, k, '-k',linewidth=0.75)
+            ylabel("$k_n(t)$", fontsize=30); title("Time steps & residual, up to level %d" %level, fontsize=25)
+            subplot(2, 1, 2); grid(True); plot(t, R, 'r', linewidth=0.75)
             ylabel('$|r_k|$', fontsize=30)
             xlabel("$t$", fontsize=30)
 
@@ -128,8 +134,14 @@ def plots():
     # Plot FSI tolerance and number of FSI iterations for each adaptive loop
     if plot_FSI_tol == True:
 
-        for level in range(num_levels):
-            print "Plotting FSI tolerance and no. of itrations (tol=1) for level %d" % level
+            # Get the level
+            level = at_level
+
+            if at_level > num_levels - 1:
+                info_red("Level do not exist! Highest available level: %d", num_levels - 1) 
+                exit(True)
+                
+            print "Plotting FSI tolerance and no. of itrations (tol=1) at level %d" % level
 
             # Extract data for FSI tolerance 
             level_lines_tol = [l for l in lines_tol if int(l.split(" ")[0]) == level]
@@ -142,8 +154,8 @@ def plots():
             iter   = [float(l.split(" ")[2]) for l in level_lines_iter]
             
             # Plot FSI tolerance and no. of FSI iterations
-            figure((level + 100)) 
-            subplot(2, 1, 1); grid(True); plot(t_tol, tol, '-k', linewidth=4)
+            figure((level + 50)) 
+            subplot(2, 1, 1); grid(True); plot(t_tol, tol, '-k', linewidth=4.0)
             ylabel("$TOL_{fSM}$", fontsize=30)
             title("FSI tolerance & # iter., level %d" %level, fontsize=30)
             subplot(2, 1, 2); grid(False); 
@@ -154,7 +166,6 @@ def plots():
             plot(t_iter, iter, '-or', linewidth=2); grid(True)
             ylabel("#iter.", fontsize=30)
             xlabel("$t$", fontsize=30)
-
 
 
 
@@ -179,9 +190,9 @@ def plots():
             print "Plotting goal functional vs time (Mt=1) for level %d" % level
 
             # Plot goal functional as a function of time
-            figure((level + 200))
-            plot(t_goal, M, '-m', linewidth=4); grid(True)
-            title("Goal Functional vs time, level %d" %level, fontsize=30)
+            figure(200)
+            plot(t_goal, M, '-k', linewidth=1); grid(True)
+            title("Goal Functional vs time, up to level %d" %level, fontsize=25)
             ylabel('$\mathcal{M}(u^h)$', fontsize=36); 
             xlabel("$t$", fontsize=30)
    
@@ -223,7 +234,7 @@ def plots():
     # --Process reference value--------------------------------------- 
 
     # Extract uniform refinement data (reference data)
-    lines_reference = open("reference_paper1.txt").read().split("\n")[:-1]
+    lines_reference = open("pressure_driven_cavity_ref.txt").read().split("\n")[:-1]
     level_lines_reference  = [l for l in lines_reference]
     ny_reference      = [float(l.split(" ")[0]) for l in level_lines_reference]
     MT_reference      = [float(l.split(" ")[1]) for l in level_lines_reference]
@@ -231,11 +242,11 @@ def plots():
     h_dofs_reference  = [float(l.split(" ")[3]) for l in level_lines_reference]
     dt_dofs_reference = [float(l.split(" ")[4]) for l in level_lines_reference]
 
-#     figure()
+#     figure(1)
 #     plot(dofs_reference , MT_reference, '-ok', linewidth=2); grid(True)
 #     title("Goal Functional; uniform ref.",fontsize=30)
 #     ylabel("M(u^h)", fontsize=30)
-#     xlabel("#dofs (h+k)", fontsize=30)
+#     xlabel("#dofs (h + dt)", fontsize=30)
     
     # Extract reference value (last one with largest amount of dofs)
     last = len(MT_reference) - 1
@@ -255,7 +266,7 @@ def plots():
     # Extract data
     lines_error = open("error_estimates.txt").read().split("\n")[:-1]
     level_lines_error = [l for l in lines_error]
-    refinment_level = [float(l.split(" ")[0]) for l in level_lines_error]
+    refinement_level = [float(l.split(" ")[0]) for l in level_lines_error]
     E   = [float(l.split(" ")[1]) for l in level_lines_error]
     E_h = [float(l.split(" ")[2]) for l in level_lines_error]
     E_k = [float(l.split(" ")[3]) for l in level_lines_error]
@@ -303,14 +314,14 @@ def plots():
         print "Plotting error estimates (E=1)"
 
         figure(88888) 
-        subplot(4, 1, 1); plot(refinment_level, E, '-ok');grid(True)
+        subplot(4, 1, 1); plot(refinement_level, E, '-ok');grid(True)
         title("Error estimate ",  fontsize=30)	
         legend(["E"], loc='best')
-        subplot(4, 1, 2); plot(refinment_level, E_h, 'db-');grid(True)
+        subplot(4, 1, 2); plot(refinement_level, E_h, 'db-');grid(True)
         legend(["E_h"], loc='best')
-        subplot(4, 1, 3); plot(refinment_level, E_k, '-pr');grid(True)
+        subplot(4, 1, 3); plot(refinement_level, E_k, '-pr');grid(True)
         legend(["E_k"], loc='best')
-        subplot(4, 1, 4); plot(refinment_level, E_c,'-sm');grid(True)
+        subplot(4, 1, 4); plot(refinement_level, E_c,'-sm');grid(True)
         legend(["E_c"], loc='best')
         xlabel('Refinement level', fontsize=30)
 
@@ -346,7 +357,8 @@ def plots():
         goal_reference_list = []
         for j in range(len(ref_level_T)):
             goal_reference_list.append(goal_reference)
-            
+
+
         figure(500)
         title("Goal Functional", fontsize=30)
         plot(ref_level_T, MT, '-dk'); grid(True)
