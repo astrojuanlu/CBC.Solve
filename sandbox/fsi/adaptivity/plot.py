@@ -27,7 +27,7 @@ info_blue("UAh  =  Uniform/Adaptive error vs #space dofs")
 info_blue("I    =  Efficiency Index")
 info_blue("DT   =  #dofs and time steps vs refinemnet level ")
 info_blue("k    =  Time Steps & Residuals")
-info_blue("tol, at_level  =  tol = FSI Tolerance & #iterations ")
+info_blue("tol, at_level = FSI Tolerance & #iterations ")
 print ""
 info_blue("BIG_KAHUNA =  plot all!")
 print ""
