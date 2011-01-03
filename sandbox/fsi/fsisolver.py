@@ -105,9 +105,10 @@ class FSISolver(CBCSolver):
                 self.problem.init_meshes(refined_mesh)
             end()
 
-            # Save mesh to file and update
-            save_mesh(self.problem.mesh(), refined_mesh)
+            # Update and save mesh
             mesh = refined_mesh
+            save_mesh(mesh)
+
 
         # Report elapsed time
         info_blue("Solution computed in %g seconds." % (time() - cpu_time))

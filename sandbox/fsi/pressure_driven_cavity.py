@@ -81,6 +81,10 @@ class PressureDrivenCavity(FSI):
         ny = 30 * scale_factor
         nx = 20 * scale_factor
         mesh = Rectangle(0.0, 0.0, cavity_length, cavity_height, nx, ny, "crossed")
+        
+        # Save original mesh
+        file = File("adaptivity/mesh_0.xml")
+        file << mesh
 
         # Report problem parameters
         mesh_size = mesh.hmin()
@@ -136,9 +140,8 @@ class PressureDrivenCavity(FSI):
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
 
-        # Compute displacement
+        # Compute displacement in y-direction
         displacement = assemble(U_S[1]*dx, mesh=U_S.function_space().mesh())
-
         return displacement
 
     def __str__(self):
@@ -205,7 +208,7 @@ class PressureDrivenCavity(FSI):
     def mesh_alpha(self):
         return application_parameters["mesh_alpha"]
 
-# Solve problem
+# Define problem
 problem = PressureDrivenCavity()
 problem.parameters["solver_parameters"]["solve_primal"] = problem.solve_primal()
 problem.parameters["solver_parameters"]["solve_dual"] = problem.solve_dual() 
@@ -213,5 +216,7 @@ problem.parameters["solver_parameters"]["estimate_error"] = problem.estimate_err
 problem.parameters["solver_parameters"]["uniform_timestep"]  = problem.uniform_timestep()
 problem.parameters["solver_parameters"]["tolerance"] = problem.TOL()
 problem.parameters["solver_parameters"]["fixed_point_tol"] = problem.fixed_point_tol()
+
+# Solve problem
 u_F, p_F, U_S, P_S, U_M = problem.solve()
 

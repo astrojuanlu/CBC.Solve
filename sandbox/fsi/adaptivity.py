@@ -310,22 +310,17 @@ def compute_itertol(problem, w_c, TOL, dt, t1):
 
     return tol
 
-def save_mesh(mesh, refined_mesh):
+def save_mesh(mesh):
     "Save mesh to file"
 
     global refinement_level
-
-    # Save initial mesh first time
-    if refinement_level == 0:
-        file = File("adaptivity/mesh_0.xml")
-        file << mesh
 
     # Increase refinement level
     refinement_level += 1
 
     # Save refined mesh
     file = File("adaptivity/mesh_%d.xml" % refinement_level)
-    file << refined_mesh
+    file << mesh
 
 def save_errors(E, E_h, E_k, E_c, ST):
     "Save errors to file"
