@@ -77,7 +77,7 @@ class FSISolver(CBCSolver):
             # Estimate error and compute error indicators
             if self.parameters["estimate_error"]:
                 begin("Estimating error and computing error indicators")
-                error, indicators, ST, E_h, E_k = estimate_error(self.problem)
+                error, indicators, ST, E_h = estimate_error(self.problem)
                 end()
             else:
                 info("Not estimating error")
@@ -100,7 +100,7 @@ class FSISolver(CBCSolver):
                 info_blue("Freezing current mesh: E_h = %g <= TOL_h = %g" % (E_h, mesh_tolerance))
                 refined_mesh = self.problem.mesh()
             else:
-                begin("Refining mesh")
+                info_red("Refining mesh")
                 refined_mesh = refine_mesh(self.problem, self.problem.mesh(), indicators)
                 self.problem.init_meshes(refined_mesh)
             end()

@@ -93,8 +93,6 @@ def estimate_error(problem):
     # Sum residuals over time intervals
     timestep_range = read_timestep_range(problem.end_time(), primal_series)
     for i in range(1, len(timestep_range)):
-    # FIXME: Temporary while testing
-    #for i in range(len(timestep_range) / 2, len(timestep_range) / 2 + 1):
 
         # Get current time and time step
         t0 = timestep_range[i - 1]
@@ -165,11 +163,9 @@ def estimate_error(problem):
     # Report results
     save_errors(E, E_h, E_k, E_c, ST)
     save_indicators(eta_F, eta_S, eta_M, eta_K, Omega)
-
-    # Report stability factor (for plotting only)
     save_stability_factor(T, ST)
 
-    return E, eta_K, ST, E_h, E_k
+    return E, eta_K, ST, E_h
 
 def compute_time_residual(primal_series, t0, t1, problem):
     "Compute size of time residual"
