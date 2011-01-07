@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-12-12
+# Last changed: 2011-01-07
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -21,6 +21,12 @@ U0 = U1 = w = None
 # Variables for storing adaptive data
 refinement_level = 0
 min_timestep = None
+
+# Create files for plotting error indicators
+indicator_files  = (File("adaptivity/eta_F.pvd"),
+                    File("adaptivity/eta_S.pvd"),
+                    File("adaptivity/eta_M.pvd"),
+                    File("adaptivity/eta_K.pvd"))
 
 def estimate_error(problem):
     "Estimate error and compute error indicators"
@@ -158,7 +164,7 @@ def estimate_error(problem):
 
     # Report results
     save_errors(E, E_h, E_k, E_c, ST)
-    save_indicators(eta_F, eta_S, eta_M, eta_K)
+    save_indicators(eta_F, eta_S, eta_M, eta_K, Omega)
 
     # Report stability factor (for plotting only)
     save_stability_factor(T, ST)
@@ -224,14 +230,6 @@ def refine_mesh(problem, mesh, indicators):
         markers[int(i)] = True
         if sub_sum >= fraction*total_sum:
             break
-
-    # Plot markers (convert to uint so it can be plotted)
-    plot_markers = CellFunction("uint", mesh)
-    plot_markers.set_all(0)
-    for i in range(plot_markers.size()):
-        if markers[i]:
-            plot_markers[i] = True
-    #plot(plot_markers, title="Markers")
 
     # Refine mesh
     refined_mesh = refine(mesh, markers)
@@ -357,17 +355,6 @@ S(T)  = %g
     g.write("%d %g %g %g %g \n" %(refinement_level, E, E_h, E_k, abs(E_c)))
     g.close()
 
-
-def save_indicators(eta_F, eta_S, eta_M, eta_K):
-    "Save indicators to file"
-
-    global refinement_level
-
-    save_array(eta_F, "adaptivity/eta_F_%d.xml" % refinement_level)
-    save_array(eta_S, "adaptivity/eta_S_%d.xml" % refinement_level)
-    save_array(eta_M, "adaptivity/eta_M_%d.xml" % refinement_level)
-    save_array(eta_K, "adaptivity/eta_K_%d.xml" % refinement_level)
-
 def save_timestep(t1, Rk, dt):
     "Save time step to file"
 
@@ -396,7 +383,6 @@ def save_goal_functional(t1, goal_functional):
     f = open("adaptivity/goal_functional.txt", "a")
     f.write("%d %g %g \n" % (refinement_level, t1, goal_functional))
     f.close()
-
 
 def save_itertol(t1, tol):
     "Save FSI iteration tolerance"
@@ -430,8 +416,32 @@ def save_dofs(num_dofs_FSM, timestep_counter):
     f.write("%d %g %g %g \n" %(refinement_level, dofs, space_dofs, time_dofs))
     f.close()
 
-def save_array(x, filename):
-    "Save array to file"
-    f = open(filename, "w")
-    f.write(" ".join(str(xx) for xx in x))
-    f.close()
+def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega):
+    "Save mesh function for visualization"
+    
+    # Create mesh functions 
+    plot_markers_F = CellFunction("double", Omega)
+    plot_markers_S = CellFunction("double", Omega)
+    plot_markers_M = CellFunction("double", Omega)
+    plot_markers_K = CellFunction("double", Omega)
+    
+    # Reset plot markers
+    plot_markers_F.set_all(0)
+    plot_markers_S.set_all(0)
+    plot_markers_M.set_all(0)
+    plot_markers_K.set_all(0)                          
+
+    # Extract error indicators                            
+    for i in range(plot_markers_F.size()):
+        plot_markers_F[i] = eta_F[i]
+        plot_markers_S[i] = eta_S[i]
+        plot_markers_M[i] = eta_M[i]
+        plot_markers_K[i] = eta_K[i]                   
+
+    # Sum markers
+    plot_markers = [plot_markers_F, plot_markers_S, plot_markers_M, plot_markers_K]
+
+    # Save markers
+    for i in range(4):
+        indicator_files[i] << plot_markers[i]
+
