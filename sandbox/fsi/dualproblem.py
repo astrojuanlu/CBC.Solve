@@ -17,7 +17,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
                       U_F1, P_F1, U_S1, P_S1, U_M1):
     "Return bilinear and linear forms for one time step."
 
-    info("Creating dual forms")
+    info_blue("Creating dual forms")
 
     # Get problem parameters
     rho_F   = problem.fluid_density()
@@ -95,23 +95,19 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 #+ G_FF
     A_SF = A_SF01 + A_SF02 + A_SF03
     G_FM = G_FM1  + G_FM2  + G_FM3
-    A_FM = A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 +A_FM09 + A_FM10 + A_FM11 + G_FM
+    A_FM = A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 +A_FM09 + A_FM10 + A_FM11  + G_FM
     A_SM = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06
     A_MM = A_MM01 + A_MM02 + A_MM03
     A_system = A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS
 
     # FIXME: Goal functional should not be defined here
-    # Define goal funtionals
-    area = 0.2*0.5
-    T = 1.0
-#    goal_functional = (1/T)*(1.0/area)*v_S[0]*dx_S
-#    goal_functional = 10*q_M[1]*dx_F
+    # Define goal funtional
     goal_functional = v_S[1]*dx_S
 
     # Define the dual rhs and lhs
     A = lhs(A_system)
     L = rhs(A_system) + goal_functional
 
-    info("Dual forms created")
+    info_blue("Dual forms created")
 
     return A, L

@@ -132,7 +132,7 @@ class DrivenCavityFixedBottom(FSI):
         return 1.0
 
     def fluid_viscosity(self):
-        return 1.0
+        return 0.02
 
     def fluid_velocity_dirichlet_values(self):
         return [(0,0), Expression(("0.5*4*x[1]", "0.0")), Expression(("0.5*1", "0.0")), Expression(("0.5*4*(2 - x[1]) ", "0.0"))]
@@ -161,10 +161,10 @@ class DrivenCavityFixedBottom(FSI):
         return 1.0 
 
     def structure_mu(self):
-        return 3.0
+        return 0.08
 
     def structure_lmbda(self):
-        return 3.0
+        return 0.08
 
     def structure_dirichlet_values(self):
         return [(0,0), (0,0), (0,0)]

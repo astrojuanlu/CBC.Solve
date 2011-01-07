@@ -14,6 +14,7 @@ from cbc.common.utils import timestep_range
 from subproblems import *
 from adaptivity import *
 from storage import *
+import sys
 
 class PrimalSolver:
     "Primal FSI solver"
@@ -81,7 +82,18 @@ class PrimalSolver:
         # Change time step if uniform
         if self.uniform_timestep:
             dt, dt_range = timestep_range(T, dt)
+            
+#         # No. time steps
+#         time_dofs = len(dt_range)
+#         total_dofs = num_dofs_FSM * time_dofs
         
+#         # Print
+#         f = open("adaptivity/ref.txt", "a")
+#         f.write("%g %g %g \n" %(total_dofs, num_dofs_FSM, time_dofs))
+#         f.close()
+#         exit(True)
+        
+
         # Initialize time-stepping
         t0 = 0.0
         t1 = dt

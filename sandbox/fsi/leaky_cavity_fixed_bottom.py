@@ -60,10 +60,11 @@ inflow  = "x[0] == 0.0  && \
            x[1] > %g + DOLFIN_EPS && x[1] < %g - DOLFIN_EPS " %(inflow_bottom, inflow_top)
 outflow = "x[0] > %g - DOLFIN_EPS && \
            x[1] > %g - DOLFIN_EPS && x[1] < %g - DOLFIN_EPS"  % (cavity_length, inflow_bottom, inflow_top)
-noslip  = "on_boundary && !(%s) && !(%s)" % (inflow, outflow)
 fixed_left   = "x[0] == 0.0  && x[1] >= DOFLIN_EPS" 
 fixed_right  = "x[0] > %g - DOLFIN_EPS  && x[1] >= 0.0" % structure_right
-fixed_bottom = "x[0] == 0.0 && x[1] == 0.0" 
+fixed_bottom = "x[0] == 0.0" 
+flow_top = "x[0] > DOLFIN_EPS && x[1] == %g" %cavity_height
+noslip  = "on_boundary && !(%s) && !(%s) && !(%s) " % (inflow, outflow, flow_top)
 
 # Define structure subdomain
 class Structure(SubDomain):
@@ -112,16 +113,8 @@ class LeakyDrivenCavityFixedBottom(FSI):
         # Compute average displacement
         structure_area = (structure_right - structure_left) * structure_top
         displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh=U_S.function_space().mesh())
-        
-        # Write to file
-        f = open("adaptivity/goal_functional.txt", "a")
-        f.write("%g \n" % (displacement))
-        f.close()
 
-        # Print values of functionals
-        info("")
-        info_blue("Functional (displacement): %g", displacement)
-        info("")
+        return displacement
         
     def __str__(self):
         return "Lid Driven Cavity with an Elastic Bottom" 
@@ -135,10 +128,10 @@ class LeakyDrivenCavityFixedBottom(FSI):
         return 1.0
 
     def fluid_velocity_dirichlet_values(self):
-        return [(0,0), Expression(("x[1]*(x[1] - 2.5) - 0.16", "0.0"))] 
+        return [(0,0), Expression(("x[1]*(x[1] - 2.5)", "0.0")), (1,0)] 
 
     def fluid_velocity_dirichlet_boundaries(self):
-        return [noslip, inflow]
+        return [noslip, inflow, flow_top]
 
     def fluid_pressure_dirichlet_values(self):
         return [0, 0]
@@ -167,10 +160,10 @@ class LeakyDrivenCavityFixedBottom(FSI):
         return 0.25*125.0
 
     def structure_dirichlet_values(self):
-        return [(0,0), (0,0), (0,0)]
+        return [(0,0), (0,0)]
 
     def structure_dirichlet_boundaries(self):
-        return [fixed_left, fixed_right, fixed_bottom]
+        return [fixed_left, fixed_right]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"
@@ -189,8 +182,8 @@ class LeakyDrivenCavityFixedBottom(FSI):
 # Solve problem
 problem = LeakyDrivenCavityFixedBottom()
 problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"]  =  True
-problem.parameters["solver_parameters"]["estimate_error"] = True
+problem.parameters["solver_parameters"]["solve_dual"]  =  False
+problem.parameters["solver_parameters"]["estimate_error"] = False
 problem.parameters["solver_parameters"]["plot_solution"] =  False
 problem.parameters["solver_parameters"]["tolerance"] = problem.adaptive_tolerance()
 u_F, p_F, U_S, P_S, U_M = problem.solve()
