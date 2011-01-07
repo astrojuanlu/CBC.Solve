@@ -428,7 +428,7 @@ def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega):
     plot_markers_K.set_all(0)                          
 
     # Extract error indicators                            
-    for i in range(plot_markers_F.size()):
+    for i in range(Omega.num_cells()):
         plot_markers_F[i] = eta_F[i]
         plot_markers_S[i] = eta_S[i]
         plot_markers_M[i] = eta_M[i]
