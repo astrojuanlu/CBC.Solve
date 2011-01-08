@@ -36,11 +36,12 @@ application_parameters.add("TOL", 0.1)
 application_parameters.add("w_h", 0.1) 
 application_parameters.add("w_k", 0.85)
 application_parameters.add("w_c", 0.05)
-application_parameters.add("dorfler_fraction", 0.5)
+application_parameters.add("fraction", 0.5)
 application_parameters.add("mesh_alpha", 1.0)
 application_parameters.add("solve_primal", True)
 application_parameters.add("solve_dual", True)
 application_parameters.add("estimate_error", True)
+application_parameters.add("dorfler_marking", False)
 application_parameters.add("uniform_timestep", False)
 application_parameters.add("fixed_point_tol", 1e-12)
 application_parameters.parse()
@@ -77,11 +78,12 @@ class Structure(SubDomain):
 class PressureDrivenCavity(FSI):
     def __init__(self):
 
+        # Define mesh based on a scale factor 
         scale_factor = application_parameters["ny"]
         ny = 30 * scale_factor
         nx = 20 * scale_factor
-        mesh = Rectangle(0.0, 0.0, cavity_length, cavity_height, nx, ny, "crossed")
-        
+        mesh = Rectangle(0.0, 0.0, cavity_length, cavity_height, nx, ny)
+
         # Save original mesh
         file = File("adaptivity/mesh_0.xml")
         file << mesh
@@ -89,10 +91,8 @@ class PressureDrivenCavity(FSI):
         # Report problem parameters
         mesh_size = mesh.hmin()
         f = open("adaptivity/pressure_driven_cavity.txt", "w")
-        f.write("=========PRESSURE DRIVEN CAVITY ========= \n \n \n")
-        f.write(str("Mesh size:  ") + (str(mesh_size)) + "\n \n")
         f.write(parameter_info)
-        f.close()
+        f.write(str("Mesh size:  ") + (str(mesh_size)) + "\n \n")
         f.close()
 
         # Initialize base class
@@ -108,6 +108,9 @@ class PressureDrivenCavity(FSI):
 
     def estimate_error(self):
         return application_parameters["estimate_error"]
+    
+    def dorfler_marking(self):
+        return application_parameters["dorfler_marking"]
 
     def uniform_timestep(self):
         return application_parameters["uniform_timestep"]
@@ -132,8 +135,8 @@ class PressureDrivenCavity(FSI):
     def non_galerkin_error_weight(self):
         return application_parameters["w_c"]
 
-    def dorfler_fraction(self):
-        return application_parameters["dorfler_fraction"]
+    def fraction(self):
+        return application_parameters["fraction"]
 
     def fixed_point_tol(self):
         return application_parameters["fixed_point_tol"]

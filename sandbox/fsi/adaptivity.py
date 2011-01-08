@@ -213,20 +213,37 @@ def compute_time_residual(primal_series, t0, t1, problem):
 def refine_mesh(problem, mesh, indicators):
     "Refine mesh based on error indicators"
 
-    # Set cell markers using Dorfler marking
-    fraction = problem.dorfler_fraction()
+    # Get fraction of elements for refinement 
+    fraction = problem.fraction()
+
+    # Create lists and markers for refinement
     indices = list(argsort(indicators))
     indices.reverse()
-    sub_sum = 0.0
-    total_sum = sum(indicators)
-    markers = CellFunction("bool", mesh)
+    markers = MeshFunction("bool", mesh, mesh.topology().dim())
     markers.set_all(False)
-    for i in indices:
-        sub_sum += indicators[i]
-        markers[int(i)] = True
-        if sub_sum >= fraction*total_sum:
-            break
-
+    
+    # Dorfler marking strategy
+    if problem.dorfler_marking():
+        info_blue("Refining using Dorfler fraction = %g" %fraction)
+        total_sum = sum(indicators)
+        sub_sum = 0.0
+        for i in indices:
+            sub_sum += indicators[i]
+            markers[int(i)] = True
+            if sub_sum >= fraction * total_sum:
+                  break
+            
+    # "Standard" marking strategy
+    else:
+        info_blue("Refining with fraction = %g" %fraction)
+        stopping_criteria = int(round(len(indices) * fraction))
+        counter = 0
+        for i in indices:
+            counter += 1
+            markers[int(i)] = True
+            if counter == stopping_criteria:
+                break
+            
     # Refine mesh
     refined_mesh = refine(mesh, markers)
 
