@@ -23,10 +23,12 @@ refinement_level = 0
 min_timestep = None
 
 # Create files for plotting error indicators
-indicator_files  = (File("adaptivity/eta_F.pvd"),
-                    File("adaptivity/eta_S.pvd"),
-                    File("adaptivity/eta_M.pvd"),
-                    File("adaptivity/eta_K.pvd"))
+info("Creating directory for error indicators")
+indicator_files  = (File("adaptivity/pvd/eta_F.pvd"),
+                    File("adaptivity/pvd/eta_S.pvd"),
+                    File("adaptivity/pvd/eta_M.pvd"),
+                    File("adaptivity/pvd/eta_K.pvd"),
+                    File("adaptivity/pvd/refinement_markers.pvd"))
 
 def estimate_error(problem):
     "Estimate error and compute error indicators"
@@ -243,6 +245,9 @@ def refine_mesh(problem, mesh, indicators):
             markers[int(i)] = True
             if counter == stopping_criteria:
                 break
+
+    # Save marked cells (for plotting)
+    save_refinement_markers(mesh, markers)
             
     # Refine mesh
     refined_mesh = refine(mesh, markers)
@@ -458,3 +463,19 @@ def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega):
     for i in range(4):
         indicator_files[i] << plot_markers[i]
 
+def save_refinement_markers(mesh, markers):
+    "Save refinement markers for visualization"
+    
+    # Create mesh functions 
+    refinement_markers = MeshFunction("uint", mesh, mesh.topology().dim())
+    
+    # Reset plot markers
+    refinement_markers.set_all(0)
+
+    # Extract error indicators                            
+    for i in range(mesh.num_cells()):
+        if markers[i]:
+            refinement_markers[i] = True
+
+    # Save markers
+    indicator_files[4] << refinement_markers

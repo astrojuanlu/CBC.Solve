@@ -9,5 +9,5 @@ rm -r adaptivity/M_ave.txt
 rm -r adaptivity/num_dofs.txt
 rm -r adaptivity/error_estimates.txt
 rm -r adaptivity/adaptivity.log
-rm -r adaptivity/eta_*.vtu
-rm -r adaptivity/eta_*.pvd
+rm -r adaptivity/pvd/*.vtu
+rm -r adaptivity/pvd/*.pvd
