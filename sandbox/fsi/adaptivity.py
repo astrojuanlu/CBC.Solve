@@ -123,9 +123,9 @@ def estimate_error(problem):
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
-        e_F = [assemble(Rh_Fi, interior_facet_domains=problem.fsi_boundary) for Rh_Fi in Rh_F]
-        e_S = [assemble(Rh_Si, interior_facet_domains=problem.fsi_boundary) for Rh_Si in Rh_S]
-        e_M = [assemble(Rh_Mi, interior_facet_domains=problem.fsi_boundary) for Rh_Mi in Rh_M]
+        e_F = [assemble(Rh_Fi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Fi in Rh_F]
+        e_S = [assemble(Rh_Si, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Si in Rh_S]
+        e_M = [assemble(Rh_Mi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Mi in Rh_M]
 
         # Assemble weak residuals for time discretization error
         Rk = norm(assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary))
