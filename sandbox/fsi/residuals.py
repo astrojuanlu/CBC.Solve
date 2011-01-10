@@ -135,7 +135,7 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     # Structure residual contributions
     R_S0 = w*inner(EZ_S - Z_S, Dt_P_S - div(Sigma_S))*dx_S
     R_S1 = avg(w)*inner(EZ_S('+') - Z_S('+'), jump(dot(Sigma_S, N_S)))*dS_S
-    R_S2 = w('-')*inner(EZ_S('-') - Z_S('-'), dot(Sigma_S('-') - Sigma_F('+'),  - N_S('+')))*d_FSI
+    R_S2 = w('-')*inner(EZ_S('-') - Z_S('-'), dot(Sigma_S('-') + Sigma_F('+'),  - N_S('+')))*d_FSI
     R_S3 = w*inner(EY_S - Y_S, Dt_U_S - P_S)*dx_S
 
     # Mesh residual contributions
