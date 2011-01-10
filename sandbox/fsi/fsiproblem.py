@@ -99,16 +99,20 @@ class FSI(CBCProblem):
             p0_inside = structure.inside(p0, False)
             p1_inside = structure.inside(p1, False)
 
+            # Just set c0, will be set only for FSI facets below
+            fsi_orientation[facet.index()] = c0
+
             # Look for points where exactly one is inside the structure
             if p0_inside and not p1_inside:
-                fsi_boundary[facet.index()] = 1
+                fsi_boundary[facet.index()] = 2
                 fsi_orientation[facet.index()] = c1
             elif p1_inside and not p0_inside:
+                fsi_boundary[facet.index()] = 2
+                fsi_orientation[facet.index()] = c0
+            elif p0_inside and p1_inside:
                 fsi_boundary[facet.index()] = 1
-                fsi_orientation[facet.index()] = c0
             else:
-                # Just set c0, will not be used
-                fsi_orientation[facet.index()] = c0
+                fsi_boundary[facet.index()] = 0
 
         # Store data
         self.Omega_F = Omega_F

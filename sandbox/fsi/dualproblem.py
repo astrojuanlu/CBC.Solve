@@ -36,7 +36,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     # Define inner products
     dx_F = dx(0)
     dx_S = dx(1)
-    d_FSI = dS(1)
+    d_FSI = dS(2)
 
     # Operators for A_SS
     Fu = F(U_S1)
