@@ -23,7 +23,6 @@ refinement_level = 0
 min_timestep = None
 
 # Create files for plotting error indicators
-info("Creating directory for error indicators")
 indicator_files  = (File("adaptivity/pvd/eta_F.pvd"),
                     File("adaptivity/pvd/eta_S.pvd"),
                     File("adaptivity/pvd/eta_M.pvd"),
@@ -438,10 +437,10 @@ def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega):
     "Save mesh function for visualization"
     
     # Create mesh functions 
-    plot_markers_F = CellFunction("double", Omega)
-    plot_markers_S = CellFunction("double", Omega)
-    plot_markers_M = CellFunction("double", Omega)
-    plot_markers_K = CellFunction("double", Omega)
+    plot_markers_F = MeshFunction("double", Omega, Omega.topology().dim())
+    plot_markers_S = MeshFunction("double", Omega, Omega.topology().dim())
+    plot_markers_M = MeshFunction("double", Omega, Omega.topology().dim())
+    plot_markers_K = MeshFunction("double", Omega, Omega.topology().dim())
     
     # Reset plot markers
     plot_markers_F.set_all(0)
