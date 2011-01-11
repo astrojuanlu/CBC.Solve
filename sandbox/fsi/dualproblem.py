@@ -46,14 +46,14 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
 
     # Dual forms
     A_FF01 = -(1/k)*inner((Z_F0 - Z_F), rho_F*J(U_M1)*v_F)*dx_F
-    A_FF02 =  inner(Z_F, rho_F*J(U_M1)*dot(dot(grad(v_F),inv(F(U_M1))), (U_F1 - (U_M0 - U_M1)*(1/k))))*dx_F
-    A_FF03 =  inner(Z_F, rho_F*J(U_M1)*dot(grad(U_F1) , dot(inv(F(U_M1)), v_F)))*dx(0)
-    A_FF04 =  inner(grad(Z_F), J(U_M1)*mu_F*dot(grad(v_F) , dot(inv(F(U_M1)), inv(F(U_M1)).T)))*dx_F
+    A_FF02 =  inner(Z_F, rho_F*J(U_M1)*dot(dot(grad(v_F), inv(F(U_M1))), (U_F1 - (U_M0 - U_M1)*(1/k))))*dx_F
+    A_FF03 =  inner(Z_F, rho_F*J(U_M1)*dot(grad(U_F1), dot(inv(F(U_M1)), v_F)))*dx(0)
+    A_FF04 =  inner(grad(Z_F), J(U_M1)*mu_F*dot(grad(v_F), dot(inv(F(U_M1)), inv(F(U_M1)).T)))*dx_F
     A_FF05 =  inner(grad(Z_F), J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)))*dx_F
     A_FF06 = -inner(grad(Z_F), J(U_M1)*q_F*inv(F(U_M1)).T)*dx_F
-    A_FF07 =  inner(Y_F, div(J(U_M1)*dot(inv(F(U_M1)),v_F)))*dx_F
+    A_FF07 =  inner(Y_F, div(J(U_M1)*dot(inv(F(U_M1)), v_F)))*dx_F
 
-    G_FF   = -inner(Z_F, dot(J(U_M1)*mu_F*dot(inv(F(U_M1)).T , dot(grad(v_F).T, inv(F(U_M1)).T)), N_F))*ds
+    G_FF   = -inner(Z_F, dot(J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)), N_F))*ds
 
     A_SF01 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(v_F('+')), inv(F(U_M1))('+')), dot(inv(F(U_M1)).T('+'), N)))*d_FSI
     A_SF02 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), grad(v_F('+')).T), dot(inv(F(U_M1)).T('+'), N)))*d_FSI
@@ -64,35 +64,35 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
 
     A_MS   = - inner(Y_M('+'), q_S('+'))*d_FSI
 
-    A_FM01 =  (1/k)*inner(Z_F, rho_F*J(U_M1)*tr(dot(grad(v_M),inv(F(U_M1))))*(U_F0 - U_F1))*dx_F
-    A_FM02 =  inner(Z_F, rho_F*J(U_M1)*tr(dot(grad(v_M),inv(F(U_M1))))*dot(grad(U_F1), dot(inv(F(U_M1)), (U_M1 - U_M0)*(1/k))))*dx_F
-    A_FM03 = -inner(Z_F,  rho_F*J(U_M1)*dot((dot(grad(U_F1), dot(inv(F(U_M1)), dot(grad(v_M),inv(F(U_M1)))))),(U_F1 - (U_M0 - U_M1)/k)))*dx_F
+    A_FM01 =  (1/k)*inner(Z_F, rho_F*J(U_M1)*tr(dot(grad(v_M), inv(F(U_M1))))*(U_F0 - U_F1))*dx_F
+    A_FM02 =  inner(Z_F, rho_F*J(U_M1)*tr(dot(grad(v_M), inv(F(U_M1))))*dot(grad(U_F1), dot(inv(F(U_M1)), (U_M1 - U_M0)*(1/k))))*dx_F
+    A_FM03 = -inner(Z_F,  rho_F*J(U_M1)*dot((dot(grad(U_F1), dot(inv(F(U_M1)), dot(grad(v_M), inv(F(U_M1)))))), (U_F1 - (U_M0 - U_M1)/k)))*dx_F
     A_FM04 =  (1/k)*inner((Z_F0 - Z_F), rho_F*J(U_M1)*dot(grad(U_F1), dot(inv(F(U_M1)), v_M )))*dx_F
-    A_FM05 =  inner(grad(Z_F), J(U_M1)*tr(dot(grad(v_M),inv(F(U_M1))))*dot(Sigma_F(U_F1, P_F1, U_M1, mu_F), inv(F(U_M1)).T))*dx_F
+    A_FM05 =  inner(grad(Z_F), J(U_M1)*tr(dot(grad(v_M), inv(F(U_M1))))*dot(Sigma_F(U_F1, P_F1, U_M1, mu_F), inv(F(U_M1)).T))*dx_F
     A_FM06 = -inner(grad(Z_F), J(U_M1)*dot(mu_F*(dot(grad(U_F1), dot(inv(F(U_M1)), dot(grad(v_M), inv(F(U_M1)))))), inv(F(U_M1)).T))*dx_F
     A_FM07 = -inner(grad(Z_F), J(U_M1)*dot(mu_F*(dot(inv(F(U_M1)).T, dot(grad(v_M).T, dot(inv(F(U_M1)).T, grad(U_F1).T )))), inv(F(U_M1)).T))*dx_F
     A_FM08 = -inner(grad(Z_F), J(U_M1)*dot(dot(Sigma_F(U_F1, P_F1, U_M1, mu_F), inv(F(U_M1)).T), dot(grad(v_M).T, inv(F(U_M1)).T)))*dx_F
-    A_FM09 =  inner(grad(Z_F), J(U_M1)*dot(dot( P_F1*I,inv(F(U_M1)).T),  dot(grad(v_M).T, inv(F(U_M1)).T)))*dx_F
-    A_FM10 =  inner(Y_F, div(J(U_M1)*tr(dot(grad(v_M),inv(F(U_M1))))*dot(inv(F(U_M1)), U_F1)))*dx_F
+    A_FM09 =  inner(grad(Z_F), J(U_M1)*dot(dot(P_F1*I, inv(F(U_M1)).T), dot(grad(v_M).T, inv(F(U_M1)).T)))*dx_F
+    A_FM10 =  inner(Y_F, div(J(U_M1)*tr(dot(grad(v_M), inv(F(U_M1))))*dot(inv(F(U_M1)), U_F1)))*dx_F
     A_FM11 = -inner(Y_F, div(J(U_M1)*dot(dot(inv(F(U_M1)), grad(v_M)), dot(inv(F(U_M1)), U_F1))))*dx_F
 
-    G_FM1 = -inner(Z_F, J(U_M1)*tr(dot(grad(v_M),inv(F(U_M1))))*mu_F*dot(dot(inv(F(U_M1)).T,grad(U_F1).T), dot(inv(F(U_M1)).T, N_F)))*ds
+    G_FM1 = -inner(Z_F, J(U_M1)*tr(dot(grad(v_M), inv(F(U_M1))))*mu_F*dot(dot(inv(F(U_M1)).T, grad(U_F1).T), dot(inv(F(U_M1)).T, N_F)))*ds
     G_FM2 =  inner(Z_F, J(U_M1)*mu_F*dot(dot(inv(F(U_M1)).T, dot(grad(v_M).T, inv(F(U_M1)).T)), dot(grad(U_F1).T, dot(inv(F(U_M1)).T, N_F ))))*ds
-    G_FM3 =  inner(Z_F, J(U_M1)*mu_F*dot(dot(inv(F(U_M1)).T, dot(grad(U_F1).T, inv(F(U_M1)).T)), dot(grad(v_M).T , dot(inv(F(U_M1)).T, N_F))))*ds
+    G_FM3 =  inner(Z_F, J(U_M1)*mu_F*dot(dot(inv(F(U_M1)).T, dot(grad(U_F1).T, inv(F(U_M1)).T)), dot(grad(v_M).T, dot(inv(F(U_M1)).T, N_F))))*ds
 
-    A_SM01 = -inner(Z_S('+'), J(U_M1)('+')*tr(dot(grad(v_M('+')),inv(F(U_M1)('+'))))*dot(dot(Sigma_F(U_F1, P_F1, U_M1, mu_F)('+'),inv(F(U_M1)('+')).T), N))*d_FSI
-    A_SM02 =  inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(U_F1('+')), dot(inv(F(U_M1))('+'),grad(v_M('+')))), dot(inv(F(U_M1))('+'), dot(inv(F(U_M1)).T('+'), N))))*d_FSI
-    A_SM03 =  inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(U_F1('+')).T, dot(inv(F(U_M1)).T('+'), grad(v_M('+')).T)), dot(inv(F(U_M1)).T('+'), dot(inv(F(U_M1)).T('+'),N))))*d_FSI
-    A_SM04 =  inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(U_F1('+')), inv(F(U_M1))('+')),dot(inv(F(U_M1)).T('+'), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'),N)))))*d_FSI
-    A_SM05 =  inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), grad(U_M1('+')).T),dot(inv(F(U_M1)).T('+'), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'),N)))))*d_FSI
-    A_SM06 = -inner(Z_S('+'), J(U_M1)('+')*dot(dot(P_F1('+')*I('+'),inv(F(U_M1)).T('+')), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'), N))))*d_FSI
+    A_SM01 = -inner(Z_S('+'), J(U_M1)('+')*tr(dot(grad(v_M('+')), inv(F(U_M1)('+'))))*dot(dot(Sigma_F(U_F1, P_F1, U_M1, mu_F)('+'), inv(F(U_M1)('+')).T), N))*d_FSI
+    A_SM02 =  inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(U_F1('+')), dot(inv(F(U_M1))('+'), grad(v_M('+')))), dot(inv(F(U_M1))('+'), dot(inv(F(U_M1)).T('+'), N))))*d_FSI
+    A_SM03 =  inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(U_F1('+')).T, dot(inv(F(U_M1)).T('+'), grad(v_M('+')).T)), dot(inv(F(U_M1)).T('+'), dot(inv(F(U_M1)).T('+'), N))))*d_FSI
+    A_SM04 =  inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(U_F1('+')), inv(F(U_M1))('+')), dot(inv(F(U_M1)).T('+'), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'), N)))))*d_FSI
+    A_SM05 =  inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), grad(U_M1('+')).T), dot(inv(F(U_M1)).T('+'), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'), N)))))*d_FSI
+    A_SM06 = -inner(Z_S('+'), J(U_M1)('+')*dot(dot(P_F1('+')*I('+'), inv(F(U_M1)).T('+')), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'), N))))*d_FSI
 
     A_MM01 = -(1/k)*inner(v_M, Z_M0 - Z_M)*dx_F + inner(sym(grad(Z_M)), Sigma_M(v_M, mu_M, lmbda_M))*dx_F
-    A_MM02 = inner(Z_M('+'),v_M('+'))*d_FSI
-    A_MM03 = inner(Y_M('+'),q_M('+'))*d_FSI
+    A_MM02 = inner(Z_M('+'), v_M('+'))*d_FSI
+    A_MM03 = inner(Y_M('+'), q_M('+'))*d_FSI
 
     # Collect forms
-    A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 #+ G_FF
+    A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + G_FF
     A_SF = A_SF01 + A_SF02 + A_SF03
     G_FM = G_FM1  + G_FM2  + G_FM3
     A_FM = A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 +A_FM09 + A_FM10 + A_FM11  + G_FM
@@ -105,8 +105,8 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     goal_functional = v_S[1]*dx_S
 
     # Define the dual rhs and lhs
-    A = lhs(A_system)
-    L = rhs(A_system) + goal_functional
+    A = lhs(A_system) 
+    L = rhs(A_system) + goal_functional 
 
     info_blue("Dual forms created")
 
