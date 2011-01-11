@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-01-07
+# Last changed: 2011-01-11
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -58,8 +58,9 @@ def estimate_error(problem):
     ZZ1, Z1 = create_dual_functions(Omega)
 
     # Define midpoint values for primal and dual functions
-    U = [0.5 * (U0[i] + U1[i]) for i in range(5)]
-    Z = [0.5 * (Z0[i] + Z1[i]) for i in range(6)]
+    U  = [0.5 * (U0[i]  + U1[i])  for i in range(5)]
+    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(6)]
+    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(6)]
 
     # Define function spaces for extrapolation
     V2 = VectorFunctionSpace(Omega, "CG", 2)
@@ -67,7 +68,8 @@ def estimate_error(problem):
     Q2 = FunctionSpace(Omega, "CG", 2)
 
     # Define functions for extrapolation
-    EZ = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
+    # FIXME: Strange!
+    #EZ = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
 
     # Define time step (value set in each time step)
     kn = Constant(0.0)
@@ -117,9 +119,8 @@ def estimate_error(problem):
         read_dual_data(ZZ1, t1, dual_series)
 
         # Extrapolate dual data
-        # FIXME: Why is only Z1 extrapolated (Kristoffer) ?
-        info("Extrapolating dual solution")
-        [EZ[j].extrapolate(Z1[j]) for j in range(6)]
+        [EZ0[j].extrapolate(Z0[j]) for j in range(6)]
+        [EZ1[j].extrapolate(Z1[j]) for j in range(6)]
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
@@ -128,10 +129,10 @@ def estimate_error(problem):
         e_M = [assemble(Rh_Mi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Mi in Rh_M]
 
         # Assemble weak residuals for time discretization error
-        Rk = norm(assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary))
+        Rk = norm(assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains))
 
         # Assemble weak residuals for computational error
-        Rc = assemble(Rc_F + Rc_S + Rc_M, mesh=Omega, interior_facet_domains=problem.fsi_boundary)
+        Rc = assemble(Rc_F + Rc_S + Rc_M, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
 
         # Estimate interpolation error (local weight)
         s = 0.5 * linalg.norm(ZZ0.vector().array() - ZZ1.vector().array(), 2) / dt
@@ -202,7 +203,7 @@ def compute_time_residual(primal_series, t0, t1, problem):
     r_F, r_S, r_M = weak_residuals(U0, U1, U1, w, kn, problem)
 
     # Assemble residual
-    r = assemble(r_F + r_S + r_M, interior_facet_domains=problem.fsi_boundary)
+    r = assemble(r_F + r_S + r_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
 
     # Compute l^2 norm
     Rk = norm(r, "l2")
@@ -214,7 +215,7 @@ def compute_time_residual(primal_series, t0, t1, problem):
 def refine_mesh(problem, mesh, indicators):
     "Refine mesh based on error indicators"
 
-    # Get fraction of elements for refinement 
+    # Get fraction of elements for refinement
     fraction = problem.fraction()
 
     # Create lists and markers for refinement
@@ -222,7 +223,7 @@ def refine_mesh(problem, mesh, indicators):
     indices.reverse()
     markers = MeshFunction("bool", mesh, mesh.topology().dim())
     markers.set_all(False)
-    
+
     # Dorfler marking strategy
     if problem.dorfler_marking():
         info_blue("Refining using Dorfler fraction = %g" %fraction)
@@ -233,7 +234,7 @@ def refine_mesh(problem, mesh, indicators):
             markers[int(i)] = True
             if sub_sum >= fraction * total_sum:
                   break
-            
+
     # "Standard" marking strategy
     else:
         info_blue("Refining with fraction = %g" %fraction)
@@ -247,7 +248,7 @@ def refine_mesh(problem, mesh, indicators):
 
     # Save marked cells (for plotting)
     save_refinement_markers(mesh, markers)
-            
+
     # Refine mesh
     refined_mesh = refine(mesh, markers)
 
@@ -306,7 +307,7 @@ def initial_timestep(problem):
 
 def compute_itertol(problem, w_c, TOL, dt, t1):
     "Compute tolerance for FSI iterations"
-    
+
     if problem.uniform_timestep():
         tol = problem.fixed_point_tol()
         info("")
@@ -319,7 +320,7 @@ def compute_itertol(problem, w_c, TOL, dt, t1):
         info("")
         info_blue("  * Changing tolerance for (f)-(S)-(M) iteration to %g" % tol)
         end()
-        
+
     # Save FSI iteration tolerance to file
     save_itertol(t1, tol)
 
@@ -404,13 +405,13 @@ def save_goal_functional(t1, goal_functional):
 def save_itertol(t1, tol):
     "Save FSI iteration tolerance"
 
-    global refinment_level 
-    
+    global refinment_level
+
     f = open("adaptivity/fsi_tolerance.txt", "a")
     f.write("%d %g %g \n" % (refinement_level, t1, tol))
     f.close()
 
-def save_no_FSI_iter(t1, no):   
+def save_no_FSI_iter(t1, no):
     "Save number of FSI iterations"
 
     global refinement_level
@@ -423,7 +424,7 @@ def save_dofs(num_dofs_FSM, timestep_counter):
     "Save number of total number of dofs"
 
     global refinement_level
-    
+
     # Calculate total number of dofs
     space_dofs = num_dofs_FSM
     time_dofs  = timestep_counter
@@ -435,25 +436,25 @@ def save_dofs(num_dofs_FSM, timestep_counter):
 
 def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega):
     "Save mesh function for visualization"
-    
-    # Create mesh functions 
+
+    # Create mesh functions
     plot_markers_F = MeshFunction("double", Omega, Omega.topology().dim())
     plot_markers_S = MeshFunction("double", Omega, Omega.topology().dim())
     plot_markers_M = MeshFunction("double", Omega, Omega.topology().dim())
     plot_markers_K = MeshFunction("double", Omega, Omega.topology().dim())
-    
+
     # Reset plot markers
     plot_markers_F.set_all(0)
     plot_markers_S.set_all(0)
     plot_markers_M.set_all(0)
-    plot_markers_K.set_all(0)                          
+    plot_markers_K.set_all(0)
 
-    # Extract error indicators                            
+    # Extract error indicators
     for i in range(Omega.num_cells()):
         plot_markers_F[i] = eta_F[i]
         plot_markers_S[i] = eta_S[i]
         plot_markers_M[i] = eta_M[i]
-        plot_markers_K[i] = eta_K[i]                   
+        plot_markers_K[i] = eta_K[i]
 
     # Sum markers
     plot_markers = [plot_markers_F, plot_markers_S, plot_markers_M, plot_markers_K]
@@ -464,14 +465,14 @@ def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega):
 
 def save_refinement_markers(mesh, markers):
     "Save refinement markers for visualization"
-    
-    # Create mesh functions 
+
+    # Create mesh functions
     refinement_markers = MeshFunction("uint", mesh, mesh.topology().dim())
-    
+
     # Reset plot markers
     refinement_markers.set_all(0)
 
-    # Extract error indicators                            
+    # Extract error indicators
     for i in range(mesh.num_cells()):
         if markers[i]:
             refinement_markers[i] = True
