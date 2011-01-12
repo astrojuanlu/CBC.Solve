@@ -25,26 +25,27 @@ from fsiproblem import *
 #   -------------------------- (2.0, 2.0)
 #        HOMO. NUEMANN BC
 
-
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
-application_parameters.add("ny", 20)
-application_parameters.add("T", 1.0)
+application_parameters.add("end_time", 0.25)
 application_parameters.add("dt", 0.02)
-application_parameters.add("w_h", 0.45) 
-application_parameters.add("w_k", 0.45)
-application_parameters.add("w_c", 0.1)
+application_parameters.add("ny", 30)
+application_parameters.add("TOL", 0.1)
+application_parameters.add("w_h", 0.1) 
+application_parameters.add("w_k", 0.85)
+application_parameters.add("w_c", 0.05)
+application_parameters.add("fraction", 0.5)
 application_parameters.add("mesh_alpha", 1.0)
-application_parameters.add("dorfler_fraction", 0.5)
-application_parameters.add("adaptive_tolerance", 0.5)
+application_parameters.add("solve_primal", True)
+application_parameters.add("solve_dual", True)
+application_parameters.add("estimate_error", True)
+application_parameters.add("dorfler_marking", False)
+application_parameters.add("uniform_timestep", False)
+application_parameters.add("fixed_point_tol", 1e-12)
 application_parameters.parse()
 
 # Save parameters to file
 parameter_info = application_parameters.option_string()
-f = open("adaptivity/driven_cavity_free_parameters.txt", "w")
-f.write("Driven Cavity Free Bottom \n \n ")
-f.write(parameter_info)
-f.close()
 
 # Constants related to the geometry of the problem
 cavity_length   = 2.0
@@ -78,17 +79,45 @@ class DrivenCavityFreeBottom(FSI):
 
     def __init__(self):
 
+        # Initialize mesh
         ny = application_parameters["ny"]
         nx = ny
         mesh = Rectangle(0.0, 0.0, cavity_length, cavity_height, nx, ny)
 
+        # Report problem parameters
+        f = open("adaptivity/pressure_driven_cavity.txt", "w")
+        f.write(parameter_info)
+        f.close()
+
+
         # Initialize base class
         FSI.__init__(self, mesh)
+
+    #--- Solver options ---
+
+    def solve_primal(self):
+        return application_parameters["solve_primal"]
+
+    def solve_dual(self):
+        return application_parameters["solve_dual"]
+
+    def estimate_error(self):
+        return application_parameters["estimate_error"]
+    
+    def dorfler_marking(self):
+        return application_parameters["dorfler_marking"]
+
+    def uniform_timestep(self):
+        return application_parameters["uniform_timestep"]
+
 
     #--- Common parameters ---
 
     def end_time(self):
-        return application_parameters["T"]
+        return application_parameters["end_time"]
+
+    def TOL(self):
+        return application_parameters["TOL"]
 
     def initial_timestep(self):
         return application_parameters["dt"]
@@ -102,27 +131,18 @@ class DrivenCavityFreeBottom(FSI):
     def non_galerkin_error_weight(self):
         return application_parameters["w_c"]
 
-    def dorfler_fraction(self):
-        return application_parameters["dorfler_fraction"]
+    def fraction(self):
+        return application_parameters["fraction"]
 
-    def adaptive_tolerance(self):
-        return application_parameters["adaptive_tolerance"]
-    
+    def fixed_point_tol(self):
+        return application_parameters["fixed_point_tol"]
+
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
 
-        # Compute average displacement in x1-direction
-        structure_area = (structure_right - structure_left) * structure_top
-        displacement = (1.0/structure_area)*assemble(U_S[1]*dx, mesh=U_S.function_space().mesh())
-    
-        # Write to file
-        f = open("adaptivity/goal_functional.txt", "a")
-        f.write("%g %g \n" % (dt, displacement))
-        f.close()
-        
-        # Print values of functionals
-        info("")
-        info_blue("Functional  (displacement): %g", displacement)
-        info("")
+        # Compute displacement in y-direction
+        displacement = assemble(U_S[1]*dx, mesh=U_S.function_space().mesh())
+
+        return displacement
         
     def __str__(self):
         return "Lid Driven Cavity with an Elastic Free Bottom" 
@@ -187,12 +207,12 @@ class DrivenCavityFreeBottom(FSI):
     def mesh_alpha(self):
         return application_parameters["mesh_alpha"]
 
-# Solve problem
+# Define problem
 problem = DrivenCavityFreeBottom()
-problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"]  = True
-problem.parameters["solver_parameters"]["estimate_error"] = True
+
+# Plot solution
 problem.parameters["solver_parameters"]["plot_solution"] = False
-problem.parameters["solver_parameters"]["tolerance"] = problem.adaptive_tolerance()
+
+# Solve problem
 u_F, p_F, U_S, P_S, U_M = problem.solve()
 
