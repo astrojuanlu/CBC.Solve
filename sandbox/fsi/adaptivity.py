@@ -57,19 +57,19 @@ def estimate_error(problem):
     ZZ0, Z0 = create_dual_functions(Omega)
     ZZ1, Z1 = create_dual_functions(Omega)
 
-    # Define midpoint values for primal and dual functions
-    U  = [0.5 * (U0[i]  + U1[i])  for i in range(5)]
-    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(6)]
-    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(6)]
-
     # Define function spaces for extrapolation
     V2 = VectorFunctionSpace(Omega, "CG", 2)
     V3 = VectorFunctionSpace(Omega, "CG", 3)
     Q2 = FunctionSpace(Omega, "CG", 2)
 
     # Define functions for extrapolation
-    # FIXME: Strange!
-    #EZ = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
+    EZ0 = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
+    EZ1 = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
+
+    # Define midpoint values for primal and dual functions
+    U  = [0.5 * (U0[i]  + U1[i])  for i in range(5)]
+    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(6)]
+    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(6)]
 
     # Define time step (value set in each time step)
     kn = Constant(0.0)
