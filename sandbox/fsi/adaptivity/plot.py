@@ -328,6 +328,17 @@ def plots():
         legend(["E_c"], loc='best')
         xlabel('Refinement level', fontsize=30)
 
+
+        figure(897897) 
+        title("Error estimates ",  fontsize=30)	
+        subplot(3, 1, 1); plot(refinement_level, E_c_F, 'db-');grid(True)
+        legend(["Ec_F"], loc='best')
+        subplot(3, 1, 2); plot(refinement_level, E_c_S, '-pr');grid(True)
+        legend(["Ec_S"], loc='best')
+        subplot(3, 1, 3); plot(refinement_level, E_c_M,'-sm');grid(True)
+        legend(["Ec_M"], loc='best')
+        xlabel('Refinement level', fontsize=30)
+
     # Plot uniform error vs adaptive error (dofs) 
     if plot_error_adaptive_vs_uniform == True:
         print "Plotting uniform errors and adaptive error vs #dofs (UA=1)"
