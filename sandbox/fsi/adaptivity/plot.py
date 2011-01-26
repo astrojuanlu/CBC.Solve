@@ -267,10 +267,13 @@ def plots():
     lines_error = open("error_estimates.txt").read().split("\n")[:-1]
     level_lines_error = [l for l in lines_error]
     refinement_level = [float(l.split(" ")[0]) for l in level_lines_error]
-    E   = [float(l.split(" ")[1]) for l in level_lines_error]
-    E_h = [float(l.split(" ")[2]) for l in level_lines_error]
-    E_k = [float(l.split(" ")[3]) for l in level_lines_error]
-    E_c = [float(l.split(" ")[4]) for l in level_lines_error]
+    E     = [float(l.split(" ")[1]) for l in level_lines_error]
+    E_h   = [float(l.split(" ")[2]) for l in level_lines_error]
+    E_k   = [float(l.split(" ")[3]) for l in level_lines_error]
+    E_c   = [float(l.split(" ")[4]) for l in level_lines_error]
+    E_c_F = [float(l.split(" ")[5]) for l in level_lines_error]
+    E_c_S = [float(l.split(" ")[6]) for l in level_lines_error]
+    E_c_M = [float(l.split(" ")[7]) for l in level_lines_error]
 
     # Create an array for E (used in efficiency index)
     E_array = array(E)
@@ -396,7 +399,7 @@ def plots():
         print "Plotting efficiency index (I=1)"
 
         figure(800)        
-        title("Efficieny Index", fontsize=30)
+        title("Efficiency Index", fontsize=30)
         semilogx(dofs_index, E_index, '-dk', linewidth=3); grid(True)
         legend(["E / |M(e)|"], loc='best')
         ettor = ones(len(dofs_index))
