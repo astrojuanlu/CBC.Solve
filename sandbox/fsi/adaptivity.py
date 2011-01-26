@@ -89,9 +89,12 @@ def estimate_error(problem):
     eta_M = zeros(Omega.num_cells())
 
     # Reset variables
-    E_k = 0.0
-    E_c = 0.0
-    ST = 0.0
+    E_k   = 0.0
+    E_c   = 0.0
+    E_c_F = 0.0
+    E_c_S = 0.0
+    E_c_M = 0.0
+    ST    = 0.0
 
     # Sum residuals over time intervals
     timestep_range = read_timestep_range(problem.end_time(), primal_series)
@@ -132,7 +135,9 @@ def estimate_error(problem):
         Rk = norm(assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains))
 
         # Assemble weak residuals for computational error
-        Rc = assemble(Rc_F + Rc_S + Rc_M, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        RcF = assemble(Rc_F, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        RcS = assemble(Rc_S, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        RcM = assemble(Rc_M, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
 
         # Estimate interpolation error (local weight)
         s = 0.5 * linalg.norm(ZZ0.vector().array() - ZZ1.vector().array(), 2) / dt
@@ -145,8 +150,13 @@ def estimate_error(problem):
         # Add to E_k
         E_k += dt * s * dt * Rk
 
-        # Add to E_c
-        E_c += dt * Rc
+        # Add to E_c's
+        E_c_F += dt * RcF
+        E_c_S += dt * RcS
+        E_c_M += dt * RcM
+        
+        # Sum total computational error
+        E_c = E_c_F + E_c_S + E_c_M
 
         # Add to stability factor
         ST  += dt * s
@@ -163,7 +173,8 @@ def estimate_error(problem):
     E = E_h + E_k + abs(E_c)
 
     # Report results
-    save_errors(E, E_h, E_k, E_c, ST)
+    save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M,  ST)
+#    save_computational_errors(E_c_F, E_c_S, E_c_M)
     save_indicators(eta_F, eta_S, eta_M, eta_K, Omega)
     save_stability_factor(T, ST)
 
@@ -338,7 +349,7 @@ def save_mesh(mesh):
     file = File("adaptivity/mesh_%d.xml" % refinement_level)
     file << mesh
 
-def save_errors(E, E_h, E_k, E_c, ST):
+def save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, ST):
     "Save errors to file"
 
     global refinement_level
@@ -370,7 +381,7 @@ S(T)  = %g
 
     # Save to file (for plotting)
     g = open("adaptivity/error_estimates.txt", "a")
-    g.write("%d %g %g %g %g \n" %(refinement_level, E, E_h, E_k, abs(E_c)))
+    g.write("%d %g %g %g %g %g %g %g %g \n" %(refinement_level, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M, ST))
     g.close()
 
 def save_timestep(t1, Rk, dt):
@@ -479,3 +490,4 @@ def save_refinement_markers(mesh, markers):
 
     # Save markers
     indicator_files[4] << refinement_markers
+
