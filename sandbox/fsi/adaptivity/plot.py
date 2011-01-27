@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-12-14
+# Last changed: 2011-01-27
 
 from pylab import *
 from numpy import trapz, ones, abs, array
@@ -242,7 +242,7 @@ def plots():
     h_dofs_reference  = [float(l.split(" ")[3]) for l in level_lines_reference]
     dt_dofs_reference = [float(l.split(" ")[4]) for l in level_lines_reference]
 
-#     figure(1)
+#     figure(11)
 #     plot(dofs_reference , MT_reference, '-ok', linewidth=2); grid(True)
 #     title("Goal Functional; uniform ref.",fontsize=30)
 #     ylabel("M(u^h)", fontsize=30)
@@ -309,14 +309,13 @@ def plots():
     E_index = E_array / Me
 
 
-
     # --Plot error estimates and goal functional----------------------
 
     # Plot error estimate
     if plot_error_estimate == True:
         print "Plotting error estimates (E=1)"
 
-        figure(88888) 
+        figure(1) 
         subplot(4, 1, 1); plot(refinement_level, E, '-ok');grid(True)
         title("Error estimate ",  fontsize=30)	
         legend(["E"], loc='best')
@@ -327,11 +326,10 @@ def plots():
         subplot(4, 1, 4); plot(refinement_level, E_c,'-sm');grid(True)
         legend(["E_c"], loc='best')
         xlabel('Refinement level', fontsize=30)
-
-
-        figure(897897) 
-        title("Error estimates ",  fontsize=30)	
+        
+        figure(2) 
         subplot(3, 1, 1); plot(refinement_level, E_c_F, 'db-');grid(True)
+        title("Computational errors ",  fontsize=30)	
         legend(["Ec_F"], loc='best')
         subplot(3, 1, 2); plot(refinement_level, E_c_S, '-pr');grid(True)
         legend(["Ec_S"], loc='best')
@@ -343,7 +341,7 @@ def plots():
     if plot_error_adaptive_vs_uniform == True:
         print "Plotting uniform errors and adaptive error vs #dofs (UA=1)"
   
-        figure(300)        
+        figure(3)        
         title("Error ", fontsize=30)
         semilogy(dofs_reference, E_uniform, '-dg', linewidth=3); grid(True)
         semilogy(dofs_index, Me, '-ok', linewidth=3); grid(True)   
@@ -355,7 +353,7 @@ def plots():
     if plot_error_adaptive_vs_uniform_space_dofs == True:
         print "Plotting uniform errors and adaptive error vs #space dofs (UAh=1)"
   
-        figure(400)        
+        figure(4)        
         title("Error ", fontsize=30)
         semilogy(h_dofs_reference, E_uniform, '-dg', linewidth=3); grid(True)
         semilogy(h_dofs_index, Me, '-ok', linewidth=3); grid(True)   
@@ -373,7 +371,7 @@ def plots():
             goal_reference_list.append(goal_reference)
 
 
-        figure(500)
+        figure(5)
         title("Goal Functional", fontsize=30)
         plot(ref_level_T, MT, '-dk'); grid(True)
         plot(ref_level_T, goal_reference_list, '-g', linewidth=6)
@@ -385,7 +383,7 @@ def plots():
     if plot_goal_vs_dofs == True:
         print "Plotting goal functional vs #dofs (Md=1)"
 
-        figure(600)
+        figure(6)
         title("Convergence of Goal Functional", fontsize=30)
         semilogx(dofs, MT, '-dk'); grid(True)
         semilogx(dofs_reference, MT_reference, '-og'); grid(True)
@@ -397,7 +395,7 @@ def plots():
     if plot_goal_vs_space_dofs == True:
         print "Plotting goal functional vs #space dofs (Mdh=1)"
 
-        figure(700)
+        figure(7)
         title("Convergence of Goal Functional", fontsize=30)
         semilogx(h_dofs, MT, '-dk'); grid(True)
         semilogx(h_dofs_reference, MT_reference, '-og'); grid(True)
@@ -409,7 +407,7 @@ def plots():
     if plot_efficiency_index == True:
         print "Plotting efficiency index (I=1)"
 
-        figure(800)        
+        figure(8)        
         title("Efficiency Index", fontsize=30)
         semilogx(dofs_index, E_index, '-dk', linewidth=3); grid(True)
         legend(["E / |M(e)|"], loc='best')
@@ -421,7 +419,7 @@ def plots():
     if plot_dofs_vs_level == True:
         print "Plotting # (space) dofs and #time steps (DT=1)"
         
-        figure(900)        
+        figure(9)        
         title("#dofs vs refinement level", fontsize=30)
         semilogy(ref_level_T, h_dofs, '-db', linewidth=3); grid(True)
         semilogy(ref_level_T, dt_dofs, '-or', linewidth=3); grid(True)   
