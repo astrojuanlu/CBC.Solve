@@ -37,6 +37,15 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     N_F = N
     N_S = N
 
+    # Define inner products
+    dx_F = dx(0)
+    dx_S = dx(1)
+    
+    # Define "facet" products
+    dS_F  = dS(0)
+    dS_S  = dS(1)
+    d_FSI = dS(2)
+
     # Define time derivatives
     dt_U_F = (1/kn) * (U_F1 - U_F0)
     dt_U_M = (1/kn) * (U_M1 - U_M0)
@@ -49,22 +58,23 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     Sigma_F = J(U_M)*dot(_Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T)
     Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
     Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
-
     
     # Fluid residual
-    R_F = inner(v_F, Dt_U_F)*dx + inner(sym(grad(v_F)), Sigma_F)*dx \
-        - inner(v_F, mu_F*J(U_M)*dot(dot(inv(F(U_M)).T, grad(U_F).T) , dot(inv(F(U_M)).T, N_F)))*ds \
+    R_F = inner(v_F, Dt_U_F)*dx_F + inner(sym(grad(v_F)), Sigma_F)*dx_F \
+        - inner(v_F, mu_F*J(U_M)*dot(dot(inv(F(U_M)).T, grad(U_F).T), dot(inv(F(U_M)).T, N_F)))*ds \
         + inner(v_F, J(U_M)*P_F*dot(I, dot(inv(F(U_M)).T, N_F)))*ds \
-        + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx 
+        + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx_F
 
-    # Structure residual
-    R_S = inner(v_S, Dt_P_S)*dx + inner(grad(v_S), Sigma_S)*dx \
-        - inner(q_S, dot(Sigma_F, N_S))('+')*dS(1) \
-        + inner(q_S, Dt_U_S - P_S)*dx
 
+    # Structure residual (note the minus sign on N_F('+'))
+    R_S = inner(v_S, Dt_P_S)*dx_S + inner(grad(v_S), Sigma_S)*dx_S \
+        - inner(v_S('-'), dot(Sigma_S('-') - Sigma_F('+'), -N_F('+')))*d_FSI \
+        + inner(q_S, Dt_U_S - P_S)*dx_S
+    
+   
     # Mesh residual contributions
-    R_M = inner(v_M, Dt_U_M)*dx + inner(sym(grad(v_M)), Sigma_M)*dx \
-        + inner(q_M, U_M - U_S)('+')*dS(1)
+    R_M = inner(v_M, Dt_U_M)*dx_F + inner(sym(grad(v_M)), Sigma_M)*dx_F \
+        + inner(q_M, U_M - U_S)('+')*d_FSI
 
     return R_F, R_S, R_M
 
@@ -131,10 +141,10 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     R_F2 = w*inner(EZ_F - Z_F, dot(Sigma_F, N_F))*ds  
     R_F3 = w*inner(EY_F - Y_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx_F
 
-    # Structure residual contributions
+    # Structure residual contributions (note the minus sign on N_F('+'))
     R_S0 = w*inner(EZ_S - Z_S, Dt_P_S - div(Sigma_S))*dx_S
-    R_S1 = avg(w)*inner(EZ_S('+') - Z_S('+'), jump(dot(Sigma_S, N_S)))*dS_S
-    R_S2 = w('-')*inner(EZ_S('-') - Z_S('-'), dot(Sigma_S('-') - Sigma_F('+'), N_S('+')))*d_FSI
+    R_S1 = avg(w)*inner(EZ_S('-') - Z_S('-'), jump(dot(Sigma_S, N_S)))*dS_S
+    R_S2 = w('-')*inner(EZ_S('-') - Z_S('-'), dot(Sigma_S('-') - Sigma_F('+'), -N_F('+')))*d_FSI
     R_S3 = w*inner(EY_S - Y_S, Dt_U_S - P_S)*dx_S
     
     # Mesh residual contributions
