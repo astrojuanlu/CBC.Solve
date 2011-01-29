@@ -98,6 +98,7 @@ class PrimalSolver:
 
             # Update time step counter
             timestep_counter += 1
+            end()
 
             # Check if we have reached the end time 
             if at_end:
