@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-11-01
+# Last changed: 2011-01-12
 
 from fsiproblem import *
 
@@ -64,7 +64,6 @@ inflow_right = " x[0] > 1.75 && x[0] <= %g &&\
 noslip  =        "on_boundary && !(%s) && !(%s) && !(%s)" % (inflow_left, inflow_middle, inflow_right)
 fixed_left   =   "x[0] == 0.0  && x[1] >= DOFLIN_EPS" 
 fixed_right  =   "x[0] > %g - DOLFIN_EPS  && x[1] >= 0.0" % structure_right
-fixed_bottom =   "x[1] == 0.0"
 
 # Define structure subdomain
 class Structure(SubDomain):
@@ -85,13 +84,13 @@ class DrivenCavityFreeBottom(FSI):
         mesh = Rectangle(0.0, 0.0, cavity_length, cavity_height, nx, ny)
 
         # Report problem parameters
-        f = open("adaptivity/pressure_driven_cavity.txt", "w")
+        f = open("adaptivity/pressure_driven_cavity_free_bottom.txt", "w")
         f.write(parameter_info)
         f.close()
 
-
         # Initialize base class
         FSI.__init__(self, mesh)
+
 
     #--- Solver options ---
 
@@ -147,6 +146,7 @@ class DrivenCavityFreeBottom(FSI):
     def __str__(self):
         return "Lid Driven Cavity with an Elastic Free Bottom" 
 
+
     #--- Parameters for fluid problem ---
 
     def fluid_density(self):
@@ -173,6 +173,7 @@ class DrivenCavityFreeBottom(FSI):
     def fluid_pressure_initial_condition(self):
         return 0.0
 
+
     #--- Parameters for structure problem ---
 
     def structure(self):
@@ -196,6 +197,7 @@ class DrivenCavityFreeBottom(FSI):
     def structure_neumann_boundaries(self):
         return "on_boundary"
 
+
     #--- Parameters for mesh problem ---
 
     def mesh_mu(self):
@@ -206,6 +208,7 @@ class DrivenCavityFreeBottom(FSI):
 
     def mesh_alpha(self):
         return application_parameters["mesh_alpha"]
+
 
 # Define problem
 problem = DrivenCavityFreeBottom()

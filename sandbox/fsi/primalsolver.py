@@ -83,15 +83,15 @@ class PrimalSolver:
         if self.uniform_timestep:
             dt, dt_range = timestep_range(T, dt)
             
-#         # No. time steps
-#         time_dofs = len(dt_range)
-#         total_dofs = num_dofs_FSM * time_dofs
+#             # No. time steps
+#             time_dofs = len(dt_range)
+#             total_dofs = num_dofs_FSM * time_dofs
         
-#         # Print
-#         f = open("adaptivity/ref.txt", "a")
-#         f.write("%g %g %g \n" %(total_dofs, num_dofs_FSM, time_dofs))
-#         f.close()
-#         exit(True)
+#             # Print
+#             f = open("adaptivity/jada.txt", "a")
+#             f.write("%g %g %g \n" %(total_dofs, num_dofs_FSM, time_dofs))
+#             f.close()
+#             exit(True)
         
 
         # Initialize time-stepping
