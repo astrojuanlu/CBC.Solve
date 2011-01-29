@@ -21,15 +21,13 @@ def create_primal_series():
     "Create time series for primal solution"
     u_F = TimeSeries("bin/u_F")
     p_F = TimeSeries("bin/p_F")
-    U_S = TimeSeries("bin/U_S")
-    P_S = TimeSeries("bin/P_S")
-    U_M = TimeSeries("bin/U_M")
-    return (u_F, p_F, U_S, P_S, U_M)
+    return (u_F, p_F)
 
 def create_dual_series():
     "Create time series for dual solution"
     return TimeSeries("bin/Z")
 
+# fix
 def read_primal_data(U, t, Omega, Omega_F, Omega_S, series):
     "Read primal variables at given time"
 
@@ -99,7 +97,7 @@ def read_timestep_range(T, series):
 
 def write_primal_data(U, t, series):
     "Write primal data at given time"
-    [series[i].store(U[i].vector(), t) for i in range(5)]
+    [series[i].store(U[i].vector(), t) for i in range(2)]
 
 def write_dual_data(Z, t, series):
     "Write dual solution at given time"

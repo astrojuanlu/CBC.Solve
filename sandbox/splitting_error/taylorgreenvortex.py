@@ -10,19 +10,19 @@ from fsiproblem import *
 application_parameters = Parameters("application_parameters")
 application_parameters.add("end_time", 0.25)
 application_parameters.add("dt", 0.02)
-application_parameters.add("mesh_scale", 1)
+application_parameters.add("mesh_scale", 16)
 application_parameters.add("TOL", 0.1)
 application_parameters.add("w_h", 0.45) 
 application_parameters.add("w_k", 0.45)
 application_parameters.add("w_c", 0.1)
 application_parameters.add("fraction", 0.5)
-#application_parameters.add("mesh_alpha", 1.0)
+application_parameters.add("mesh_alpha", 1.0)
 application_parameters.add("solve_primal", True)
 application_parameters.add("solve_dual", False)
 application_parameters.add("estimate_error", False)
 application_parameters.add("dorfler_marking", True)
-application_parameters.add("uniform_timestep", False)
-#application_parameters.add("fixed_point_tol", 1e-12)
+application_parameters.add("uniform_timestep", True)
+application_parameters.add("fixed_point_tol", 1e-12)
 application_parameters.parse()
 
 # Collect parameters
@@ -50,6 +50,9 @@ class TaylorGreenVortex(FSI):
         # Initialize base class
         FSI.__init__(self, mesh)
 
+
+#     def mesh(self):
+#         return  UnitSquare(32, 32)
 
     #--- Solver options ---
 
@@ -99,7 +102,7 @@ class TaylorGreenVortex(FSI):
 
         # Compute x-component at the point [0.5, 0.5]
         functional = u_F((0.0, 0.5))[0]
-        return displacement
+        return functional
 
     def __str__(self):
         return "TaylorGreen Vortex test case"
@@ -107,25 +110,28 @@ class TaylorGreenVortex(FSI):
 
  #--- Fluid parameters ---
 
-    def viscosity(self):
+    def fluid_viscosity(self):
         return 1.0 / 8.0
 
-    def velocity_dirichlet_values(self):
+    def fluid_density(self):
+        return 1.0
+
+    def fluid_velocity_dirichlet_values(self):
         return [(0, 0)]
 
-    def velocity_dirichlet_boundaries(self):
+    def fluid_velocity_dirichlet_boundaries(self):
         return ["x[1] < DOLFIN_EPS || x[1] > 1.0 - DOLFIN_EPS"]
 
-    def pressure_dirichlet_values(self):
+    def fluid_pressure_dirichlet_values(self):
         return [1, 0]
 
-    def pressure_dirichlet_boundaries(self):
+    def fluid_pressure_dirichlet_boundaries(self):
         return ["x[0] < DOLFIN_EPS", "x[0] > 1 - DOLFIN_EPS"]
 
-    def velocity_initial_condition(self):
+    def fluid_velocity_initial_condition(self):
         return (0, 0)
 
-    def pressure_initial_condition(self):
+    def fluid_pressure_initial_condition(self):
         return "1 - x[0]"
 
     def end_time(self):
