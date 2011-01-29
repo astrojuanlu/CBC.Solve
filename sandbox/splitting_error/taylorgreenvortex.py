@@ -25,6 +25,8 @@ application_parameters.add("uniform_timestep", False)
 #application_parameters.add("fixed_point_tol", 1e-12)
 application_parameters.parse()
 
+# Collect parameters
+parameter_info = application_parameters.option_string()
 
 # Define problem class (only a the F subproblem...)
 class TaylorGreenVortex(FSI):
