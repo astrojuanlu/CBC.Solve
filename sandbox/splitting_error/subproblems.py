@@ -21,9 +21,9 @@ class FluidProblem(NavierStokes):
         self.problem = problem
 
         # Store initial and current mesh
-        self.Omega_F = problem.fluid_mesh()
-        self.omega_F0 = Mesh(self.Omega_F)
-        self.omega_F1 = Mesh(self.Omega_F)
+        self.Omega= problem.fluid_mesh()
+#         self.omega_F0 = Mesh(self.Omega_F)
+#         self.omega_F1 = Mesh(self.Omega_F)
 
         # Initialize base class
         NavierStokes.__init__(self)
@@ -33,8 +33,9 @@ class FluidProblem(NavierStokes):
         self.parameters["solver_parameters"]["save_solution"] = False
 
     def mesh(self):
-        return self.omega_F1
-
+        return self.Omega
+# return self.omega_F1
+    
     def viscosity(self):
         return self.problem.fluid_viscosity()
 

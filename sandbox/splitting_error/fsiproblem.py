@@ -30,7 +30,7 @@ class FSI(CBCProblem):
         self.init_meshes(mesh)
 
     def solve(self):
-        "Solve and return computed solution (u_F, p_F, U_S, P_S, U_M, P_M)"
+        "Solve and return computed solution (u_F, p_F)"
 
         # Update solver parameters
         self.solver.parameters.update(self.parameters["solver_parameters"])
@@ -39,23 +39,20 @@ class FSI(CBCProblem):
         return self.solver.solve()
 
     def init_meshes(self, Omega):
-        "Create mappings between submeshes"
-
-        info("Exracting fluid and structure submeshes")
 
         # Set global mesh
         self.Omega = Omega
 
-        # Create cell markers (0 = fluid, 1 = structure)
-        D = Omega.topology().dim()
-        cell_domains = MeshFunction("uint", self.Omega, D)
-        cell_domains.set_all(0)
+#         # Create cell markers (0 = fluid, 1 = structure)
+#         D = Omega.topology().dim()
+#         cell_domains = MeshFunction("uint", self.Omega, D)
+#         cell_domains.set_all(0)
 #        structure = self.structure()
 #        structure.mark(cell_domains, 1)
 
         # Extract submeshes for fluid and structure
 #        Omega_F = SubMesh(self.Omega, cell_domains, 0)
-        Omega_F = Omega
+#        Omega_F = Omega
 #        Omega_S = SubMesh(self.Omega, cell_domains, 1)
 
 #        info("Computing mappings between submeshes")
@@ -116,7 +113,7 @@ class FSI(CBCProblem):
 #                 fsi_boundary[facet.index()] = 0
 
         # Store data
-        self.Omega_F = Omega_F
+#        self.Omega_F = Omega_F
 #        self.Omega_S = Omega_S
 #         self.cell_domains = cell_domains
 #         self.fdofs = fdofs
@@ -124,13 +121,13 @@ class FSI(CBCProblem):
 #         self.fsi_boundary = fsi_boundary
 #         self.fsi_orientation = fsi_orientation
 
-    def mesh(self):
-        "Return mesh for full domain"
-        return self.Omega
+#     def mesh(self):
+#         "Return mesh for full domain"
+#         return self.Omega
 
     def fluid_mesh(self):
         "Return mesh for fluid domain"
-        return self.Omega_F
+        return self.Omega
 
 #     def structure_mesh(self):
 #         "Return mesh for structure domain"

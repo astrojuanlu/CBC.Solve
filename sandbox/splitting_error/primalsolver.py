@@ -32,8 +32,8 @@ class PrimalSolver:
 
         # Create files for saving to VTK
         if self.save_solution:
-            self.files = (File("pvd/u_F.pvd"),
-                          File("pvd/p_F.pvd"))
+            self.files = (File("pvd/u.pvd"),
+                          File("pvd/p.pvd"))
    
         # Create time series for storing solution
         self.time_series = create_primal_series()
@@ -86,12 +86,16 @@ class PrimalSolver:
             info_blue("  * t = %g (T = %g, dt = %g)" % (t1, T, dt))
                 
             # Solve fluid problem
-            u_F, p_F = F.step(dt)
+            u, p = F.step(dt)
 
             # Save solution and time series to file
             U = extract_solution(F)
             self._save_solution(U)
             write_primal_data(U, t1, self.time_series)
+
+            # Evaluate and save functional
+            goal_functional = self.problem.evaluate_functional(u, p, t1)
+            save_goal_functional(t1, goal_functional)
 
             # Move to next time step
             F.update(t1)
@@ -125,17 +129,17 @@ class PrimalSolver:
         info_blue("Primal solution computed in %g seconds." % (time() - cpu_time))
         
         # Return solution
-        return u_F, p_F
+        return u, p
 
-    def _plot_solution(self, u_F, p_F):
+    def _plot_solution(self, u, p):
         "Plot solution"
 
         # Check if we should plot
         if not self.plot_solution: return
 
         # Plot
-        plot(u_F, title="Fluid velocity")
-        plot(p_F, title="Fluid pressure")
+        plot(u, title="Fluid velocity")
+        plot(p, title="Fluid pressure")
 
     def _save_solution(self, U):
         "Save solution to VTK"

@@ -47,7 +47,7 @@ class FSISolver(CBCSolver):
         "Solve the FSI problem (main adaptive loop)"
 
         # Create empty solution (return value when primal is not solved)
-        U = 5*(None,)
+        U = 2*(None,)
 
         # Initial guess for stability factor
         ST = 1.0

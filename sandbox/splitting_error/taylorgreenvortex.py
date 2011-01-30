@@ -28,7 +28,7 @@ application_parameters.parse()
 # Collect parameters
 parameter_info = application_parameters.option_string()
 
-# Define problem class (only a the F subproblem...)
+# Define problem class 
 class TaylorGreenVortex(FSI):
     def __init__(self):
         
@@ -50,9 +50,6 @@ class TaylorGreenVortex(FSI):
         # Initialize base class
         FSI.__init__(self, mesh)
 
-
-#     def mesh(self):
-#         return  UnitSquare(32, 32)
 
     #--- Solver options ---
 
@@ -98,10 +95,10 @@ class TaylorGreenVortex(FSI):
     def fixed_point_tol(self):
         return application_parameters["fixed_point_tol"]
 
-    def evaluate_functional(self, u_F, p_F, dt):
+    def evaluate_functional(self, u, p, dt):
 
         # Compute x-component at the point [0.5, 0.5]
-        functional = u_F((0.0, 0.5))[0]
+        functional = u((0.0, 0.5))[0]
         return functional
 
     def __str__(self):
@@ -147,6 +144,6 @@ problem.parameters["solver_parameters"]["tolerance"] = problem.TOL()
 problem.parameters["solver_parameters"]["fixed_point_tol"] = problem.fixed_point_tol()
 
 # Solve problem
-u_F, p_F = problem.solve()
+u, p = problem.solve()
 
 
