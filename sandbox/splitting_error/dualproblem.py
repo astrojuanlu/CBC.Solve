@@ -9,7 +9,8 @@ __license__  = "GNU GPL Version 3 or any later version"
 from dolfin import *
 
 def create_dual_forms(Omega, k, problem,
-                      v, q, z, y, z0, uh):
+                      v, q, z, y, z0, 
+                      uh0, ph0, uh1, ph1):
 
     info_blue("Creating dual forms")
 
@@ -31,11 +32,16 @@ def create_dual_forms(Omega, k, problem,
     def sigma(v, q):
         return  2*mu*epsilon(v) - q*I
 
+    
+    # Defined mid point value for the fluid
+    # FIXME: Talk to Anders abou this
+    u_mid = 0.5*(uh0 + uh1)
+
     # Define the dual momemtum form
-    # FIXME: Add Neumann terms if needed 
+    # FIXME: Check if this scheme is correct
     dual_mom = -(1/k)*rho*inner((z0 - z), v)*dx \
-               + rho*inner(z, dot(grad(uh), v))*dx \
-               + rho*inner(z, dot(grad(v), uh))*dx \
+               + rho*inner(z, dot(grad(u_mid), v))*dx \
+               + rho*inner(z, dot(grad(v), uh1))*dx \
                + inner(epsilon(z), sigma(v,q))*dx
 
     # Define the dual continuity form

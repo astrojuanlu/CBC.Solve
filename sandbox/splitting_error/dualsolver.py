@@ -60,8 +60,9 @@ class DualSolver:
 #         Z0, (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = create_dual_functions(Omega)
 #         Z1, (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = create_dual_functions(Omega)
 
-        # Create primal function used in the dual form
-        uh = create_primal_function(Omega)
+        # Create primal functions used in the dual form
+        uh0, ph0 = primal_sol_0 = create_primal_function(Omega)
+        uh1, ph1 = primal_sol_1 = create_primal_function(Omega)
 #         U_F0, P_F0, U_S0, P_S0, U_M0 = U0 = create_primal_functions(Omega)
 #         U_F1, P_F1, U_S1, P_S1, U_M1 = U1 = create_primal_functions(Omega)
 
@@ -70,7 +71,8 @@ class DualSolver:
 
         # Create variational forms for dual problem
         A, L = create_dual_forms(Omega, k, self.problem,  
-                                 v, q, z, y, z0, uh)
+                                 v, q, z, y, z0, 
+                                 uh0, ph0, uh1, ph1)
 
         # Create dual boundary conditions
         bcs = self._create_boundary_conditions(W)
@@ -93,8 +95,9 @@ class DualSolver:
             info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
             # Read primal data
-            # FIXME: take uh_mean = 0.5(uh0 + uh1) ?
-            read_primal_data(uh, t1, Omega, self.primal_series)            
+            read_primal_data(primal_sol_0, t0, Omega, self.primal_series)            
+            read_primal_data(primal_sol_1, t1, Omega, self.primal_series)            
+
 #             read_primal_data(U0, t0, Omega, Omega_F, Omega_S, self.primal_series)
 #             read_primal_data(U1, t1, Omega, Omega_F, Omega_S, self.primal_series)
 
@@ -118,7 +121,6 @@ class DualSolver:
             self._save_solution(dual_sol_0)
             write_dual_data(dual_sol_0, t0, self.dual_series)
             self._plot_solution(z0, y0)
-#           self._plot_solution(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0)
 
             # Copy solution to previous interval (going backwards in time)
             dual_sol_1.assign(dual_sol_0)

@@ -11,19 +11,13 @@ def create_primal_function(Omega):
 
     # Create function spaces
     V = VectorFunctionSpace(Omega, "CG", 2)
-#     Q = FunctionSpace(Omega, "CG", 1)
-#     V_S = VectorFunctionSpace(Omega, "CG", 1)
-#     Q_S = VectorFunctionSpace(Omega, "CG", 1)
-#     V_M = VectorFunctionSpace(Omega, "CG", 1)
+    Q = FunctionSpace(Omega, "CG", 1)
 
     # Create primal functions
     uh = Function(V)
-#    p = Function(Q)
-#     U_S = Function(V_S)
-#     P_S = Function(Q_S)
-#     U_M = Function(V_M)
+    ph = Function(Q)
 
-    return uh
+    return uh, ph
 
 def create_dual_space(Omega):
     "Return dual function space"
@@ -31,23 +25,15 @@ def create_dual_space(Omega):
     # Create function spaces
     V = VectorFunctionSpace(Omega, "CG", 2)
     Q = FunctionSpace(Omega, "CG", 1)
-#     V_S = VectorFunctionSpace(Omega, "CG", 1)
-#     Q_S = VectorFunctionSpace(Omega, "CG", 1)
-#     V_M = VectorFunctionSpace(Omega, "CG", 1)
-#     Q_M = VectorFunctionSpace(Omega, "CG", 1)
 
-#     # Create mixed function space
-#     W = MixedFunctionSpace([V_F, Q_F, V_S, Q_S, V_M, Q_M])
+    # Create mixed function space
     W = MixedFunctionSpace([V, Q])
     
     return W
 
 def create_dual_functions(Omega):
     "Return dual variables on the full domain initialized to zero"
-#     W = create_dual_space(Omega)
-#     Z = Function(W)
-#     return Z, Z.split(False)
 
     W = create_dual_space(Omega)
     dual_sol = Function(W)
-    return dual_sol, dual_sol.split(False)
+    return dual_sol, dual_sol.split()
