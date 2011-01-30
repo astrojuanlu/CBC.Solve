@@ -23,21 +23,15 @@ refinement_level = 0
 min_timestep = None
 
 # Create files for plotting error indicators
-indicator_files  = (File("adaptivity/pvd/eta_F.pvd"),
-                    File("adaptivity/pvd/eta_S.pvd"),
-                    File("adaptivity/pvd/eta_M.pvd"),
-                    File("adaptivity/pvd/eta_K.pvd"),
+indicator_files  = (File("adaptivity/pvd/eta.pvd"),
                     File("adaptivity/pvd/refinement_markers.pvd"))
 
 def estimate_error(problem):
     "Estimate error and compute error indicators"
 
-    # Get meshes
-    Omega = problem.mesh()
-    Omega_F = problem.fluid_mesh()
-    Omega_S = problem.structure_mesh()
+    # Get the mesh
+    Omega = problem.fluid_mesh()
 
-    # Define projection space (piecewise constants)
     DG = FunctionSpace(Omega, "DG", 0)
     dg = TestFunction(DG)
 

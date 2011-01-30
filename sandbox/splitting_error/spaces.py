@@ -6,7 +6,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 
-def create_primal_function(Omega):
+def create_primal_functions(Omega):
     "Return primal velocity"
 
     # Create function spaces

@@ -31,7 +31,6 @@ def create_dual_forms(Omega, k, problem,
     # Define the fluid stress tensor
     def sigma(v, q):
         return  2*mu*epsilon(v) - q*I
-
     
     # Defined mid point value for the fluid
     # FIXME: Talk to Anders abou this
