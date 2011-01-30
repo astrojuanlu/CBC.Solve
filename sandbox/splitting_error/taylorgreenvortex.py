@@ -16,13 +16,11 @@ application_parameters.add("w_h", 0.45)
 application_parameters.add("w_k", 0.45)
 application_parameters.add("w_c", 0.1)
 application_parameters.add("fraction", 0.5)
-application_parameters.add("mesh_alpha", 1.0)
 application_parameters.add("solve_primal", True)
 application_parameters.add("solve_dual", False)
 application_parameters.add("estimate_error", False)
 application_parameters.add("dorfler_marking", True)
 application_parameters.add("uniform_timestep", True)
-application_parameters.add("fixed_point_tol", 1e-12)
 application_parameters.parse()
 
 # Collect parameters
@@ -92,9 +90,6 @@ class TaylorGreenVortex(FSI):
     def fraction(self):
         return application_parameters["fraction"]
 
-    def fixed_point_tol(self):
-        return application_parameters["fixed_point_tol"]
-
     def evaluate_functional(self, u, p, dt):
 
         # Compute x-component at the point [0.5, 0.5]
@@ -141,7 +136,6 @@ problem.parameters["solver_parameters"]["solve_dual"] = problem.solve_dual()
 problem.parameters["solver_parameters"]["estimate_error"] = problem.estimate_error()
 problem.parameters["solver_parameters"]["uniform_timestep"]  = problem.uniform_timestep()
 problem.parameters["solver_parameters"]["tolerance"] = problem.TOL()
-problem.parameters["solver_parameters"]["fixed_point_tol"] = problem.fixed_point_tol()
 
 # Solve problem
 u, p = problem.solve()

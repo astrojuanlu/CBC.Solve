@@ -32,10 +32,7 @@ class FSISolver(CBCSolver):
         self.parameters.add("save_solution", True)
         self.parameters.add("save_series", True)
         self.parameters.add("tolerance", 0.1)
-        self.parameters.add("maxiter", 100)
-        self.parameters.add("num_smoothings", 50)
         self.parameters.add("uniform_timestep", False)
-        self.parameters.add("fixed_point_tol", 1e-7)
 
         # Set DOLFIN parameters
         parameters["form_compiler"]["cpp_optimize"] = True

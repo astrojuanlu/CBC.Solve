@@ -25,10 +25,8 @@ class PrimalSolver:
         # Get solver parameters
         self.plot_solution = solver_parameters["plot_solution"]
         self.save_solution = solver_parameters["save_solution"]
-        self.maxiter = solver_parameters["maxiter"]
         self.tolerance = solver_parameters["tolerance"]
         self.uniform_timestep = solver_parameters["uniform_timestep"]
-        self.fsi_tolerance = solver_parameters["fixed_point_tol"]
 
         # Create files for saving to VTK
         if self.save_solution:
