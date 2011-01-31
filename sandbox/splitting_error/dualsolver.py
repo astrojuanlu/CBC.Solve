@@ -137,11 +137,11 @@ class DualSolver:
         bcs = []
 
         # Boundary conditions for dual velocity
-        for boundary in self.problem.fluid_velocity_dirichlet_boundaries():
+        for boundary in self.problem.velocity_dirichlet_boundaries():
             bcs += [DirichletBC(W.sub(0), (0.0 , 0.0), boundary)]
 
         # Boundary conditions for dual pressure
-        for boundary in self.problem.fluid_pressure_dirichlet_boundaries():
+        for boundary in self.problem.pressure_dirichlet_boundaries():
             bcs += [DirichletBC(W.sub(1), 0.0, boundary)]
 
         return bcs

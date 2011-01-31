@@ -8,8 +8,8 @@ from fsiproblem import *
 
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
-application_parameters.add("end_time", 0.25)
-application_parameters.add("dt", 0.02)
+application_parameters.add("end_time", 0.5)
+application_parameters.add("dt", 0.1)
 application_parameters.add("mesh_scale", 16)
 application_parameters.add("TOL", 0.1)
 application_parameters.add("w_h", 0.45) 
@@ -17,7 +17,7 @@ application_parameters.add("w_k", 0.45)
 application_parameters.add("w_c", 0.1)
 application_parameters.add("fraction", 0.5)
 application_parameters.add("solve_primal", True)
-application_parameters.add("solve_dual", False)
+application_parameters.add("solve_dual", True)
 application_parameters.add("estimate_error", False)
 application_parameters.add("dorfler_marking", True)
 application_parameters.add("uniform_timestep", True)
@@ -102,32 +102,29 @@ class TaylorGreenVortex(FSI):
 
  #--- Fluid parameters ---
 
-    def fluid_viscosity(self):
+    def viscosity(self):
         return 1.0 / 8.0
 
-    def fluid_density(self):
+    def density(self):
         return 1.0
 
-    def fluid_velocity_dirichlet_values(self):
+    def velocity_dirichlet_values(self):
         return [(0, 0)]
 
-    def fluid_velocity_dirichlet_boundaries(self):
+    def velocity_dirichlet_boundaries(self):
         return ["x[1] < DOLFIN_EPS || x[1] > 1.0 - DOLFIN_EPS"]
 
-    def fluid_pressure_dirichlet_values(self):
+    def pressure_dirichlet_values(self):
         return [1, 0]
 
-    def fluid_pressure_dirichlet_boundaries(self):
+    def pressure_dirichlet_boundaries(self):
         return ["x[0] < DOLFIN_EPS", "x[0] > 1 - DOLFIN_EPS"]
 
-    def fluid_velocity_initial_condition(self):
+    def velocity_initial_condition(self):
         return (0, 0)
 
-    def fluid_pressure_initial_condition(self):
+    def pressure_initial_condition(self):
         return "1 - x[0]"
-
-    def end_time(self):
-        return 0.5
 
 # Define problem
 problem = TaylorGreenVortex()

@@ -20,10 +20,8 @@ class FluidProblem(NavierStokes):
         # Store problem
         self.problem = problem
 
-        # Store initial and current mesh
+        # Store fluid mesh as Omega
         self.Omega= problem.fluid_mesh()
-#         self.omega_F0 = Mesh(self.Omega_F)
-#         self.omega_F1 = Mesh(self.Omega_F)
 
         # Initialize base class
         NavierStokes.__init__(self)
@@ -34,31 +32,30 @@ class FluidProblem(NavierStokes):
 
     def mesh(self):
         return self.Omega
-# return self.omega_F1
     
     def viscosity(self):
-        return self.problem.fluid_viscosity()
+        return self.problem.viscosity()
 
     def density(self):
-        return self.problem.fluid_density()
+        return self.problem.density()
 
     def velocity_dirichlet_values(self):
-        return self.problem.fluid_velocity_dirichlet_values()
+        return self.problem.velocity_dirichlet_values()
 
     def velocity_dirichlet_boundaries(self):
-        return self.problem.fluid_velocity_dirichlet_boundaries()
+        return self.problem.velocity_dirichlet_boundaries()
 
     def pressure_dirichlet_values(self):
-        return self.problem.fluid_pressure_dirichlet_values()
+        return self.problem.pressure_dirichlet_values()
 
     def pressure_dirichlet_boundaries(self):
-        return self.problem.fluid_pressure_dirichlet_boundaries()
+        return self.problem.pressure_dirichlet_boundaries()
 
     def velocity_initial_condition(self):
-        return self.problem.fluid_velocity_initial_condition()
+        return self.problem.velocity_initial_condition()
 
     def pressure_initial_condition(self):
-        return self.problem.fluid_pressure_initial_condition()
+        return self.problem.pressure_initial_condition()
 
     def end_time(self):
         return self.problem.end_time()
@@ -74,9 +71,9 @@ def extract_solution(F):
     "Extract solution from the fluid problem"
 
     # Extract solutions from subproblems
-    u_F, p_F = F.solution()
+    u, p = F.solution()
     
     # Pack up solutions
-    U = (u_F, p_F)
+    U = (u, p)
 
     return U
