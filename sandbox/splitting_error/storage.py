@@ -52,10 +52,10 @@ def read_timestep_range(T, series):
     # Get nodal points for primal time series
     t = series[0].vector_times()
 
-    # Check that time series is not empty and covers the interval
-    if not (len(t) > 1 and t[0] == 0.0 and t[-1] == T):
-        print "Nodal points for primal time series:", t
-        raise RuntimeError, "Missing primal data"
+#     # Check that time series is not empty and covers the interval
+#     if not (len(t) > 1 and t[0] == 0.0 and t[-1] == T):
+#         print "Nodal points for primal time series:", t
+#         raise RuntimeError, "Missing primal data"
 
     return t
 

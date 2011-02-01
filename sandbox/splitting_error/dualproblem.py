@@ -33,14 +33,14 @@ def create_dual_forms(Omega, k, problem,
         return  2*mu*epsilon(v) - q*I
     
     # Defined mid point value for the fluid
-    # FIXME: Talk to Anders abou this
+    # FIXME: Talk to Anders/Mats about this
     u_mid = 0.5*(uh0 + uh1)
 
     # Define the dual momemtum form
     # FIXME: Check if this scheme is correct
     dual_mom = -(1/k)*rho*inner((z0 - z), v)*dx \
-               + rho*inner(z, dot(grad(u_mid), v))*dx \
-               + rho*inner(z, dot(grad(v), uh1))*dx \
+               + rho*inner(z, dot(grad(uh0), v))*dx \
+               + rho*inner(z, dot(grad(v), uh0))*dx \
                + inner(epsilon(z), sigma(v,q))*dx
 
     # Define the dual continuity form
@@ -49,9 +49,9 @@ def create_dual_forms(Omega, k, problem,
     # Collect momentum and continuity forms
     dual = dual_mom + dual_cont
 
-    # FIXME: Goal functional should not be defined here
-    # Define goal funtional
-    goal_functional = v[1]*dx + v[0]*dx
+    
+    # Define goal funtional 
+    goal_functional = curl(v)*dx
 
     # Define the dual rhs and lhs
     A = lhs(dual) 
