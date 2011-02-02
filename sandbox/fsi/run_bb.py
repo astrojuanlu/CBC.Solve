@@ -47,7 +47,7 @@ dt  = 0.036
 
 # Define and submit job (and clear old data)
 clean = ("./clean.sh")
-jobs =("python"+" "+ str(problem)+".py"+" "+"--solve_primal" + " " + str(solve_primal) + " " + "--solve_dual" + " " + str(solve_dual) + " " + "--estimate_error" + " " + str(estimate_error) + " " + "--uniform_timestep" + " " + str(uniform_timestep) + " " + "--TOL" + " " + str(TOL) + " " + "--w_h" + " " + str(w_h) + " " + "--w_k" + " " + str(w_k) + " " + "--w_c" + " " + str(w_c) + " " + "--dorfler_marking" + " " + str(dorfler_marking) + " " + "--mesh_alpha" + " " + str(m_a) + " " + "--ny" + " " + str(ny) + " " + "--end_time" + " " + str(end_time) + " " + "--dt" + " " + str(dt) + " " + "--fixed_point_tol" + " " + str(fp_tol) + " " + "--fraction" + " " + str(fraction) + " " + "--vonvergence_test" + " " + str(convergence_test))
+jobs =("python"+" "+ str(problem)+".py"+" "+"--solve_primal" + " " + str(solve_primal) + " " + "--solve_dual" + " " + str(solve_dual) + " " + "--estimate_error" + " " + str(estimate_error) + " " + "--uniform_timestep" + " " + str(uniform_timestep) + " " + "--TOL" + " " + str(TOL) + " " + "--w_h" + " " + str(w_h) + " " + "--w_k" + " " + str(w_k) + " " + "--w_c" + " " + str(w_c) + " " + "--dorfler_marking" + " " + str(dorfler_marking) + " " + "--mesh_alpha" + " " + str(m_a) + " " + "--ny" + " " + str(ny) + " " + "--end_time" + " " + str(end_time) + " " + "--dt" + " " + str(dt) + " " + "--fixed_point_tol" + " " + str(fp_tol) + " " + "--fraction" + " " + str(fraction) + " " + "--convergence_test" + " " + str(convergence_test))
 submit(clean, nodes=1, ppn=8,  keep_environment=True, walltime=24*days, dryrun=False)
 sleep(1)
 submit(jobs, nodes=1, ppn=8,  keep_environment=True, walltime=24*days, dryrun=False)

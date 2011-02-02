@@ -94,6 +94,8 @@ class PrimalSolver:
 
         # Change time step if uniform and/or convergence test is selected
         if self.problem.uniform_timestep() or self.problem.convergence_test():
+            
+            # Get time step size to avoid solving for t > T
             dt, dt_range = timestep_range(T, dt)
             
             # No. time steps
@@ -216,8 +218,8 @@ class PrimalSolver:
                 end()
                 break
 
-            # Use constant time step
-            if self.uniform_timestep:
+            # Use constant time step 
+            if self.uniform_timestep or self.convergence_test:
                 t0 = t1
                 t1 = t1 + dt
                 at_end = t1 > T - DOLFIN_EPS
