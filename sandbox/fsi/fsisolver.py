@@ -36,6 +36,7 @@ class FSISolver(CBCSolver):
         self.parameters.add("num_smoothings", 50)
         self.parameters.add("uniform_timestep", False)
         self.parameters.add("fixed_point_tol", 1e-7)
+        self.parameters.add("convergence_test", False)
 
         # Set DOLFIN parameters
         parameters["form_compiler"]["cpp_optimize"] = True
@@ -81,7 +82,15 @@ class FSISolver(CBCSolver):
                 end()
             else:
                 info("Not estimating error")
-                error = 0
+
+                # Check if convergence test (add random errors)
+                if self.problem.convergence_test():
+                    error = 4  
+                    E_h   = 3
+
+                # Not estimating the error    
+                else: 
+                    error = 0
 
             # Check if error is small enough
             begin("Checking error estimate")
@@ -101,7 +110,15 @@ class FSISolver(CBCSolver):
                 refined_mesh = self.problem.mesh()
             else:
                 info_red("Refining mesh")
-                refined_mesh = refine_mesh(self.problem, self.problem.mesh(), indicators)
+                
+                # Check if convergence test
+                if self.problem.convergence_test():
+                    refined_mesh = refine(self.problem.mesh())
+            
+                # Refine according to error estimate    
+                else:                    
+                    refined_mesh = refine_mesh(self.problem, self.problem.mesh(), indicators)
+
                 self.problem.init_meshes(refined_mesh)
             end()
 

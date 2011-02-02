@@ -30,20 +30,21 @@ from fsiproblem import *
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
 application_parameters.add("end_time", 0.25)
-application_parameters.add("dt", 0.02)
+application_parameters.add("dt", 0.01)
 application_parameters.add("ny", 1)
-application_parameters.add("TOL", 0.1)
+application_parameters.add("TOL", 1e-12)
 application_parameters.add("w_h", 0.45) 
 application_parameters.add("w_k", 0.45)
 application_parameters.add("w_c", 0.1)
-application_parameters.add("fraction", 0.5)
+application_parameters.add("fraction", 1.0)
 application_parameters.add("mesh_alpha", 1.0)
 application_parameters.add("solve_primal", True)
-application_parameters.add("solve_dual", True)
-application_parameters.add("estimate_error", True)
+application_parameters.add("solve_dual", False)
+application_parameters.add("estimate_error", False)
 application_parameters.add("dorfler_marking", False)
-application_parameters.add("uniform_timestep", False)
+application_parameters.add("uniform_timestep", True)
 application_parameters.add("fixed_point_tol", 1e-12)
+application_parameters.add("convergence_test", True)
 application_parameters.parse()
 
 # Collect parameters
@@ -89,7 +90,7 @@ class PressureDrivenCavity(FSI):
 
         # Report problem parameters
         mesh_size = mesh.hmin()
-        f = open("adaptivity/pressure_driven_cavity.txt", "w")
+        f = open("adaptivity/modified_pressure_driven_cavity.txt", "w")
         f.write(parameter_info)
         f.write(str("Mesh size:  ") + (str(mesh_size)) + "\n \n")
         f.close()
@@ -113,6 +114,12 @@ class PressureDrivenCavity(FSI):
 
     def uniform_timestep(self):
         return application_parameters["uniform_timestep"]
+
+    def convergence_test(self):
+        return application_parameters["convergence_test"]
+
+    def convergence_test_timestep(self, mesh):
+        return mesh.hmin()
 
     #--- Common parameters ---
 
@@ -218,6 +225,7 @@ problem.parameters["solver_parameters"]["estimate_error"] = problem.estimate_err
 problem.parameters["solver_parameters"]["uniform_timestep"]  = problem.uniform_timestep()
 problem.parameters["solver_parameters"]["tolerance"] = problem.TOL()
 problem.parameters["solver_parameters"]["fixed_point_tol"] = problem.fixed_point_tol()
+problem.parameters["solver_parameters"]["convergence_test"] = problem.convergence_test()
 
 # Solve problem
 u_F, p_F, U_S, P_S, U_M = problem.solve()

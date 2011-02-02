@@ -10,5 +10,6 @@ rm -r adaptivity/num_dofs.txt
 rm -r adaptivity/error_estimates.txt
 rm -r adaptivity/adaptivity.log
 rm -r adaptivity/uniform_timestep_dofs.txt
+rm -r adaptivity/timestep_hmin.txt
 rm -r adaptivity/pvd/*.vtu
 rm -r adaptivity/pvd/*.pvd

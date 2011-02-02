@@ -29,6 +29,7 @@ class PrimalSolver:
         self.tolerance = solver_parameters["tolerance"]
         self.uniform_timestep = solver_parameters["uniform_timestep"]
         self.fsi_tolerance = solver_parameters["fixed_point_tol"]
+        self.convergence_test = solver_parameters["convergence_test"]
 
         # Create files for saving to VTK
         if self.save_solution:
@@ -59,6 +60,15 @@ class PrimalSolver:
         TOL = self.tolerance
         w_c = self.problem.non_galerkin_error_weight()
 
+        # Change time step if convergence test is used 
+        if self.problem.convergence_test():
+            dt = 0.1 * self.problem.convergence_test_timestep(self.problem.mesh())
+            info_red("The time step is set to 0.1 * hmin ")
+            info_red("dt = %g", dt)
+            f = open("adaptivity/timestep_hmin.txt", "a")
+            f.write(str("Timestep size (conv. test):  ") + (str(dt)) + "\n \n")
+            f.close()
+
         # Define the three subproblems
         F = FluidProblem(self.problem)
         S = StructureProblem(self.problem)
@@ -83,16 +93,17 @@ class PrimalSolver:
         if self.uniform_timestep:
             dt, dt_range = timestep_range(T, dt)
             
-#             # No. time steps
-#             time_dofs = len(dt_range)
-#             total_dofs = num_dofs_FSM * time_dofs
+            # Temp fix
+            info_red("Changed dt , %g", dt)
+
+            # No. time steps
+            time_dofs = len(dt_range) 
+            total_dofs = num_dofs_FSM * time_dofs
         
-#             # Print
-#             f = open("adaptivity/jada.txt", "a")
-#             f.write("%g %g %g \n" %(total_dofs, num_dofs_FSM, time_dofs))
-#             f.close()
-#             exit(True)
-        
+            # Print to file
+            f = open("adaptivity/uniform_timestep_dofs.txt", "a")
+            f.write("%g %g %g \n" %(total_dofs, num_dofs_FSM, time_dofs))
+            f.close()
 
         # Initialize time-stepping
         t0 = 0.0
