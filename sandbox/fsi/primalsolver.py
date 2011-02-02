@@ -62,9 +62,12 @@ class PrimalSolver:
 
         # Change time step if convergence test is used 
         if self.problem.convergence_test():
+            
+            # Set time step size based on current mesh size
             dt = 0.1 * self.problem.convergence_test_timestep(self.problem.mesh())
-            info_red("The time step is set to 0.1 * hmin ")
-            info_red("dt = %g", dt)
+            warning("The time step is set to 0.1 * hmin  = %g", dt)
+            
+            # Write to file
             f = open("adaptivity/timestep_hmin.txt", "a")
             f.write(str("Timestep size (conv. test):  ") + (str(dt)) + "\n \n")
             f.close()
@@ -89,13 +92,10 @@ class PrimalSolver:
         self._save_solution(U)
         write_primal_data(U, 0, self.time_series)
 
-        # Change time step if uniform
-        if self.uniform_timestep:
+        # Change time step if uniform and/or convergence test is selected
+        if self.problem.uniform_timestep() or self.problem.convergence_test():
             dt, dt_range = timestep_range(T, dt)
             
-            # Temp fix
-            info_red("Changed dt , %g", dt)
-
             # No. time steps
             time_dofs = len(dt_range) 
             total_dofs = num_dofs_FSM * time_dofs
