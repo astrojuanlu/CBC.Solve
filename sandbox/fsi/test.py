@@ -1,69 +1,16 @@
-"This demo program demonstrates various algorithms for mesh smoothing."
-
-__author__ = "Anders Logg (logg@simula.no)"
-__date__ = "2010-03-02"
-__copyright__ = "Copyright (C) 2010 " + __author__
-__license__  = "GNU LGPL Version 2.1"
-
-# Last changed: 2010-05-11
-
 from dolfin import *
 
-not_working_in_parallel("mesh smoothing demo")
+application_parameters = Parameters("application_parameters")
 
-# Create rectangular mesh
-channel_length  = 4.0
-channel_height  = 1.0
-structure_left  = 1.4
-structure_right = 1.6
-structure_top   = 0.5
-ny = 10
-nx = 4*ny 
-mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
+#application_parameters.add("end_time", 0.25)
+#application_parameters.add("dt", 0.01)
+#application_parameters.add("mesh_scale", 1)
+#application_parameters.add("TOL", 1e-12)
+#application_parameters.add("w_h", 0.45)
+#application_parameters.add("w_k", 0.45)
+#application_parameters.add("w_c", 0.1)
 
-# Define a circular hole
-center = Point(0.5, 0.5)
-radius = 0.1
+file = File("application_parameters.xml")
+file >> application_parameters
 
-class Hole(SubDomain):
-
-    def inside(self, x, on_boundary):
-        r = sqrt((x[0] - center[0])**2 + (x[1] - center[0])**2)
-        return r < 1.5*radius # slightly larger
-
-    def snap(self, x):
-        r = sqrt((x[0] - center[0])**2 + (x[1] - center[1])**2)
-        if r < 1.5*radius:
-            x[0] = center[0] + (radius / r)*(x[0] - center[0])
-            x[1] = center[1] + (radius / r)*(x[1] - center[1])
-
-# Mark hole and extract submesh
-hole = Hole()
-sub_domains = MeshFunction("uint", mesh, mesh.topology().dim())
-sub_domains.set_all(0)
-hole.mark(sub_domains, 1)
-mesh = SubMesh(mesh, sub_domains, 0)
-mesh.snap_boundary(hole)
-
-# Refine and snap mesh
-plot(mesh, title="Mesh 0")
-num_refinements = 3
-for i in range(num_refinements):
-
-    # Mark cells for refinement
-    markers = MeshFunction("bool", mesh, mesh.topology().dim())
-    markers.set_all(False)
-    for cell in cells(mesh):
-        if cell.midpoint().distance(center) < 2*radius:
-            markers[cell.index()] = True
-
-    # Refine mesh
-    mesh = refine(mesh, markers)
-
-    # Snap boundary
-    mesh.snap_boundary(hole)
-
-    # Plot mesh
-    plot(mesh, title=("Mesh %d" % (i + 1)))
-
-interactive()
+info(application_parameters, True)

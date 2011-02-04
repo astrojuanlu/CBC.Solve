@@ -2,15 +2,15 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-12-08
+# Last changed: 2011-02-04
 
 from fsiproblem import *
 
-# ------------------------------------------ 
-#                 NOSLIP
-#  p = 1                            p = 0
-#                         
-#  NOSLIP                           NOSLIP
+# ------------------------------------------
+#                  NOSLIP
+#  p = 1                             p = 0
+#
+#  NOSLIP                            NOSLIP
 # -------                          ---------
 #        |                        |
 #        |                        |
@@ -18,34 +18,21 @@ from fsiproblem import *
 #        |         FLUID          |
 #        |                        |
 #        |                        |
-#        |                        |  
 #        |                        |
-#        __________________________ (1.0, 0.25)
 #        |                        |
-# FIXED  |       STRUCTURE        |  FIXED 
+#        |________________________| (1.0, 0.25)
 #        |                        |
-#        -------------------------- (1.0, 0.0)
-#                  FREE
+# FIXED  |        STRUCTURE       |  FIXED
+#        |                        |
+#         ------------------------ (1.0, 0.0)
+#                   FREE
 
-# Create application parameters set
-application_parameters = Parameters("application_parameters")
-application_parameters.add("end_time", 0.25)
-application_parameters.add("dt", 0.01)
-application_parameters.add("mesh_scale", 1)
-application_parameters.add("TOL", 1e-12)
-application_parameters.add("w_h", 0.45) 
-application_parameters.add("w_k", 0.45)
-application_parameters.add("w_c", 0.1)
-application_parameters.add("fraction", 0.5)
-application_parameters.add("mesh_alpha", 1.0)
-application_parameters.add("fixed_point_tol", 1e-12)
-application_parameters.add("solve_primal", True)
-application_parameters.add("solve_dual", True)
-application_parameters.add("estimate_error", True)
-application_parameters.add("dorfler_marking", True)
-application_parameters.add("uniform_timestep", False)
-application_parameters.add("convergence_test", False)
-application_parameters.parse()
+# Create application parameters
+
+# Parse from file "application_parameters.xml"
+file = File("application_parameters.xml")
+application_parameters = Parameters("application_parameters_file")
+file >> application_parameters
 
 # Collect parameters
 parameter_info = application_parameters.option_string()
@@ -59,10 +46,10 @@ structure_top   = 0.25
 inflow_top = 1.5
 inflow_bottom = 1.25
 
-# Define boundaries 
+# Define boundaries
 inflow        = "x[0] < DOLFIN_EPS && x[1] > %g - DOLFIN_EPS &&  x[1] < %g + DOLFIN_EPS" %(inflow_bottom, inflow_top)
 outflow       = "x[0] > %g - DOLFIN_EPS && x[1] > %g - DOLFIN_EPS && x[1] < %g + DOLFIN_EPS"  %(cavity_length, inflow_bottom, inflow_top)
-fixed_left    = "x[0] == 0.0  && x[1] >= DOFLIN_EPS" 
+fixed_left    = "x[0] == 0.0  && x[1] >= DOFLIN_EPS"
 fixed_right   = "x[0] > %g - DOLFIN_EPS  && x[1] >= 0.0" %structure_right
 noslip        = "on_boundary && !(%s) && !(%s) " %(inflow, outflow)
 
@@ -88,13 +75,6 @@ class PressureDrivenCavity(FSI):
         file = File("adaptivity/mesh_0.xml")
         file << mesh
 
-        # Report problem parameters
-        mesh_size = mesh.hmin()
-        f = open("adaptivity/modified_pressure_driven_cavity.txt", "w")
-        f.write(parameter_info)
-        f.write(str("Mesh size:  ") + (str(mesh_size)) + "\n \n")
-        f.close()
-
         # Initialize base class
         FSI.__init__(self, mesh)
 
@@ -108,7 +88,7 @@ class PressureDrivenCavity(FSI):
 
     def estimate_error(self):
         return application_parameters["estimate_error"]
-    
+
     def dorfler_marking(self):
         return application_parameters["dorfler_marking"]
 
@@ -154,7 +134,7 @@ class PressureDrivenCavity(FSI):
         return displacement
 
     def __str__(self):
-        return "Pressure driven cavity with an elastic bottom" 
+        return "Pressure driven cavity with an elastic bottom"
 
     #--- Parameters for fluid problem ---
 
