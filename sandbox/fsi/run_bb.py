@@ -2,14 +2,17 @@ import os
 from time import sleep
 from dolfin_utils.pjobs import submit
 os.environ['PYTHONPATH'] = "..:../..:" + os.environ['PYTHONPATH']
-days = 2000 
+days = 2000
+
+# Use for quick testing on local machine
+#submit = lambda command, *args, **kwargs : os.system(command)
 
 # Define problem names
 problem_names = ["modified_pressure_driven_cavity", "channel_with_flap", "driven_cavity_free_bottom", "driven_cavity_fixed_bottom" , "leaky_cavity_free_bottom", "leaky_cavity_fixed_bottom"]
 
 #-----------------------------------------------
 # problem_names[0] = modified_pressure_driven_cavity ("new" BC)
-# problem_names[1] = channel_with_flap * 
+# problem_names[1] = channel_with_flap *
 # problem_names[2] = driven_cavity_free_bottom *
 # problem_names[3] = driven_cavity_fixed_bottom *
 # problem_names[4] = leaky_cavity_free_bottom *
@@ -37,8 +40,8 @@ w_c = 0.1
 fp_tol = 1e-12
 
 # Define mesh parameters
-fraction = 0.5  
-m_a = 1.0   # Mesh constant 
+fraction = 0.5
+m_a = 1.0   # Mesh constant
 mesh_scale = 1
 
 # Define time parameters
@@ -51,5 +54,3 @@ jobs =("python"+" "+ str(problem)+".py"+" "+"--solve_primal" + " " + str(solve_p
 submit(clean, nodes=1, ppn=8,  keep_environment=True, walltime=24*days, dryrun=False)
 sleep(1)
 submit(jobs, nodes=1, ppn=8,  keep_environment=True, walltime=24*days, dryrun=False)
-
-
