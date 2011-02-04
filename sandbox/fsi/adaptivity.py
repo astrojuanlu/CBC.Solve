@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-04
+# Last changed: 2011-02-05
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -23,13 +23,9 @@ refinement_level = 0
 min_timestep = None
 
 # Create files for plotting error indicators
-indicator_files  = (File("adaptivity/pvd/eta_F.pvd"),
-                    File("adaptivity/pvd/eta_S.pvd"),
-                    File("adaptivity/pvd/eta_M.pvd"),
-                    File("adaptivity/pvd/eta_K.pvd"),
-                    File("adaptivity/pvd/refinement_markers.pvd"))
+indicator_files = None
 
-def estimate_error(problem):
+def estimate_error(problem, parameters):
     "Estimate error and compute error indicators"
 
     # Get meshes
@@ -46,8 +42,8 @@ def estimate_error(problem):
     w = TestFunctions(W)
 
     # Create time series
-    primal_series = create_primal_series()
-    dual_series = create_dual_series()
+    primal_series = create_primal_series(parameters)
+    dual_series = create_dual_series(parameters)
 
     # Create primal functions
     U0 = create_primal_functions(Omega)
@@ -173,10 +169,10 @@ def estimate_error(problem):
     E = E_h + E_k + abs(E_c)
 
     # Report results
-    save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M,  ST)
-#    save_computational_errors(E_c_F, E_c_S, E_c_M)
-    save_indicators(eta_F, eta_S, eta_M, eta_K, Omega)
-    save_stability_factor(T, ST)
+    save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, ST, parameters)
+#    save_computational_errors(E_c_F, E_c_S, E_c_M, parameters)
+    save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters)
+    save_stability_factor(T, ST, parameters)
 
     return E, eta_K, ST, E_h
 
@@ -265,7 +261,7 @@ def refine_mesh(problem, mesh, indicators):
 
     return refined_mesh
 
-def compute_time_step(problem, Rk, ST, TOL, dt, t1, T, w_k):
+def compute_time_step(problem, Rk, ST, TOL, dt, t1, T, w_k, parameters):
     """Compute new time step based on residual R, stability factor S,
     tolerance TOL, and the previous time step dt. The time step is
     adjusted so that we will not step beyond the given end time."""
@@ -294,9 +290,9 @@ def compute_time_step(problem, Rk, ST, TOL, dt, t1, T, w_k):
         min_timestep = dt_new
 
     # Save time step
-    save_timestep(t1, Rk, dt)
+    save_timestep(t1, Rk, dt, parameters)
     if at_end:
-        save_timestep(T, Rk, dt_new)
+        save_timestep(T, Rk, dt_new, parameters)
 
     info("Changing time step: %g --> %g" % (dt, dt_new))
 
@@ -333,11 +329,11 @@ def compute_itertol(problem, w_c, TOL, dt, t1, parameters):
         end()
 
     # Save FSI iteration tolerance to file
-    save_itertol(t1, tol)
+    save_itertol(t1, tol, parameters)
 
     return tol
 
-def save_mesh(mesh):
+def save_mesh(mesh, parameters):
     "Save mesh to file"
 
     global refinement_level
@@ -346,10 +342,10 @@ def save_mesh(mesh):
     refinement_level += 1
 
     # Save refined mesh
-    file = File("adaptivity/mesh_%d.xml" % refinement_level)
+    file = File("%s/mesh_%d.xml" % (parameters["output_directory"], refinement_level))
     file << mesh
 
-def save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, ST):
+def save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, ST, parameters):
     "Save errors to file"
 
     global refinement_level
@@ -375,72 +371,74 @@ S(T)  = %g
     info(summary)
 
     # Save to log file
-    f = open("adaptivity/adaptivity.log", "a")
+    f = open("%s/adaptivity.log" % parameters["output_directory"], "a")
     f.write(summary)
     f.close()
 
     # Save to file (for plotting)
-    g = open("adaptivity/error_estimates.txt", "a")
+    g = open("%s/error_estimates.txt" % parameters["output_directory"], "a")
     g.write("%d %g %g %g %g %g %g %g %g \n" %(refinement_level, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M, ST))
     g.close()
 
-def save_timestep(t1, Rk, dt):
+def save_timestep(t1, Rk, dt, parameters):
     "Save time step to file"
 
     global refinement_level
 
-    f = open("adaptivity/timesteps.txt", "a")
+    info(parameters, True)
+
+    f = open("%s/timesteps.txt" % parameters["output_directory"], "a")
     f.write("%d %g %g %g\n" % (refinement_level, t1, dt, Rk))
     f.close()
 
-def save_stability_factor(T, ST):
+def save_stability_factor(T, ST, parameters):
     "Save Galerkin stability factor"
 
     global refinement_level
 
-    f = open("adaptivity/stability_factor.txt", "a")
+    f = open("%s/stability_factor.txt" % parameters["output_directory"], "a")
     f.write("%g %g\n" % (T, ST))
     f.close()
 
-def save_goal_functional(t1, goal_functional):
+def save_goal_functional(t1, goal_functional, parameters):
     "Saving goal functional at t = t1"
 
     global refinement_level
 
     info("Value of goal functional at t = %g: %g" % (t1, goal_functional))
-    f = open("adaptivity/goal_functional.txt", "a")
+    f = open("%s/goal_functional.txt" % parameters["output_directory"], "a")
     f.write("%d %.16g %.16g\n" % (refinement_level, t1, goal_functional))
     f.close()
 
-def save_goal_functional_final(goal_functional):
+def save_goal_functional_final(goal_functional, parameters):
     "Saving goal functional at final time"
 
     global refinement_level
 
     info("Value of goal functional at T: %g" % goal_functional)
-    f = open("adaptivity/goal_functional_final.txt", "a")
+    f = open("%s/goal_functional_final.txt" % parameters["output_directory"], "a")
     f.write("%d %.16g\n" % (refinement_level, goal_functional))
     f.close()
 
-def save_itertol(t1, tol):
+def save_itertol(t1, tol, parameters):
     "Save FSI iteration tolerance"
 
     global refinment_level
 
-    f = open("adaptivity/fsi_tolerance.txt", "a")
+    f = open("%s/fsi_tolerance.txt" % parameters["output_directory"], "a")
     f.write("%d %g %g \n" % (refinement_level, t1, tol))
     f.close()
 
-def save_no_FSI_iter(t1, no):
+def save_no_FSI_iter(t1, no, parameters):
     "Save number of FSI iterations"
 
     global refinement_level
 
-    f = open("adaptivity/no_iterations.txt", "a")
+    f = open("%s/no_iterations.txt" % parameters["output_directory"], "a")
     f.write("%d %g %g \n" % (refinement_level, t1, no))
     f.close()
 
-def save_dofs(num_dofs_FSM, timestep_counter):
+def save_dofs(num_dofs_FSM, timestep_counter, parameters):
     "Save number of total number of dofs"
 
     global refinement_level
@@ -450,12 +448,14 @@ def save_dofs(num_dofs_FSM, timestep_counter):
     time_dofs  = timestep_counter
     dofs       = space_dofs * time_dofs
 
-    f = open("adaptivity/num_dofs.txt", "a")
+    f = open("%s/num_dofs.txt" % parameters["output_directory"], "a")
     f.write("%d %g %g %g \n" %(refinement_level, dofs, space_dofs, time_dofs))
     f.close()
 
-def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega):
+def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters):
     "Save mesh function for visualization"
+
+    global indicator_files
 
     # Create mesh functions
     plot_markers_F = MeshFunction("double", Omega, Omega.topology().dim())
@@ -479,6 +479,14 @@ def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega):
     # Sum markers
     plot_markers = [plot_markers_F, plot_markers_S, plot_markers_M, plot_markers_K]
 
+    # Create indicator files
+    if indicator_files is None:
+        indicator_files = ((File("%s/pvd/eta_F.pvd" % parameters["output_directory"]),
+                            File("%s/pvd/eta_S.pvd" % parameters["output_directory"]),
+                            File("%s/pvd/eta_M.pvd" % parameters["output_directory"]),
+                            File("%s/pvd/eta_K.pvd" % parameters["output_directory"]),
+                            File("%s/pvd/refinement_markers.pvd" % parameters["output_directory"])))
+
     # Save markers
     for i in range(4):
         indicator_files[i] << plot_markers[i]
@@ -499,4 +507,3 @@ def save_refinement_markers(mesh, markers):
 
     # Save markers
     indicator_files[4] << refinement_markers
-

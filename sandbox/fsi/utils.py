@@ -6,6 +6,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2011-02-04
 
+from os import mkdir
 from time import strftime
 from dolfin import CellFunction
 

@@ -29,15 +29,20 @@ def default_parameters():
     p.add("w_c", 0.1)
     p.add("marking_fraction", 0.5)
 
+    p.add("output_directory", "results")
+
     return p
 
-def store_parameters(p, prefix="application"):
+def store_parameters(p):
     "Store parameters to file"
 
-    # Save to file "application_parameters.xml"
-    file = File("%s_parameters.xml" % prefix)
+    # Set output directory
+    p["output_directory"] = "results-%s" % date()
+
+    # Save to file application_parameters.xml
+    file = File("application_parameters.xml")
     file << p
 
-    # Save to file based on current date
-    file = File("%s_parameters-%s.xml" % (prefix, date()))
+    # Save to file <output_directory>/application_parameters.xml
+    file = File("%s/application_parameters.xml" % p["output_directory"])
     file << p

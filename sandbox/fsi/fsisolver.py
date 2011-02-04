@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-04
+# Last changed: 2011-02-05
 
 __all__ = ["FSISolver"]
 
@@ -66,7 +66,7 @@ class FSISolver(CBCSolver):
             # Estimate error and compute error indicators
             if parameters["estimate_error"]:
                 begin("Estimating error and computing error indicators")
-                error, indicators, ST, E_h = estimate_error(self.problem)
+                error, indicators, ST, E_h = estimate_error(self.problem, parameters)
                 end()
             else:
                 info("Not estimating error")

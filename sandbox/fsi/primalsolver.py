@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-04
+# Last changed: 2011-02-05
 
 import pylab
 from time import time
@@ -33,14 +33,14 @@ def solve_primal(problem, parameters, ST):
 
     # Create files for saving to VTK
     if save_solution:
-        files = (File("pvd/u_F.pvd"),
-                 File("pvd/p_F.pvd"),
-                 File("pvd/U_S.pvd"),
-                 File("pvd/P_S.pvd"),
-                 File("pvd/U_M.pvd"))
+        files = (File("%s/pvd/u_F.pvd" % parameters["output_directory"]),
+                 File("%s/pvd/p_F.pvd" % parameters["output_directory"]),
+                 File("%s/pvd/U_S.pvd" % parameters["output_directory"]),
+                 File("%s/pvd/P_S.pvd" % parameters["output_directory"]),
+                 File("%s/pvd/U_M.pvd" % parameters["output_directory"]))
 
     # Create time series for storing solution
-    time_series = create_primal_series()
+    time_series = create_primal_series(parameters)
 
     # Record CPU time
     cpu_time = time()
@@ -138,13 +138,13 @@ def solve_primal(problem, parameters, ST):
                 end()
 
                 # Saving number of FSI iterations
-                save_no_FSI_iter(t1, iter + 1)
+                save_no_FSI_iter(t1, iter + 1, parameters)
 
                 # Evaluate user goal functional
                 goal_functional = problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, t1)
 
                 # Save goal functional
-                save_goal_functional(t1, goal_functional)
+                save_goal_functional(t1, goal_functional, parameters)
                 break
 
             # Check if we have reached the maximum number of iterations
@@ -176,7 +176,7 @@ def solve_primal(problem, parameters, ST):
         if at_end:
             info("")
             info_green("Finished time-stepping")
-            save_dofs(num_dofs_FSM, timestep_counter)
+            save_dofs(num_dofs_FSM, timestep_counter, parameters)
             end()
             break
 
@@ -190,12 +190,12 @@ def solve_primal(problem, parameters, ST):
         # Compute new adaptive time step
         else:
             Rk = compute_time_residual(time_series, t0, t1, problem)
-            (dt, at_end) = compute_time_step(problem, Rk, ST, TOL, dt, t1, T, w_k)
+            (dt, at_end) = compute_time_step(problem, Rk, ST, TOL, dt, t1, T, w_k, parameters)
             t0 = t1
             t1 = t1 + dt
 
     # Save final value of goal functional
-    save_goal_functional_final(goal_functional)
+    save_goal_functional_final(goal_functional, parameters)
 
     # Report elapsed time
     info_blue("Primal solution computed in %g seconds." % (time() - cpu_time))

@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-04
+# Last changed: 2011-02-05
 
 from time import time
 from dolfin import *
@@ -28,19 +28,19 @@ def solve_dual(problem, parameters):
     # Create files for saving to VTK
     files = None
     if save_solution:
-        Z_F_file = File("pvd/Z_F.pvd")
-        Y_F_file = File("pvd/Y_F.pvd")
-        Z_S_file = File("pvd/Z_S.pvd")
-        Y_S_file = File("pvd/Y_S.pvd")
-        Z_M_file = File("pvd/Z_M.pvd")
-        Y_M_file = File("pvd/Y_M.pvd")
+        Z_F_file = File("%s/pvd/Z_F.pvd" % parameters["output_directory"])
+        Y_F_file = File("%s/pvd/Y_F.pvd" % parameters["output_directory"])
+        Z_S_file = File("%s/pvd/Z_S.pvd" % parameters["output_directory"])
+        Y_S_file = File("%s/pvd/Y_S.pvd" % parameters["output_directory"])
+        Z_M_file = File("%s/pvd/Z_M.pvd" % parameters["output_directory"])
+        Y_M_file = File("%s/pvd/Y_M.pvd" % parameters["output_directory"])
         files = [Z_F_file, Y_F_file,
                  Z_S_file, Y_S_file,
                  Z_M_file, Y_M_file]
 
     # Create time series for storing solution
-    primal_series = create_primal_series()
-    dual_series = create_dual_series()
+    primal_series = create_primal_series(parameters)
+    dual_series = create_dual_series(parameters)
 
     # Record CPU time
     cpu_time = time()

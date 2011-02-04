@@ -12,14 +12,21 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-04
+# Last changed: 2011-02-05
 
 from numpy import append
 from dolfin import *
 
-def create_primal_series():
+def create_primal_series(parameters):
     "Create time series for primal solution"
     info("Creating primal time series.")
+    # Don't write to results directory, otherwise difficult to run
+    # dual after primal etc in separate runs
+    #u_F = TimeSeries("%s/bin/u_F" % parameters["output_directory"])
+    #p_F = TimeSeries("%s/bin/p_F" % parameters["output_directory"])
+    #U_S = TimeSeries("%s/bin/U_S" % parameters["output_directory"])
+    #P_S = TimeSeries("%s/bin/P_S" % parameters["output_directory"])
+    #U_M = TimeSeries("%s/bin/U_M" % parameters["output_directory"])
     u_F = TimeSeries("bin/u_F")
     p_F = TimeSeries("bin/p_F")
     U_S = TimeSeries("bin/U_S")
@@ -27,9 +34,10 @@ def create_primal_series():
     U_M = TimeSeries("bin/U_M")
     return (u_F, p_F, U_S, P_S, U_M)
 
-def create_dual_series():
+def create_dual_series(parameters):
     "Create time series for dual solution"
     info("Creating dual time series.")
+    #return TimeSeries("%s/bin/Z", parameters["output_directory"])
     return TimeSeries("bin/Z")
 
 def read_primal_data(U, t, Omega, Omega_F, Omega_S, series):
