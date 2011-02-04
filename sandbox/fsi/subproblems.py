@@ -9,9 +9,9 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-12-12
+# Last changed: 2011-02-04
 
-__all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution", 
+__all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
 
 from dolfin import *
@@ -39,8 +39,8 @@ class FluidProblem(NavierStokes):
         self.U_F = Function(self.V)
         self.P_F = Function(self.Q)
 
-        # Calculate number of dofs 
-        self.num_dofs = self.U_F.vector().size() + self.P_F.vector().size()  
+        # Calculate number of dofs
+        self.num_dofs = self.U_F.vector().size() + self.P_F.vector().size()
 
         # Initialize base class
         NavierStokes.__init__(self)
@@ -48,6 +48,8 @@ class FluidProblem(NavierStokes):
         # Don't plot and save solution in subsolvers
         self.parameters["solver_parameters"]["plot_solution"] = False
         self.parameters["solver_parameters"]["save_solution"] = False
+
+        #
 
     def mesh(self):
         return self.omega_F1
@@ -108,7 +110,7 @@ class FluidProblem(NavierStokes):
 
         return Sigma_F
 
-    def update_mesh_displacement(self, U_M, dt):
+    def update_mesh_displacement(self, U_M, dt, num_smoothings):
 
         # Get mesh coordinate data
         X  = self.Omega_F.coordinates()
@@ -127,7 +129,6 @@ class FluidProblem(NavierStokes):
         self.omega_F1.coordinates()[:] = x1
 
         # Smooth the mesh
-        num_smoothings = self.problem.parameters["solver_parameters"]["num_smoothings"]
         self.omega_F1.smooth(num_smoothings)
 
         # Update mesh velocity
@@ -169,7 +170,7 @@ class StructureProblem(Hyperelasticity):
         self.G_S = Function(self.V_S)
         self.N_F = FacetNormal(Omega_F)
 
-        # Calculate number of dofs 
+        # Calculate number of dofs
         self.num_dofs = 2 * self.G_S.vector().size()
 
         # Initialize base class
@@ -253,7 +254,7 @@ class MeshProblem():
         u0 = Function(V)
         u1 = Function(V)
 
-        # Calculate number of dofs 
+        # Calculate number of dofs
         self.num_dofs = u0.vector().size()
 
         # Define boundary condition
@@ -311,7 +312,7 @@ class MeshProblem():
 
 def extract_num_dofs(F, S, M):
     "Extract the number of dofs"
-    
+
     # Extract number of dofs
     F_dofs = F.num_dofs
     S_dofs = S.num_dofs

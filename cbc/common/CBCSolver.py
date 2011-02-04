@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-10-21
+# Last changed: 2011-02-04
 
 from time import time
 from dolfin import info, error, Progress
@@ -66,12 +66,13 @@ def create_dirichlet_conditions(values, boundaries, function_space):
         error("The number of Dirichlet values does not match the number of Dirichlet boundaries.")
 
     # Create Dirichlet conditions
-    info("Creating %d Dirichlet boundary conditions" % len(values))
+    info("Creating %d Dirichlet boundary condition(s)." % len(values))
     bcs = []
     for (i, value) in enumerate(values):
         pretty_str = str(boundaries[i])
         while "  " in pretty_str: pretty_str = pretty_str.replace("  ", " ")
-        info("Creating Dirichlet boundary condition at %s" % pretty_str)
+        info("Creating Dirichlet boundary condition.")
+        #info(pretty_str)
         subdomain = boundaries[i]
         if not isinstance(subdomain, SubDomain):
             subdomain = compile_subdomains(subdomain)

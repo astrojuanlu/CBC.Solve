@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Anders Logg, 2010
-# Last changed: 2010-09-16
+# Last changed: 2011-02-04
 
 from dolfin import *
 from cbc.common import *
@@ -147,12 +147,12 @@ class MomentumBalanceSolver(CBCSolver):
         # If either are text strings, assume those are file names and
         # load conditions from those files
         if isinstance(u0, str):
-            print "Loading initial displacement from file"
+            info("Loading initial displacement from file.")
             file_name = u0
             u0 = Function(vector)
             u0.vector()[:] = loadtxt(file_name)[:]
         if isinstance(v0, str):
-            print "Loading initial velocity from file"
+            info("Loading initial velocity from file.")
             file_name = v0
             v0 = Function(vector)
             v0.vector()[:] = loadtxt(file_name)[:]
@@ -229,7 +229,7 @@ class MomentumBalanceSolver(CBCSolver):
 
         density_type = str(rho0.__class__)
         if not ("dolfin" in density_type):
-            print "Converting given density to a DOLFIN Constant"
+            info("Converting given density to a DOLFIN Constant.")
             rho0 = Constant(rho0)
 
         # Piola-Kirchhoff stress tensor based on the material model
@@ -260,7 +260,8 @@ class MomentumBalanceSolver(CBCSolver):
         boundary.set_all(len(neumann_boundaries) + 1)
 
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
-            print "Applying Neumann boundary condition at", neumann_boundary
+            info("Applying Neumann boundary condition.")
+            info(str(neumann_boundary))
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
             L = L - inner(neumann_conditions[i], v)*ds(i)
@@ -306,7 +307,7 @@ class MomentumBalanceSolver(CBCSolver):
 
         # Time loop
         for t in self.t_range:
-            print "Solving the problem at time t = " + str(self.t)
+            info("Solving the problem at time t = " + str(self.t))
             self.step(self.dt)
             self.update()
 
@@ -419,12 +420,12 @@ class CG1MomentumBalanceSolver(CBCSolver):
         # If either are text strings, assume those are file names and
         # load conditions from those files
         if isinstance(u0, str):
-            print "Loading initial displacement from file"
+            info("Loading initial displacement from file.")
             file_name = u0
             _u0 = loadtxt(file_name)[:]
             U0.vector()[0:len(_u0)] = _u0[:]
         if isinstance(v0, str):
-            print "Loading initial velocity from file"
+            info("Loading initial velocity from file.")
             file_name = v0
             _v0 = loadtxt(file_name)[:]
             U0.vector()[len(_v0) + 1:2*len(_v0) - 1] = _v0[:]
@@ -461,7 +462,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
         density_type = str(rho0.__class__)
         if not ("dolfin" in density_type):
-            print "Converting given density to a DOLFIN Constant"
+            info("Converting given density to a DOLFIN Constant.")
             rho0 = Constant(rho0)
 
         # Piola-Kirchhoff stress tensor based on the material model
@@ -486,7 +487,8 @@ class CG1MomentumBalanceSolver(CBCSolver):
         boundary.set_all(len(neumann_boundaries) + 1)
 
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
-            print "Applying Neumann boundary condition at", neumann_boundary
+            info("Applying Neumann boundary condition.")
+            info(str(neumann_boundary))
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
             L = L - k*inner(neumann_conditions[i], xi)*ds(i)
@@ -525,7 +527,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
         # Time loop
         for t in self.t_range:
-            print "Solving the problem at time t = " + str(self.t)
+            info("Solving the problem at time t = " + str(self.t))
             self.step(self.dt)
             self.update()
 

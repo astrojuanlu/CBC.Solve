@@ -9,6 +9,7 @@ from numpy import array, append
 from cbc.common import CBCProblem
 
 from fsisolver import FSISolver
+from parameters import default_parameters
 
 class FSI(CBCProblem):
     "Base class for all FSI problems"
@@ -19,24 +20,13 @@ class FSI(CBCProblem):
         # Initialize base class
         CBCProblem.__init__(self)
 
-        # Create solver
-        self.solver = FSISolver(self)
-
-        # Set up parameters
-        self.parameters = Parameters("problem_parameters")
-        self.parameters.add(self.solver.parameters)
-
         # Create submeshes and mappings
         self.init_meshes(mesh)
 
-    def solve(self):
+    def solve(self, parameters=default_parameters()):
         "Solve and return computed solution (u_F, p_F, U_S, P_S, U_M, P_M)"
-
-        # Update solver parameters
-        self.solver.parameters.update(self.parameters["solver_parameters"])
-
-        # Call solver
-        return self.solver.solve()
+        solver = FSISolver(self)
+        return solver.solve(parameters)
 
     def init_meshes(self, Omega):
         "Create mappings between submeshes"

@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-01-07
+# Last changed: 2011-02-04
 
 __all__ = ["FSISolver"]
 
@@ -11,8 +11,8 @@ from time import time
 from dolfin import *
 from cbc.common import CBCSolver
 
-from primalsolver import PrimalSolver
-from dualsolver import DualSolver
+from primalsolver import solve_primal
+from dualsolver import solve_dual
 from adaptivity import estimate_error, refine_mesh, save_mesh
 
 class FSISolver(CBCSolver):
@@ -23,29 +23,18 @@ class FSISolver(CBCSolver):
         # Initialize base class
         CBCSolver.__init__(self)
 
-        # Set solver parameters
-        self.parameters = Parameters("solver_parameters")
-        self.parameters.add("solve_primal", True)
-        self.parameters.add("solve_dual", True)
-        self.parameters.add("estimate_error", True)
-        self.parameters.add("plot_solution", False)
-        self.parameters.add("save_solution", True)
-        self.parameters.add("save_series", True)
-        self.parameters.add("tolerance", 0.1)
-        self.parameters.add("maxiter", 100)
-        self.parameters.add("num_smoothings", 50)
-        self.parameters.add("uniform_timestep", False)
-        self.parameters.add("fixed_point_tol", 1e-7)
-        self.parameters.add("convergence_test", False)
-
         # Set DOLFIN parameters
         parameters["form_compiler"]["cpp_optimize"] = True
 
         # Store problem
         self.problem = problem
 
-    def solve(self):
+    def solve(self, parameters):
         "Solve the FSI problem (main adaptive loop)"
+
+        # Get parameters
+        tolerance = parameters["tolerance"]
+        w_h = parameters["w_h"]
 
         # Create empty solution (return value when primal is not solved)
         U = 5*(None,)
@@ -58,43 +47,32 @@ class FSISolver(CBCSolver):
         while True:
 
             # Solve primal problem
-            if self.parameters["solve_primal"]:
+            if parameters["solve_primal"]:
                 begin("Solving primal problem")
-                primal_solver = PrimalSolver(self.problem, self.parameters)
-                U = primal_solver.solve(ST)
+                solve_primal(self.problem, parameters, ST)
                 end()
             else:
                 info("Not solving primal problem")
 
             # Solve dual problem
-            if self.parameters["solve_dual"]:
+            if parameters["solve_dual"]:
                 begin("Solving dual problem")
-                dual_solver = DualSolver(self.problem, self.parameters)
-                dual_solver.solve()
+                solve_dual(self.problem, parameters)
                 end()
             else:
                 info("Not solving dual problem")
 
             # Estimate error and compute error indicators
-            if self.parameters["estimate_error"]:
+            if parameters["estimate_error"]:
                 begin("Estimating error and computing error indicators")
                 error, indicators, ST, E_h = estimate_error(self.problem)
                 end()
             else:
                 info("Not estimating error")
-
-                # Check if convergence test (add random errors)
-                if self.problem.convergence_test():
-                    error = 4  
-                    E_h   = 3
-
-                # Not estimating the error    
-                else: 
-                    error = 0
+                error = 0.0
 
             # Check if error is small enough
             begin("Checking error estimate")
-            tolerance = self.parameters["tolerance"]
             if error <= tolerance:
                 info_green("Adaptive solver converged: error = %g <= TOL = %g" % (error, tolerance))
                 break
@@ -104,20 +82,20 @@ class FSISolver(CBCSolver):
 
             # Check if mesh error is small enough
             begin("Checking space error estimate")
-            mesh_tolerance = tolerance * self.problem.space_error_weight()
+            mesh_tolerance = w_h * tolerance
             if E_h <= mesh_tolerance:
                 info_blue("Freezing current mesh: E_h = %g <= TOL_h = %g" % (E_h, mesh_tolerance))
                 refined_mesh = self.problem.mesh()
             else:
                 info_red("Refining mesh")
-                
+
                 # Check: If convergence_test = True and etimate_error = True, the mesh
                 # will adapt but the time step is set according to the convergence test
                 if self.problem.convergence_test() and not self.problem.estimate_error():
                     refined_mesh = refine(self.problem.mesh())
-            
-                # Refine according to error estimate    
-                else:                    
+
+                # Refine according to error estimate
+                else:
                     refined_mesh = refine_mesh(self.problem, self.problem.mesh(), indicators)
 
                 self.problem.init_meshes(refined_mesh)
@@ -126,7 +104,6 @@ class FSISolver(CBCSolver):
             # Update and save mesh
             mesh = refined_mesh
             save_mesh(mesh)
-
 
         # Report elapsed time
         info_blue("Solution computed in %g seconds." % (time() - cpu_time))

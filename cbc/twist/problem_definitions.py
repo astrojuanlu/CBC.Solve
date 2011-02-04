@@ -93,14 +93,13 @@ class Hyperelasticity(StaticHyperelasticity):
 
         # Create solver
         if self.time_stepping() is "CG1":
-            print "Using CG1 time-stepping"
+            info("Using CG1 time-stepping.")
             self.solver = CG1MomentumBalanceSolver(self)
         elif self.time_stepping() is "HHT":
-            print "Using HHT time-stepping"
+            info("Using HHT time-stepping.")
             self.solver = MomentumBalanceSolver(self)
         else:
-            print "%s time-stepping scheme not supported" % str(self.time_stepping())
-            exit(2)
+            error("%s time-stepping scheme not supported." % str(self.time_stepping()))
 
         # Set up parameters
         self.parameters = Parameters("problem_parameters")

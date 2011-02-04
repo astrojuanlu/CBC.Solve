@@ -22,8 +22,7 @@ class MaterialModel():
 
     def _num_parameters_check(self):
         if len(self.parameters) != self.num_parameters:
-            print "Please provide the correct number of parameters (%s) for this material model" % self.num_parameters
-            exit(2)
+            error("Please provide the correct number of parameters (%s) for this material model." % self.num_parameters)
 
     def _parameters_as_functions(self, u):
         parameters = []
@@ -35,10 +34,10 @@ class MaterialModel():
             if "dolfin" in parameter_type:
                 parameters.append(self.parameters[i])
             else:
-                print "Converting given numerical parameter to DOLFIN Constant"
+                info("Converting given numerical parameter to DOLFIN Constant.")
                 parameters.append(Constant(self.parameters[i]))
         return parameters
-    
+
     def _construct_local_kinematics(self, u):
         self.I = SecondOrderIdentity(u)
         self.epsilon = InfinitesimalStrain(u)
@@ -50,7 +49,7 @@ class MaterialModel():
         self.e = EulerAlmansiStrain(u)
         [self.I1, self.I2, self.I3] = CauchyGreenInvariants(u)
         [self.I1bar, self.I2bar] = IsochoricCauchyGreenInvariants(u)
-        
+
     def strain_energy(self, parameters):
         pass
 
@@ -63,7 +62,7 @@ class MaterialModel():
             S = diff(psi, epsilon)
         elif self.kinematic_measure == "RightCauchyGreen":
             C = self.C
-            S = 2*diff(psi, C)            
+            S = 2*diff(psi, C)
         elif self.kinematic_measure ==  "GreenLagrangeStrain":
             E = self.E
             S = diff(psi, E)
@@ -88,7 +87,7 @@ class MaterialModel():
         S = self.SecondPiolaKirchhoffStress(u)
         F = self.F
         P = F*S
-        
+
         if self.kinematic_measure == "InfinitesimalStrain":
             return S
         else:

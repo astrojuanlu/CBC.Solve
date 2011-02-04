@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-01-11
+# Last changed: 2011-02-04
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -154,7 +154,7 @@ def estimate_error(problem):
         E_c_F += dt * RcF
         E_c_S += dt * RcS
         E_c_M += dt * RcM
-        
+
         # Sum total computational error
         E_c = E_c_F + E_c_S + E_c_M
 
@@ -265,7 +265,7 @@ def refine_mesh(problem, mesh, indicators):
 
     return refined_mesh
 
-def compute_time_step(problem, Rk, ST, TOL, dt, t1, T):
+def compute_time_step(problem, Rk, ST, TOL, dt, t1, T, w_k):
     """Compute new time step based on residual R, stability factor S,
     tolerance TOL, and the previous time step dt. The time step is
     adjusted so that we will not step beyond the given end time."""
@@ -276,7 +276,7 @@ def compute_time_step(problem, Rk, ST, TOL, dt, t1, T):
     conservation = 1.0    # time step conservation (high value means small change)
 
     # Compute new time step
-    dt_new = safety_factor * TOL * problem.time_error_weight() / (ST * Rk)
+    dt_new = safety_factor * TOL * w_k / (ST * Rk)
 
     # Modify time step to avoid oscillations
     dt_new = (1.0 + conservation) * dt * dt_new / (dt + conservation * dt_new)
@@ -302,13 +302,13 @@ def compute_time_step(problem, Rk, ST, TOL, dt, t1, T):
 
     return dt_new, at_end
 
-def initial_timestep(problem):
+def initial_timestep(problem, parameters):
     "Return initial time step"
 
     global min_timestep
 
-    # Get initial timestep for problem
-    dt = problem.initial_timestep()
+    # Get initial time step from parameters
+    dt = parameters["initial_timestep"]
 
     # Use the smallest time step so far
     if (not min_timestep is None) and min_timestep < dt:
@@ -316,11 +316,11 @@ def initial_timestep(problem):
 
     return dt
 
-def compute_itertol(problem, w_c, TOL, dt, t1):
+def compute_itertol(problem, w_c, TOL, dt, t1, parameters):
     "Compute tolerance for FSI iterations"
 
-    if problem.uniform_timestep():
-        tol = problem.fixed_point_tol()
+    if parameters["uniform_timestep"]:
+        tol = parameters["fixedpoint_tolerance"]
         info("")
         info_blue("  * Tolerance for (f)-(S)-(M) iteration is fixed to %g" % tol)
         end()

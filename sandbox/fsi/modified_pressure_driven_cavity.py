@@ -27,15 +27,10 @@ from fsiproblem import *
 #         ------------------------ (1.0, 0.0)
 #                   FREE
 
-# Create application parameters
-
-# Parse from file "application_parameters.xml"
+# Read parameters
 file = File("application_parameters.xml")
-application_parameters = Parameters("application_parameters_file")
+application_parameters = Parameters("application_parameters")
 file >> application_parameters
-
-# Collect parameters
-parameter_info = application_parameters.option_string()
 
 # Constants related to the geometry of the problem
 cavity_length  = 1.0
@@ -47,11 +42,11 @@ inflow_top = 1.5
 inflow_bottom = 1.25
 
 # Define boundaries
-inflow        = "x[0] < DOLFIN_EPS && x[1] > %g - DOLFIN_EPS &&  x[1] < %g + DOLFIN_EPS" %(inflow_bottom, inflow_top)
-outflow       = "x[0] > %g - DOLFIN_EPS && x[1] > %g - DOLFIN_EPS && x[1] < %g + DOLFIN_EPS"  %(cavity_length, inflow_bottom, inflow_top)
-fixed_left    = "x[0] == 0.0  && x[1] >= DOFLIN_EPS"
-fixed_right   = "x[0] > %g - DOLFIN_EPS  && x[1] >= 0.0" %structure_right
-noslip        = "on_boundary && !(%s) && !(%s) " %(inflow, outflow)
+inflow      = "x[0] < DOLFIN_EPS && x[1] > %g - DOLFIN_EPS &&  x[1] < %g + DOLFIN_EPS" % (inflow_bottom, inflow_top)
+outflow     = "x[0] > %g - DOLFIN_EPS && x[1] > %g - DOLFIN_EPS && x[1] < %g + DOLFIN_EPS"  % (cavity_length, inflow_bottom, inflow_top)
+fixed_left  = "x[0] == 0.0  && x[1] >= DOFLIN_EPS"
+fixed_right = "x[0] > %g - DOLFIN_EPS  && x[1] >= 0.0" % structure_right
+noslip      = "on_boundary && !(%s) && !(%s) " % (inflow, outflow)
 
 # Define structure subdomain
 class Structure(SubDomain):
@@ -63,12 +58,12 @@ class Structure(SubDomain):
 
 # Define problem class
 class PressureDrivenCavity(FSI):
+
     def __init__(self):
 
-        # Define mesh based on a mesh_scale
-        mesh_scale = application_parameters["mesh_scale"]
-        ny = 6 * mesh_scale
-        nx = 4 * mesh_scale
+        # Define mesh
+        nx = 4
+        ny = 6
         mesh = Rectangle(0.0, 0.0, cavity_length, cavity_height, nx, ny)
 
         # Save original mesh
@@ -80,63 +75,21 @@ class PressureDrivenCavity(FSI):
 
     #--- Solver options ---
 
-    def solve_primal(self):
-        return application_parameters["solve_primal"]
-
-    def solve_dual(self):
-        return application_parameters["solve_dual"]
-
-    def estimate_error(self):
-        return application_parameters["estimate_error"]
-
-    def dorfler_marking(self):
-        return application_parameters["dorfler_marking"]
-
-    def uniform_timestep(self):
-        return application_parameters["uniform_timestep"]
-
-    def convergence_test(self):
-        return application_parameters["convergence_test"]
-
     def convergence_test_timestep(self, mesh):
         return 0.1 * mesh.hmin()
 
     #--- Common parameters ---
 
     def end_time(self):
-        return application_parameters["end_time"]
-
-    def TOL(self):
-        return application_parameters["TOL"]
-
-    def initial_timestep(self):
-        return application_parameters["dt"]
-
-    def space_error_weight(self):
-        return application_parameters["w_h"]
-
-    def time_error_weight(self):
-        return application_parameters["w_k"]
-
-    def non_galerkin_error_weight(self):
-        return application_parameters["w_c"]
-
-    def fraction(self):
-        return application_parameters["fraction"]
-
-    def fixed_point_tol(self):
-        return application_parameters["fixed_point_tol"]
+        return 0.25
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
-
-        # Compute displacement in y-direction
-        displacement = assemble(U_S[1]*dx, mesh=U_S.function_space().mesh())
-        return displacement
+        return assemble(U_S[1]*dx, mesh=U_S.function_space().mesh())
 
     def __str__(self):
         return "Pressure driven cavity with an elastic bottom"
 
-    #--- Parameters for fluid problem ---
+    #--- Fluid problem ---
 
     def fluid_density(self):
         return 1.0
@@ -152,7 +105,7 @@ class PressureDrivenCavity(FSI):
 
     def fluid_pressure_dirichlet_values(self):
         return [1.0, 0.0]
-#        return [Expression("1.0 - x[0]"), 0.0]
+        #return [Expression("1.0 - x[0]"), 0.0]
 
     def fluid_pressure_dirichlet_boundaries(self):
         return [inflow, outflow]
@@ -163,7 +116,7 @@ class PressureDrivenCavity(FSI):
     def fluid_pressure_initial_condition(self):
         return 0.0
 
-    #--- Parameters for structure problem ---
+    #--- Structure problem ---
 
     def structure(self):
         return Structure()
@@ -186,7 +139,7 @@ class PressureDrivenCavity(FSI):
     def structure_neumann_boundaries(self):
         return "on_boundary"
 
-    #--- Parameters for mesh problem ---
+    #--- Mesh problem ---
 
     def mesh_mu(self):
         return 3.8461
@@ -195,9 +148,8 @@ class PressureDrivenCavity(FSI):
         return 5.76
 
     def mesh_alpha(self):
-        return application_parameters["mesh_alpha"]
+        return 1.0
 
 # Define and solve problem
 problem = PressureDrivenCavity()
-u_F, p_F, U_S, P_S, U_M = problem.solve()
-
+u_F, p_F, U_S, P_S, U_M = problem.solve(application_parameters)

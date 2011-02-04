@@ -12,13 +12,14 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-16
+# Last changed: 2011-02-04
 
 from numpy import append
 from dolfin import *
 
 def create_primal_series():
     "Create time series for primal solution"
+    info("Creating primal time series.")
     u_F = TimeSeries("bin/u_F")
     p_F = TimeSeries("bin/p_F")
     U_S = TimeSeries("bin/U_S")
@@ -28,6 +29,7 @@ def create_primal_series():
 
 def create_dual_series():
     "Create time series for dual solution"
+    info("Creating dual time series.")
     return TimeSeries("bin/Z")
 
 def read_primal_data(U, t, Omega, Omega_F, Omega_S, series):
@@ -90,13 +92,14 @@ def read_timestep_range(T, series):
     # Get nodal points for primal time series
     t = series[0].vector_times()
 
-    # Check that time series is not empty and covers the interval 
-    if not (len(t) > 1  and t[0] == 0.0 or abs(0.0 - DOLFIN_EPS) <= t[0] <= abs(0.0 + DOLFIN_EPS) \
-              and t[-1] == T or abs(T - DOLFIN_EPS) <= t[-1] <= abs(T + DOLFIN_EPS)):
+    # Check that time series is not empty and that it covers the interval
+    if len(t) == 0:
+        error("Missing primal data (empty).")
+    elif t[0] > DOLFIN_EPS:
+        error("Illegal initial value %.16e for primal data, expecting 0.0." % t[0])
+    elif t[-1] < T - DOLFIN_EPS:
+        error("Illegal final time %.16e for primal data, expecting (at least) %.16e" % (t[-1], T))
 
-        print "Nodal points for primal time series:", t
-        raise RuntimeError, "Missing primal data"
-    
     return t
 
 def write_primal_data(U, t, series):
