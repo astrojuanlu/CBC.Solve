@@ -44,12 +44,13 @@ class FSISolver(CBCSolver):
 
         # Adaptive loop
         cpu_time = time()
+        goal_functional = None
         while True:
 
             # Solve primal problem
             if parameters["solve_primal"]:
                 begin("Solving primal problem")
-                solve_primal(self.problem, parameters, ST)
+                goal_functional = solve_primal(self.problem, parameters, ST)
                 end()
             else:
                 info("Not solving primal problem")
@@ -109,4 +110,4 @@ class FSISolver(CBCSolver):
         info_blue("Solution computed in %g seconds." % (time() - cpu_time))
 
         # Return solution
-        return U
+        return goal_functional

@@ -152,4 +152,4 @@ class PressureDrivenCavity(FSI):
 
 # Define and solve problem
 problem = PressureDrivenCavity()
-u_F, p_F, U_S, P_S, U_M = problem.solve(application_parameters)
+problem.solve(application_parameters)

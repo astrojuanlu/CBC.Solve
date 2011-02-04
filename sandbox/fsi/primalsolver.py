@@ -194,12 +194,15 @@ def solve_primal(problem, parameters, ST):
             t0 = t1
             t1 = t1 + dt
 
+    # Save final value of goal functional
+    save_goal_functional_final(goal_functional)
+
     # Report elapsed time
     info_blue("Primal solution computed in %g seconds." % (time() - cpu_time))
     info("")
 
     # Return solution
-    return u_F, p_F, U_S, P_S, U_M
+    return goal_functional
 
 def _plot_solution(u_F, U_S0, U_M):
     "Plot solution"
