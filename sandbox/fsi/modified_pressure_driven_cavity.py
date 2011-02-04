@@ -31,19 +31,19 @@ from fsiproblem import *
 application_parameters = Parameters("application_parameters")
 application_parameters.add("end_time", 0.25)
 application_parameters.add("dt", 0.01)
-application_parameters.add("ny", 1)
-application_parameters.add("TOL", 1e-1)
+application_parameters.add("mesh_scale", 1)
+application_parameters.add("TOL", 1e-12)
 application_parameters.add("w_h", 0.45) 
 application_parameters.add("w_k", 0.45)
 application_parameters.add("w_c", 0.1)
 application_parameters.add("fraction", 0.5)
 application_parameters.add("mesh_alpha", 1.0)
+application_parameters.add("fixed_point_tol", 1e-12)
 application_parameters.add("solve_primal", True)
 application_parameters.add("solve_dual", True)
 application_parameters.add("estimate_error", True)
 application_parameters.add("dorfler_marking", True)
 application_parameters.add("uniform_timestep", False)
-application_parameters.add("fixed_point_tol", 1e-12)
 application_parameters.add("convergence_test", False)
 application_parameters.parse()
 
@@ -78,10 +78,10 @@ class Structure(SubDomain):
 class PressureDrivenCavity(FSI):
     def __init__(self):
 
-        # Define mesh based on a scale factor 
-        scale_factor = application_parameters["ny"]
-        ny = 6 * scale_factor
-        nx = 4 * scale_factor
+        # Define mesh based on a mesh_scale
+        mesh_scale = application_parameters["mesh_scale"]
+        ny = 6 * mesh_scale
+        nx = 4 * mesh_scale
         mesh = Rectangle(0.0, 0.0, cavity_length, cavity_height, nx, ny)
 
         # Save original mesh
@@ -119,7 +119,7 @@ class PressureDrivenCavity(FSI):
         return application_parameters["convergence_test"]
 
     def convergence_test_timestep(self, mesh):
-        return mesh.hmin()
+        return 0.1 * mesh.hmin()
 
     #--- Common parameters ---
 
@@ -217,16 +217,7 @@ class PressureDrivenCavity(FSI):
     def mesh_alpha(self):
         return application_parameters["mesh_alpha"]
 
-# Define problem
+# Define and solve problem
 problem = PressureDrivenCavity()
-problem.parameters["solver_parameters"]["solve_primal"] = problem.solve_primal()
-problem.parameters["solver_parameters"]["solve_dual"] = problem.solve_dual() 
-problem.parameters["solver_parameters"]["estimate_error"] = problem.estimate_error()
-problem.parameters["solver_parameters"]["uniform_timestep"]  = problem.uniform_timestep()
-problem.parameters["solver_parameters"]["tolerance"] = problem.TOL()
-problem.parameters["solver_parameters"]["fixed_point_tol"] = problem.fixed_point_tol()
-problem.parameters["solver_parameters"]["convergence_test"] = problem.convergence_test()
-
-# Solve problem
 u_F, p_F, U_S, P_S, U_M = problem.solve()
 

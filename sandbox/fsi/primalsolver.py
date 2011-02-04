@@ -64,8 +64,8 @@ class PrimalSolver:
         if self.problem.convergence_test():
             
             # Set time step size based on current mesh size
-            dt = 0.1 * self.problem.convergence_test_timestep(self.problem.mesh())
-            warning("The time step is set to 0.1 * hmin  = %g", dt)
+            dt = self.problem.convergence_test_timestep(self.problem.mesh())
+            warning("The time step is set dt  = %g", dt)
             
             # Write to file
             f = open("adaptivity/timestep_hmin.txt", "a")
