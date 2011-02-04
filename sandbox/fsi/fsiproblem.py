@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim andAnders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-13
+# Last changed: 2011-02-04
 
 from dolfin import *
 from numpy import array, append
@@ -83,11 +83,14 @@ class FSI(CBCProblem):
         for facet in facets(Omega):
 
             # Skip facets on the boundary
-            if facet.num_entities(D) == 1:
+            cells = facet.entities(D)
+            if len(cells) == 1:
                 continue
+            elif len(cells) != 2:
+                raise RuntimeError, "Strange, expecting two facets!"
 
             # Create the two cells
-            c0, c1 = facet.entities(D)
+            c0, c1 = cells
             cell0 = Cell(Omega, c0)
             cell1 = Cell(Omega, c1)
 
