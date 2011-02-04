@@ -89,16 +89,7 @@ class FSISolver(CBCSolver):
                 refined_mesh = self.problem.mesh()
             else:
                 info_red("Refining mesh")
-
-                # Check: If convergence_test = True and etimate_error = True, the mesh
-                # will adapt but the time step is set according to the convergence test
-                if self.problem.convergence_test() and not self.problem.estimate_error():
-                    refined_mesh = refine(self.problem.mesh())
-
-                # Refine according to error estimate
-                else:
-                    refined_mesh = refine_mesh(self.problem, self.problem.mesh(), indicators)
-
+                refined_mesh = refine_mesh(self.problem, self.problem.mesh(), indicators, parameters)
                 self.problem.init_meshes(refined_mesh)
             end()
 

@@ -219,11 +219,11 @@ def compute_time_residual(primal_series, t0, t1, problem):
 
     return Rk
 
-def refine_mesh(problem, mesh, indicators):
+def refine_mesh(problem, mesh, indicators, parameters):
     "Refine mesh based on error indicators"
 
     # Get fraction of elements for refinement
-    fraction = problem.fraction()
+    fraction = parameters["marking_fraction"]
 
     # Create lists and markers for refinement
     indices = list(argsort(indicators))
@@ -232,7 +232,7 @@ def refine_mesh(problem, mesh, indicators):
     markers.set_all(False)
 
     # Dorfler marking strategy
-    if problem.dorfler_marking():
+    if parameters["dorfler_marking"]:
         info_blue("Refining using Dorfler fraction = %g" %fraction)
         total_sum = sum(indicators)
         sub_sum = 0.0
