@@ -196,7 +196,7 @@ def solve_primal(problem, parameters, ST):
 
     # Report elapsed time
     info_blue("Primal solution computed in %g seconds." % (time() - cpu_time))
-    info()
+    info("")
 
     # Return solution
     return u_F, p_F, U_S, P_S, U_M
