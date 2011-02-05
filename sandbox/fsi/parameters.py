@@ -18,6 +18,7 @@ def default_parameters():
     p.add("save_series", True)
     p.add("uniform_timestep", False)
     p.add("dorfler_marking", True)
+    p.add("global_storage", False)
 
     p.add("tolerance", 0.1)
     p.add("fixedpoint_tolerance", 1e-8)
