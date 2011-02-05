@@ -30,6 +30,7 @@ def default_parameters():
     p.add("marking_fraction", 0.5)
 
     p.add("output_directory", "results")
+    p.add("description", "unspecified")
 
     return p
 

@@ -13,8 +13,11 @@ def read(filename):
 # Extract values
 functional_values = []
 integrated_values = []
+legends = []
 for directory in glob.glob("results-*"):
     print "Extracting values from %s" % directory
+
+    # Get data
     filename = "%s/goal_functional_final.txt" % directory
     if os.path.isfile(filename):
         levels, functionals, integrated_functionals = read(filename)
@@ -24,20 +27,29 @@ for directory in glob.glob("results-*"):
         integrated_values.append(levels)
         integrated_values.append(integrated_functionals)
 
+    # Get legend
+    filename = "%s/application_parameters.xml" % directory
+    if os.path.isfile(filename):
+        row = [row for row in open(filename).read().split("\n") if "description" in row][0]
+        description = row.split('value="')[1].split('"')[0]
+        legends.append(description)
+
 # Plot functional values at t = T
 figure(1)
-plot(*functional_values)
+plot(*functional_values, marker='o')
 xlabel("Refinement level")
 ylabel("Functional value")
 title("Functional values at end time")
+legend(legends)
 grid(True)
 
 # Plot integrated functional values
 figure(2)
-plot(*integrated_values)
+plot(*integrated_values, marker='o')
 xlabel("Refinement level")
 ylabel("Functional value")
 title("Integrated functional values")
+legend(legends)
 grid(True)
 
 show()
