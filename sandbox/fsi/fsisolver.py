@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-05
+# Last changed: 2011-02-06
 
 __all__ = ["FSISolver"]
 
@@ -41,6 +41,9 @@ class FSISolver(CBCSolver):
 
         # Initial guess for stability factor
         ST = 1.0
+
+        # Save initial mesh
+        save_mesh(self.problem.mesh(), parameters)
 
         # Adaptive loop
         cpu_time = time()

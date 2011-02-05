@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-05
+# Last changed: 2011-02-06
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -19,7 +19,7 @@ from sys import exit
 U0 = U1 = w = None
 
 # Variables for storing adaptive data
-refinement_level = 0
+refinement_level = -1
 min_timestep = None
 
 # Create files for plotting error indicators
