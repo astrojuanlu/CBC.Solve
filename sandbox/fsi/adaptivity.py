@@ -400,24 +400,24 @@ def save_stability_factor(T, ST, parameters):
     f.write("%g %g\n" % (T, ST))
     f.close()
 
-def save_goal_functional(t1, goal_functional, parameters):
+def save_goal_functional(t1, goal_functional, integrated_goal_functional, parameters):
     "Saving goal functional at t = t1"
 
     global refinement_level
 
     info("Value of goal functional at t = %g: %g" % (t1, goal_functional))
     f = open("%s/goal_functional.txt" % parameters["output_directory"], "a")
-    f.write("%d %.16g %.16g\n" % (refinement_level, t1, goal_functional))
+    f.write("%d %.16g %.16g %.16g\n" % (refinement_level, t1, goal_functional, integrated_goal_functional))
     f.close()
 
-def save_goal_functional_final(goal_functional, parameters):
+def save_goal_functional_final(goal_functional, integrated_goal_functional, parameters):
     "Saving goal functional at final time"
 
     global refinement_level
 
     info("Value of goal functional at T: %g" % goal_functional)
     f = open("%s/goal_functional_final.txt" % parameters["output_directory"], "a")
-    f.write("%d %.16g\n" % (refinement_level, goal_functional))
+    f.write("%d %.16g %.16g\n" % (refinement_level, goal_functional, integrated_goal_functional))
     f.close()
 
 def save_itertol(t1, tol, parameters):

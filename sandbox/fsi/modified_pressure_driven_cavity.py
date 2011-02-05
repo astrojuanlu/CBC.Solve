@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-04
+# Last changed: 2011-02-05
 
 from fsiproblem import *
 
@@ -83,7 +83,7 @@ class PressureDrivenCavity(FSI):
     def end_time(self):
         return 0.25
 
-    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
+    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, t0, t1):
         return assemble(U_S[1]*dx, mesh=U_S.function_space().mesh())
 
     def __str__(self):

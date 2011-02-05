@@ -73,6 +73,10 @@ def solve_primal(problem, parameters, ST):
     t1 = dt
     at_end = False
 
+    # Initialize integration of goal functional (assuming M(u) = 0 at t = 0)
+    integrated_goal_functional = 0.0
+    old_goal_functional = 0.0
+
     # Time-stepping loop
     while True:
 
@@ -141,10 +145,14 @@ def solve_primal(problem, parameters, ST):
                 save_no_FSI_iter(t1, iter + 1, parameters)
 
                 # Evaluate user goal functional
-                goal_functional = problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, t1)
+                goal_functional = problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, t0, t1)
+
+                # Integrate goal functional
+                integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)
+                old_goal_functional = goal_functional
 
                 # Save goal functional
-                save_goal_functional(t1, goal_functional, parameters)
+                save_goal_functional(t1, goal_functional, integrated_goal_functional, parameters)
                 break
 
             # Check if we have reached the maximum number of iterations
@@ -195,7 +203,7 @@ def solve_primal(problem, parameters, ST):
             t1 = t1 + dt
 
     # Save final value of goal functional
-    save_goal_functional_final(goal_functional, parameters)
+    save_goal_functional_final(goal_functional, integrated_goal_functional, parameters)
 
     # Report elapsed time
     info_blue("Primal solution computed in %g seconds." % (time() - cpu_time))
