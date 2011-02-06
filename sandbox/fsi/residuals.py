@@ -152,4 +152,7 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     R_M1 = avg(w)*inner(EZ_M('+') - Z_M('+'), jump(dot(Sigma_M, N_F)))*dS_F
     R_M2 = w('+')*inner(EY_M - Y_M, U_M - U_S)('+')*d_FSI # \equiv 0
 
+    # FIXME: Testing
+    R_M1 = avg(w)*inner(jump(dot(Sigma_M, N_F)), jump(dot(Sigma_M, N_F)))*dS_F
+
     return (R_F0, R_F1, R_F2, R_F3), (R_S0, R_S1, R_S2, R_S3), (R_M0, R_M1, R_M2)
