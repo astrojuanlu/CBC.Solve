@@ -17,6 +17,7 @@ def default_parameters():
     p.add("save_solution", True)
     p.add("save_series", True)
     p.add("uniform_timestep", False)
+    p.add("uniform_mesh", False)
     p.add("dorfler_marking", True)
     p.add("global_storage", False)
 

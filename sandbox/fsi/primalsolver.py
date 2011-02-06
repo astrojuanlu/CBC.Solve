@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-05
+# Last changed: 2011-02-06
 
 import pylab
 from time import time
@@ -32,12 +32,13 @@ def solve_primal(problem, parameters, ST):
     num_smoothings = parameters["num_smoothings"]
 
     # Create files for saving to VTK
+    level = refinement_level()
     if save_solution:
-        files = (File("%s/pvd/u_F.pvd" % parameters["output_directory"]),
-                 File("%s/pvd/p_F.pvd" % parameters["output_directory"]),
-                 File("%s/pvd/U_S.pvd" % parameters["output_directory"]),
-                 File("%s/pvd/P_S.pvd" % parameters["output_directory"]),
-                 File("%s/pvd/U_M.pvd" % parameters["output_directory"]))
+        files = (File("%s/pvd/level_%d/u_F.pvd" % (parameters["output_directory"], level)),
+                 File("%s/pvd/level_%d/p_F.pvd" % (parameters["output_directory"], level)),
+                 File("%s/pvd/level_%d/U_S.pvd" % (parameters["output_directory"], level)),
+                 File("%s/pvd/level_%d/P_S.pvd" % (parameters["output_directory"], level)),
+                 File("%s/pvd/level_%d/U_M.pvd" % (parameters["output_directory"], level)))
 
     # Create time series for storing solution
     time_series = create_primal_series(parameters)

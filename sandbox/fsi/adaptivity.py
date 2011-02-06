@@ -19,7 +19,7 @@ from sys import exit
 U0 = U1 = w = None
 
 # Variables for storing adaptive data
-refinement_level = -1
+_refinement_level = -1
 min_timestep = None
 
 # Create files for plotting error indicators
@@ -336,19 +336,19 @@ def compute_itertol(problem, w_c, TOL, dt, t1, parameters):
 def save_mesh(mesh, parameters):
     "Save mesh to file"
 
-    global refinement_level
+    global _refinement_level
 
     # Increase refinement level
-    refinement_level += 1
+    _refinement_level += 1
 
     # Save refined mesh
-    file = File("%s/mesh_%d.xml" % (parameters["output_directory"], refinement_level))
+    file = File("%s/mesh_%d.xml" % (parameters["output_directory"], _refinement_level))
     file << mesh
 
 def save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, ST, parameters):
     "Save errors to file"
 
-    global refinement_level
+    global _refinement_level
 
     # Summarize errors
     summary = """
@@ -365,7 +365,7 @@ E_c  = %g
 E_tot = %g
 S(T)  = %g
 
-""" % (refinement_level, E_h, E_k, abs(E_c), E, ST)
+""" % (_refinement_level, E_h, E_k, abs(E_c), E, ST)
 
     # Print summary
     info(summary)
@@ -377,24 +377,24 @@ S(T)  = %g
 
     # Save to file (for plotting)
     g = open("%s/error_estimates.txt" % parameters["output_directory"], "a")
-    g.write("%d %g %g %g %g %g %g %g %g \n" %(refinement_level, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M, ST))
+    g.write("%d %g %g %g %g %g %g %g %g \n" %(_refinement_level, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M, ST))
     g.close()
 
 def save_timestep(t1, Rk, dt, parameters):
     "Save time step to file"
 
-    global refinement_level
+    global _refinement_level
 
     info(parameters, True)
 
     f = open("%s/timesteps.txt" % parameters["output_directory"], "a")
-    f.write("%d %g %g %g\n" % (refinement_level, t1, dt, Rk))
+    f.write("%d %g %g %g\n" % (_refinement_level, t1, dt, Rk))
     f.close()
 
 def save_stability_factor(T, ST, parameters):
     "Save Galerkin stability factor"
 
-    global refinement_level
+    global _refinement_level
 
     f = open("%s/stability_factor.txt" % parameters["output_directory"], "a")
     f.write("%g %g\n" % (T, ST))
@@ -403,21 +403,21 @@ def save_stability_factor(T, ST, parameters):
 def save_goal_functional(t1, goal_functional, integrated_goal_functional, parameters):
     "Saving goal functional at t = t1"
 
-    global refinement_level
+    global _refinement_level
 
     info("Value of goal functional at t = %g: %g" % (t1, goal_functional))
     f = open("%s/goal_functional.txt" % parameters["output_directory"], "a")
-    f.write("%d %.16g %.16g %.16g\n" % (refinement_level, t1, goal_functional, integrated_goal_functional))
+    f.write("%d %.16g %.16g %.16g\n" % (_refinement_level, t1, goal_functional, integrated_goal_functional))
     f.close()
 
 def save_goal_functional_final(goal_functional, integrated_goal_functional, parameters):
     "Saving goal functional at final time"
 
-    global refinement_level
+    global _refinement_level
 
     info("Value of goal functional at T: %g" % goal_functional)
     f = open("%s/goal_functional_final.txt" % parameters["output_directory"], "a")
-    f.write("%d %.16g %.16g\n" % (refinement_level, goal_functional, integrated_goal_functional))
+    f.write("%d %.16g %.16g\n" % (_refinement_level, goal_functional, integrated_goal_functional))
     f.close()
 
 def save_itertol(t1, tol, parameters):
@@ -426,22 +426,22 @@ def save_itertol(t1, tol, parameters):
     global refinment_level
 
     f = open("%s/fsi_tolerance.txt" % parameters["output_directory"], "a")
-    f.write("%d %g %g \n" % (refinement_level, t1, tol))
+    f.write("%d %g %g \n" % (_refinement_level, t1, tol))
     f.close()
 
 def save_no_FSI_iter(t1, no, parameters):
     "Save number of FSI iterations"
 
-    global refinement_level
+    global _refinement_level
 
     f = open("%s/no_iterations.txt" % parameters["output_directory"], "a")
-    f.write("%d %g %g \n" % (refinement_level, t1, no))
+    f.write("%d %g %g \n" % (_refinement_level, t1, no))
     f.close()
 
 def save_dofs(num_dofs_FSM, timestep_counter, parameters):
     "Save number of total number of dofs"
 
-    global refinement_level
+    global _refinement_level
 
     # Calculate total number of dofs
     space_dofs = num_dofs_FSM
@@ -449,13 +449,14 @@ def save_dofs(num_dofs_FSM, timestep_counter, parameters):
     dofs       = space_dofs * time_dofs
 
     f = open("%s/num_dofs.txt" % parameters["output_directory"], "a")
-    f.write("%d %g %g %g \n" %(refinement_level, dofs, space_dofs, time_dofs))
+    f.write("%d %g %g %g \n" %(_refinement_level, dofs, space_dofs, time_dofs))
     f.close()
 
 def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters):
     "Save mesh function for visualization"
 
     global indicator_files
+    global _refinement_level
 
     # Create mesh functions
     plot_markers_F = MeshFunction("double", Omega, Omega.topology().dim())
@@ -481,11 +482,11 @@ def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters):
 
     # Create indicator files
     if indicator_files is None:
-        indicator_files = ((File("%s/pvd/eta_F.pvd" % parameters["output_directory"]),
-                            File("%s/pvd/eta_S.pvd" % parameters["output_directory"]),
-                            File("%s/pvd/eta_M.pvd" % parameters["output_directory"]),
-                            File("%s/pvd/eta_K.pvd" % parameters["output_directory"]),
-                            File("%s/pvd/refinement_markers.pvd" % parameters["output_directory"])))
+        indicator_files = (File("%s/pvd/level_%d/eta_F.pvd" % (parameters["output_directory"], _refinement_level)),
+                           File("%s/pvd/level_%d/eta_S.pvd" % (parameters["output_directory"], _refinement_level)),
+                           File("%s/pvd/level_%d/eta_M.pvd" % (parameters["output_directory"], _refinement_level)),
+                           File("%s/pvd/level_%d/eta_K.pvd" % (parameters["output_directory"], _refinement_level)),
+                           File("%s/pvd/level_%d/refinement_markers.pvd" % (parameters["output_directory"], _refinement_level)))
 
     # Save markers
     for i in range(4):
@@ -507,3 +508,8 @@ def save_refinement_markers(mesh, markers):
 
     # Save markers
     indicator_files[4] << refinement_markers
+
+def refinement_level():
+    "Return current refinement level"
+    global _refinement_level
+    return _refinement_level

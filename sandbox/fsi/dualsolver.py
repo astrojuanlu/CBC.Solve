@@ -4,13 +4,14 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-05
+# Last changed: 2011-02-06
 
 from time import time
 from dolfin import *
 from spaces import *
 from storage import *
 from dualproblem import *
+from adaptivity import *
 
 # FIXME: alpha_M missing
 
@@ -27,13 +28,14 @@ def solve_dual(problem, parameters):
 
     # Create files for saving to VTK
     files = None
+    level = refinement_level()
     if save_solution:
-        Z_F_file = File("%s/pvd/Z_F.pvd" % parameters["output_directory"])
-        Y_F_file = File("%s/pvd/Y_F.pvd" % parameters["output_directory"])
-        Z_S_file = File("%s/pvd/Z_S.pvd" % parameters["output_directory"])
-        Y_S_file = File("%s/pvd/Y_S.pvd" % parameters["output_directory"])
-        Z_M_file = File("%s/pvd/Z_M.pvd" % parameters["output_directory"])
-        Y_M_file = File("%s/pvd/Y_M.pvd" % parameters["output_directory"])
+        Z_F_file = File("%s/pvd/level_%d/Z_F.pvd" % (parameters["output_directory"], level))
+        Y_F_file = File("%s/pvd/level_%d/Y_F.pvd" % (parameters["output_directory"], level))
+        Z_S_file = File("%s/pvd/level_%d/Z_S.pvd" % (parameters["output_directory"], level))
+        Y_S_file = File("%s/pvd/level_%d/Y_S.pvd" % (parameters["output_directory"], level))
+        Z_M_file = File("%s/pvd/level_%d/Z_M.pvd" % (parameters["output_directory"], level))
+        Y_M_file = File("%s/pvd/level_%d/Y_M.pvd" % (parameters["output_directory"], level))
         files = [Z_F_file, Y_F_file,
                  Z_S_file, Y_S_file,
                  Z_M_file, Y_M_file]

@@ -90,8 +90,12 @@ class FSISolver(CBCSolver):
             if E_h <= mesh_tolerance:
                 info_blue("Freezing current mesh: E_h = %g <= TOL_h = %g" % (E_h, mesh_tolerance))
                 refined_mesh = self.problem.mesh()
+            elif parameters["uniform_mesh"]:
+                info_red("Refining mesh uniformly")
+                refined_mesh = refine(self.problem.mesh())
+                self.problem.init_meshes(refined_mesh)
             else:
-                info_red("Refining mesh")
+                info_red("Refining mesh adaptively")
                 refined_mesh = refine_mesh(self.problem, self.problem.mesh(), indicators, parameters)
                 self.problem.init_meshes(refined_mesh)
             end()
