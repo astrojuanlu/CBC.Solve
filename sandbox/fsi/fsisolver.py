@@ -35,6 +35,7 @@ class FSISolver(CBCSolver):
         # Get parameters
         tolerance = parameters["tolerance"]
         w_h = parameters["w_h"]
+        max_num_refinements = parameters["max_num_refinements"]
 
         # Create empty solution (return value when primal is not solved)
         U = 5*(None,)
@@ -48,7 +49,7 @@ class FSISolver(CBCSolver):
         # Adaptive loop
         cpu_time = time()
         goal_functional = None
-        while True:
+        for level in range(max_num_refinements + 1):
 
             # Solve primal problem
             if parameters["solve_primal"]:
@@ -103,6 +104,10 @@ class FSISolver(CBCSolver):
             # Update and save mesh
             mesh = refined_mesh
             save_mesh(mesh, parameters)
+
+            # Check if we reached the maximum number of refinements
+            if level == max_num_refinements:
+                info_blue("Reached maximum number of refinement levels (%d)", max_num_refinements)
 
         # Report elapsed time
         info_blue("Solution computed in %g seconds." % (time() - cpu_time))
