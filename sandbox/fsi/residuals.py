@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-16
+# Last changed: 2011-02-06
 
 from dolfin import *
 from operators import Sigma_F as _Sigma_F
@@ -40,7 +40,7 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     # Define inner products
     dx_F = dx(0)
     dx_S = dx(1)
-    
+
     # Define "facet" products
     dS_F  = dS(0)
     dS_S  = dS(1)
@@ -58,7 +58,7 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     Sigma_F = J(U_M)*dot(_Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T)
     Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
     Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
-    
+
     # Fluid residual
     R_F = inner(v_F, Dt_U_F)*dx_F + inner(sym(grad(v_F)), Sigma_F)*dx_F \
         - inner(v_F, mu_F*J(U_M)*dot(dot(inv(F(U_M)).T, grad(U_F).T), dot(inv(F(U_M)).T, N_F)))*ds \
@@ -70,8 +70,8 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     R_S = inner(v_S, Dt_P_S)*dx_S + inner(grad(v_S), Sigma_S)*dx_S \
         - inner(v_S('-'), dot(Sigma_S('-') - Sigma_F('+'), -N_F('+')))*d_FSI \
         + inner(q_S, Dt_U_S - P_S)*dx_S
-    
-   
+
+
     # Mesh residual contributions
     R_M = inner(v_M, Dt_U_M)*dx_F + inner(sym(grad(v_M)), Sigma_M)*dx_F \
         + inner(q_M, U_M - U_S)('+')*d_FSI
@@ -109,7 +109,7 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     # Define inner products
     dx_F = dx(0)
     dx_S = dx(1)
-    
+
     # Define "facet" products
     dS_F  = dS(0)
     dS_S  = dS(1)
@@ -138,7 +138,7 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     # Fluid residual contributions
     R_F0 = w*inner(EZ_F - Z_F, Dt_U_F - div(Sigma_F))*dx_F
     R_F1 = avg(w)*inner(EZ_F('+') - Z_F('+'), jump(dot(Sigma_F, N_F)))*dS_F
-    R_F2 = w*inner(EZ_F - Z_F, dot(Sigma_F, N_F))*ds  
+    R_F2 = w*inner(EZ_F - Z_F, dot(Sigma_F, N_F))*ds
     R_F3 = w*inner(EY_F - Y_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx_F
 
     # Structure residual contributions (note the minus sign on N_F('+'))
@@ -146,7 +146,7 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     R_S1 = avg(w)*inner(EZ_S('-') - Z_S('-'), jump(dot(Sigma_S, N_S)))*dS_S
     R_S2 = w('-')*inner(EZ_S('-') - Z_S('-'), dot(Sigma_S('-') - Sigma_F('+'), -N_F('+')))*d_FSI
     R_S3 = w*inner(EY_S - Y_S, Dt_U_S - P_S)*dx_S
-    
+
     # Mesh residual contributions
     R_M0 = w*inner(EZ_M - Z_M, Dt_U_M - div(Sigma_M))*dx_F
     R_M1 = avg(w)*inner(EZ_M('+') - Z_M('+'), jump(dot(Sigma_M, N_F)))*dS_F

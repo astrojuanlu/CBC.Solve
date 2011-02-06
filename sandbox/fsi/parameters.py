@@ -40,7 +40,8 @@ def store_parameters(p):
     "Store parameters to file"
 
     # Set output directory
-    p["output_directory"] = "results-%s" % date()
+    if p["output_directory"] == "unspecified":
+        p["output_directory"] = "results-%s" % date()
 
     # Save to file application_parameters.xml
     file = File("application_parameters.xml")
