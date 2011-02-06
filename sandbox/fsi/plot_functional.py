@@ -27,12 +27,12 @@ for directory in glob.glob("results-*"):
         integrated_values.append(levels)
         integrated_values.append(integrated_functionals)
 
-    # Get legend
-    filename = "%s/application_parameters.xml" % directory
-    if os.path.isfile(filename):
-        row = [row for row in open(filename).read().split("\n") if "description" in row][0]
-        description = row.split('value="')[1].split('"')[0]
-        legends.append(description)
+        # Get legend
+        filename = "%s/application_parameters.xml" % directory
+        if os.path.isfile(filename):
+            row = [row for row in open(filename).read().split("\n") if "description" in row][0]
+            description = row.split('value="')[1].split('"')[0]
+            legends.append(description)
 
 # Plot functional values at t = T
 figure(1)
