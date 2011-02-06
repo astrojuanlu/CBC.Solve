@@ -41,29 +41,40 @@ def evaluate_jumps(u):
 
     return j
 
-mesh = UnitSquare(2, 2)
-num_refinements = 12
-file = File("jumps.pvd")
-jumps = []
-hmaxs = []
+def run_experiment(refinement_type):
+    "Run experiment for given refinement type ('uniform' or 'adaptive')"
 
-for level in range(num_refinements + 1):
-    u = solve(mesh)
-    j = evaluate_jumps(u)
+    mesh = UnitSquare(2, 2)
+    file = File("jumps_%s.pvd" % refinement_type)
 
-    jumps.append(max(abs(j.vector().array())))
-    hmaxs.append(mesh.hmax())
-    file << j
+    hmaxs = []
+    jumps = []
 
-    markers = CellFunction("bool", mesh)
-    markers.set_all(True)
-    mesh = refine(mesh, markers)
+    while mesh.num_cells() < 100000:
 
-print
-print "Maximum jumps:", str(jumps)
+        u = solve(mesh)
+        j = evaluate_jumps(u)
+
+        jumps.append(max(abs(j.vector().array())))
+        hmaxs.append(mesh.hmax())
+        file << j
+
+        if refinement_type == "uniform":
+            markers = CellFunction("bool", mesh)
+            markers.set_all(True)
+            mesh = refine(mesh, markers)
+        else:
+            mesh = refine(mesh)
+
+    return hmaxs, jumps
+
+h1, j1 = run_experiment("uniform")
+h2, j2 = run_experiment("adaptive")
 
 import pylab
-pylab.loglog(hmaxs, jumps, '-o')
+pylab.loglog(h1, j1, '-o')
+pylab.loglog(h2, j2, 'r-o')
+pylab.legend(["uniform", "adaptive"])
 pylab.grid(True)
 pylab.xlabel("h max")
 pylab.ylabel("Maximum squared jump indicator")
