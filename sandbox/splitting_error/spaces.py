@@ -36,4 +36,4 @@ def create_dual_functions(Omega):
 
     W = create_dual_space(Omega)
     dual_sol = Function(W)
-    return dual_sol, dual_sol.split()
+    return dual_sol, dual_sol.split(False)
