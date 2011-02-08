@@ -98,7 +98,7 @@ class FSISolver(CBCSolver):
                 refined_mesh = self.problem.mesh()
             else:
                 info_red("Refining mesh")
-                refined_mesh = refine_mesh(self.problem, self.problem.mesh(), indicators)
+                refined_mesh = refine_mesh(self.problem, self.problem.fluid_mesh(), indicators)
                 self.problem.init_meshes(refined_mesh)
             end()
 

@@ -420,34 +420,21 @@ def save_dofs(num_dofs_FSM, timestep_counter):
     f.write("%d %g %g %g \n" %(refinement_level, dofs, space_dofs, time_dofs))
     f.close()
 
-def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega):
+def save_indicators(eta_K, Omega):
     "Save mesh function for visualization"
 
     # Create mesh functions
-    plot_markers_F = MeshFunction("double", Omega, Omega.topology().dim())
-    plot_markers_S = MeshFunction("double", Omega, Omega.topology().dim())
-    plot_markers_M = MeshFunction("double", Omega, Omega.topology().dim())
-    plot_markers_K = MeshFunction("double", Omega, Omega.topology().dim())
+    plot_markers = MeshFunction("double", Omega, Omega.topology().dim())
 
     # Reset plot markers
-    plot_markers_F.set_all(0)
-    plot_markers_S.set_all(0)
-    plot_markers_M.set_all(0)
-    plot_markers_K.set_all(0)
+    plot_markers.set_all(0)
 
     # Extract error indicators
     for i in range(Omega.num_cells()):
-        plot_markers_F[i] = eta_F[i]
-        plot_markers_S[i] = eta_S[i]
-        plot_markers_M[i] = eta_M[i]
-        plot_markers_K[i] = eta_K[i]
-
-    # Sum markers
-    plot_markers = [plot_markers_F, plot_markers_S, plot_markers_M, plot_markers_K]
+        plot_markers[i] = eta_K[i]
 
     # Save markers
-    for i in range(4):
-        indicator_files[i] << plot_markers[i]
+    indicator_files << plot_markers
 
 def save_refinement_markers(mesh, markers):
     "Save refinement markers for visualization"
@@ -463,6 +450,6 @@ def save_refinement_markers(mesh, markers):
         if markers[i]:
             refinement_markers[i] = True
 
-    # Save markers
-    indicator_files[4] << refinement_markers
+#     # Save markers
+#     indicator_files << refinement_markers
 
