@@ -109,7 +109,7 @@ class DualSolver:
 
             # Solve linear system
             solve(matrix, dual_sol_0.vector(), vector)
-
+            
             # Save and plot solution
             self._save_solution(dual_sol_0)
             write_dual_data(dual_sol_0, t0, self.dual_series)

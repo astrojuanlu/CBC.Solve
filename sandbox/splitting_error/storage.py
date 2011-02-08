@@ -44,11 +44,10 @@ def read_primal_data(U, t, series):
     u.vector()[:] = u_values
     p.vector()[:] = p_values
     
-def read_dual_data(z, y, t, series):
+def read_dual_data(Z, t, series):
     "Read dual solution at given time"
     info("Reading dual data at t = %g" % t)
-    series.retrieve(z.vector(), t)
-    series.retrieve(y.vector(), t)
+    series.retrieve(Z.vector(), t)
 
 def read_timestep_range(T, series):
     "Read time step range"

@@ -61,33 +61,28 @@ def estimate_error(problem):
     EZ1 = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
 
     # Define midpoint values for primal and dual functions
-    U  = [0.5 * (U0[i]  + U1[i])  for i in range(5)]
-    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(6)]
-    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(6)]
+    U  = [0.5 * (U0[i]  + U1[i])  for i in range(2)]
+    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(2)]
+    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(2)]
 
     # Define time step (value set in each time step)
     kn = Constant(0.0)
 
     # Get strong residuals for E_h
-    Rh_F, Rh_S, Rh_M = strong_residuals(U0, U1, U, Z, EZ, dg, kn, problem)
+    sRh = strong_residuals(U0, U1, Z, EZ, dg, kn, problem)
 
     # Get weak residuals for E_k
-    Rk_F, Rk_S, Rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
+    wRk = weak_residuals(U0, U1, w, kn, problem)
 
     # Get weak residuals for E_c
-    Rc_F, Rc_S, Rc_M = weak_residuals(U0, U1, U, Z, kn, problem)
+    wRc =  weak_residuals(U0, U1, Z, kn, problem)
 
     # Reset vectors for assembly of residuals
-    eta_F = zeros(Omega.num_cells())
-    eta_S = zeros(Omega.num_cells())
-    eta_M = zeros(Omega.num_cells())
+    eta_K = zeros(Omega.num_cells())
 
     # Reset variables
     E_k   = 0.0
     E_c   = 0.0
-    E_c_F = 0.0
-    E_c_S = 0.0
-    E_c_M = 0.0
     ST    = 0.0
 
     # Sum residuals over time intervals
@@ -108,57 +103,43 @@ def estimate_error(problem):
         info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
         # Read primal data
-        read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series)
-        read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series)
+        read_primal_data(U0, t0, primal_series)
+        read_primal_data(U1, t1, primal_series)
 
         # Read dual data
         read_dual_data(ZZ0, t0, dual_series)
         read_dual_data(ZZ1, t1, dual_series)
 
         # Extrapolate dual data
-        [EZ0[j].extrapolate(Z0[j]) for j in range(6)]
-        [EZ1[j].extrapolate(Z1[j]) for j in range(6)]
+        [EZ0[j].extrapolate(Z0[j]) for j in range(2)]
+        [EZ1[j].extrapolate(Z1[j]) for j in range(2)]
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
-        e_F = [assemble(Rh_Fi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Fi in Rh_F]
-        e_S = [assemble(Rh_Si, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Si in Rh_S]
-        e_M = [assemble(Rh_Mi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Mi in Rh_M]
+        eta_sub_sum = assemble(sRh) 
 
         # Assemble weak residuals for time discretization error
-        Rk = norm(assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains))
+        Rk = norm(assemble(wRk))
 
         # Assemble weak residuals for computational error
-        RcF = assemble(Rc_F, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        RcS = assemble(Rc_S, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        RcM = assemble(Rc_M, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        Rc = assemble(wRc, mesh=Omega)
 
         # Estimate interpolation error (local weight)
         s = 0.5 * linalg.norm(ZZ0.vector().array() - ZZ1.vector().array(), 2) / dt
 
         # Add to error indicators
-        eta_F += dt * sum(abs(e.array()) for e in e_F)
-        eta_S += dt * sum(abs(e.array()) for e in e_S)
-        eta_M += dt * sum(abs(e.array()) for e in e_M)
+        eta_K += dt * sum(abs(eta_sub_sum.array()))
 
         # Add to E_k
         E_k += dt * s * dt * Rk
 
-        # Add to E_c's
-        E_c_F += dt * RcF
-        E_c_S += dt * RcS
-        E_c_M += dt * RcM
-        
-        # Sum total computational error
-        E_c = E_c_F + E_c_S + E_c_M
+        # Add to Ec
+        E_c +=  dt * Rc
 
         # Add to stability factor
         ST  += dt * s
 
         end()
-
-    # Compute sum of error indicators
-    eta_K = eta_F + eta_S + eta_M
 
     # Compute space discretization error
     E_h = sum(eta_K)
@@ -167,9 +148,9 @@ def estimate_error(problem):
     E = E_h + E_k + abs(E_c)
 
     # Report results
-    save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M,  ST)
+#    save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M,  ST)
 #    save_computational_errors(E_c_F, E_c_S, E_c_M)
-    save_indicators(eta_F, eta_S, eta_M, eta_K, Omega)
+#    save_indicators(eta_F, eta_S, eta_M, eta_K, Omega)
     save_stability_factor(T, ST)
 
     return E, eta_K, ST, E_h
