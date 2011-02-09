@@ -148,10 +148,10 @@ def estimate_error(problem):
     E = E_h + E_k + abs(E_c)
 
     # Report results
-#    save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M,  ST)
+    save_errors(E, E_h, E_k, E_c, ST)
 #    save_computational_errors(E_c_F, E_c_S, E_c_M)
 #    save_indicators(eta_F, eta_S, eta_M, eta_K, Omega)
-    save_stability_factor(T, ST)
+#    save_stability_factor(T, ST)
 
     return E, eta_K, ST, E_h
 
@@ -185,6 +185,7 @@ def compute_time_residual(primal_series, t0, t1, problem):
     # Set time step
     kn = Constant(t1 - t0)
 
+    # FIXME...
     # Get weak residuals
     r_F, r_S, r_M = weak_residuals(U0, U1, U1, w, kn, problem)
 
@@ -324,7 +325,7 @@ def save_mesh(mesh):
     file = File("adaptivity/mesh_%d.xml" % refinement_level)
     file << mesh
 
-def save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, ST):
+def save_errors(E, E_h, E_k, E_c, ST):
     "Save errors to file"
 
     global refinement_level
@@ -356,7 +357,7 @@ S(T)  = %g
 
     # Save to file (for plotting)
     g = open("adaptivity/error_estimates.txt", "a")
-    g.write("%d %g %g %g %g %g %g %g %g \n" %(refinement_level, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M, ST))
+    g.write("%d %g %g %g %g \n" %(refinement_level, E, E_h, E_k, abs(E_c)))
     g.close()
 
 def save_timestep(t1, Rk, dt):
