@@ -13,7 +13,6 @@ from residuals import *
 from storage import *
 from spaces import *
 from utils import *
-from sys import exit
 
 # Variables for time residual
 U0 = U1 = w = None
@@ -23,7 +22,7 @@ refinement_level = 0
 min_timestep = None
 
 # Create files for plotting error indicators
-indicator_files  = (File("adaptivity/pvd/eta.pvd"),
+indicator_files  = (File("adaptivity/pvd/eta_K.pvd"),
                     File("adaptivity/pvd/refinement_markers.pvd"))
 
 def estimate_error(problem):
@@ -149,8 +148,7 @@ def estimate_error(problem):
 
     # Report results
     save_errors(E, E_h, E_k, E_c, ST)
-#    save_computational_errors(E_c_F, E_c_S, E_c_M)
-#    save_indicators(eta_F, eta_S, eta_M, eta_K, Omega)
+    save_indicators(eta_K, Omega)
 #    save_stability_factor(T, ST)
 
     return E, eta_K, ST, E_h
@@ -435,7 +433,7 @@ def save_indicators(eta_K, Omega):
         plot_markers[i] = eta_K[i]
 
     # Save markers
-    indicator_files << plot_markers
+    indicator_files[0] << plot_markers
 
 def save_refinement_markers(mesh, markers):
     "Save refinement markers for visualization"
@@ -450,7 +448,7 @@ def save_refinement_markers(mesh, markers):
     for i in range(mesh.num_cells()):
         if markers[i]:
             refinement_markers[i] = True
-
-#     # Save markers
-#     indicator_files << refinement_markers
+            
+    # Save markers
+    indicator_files[1] << refinement_markers
 
