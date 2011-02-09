@@ -290,26 +290,6 @@ def initial_timestep(problem):
 
     return dt
 
-def compute_itertol(problem, w_c, TOL, dt, t1):
-    "Compute tolerance for FSI iterations"
-
-    if problem.uniform_timestep():
-        tol = problem.fixed_point_tol()
-        info("")
-        info_blue("  * Tolerance for (f)-(S)-(M) iteration is fixed to %g" % tol)
-        end()
-
-    else:
-        S_c = 1.0 # not computed
-        tol = w_c * TOL * dt / S_c
-        info("")
-        info_blue("  * Changing tolerance for (f)-(S)-(M) iteration to %g" % tol)
-        end()
-
-    # Save FSI iteration tolerance to file
-    save_itertol(t1, tol)
-
-    return tol
 
 def save_mesh(mesh):
     "Save mesh to file"
@@ -385,24 +365,6 @@ def save_goal_functional(t1, goal_functional):
 
     f = open("adaptivity/goal_functional.txt", "a")
     f.write("%d %g %g \n" % (refinement_level, t1, goal_functional))
-    f.close()
-
-def save_itertol(t1, tol):
-    "Save FSI iteration tolerance"
-
-    global refinment_level
-
-    f = open("adaptivity/fsi_tolerance.txt", "a")
-    f.write("%d %g %g \n" % (refinement_level, t1, tol))
-    f.close()
-
-def save_no_FSI_iter(t1, no):
-    "Save number of FSI iterations"
-
-    global refinement_level
-
-    f = open("adaptivity/no_iterations.txt", "a")
-    f.write("%d %g %g \n" % (refinement_level, t1, no))
     f.close()
 
 def save_dofs(num_dofs_FSM, timestep_counter):
