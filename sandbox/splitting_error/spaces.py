@@ -14,10 +14,10 @@ def create_primal_functions(Omega):
     Q = FunctionSpace(Omega, "CG", 1)
 
     # Create primal functions
-    uh = Function(V)
-    ph = Function(Q)
+    u = Function(V)
+    p = Function(Q)
 
-    return uh, ph
+    return u, p
 
 def create_dual_space(Omega):
     "Return dual function space"
@@ -32,8 +32,8 @@ def create_dual_space(Omega):
     return W
 
 def create_dual_functions(Omega):
-    "Return dual variables on the full domain initialized to zero"
+    "Return dual variables"
 
     W = create_dual_space(Omega)
     dual_sol = Function(W)
-    return dual_sol, dual_sol.split()
+    return dual_sol, dual_sol.split(False)

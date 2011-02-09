@@ -4,152 +4,68 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-16
+# Last changed: 2011-02-08
 
 from dolfin import *
-from operators import Sigma_F as _Sigma_F
-from operators import Sigma_S as _Sigma_S
-from operators import Sigma_M as _Sigma_M
-from operators import F, J, I
+from operators import *
 
 def weak_residuals(U0, U1, U, w, kn, problem):
-    "Return weak residuals"
+    "Return weak residuals used for Ek. The primal data is evaluated in at U1"
 
     # Extract variables
-    U_F0, P_F0, U_S0, P_S0, U_M0 = U0
-    U_F1, P_F1, U_S1, P_S1, U_M1 = U1
-    U_F,  P_F,  U_S,  P_S,  U_M  = U
-    v_F, q_F, v_S, q_S, v_M, q_M = w
+    u0, p0 = U0
+    u1, p1 = U1
+    u, p   = U
+    v, q,  = w # Can denote test function or dual solutoion
 
     # Get problem parameters
-    Omega   = problem.mesh()
-    rho_F   = problem.fluid_density()
-    mu_F    = problem.fluid_viscosity()
-    rho_S   = problem.structure_density()
-    mu_S    = problem.structure_mu()
-    lmbda_S = problem.structure_lmbda()
-    alpha_M = problem.mesh_alpha()
-    mu_M    = problem.mesh_mu()
-    lmbda_M = problem.mesh_lmbda()
-
+    Omega = problem.fluid_mesh()
+    rho   = problem.density()
+    mu    = problem.viscosity()
+    
     # Define normals
-    N = FacetNormal(Omega)
-    N_F = N
-    N_S = N
+    n = FacetNormal(Omega)
 
-    # Define inner products
-    dx_F = dx(0)
-    dx_S = dx(1)
+    # FIXME: Check epsilon(v) is correct
+    # Define weak residual for the time error 
+    wR  = (1/kn)*rho*inner(v, u1 - u0)*dx \
+        + rho*inner(v, dot(grad(u), u))*dx \
+        + inner(epsilon(v), sigma(u, p, mu))*dx \
+        - inner(v, dot(sigma(u, p, mu), n))*ds \
+        + inner(q, div(u))*dx
     
-    # Define "facet" products
-    dS_F  = dS(0)
-    dS_S  = dS(1)
-    d_FSI = dS(2)
+    return wR
 
-    # Define time derivatives
-    dt_U_F = (1/kn) * (U_F1 - U_F0)
-    dt_U_M = (1/kn) * (U_M1 - U_M0)
-    Dt_U_F = rho_F * J(U_M) * (dt_U_F + dot(grad(U_F), dot(inv(F(U_M)), U_F - dt_U_M)))
-    Dt_U_S = (1/kn) * (U_S1 - U_S0)
-    Dt_P_S = rho_S * (1/kn) * (P_S1 - P_S0)
-    Dt_U_M = alpha_M * (1/kn) * (U_M1 - U_M0)
-
-    # Define stresses
-    Sigma_F = J(U_M)*dot(_Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T)
-    Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
-    Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
-    
-    # Fluid residual
-    R_F = inner(v_F, Dt_U_F)*dx_F + inner(sym(grad(v_F)), Sigma_F)*dx_F \
-        - inner(v_F, mu_F*J(U_M)*dot(dot(inv(F(U_M)).T, grad(U_F).T), dot(inv(F(U_M)).T, N_F)))*ds \
-        + inner(v_F, J(U_M)*P_F*dot(I, dot(inv(F(U_M)).T, N_F)))*ds \
-        + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx_F
-
-
-    # Structure residual (note the minus sign on N_F('+'))
-    R_S = inner(v_S, Dt_P_S)*dx_S + inner(grad(v_S), Sigma_S)*dx_S \
-        - inner(v_S('-'), dot(Sigma_S('-') - Sigma_F('+'), -N_F('+')))*d_FSI \
-        + inner(q_S, Dt_U_S - P_S)*dx_S
-    
-   
-    # Mesh residual contributions
-    R_M = inner(v_M, Dt_U_M)*dx_F + inner(sym(grad(v_M)), Sigma_M)*dx_F \
-        + inner(q_M, U_M - U_S)('+')*d_FSI
-
-    return R_F, R_S, R_M
-
-def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
+def strong_residuals(U, U0, U1, Z, EZ, dg, kn, problem):
     "Return strong residuals (integrated by parts)"
 
     # Extract variables
-    U_F0, P_F0, U_S0, P_S0, U_M0       = U0
-    U_F1, P_F1, U_S1, P_S1, U_M1       = U1
-    U_F,  P_F,  U_S,  P_S,  U_M        = U
-    Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M  = Z
-    EZ_F, EY_F, EZ_S, EY_S, EZ_M, EY_M = EZ
+    # Here U, U0, U1, Z and EZ are mid point values
+    u, p   = U   
+    u0, p0 = U0
+    u1, p1 = U1 
+    z, y   = Z   
+    Ez, Ey = EZ  
 
     # Get problem parameters
-    Omega   = problem.mesh()
-    Omega_F = problem.fluid_mesh()
-    Omega_S = problem.structure_mesh()
-    rho_F   = problem.fluid_density()
-    mu_F    = problem.fluid_viscosity()
-    rho_S   = problem.structure_density()
-    mu_S    = problem.structure_mu()
-    lmbda_S = problem.structure_lmbda()
-    alpha_M = problem.mesh_alpha()
-    mu_M    = problem.mesh_mu()
-    lmbda_M = problem.mesh_lmbda()
+    Omega = problem.fluid_mesh()
+    rho   = problem.density()
+    mu    = problem.viscosity()
 
     # Define normals
-    N = FacetNormal(Omega)
-    N_F = N
-    N_S = N
+    n = FacetNormal(Omega)
 
-    # Define inner products
-    dx_F = dx(0)
-    dx_S = dx(1)
+    # Define element residuals for momentum eq.
+    sR_mom_K =  dg*(1/kn)*rho*inner(Ez - z, u1 - u0)*dx \
+             +  dg*rho*inner(Ez - z, dot(grad(u), u))*dx \
+             -  dg*inner(Ez - z, div(sigma(u, p0, mu)))*dx
+
+    # Define moment eq. residuals defined on facets (jumps and BCs)
+    sR_mom_dK = avg(dg)*inner(Ez('+') - z('+'), jump(dot(sigma(u, p, mu), n)))*dS \
+              - dg*inner(Ez - z, dot(sigma(u, p, mu), n))*ds 
+
+    # Define continuity eq. element residuals
+    sR_con_K =  dg*inner(Ey - y, div(u))*dx
+
     
-    # Define "facet" products
-    dS_F  = dS(0)
-    dS_S  = dS(1)
-    d_FSI = dS(2)
-
-    # Define midpoint values
-    U_F = 0.5 * (U_F0 + U_F1)
-    P_F = 0.5 * (P_F0 + P_F1)
-    U_S = 0.5 * (U_S0 + U_S1)
-    P_S = 0.5 * (P_S0 + P_S1)
-    U_M = 0.5 * (U_M0 + U_M1)
-
-    # Define time derivatives
-    dt_U_F = (1/kn) * (U_F1 - U_F0)
-    dt_U_M = (1/kn) * (U_M1 - U_M0)
-    Dt_U_F = rho_F * J(U_M) * (dt_U_F + dot(grad(U_F), dot(inv(F(U_M)), U_F - dt_U_M)))
-    Dt_U_S = (1/kn) * (U_S1 - U_S0)
-    Dt_P_S = rho_S * (1/kn) * (P_S1 - P_S0)
-    Dt_U_M = alpha_M * (1/kn) * (U_M1 - U_M0)
-
-    # Define stresses
-    Sigma_F = J(U_M)*dot(_Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T)
-    Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
-    Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
-
-    # Fluid residual contributions
-    R_F0 = w*inner(EZ_F - Z_F, Dt_U_F - div(Sigma_F))*dx_F
-    R_F1 = avg(w)*inner(EZ_F('+') - Z_F('+'), jump(dot(Sigma_F, N_F)))*dS_F
-    R_F2 = w*inner(EZ_F - Z_F, dot(Sigma_F, N_F))*ds  
-    R_F3 = w*inner(EY_F - Y_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx_F
-
-    # Structure residual contributions (note the minus sign on N_F('+'))
-    R_S0 = w*inner(EZ_S - Z_S, Dt_P_S - div(Sigma_S))*dx_S
-    R_S1 = avg(w)*inner(EZ_S('-') - Z_S('-'), jump(dot(Sigma_S, N_S)))*dS_S
-    R_S2 = w('-')*inner(EZ_S('-') - Z_S('-'), dot(Sigma_S('-') - Sigma_F('+'), -N_F('+')))*d_FSI
-    R_S3 = w*inner(EY_S - Y_S, Dt_U_S - P_S)*dx_S
-    
-    # Mesh residual contributions
-    R_M0 = w*inner(EZ_M - Z_M, Dt_U_M - div(Sigma_M))*dx_F
-    R_M1 = avg(w)*inner(EZ_M('+') - Z_M('+'), jump(dot(Sigma_M, N_F)))*dS_F
-    R_M2 = w('+')*inner(EY_M - Y_M, U_M - U_S)('+')*d_FSI # \equiv 0
-
-    return (R_F0, R_F1, R_F2, R_F3), (R_S0, R_S1, R_S2, R_S3), (R_M0, R_M1, R_M2)
+    return (sR_mom_K, sR_mom_dK, sR_con_K)
