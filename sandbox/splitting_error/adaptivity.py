@@ -149,7 +149,7 @@ def estimate_error(problem):
     # Report results
     save_errors(E, E_h, E_k, E_c, ST)
     save_indicators(eta_K, Omega)
-#    save_stability_factor(T, ST)
+    save_stability_factor(T, ST)
 
     return E, eta_K, ST, E_h
 
@@ -159,9 +159,7 @@ def compute_time_residual(primal_series, t0, t1, problem):
     info("Computing time residual")
 
     # Get meshes
-    Omega = problem.mesh()
-    Omega_F = problem.fluid_mesh()
-    Omega_S = problem.structure_mesh()
+    Omega = problem.fluid_mesh()
 
     # Initialize solution variables (only first time)
     global U0, U1, w
@@ -177,18 +175,17 @@ def compute_time_residual(primal_series, t0, t1, problem):
         w = TestFunctions(W)
 
     # Read solution data
-    read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series)
-    read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series)
+    read_primal_data(U0, t0, primal_series)
+    read_primal_data(U1, t1, primal_series)
 
     # Set time step
     kn = Constant(t1 - t0)
 
-    # FIXME...
     # Get weak residuals
-    r_F, r_S, r_M = weak_residuals(U0, U1, U1, w, kn, problem)
+    rk = weak_residuals(U0, U1, w, kn, problem)
 
     # Assemble residual
-    r = assemble(r_F + r_S + r_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+    r = assemble(rk)
 
     # Compute l^2 norm
     Rk = norm(r, "l2")
