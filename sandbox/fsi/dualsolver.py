@@ -4,9 +4,9 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-06
+# Last changed: 2011-02-09
 
-from time import time
+from time import time as python_time
 from dolfin import *
 from spaces import *
 from storage import *
@@ -45,7 +45,7 @@ def solve_dual(problem, parameters):
     dual_series = create_dual_series(parameters)
 
     # Record CPU time
-    cpu_time = time()
+    cpu_time = python_time()
 
     # Create mixed function space
     W = create_dual_space(Omega)
@@ -134,7 +134,7 @@ def solve_dual(problem, parameters):
         end()
 
     # Report elapsed time
-    info_blue("Dual solution computed in %g seconds." % (time() - cpu_time))
+    info_blue("Dual solution computed in %g seconds." % (python_time() - cpu_time))
 
 def _create_boundary_conditions(problem, W):
     "Create boundary conditions for dual problem"

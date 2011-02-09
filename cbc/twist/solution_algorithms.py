@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Anders Logg, 2010
-# Last changed: 2011-02-04
+# Last changed: 2011-02-09
 
 from dolfin import *
 from cbc.common import *
@@ -78,10 +78,10 @@ class StaticMomentumBalanceSolver(CBCSolver):
         a = derivative(L, u, du)
 
         # Setup problem
-        equation = VariationalProblem(a, L, bcu, exterior_facet_domains = boundary, nonlinear = True)
-        equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-12
-        equation.parameters["newton_solver"]["relative_tolerance"] = 1e-16
-        equation.parameters["newton_solver"]["maximum_iterations"] = 100
+        equation = VariationalProblem(L, a, bcu, exterior_facet_domains=boundary)
+        equation.parameters["solver"]["newton_solver"]["absolute_tolerance"] = 1e-12
+        equation.parameters["solver"]["newton_solver"]["relative_tolerance"] = 1e-16
+        equation.parameters["solver"]["newton_solver"]["maximum_iterations"] = 100
 
         # Store variables needed for time-stepping
         # FIXME: Figure out why I am needed
@@ -214,7 +214,7 @@ class MomentumBalanceSolver(CBCSolver):
             compiled_boundary.mark(boundary, i)
             L_accn = L_accn + inner(neumann_conditions[i], v)*ds(i)
 
-        problem_accn = VariationalProblem(a_accn, L_accn, exterior_facet_domains = boundary)
+        problem_accn = VariationalProblem(a_accn, L_accn, exterior_facet_domains=boundary)
         a0 = problem_accn.solve()
 
         k = Constant(dt)
@@ -322,7 +322,7 @@ class MomentumBalanceSolver(CBCSolver):
         self.k.assign(dt)
 
         # FIXME: Setup all stuff in the constructor and call assemble instead of VariationalProblem
-        equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
+        equation = VariationalProblem(self.L, self.a, self.bcu, exterior_facet_domains=self.boundary)
         equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-12
         equation.parameters["newton_solver"]["relative_tolerance"] = 1e-12
         equation.parameters["newton_solver"]["maximum_iterations"] = 100
@@ -541,10 +541,11 @@ class CG1MomentumBalanceSolver(CBCSolver):
         self.dt = dt
         self.k.assign(dt)
 
-        equation = VariationalProblem(self.a, self.L, self.bcu, exterior_facet_domains = self.boundary, nonlinear = True)
-        equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-12
-        equation.parameters["newton_solver"]["relative_tolerance"] = 1e-12
-        equation.parameters["newton_solver"]["maximum_iterations"] = 100
+        equation = VariationalProblem(self.L, self.a, self.bcu, exterior_facet_domains = self.boundary)
+        info(equation.parameters, True)
+        equation.parameters["solver"]["newton_solver"]["absolute_tolerance"] = 1e-12
+        equation.parameters["solver"]["newton_solver"]["relative_tolerance"] = 1e-12
+        equation.parameters["solver"]["newton_solver"]["maximum_iterations"] = 100
         equation.solve(self.U)
         return self.U.split(True)
 

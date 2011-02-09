@@ -4,10 +4,10 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-06
+# Last changed: 2011-02-09
 
 import pylab
-from time import time
+from time import time as python_time
 from dolfin import *
 
 from cbc.common.utils import timestep_range
@@ -44,7 +44,7 @@ def solve_primal(problem, parameters, ST):
     time_series = create_primal_series(parameters)
 
     # Record CPU time
-    cpu_time = time()
+    cpu_time = python_time()
 
     # Record number of time steps
     timestep_counter = 0
@@ -207,7 +207,7 @@ def solve_primal(problem, parameters, ST):
     save_goal_functional_final(goal_functional, integrated_goal_functional, parameters)
 
     # Report elapsed time
-    info_blue("Primal solution computed in %g seconds." % (time() - cpu_time))
+    info_blue("Primal solution computed in %g seconds." % (python_time() - cpu_time))
     info("")
 
     # Return solution

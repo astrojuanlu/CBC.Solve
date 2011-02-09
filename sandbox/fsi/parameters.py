@@ -32,7 +32,7 @@ def default_parameters():
     p.add("w_c", 0.1)
     p.add("marking_fraction", 0.5)
 
-    p.add("output_directory", "results")
+    p.add("output_directory", "unspecified")
     p.add("description", "unspecified")
 
     return p

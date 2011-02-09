@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-06
+# Last changed: 2011-02-09
 
 from fsiproblem import *
 
@@ -33,11 +33,11 @@ application_parameters = Parameters("application_parameters")
 file >> application_parameters
 
 # Constants related to the geometry of the problem
-cavity_length  = 1.0
-cavity_height  = 1.5
-structure_left  = 0.0
+cavity_length = 1.0
+cavity_height = 1.5
+structure_left = 0.0
 structure_right = 1.0
-structure_top   = 0.25
+structure_top = 0.25
 inflow_top = 1.5
 inflow_bottom = 1.25
 

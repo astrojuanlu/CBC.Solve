@@ -2,11 +2,11 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-06
+# Last changed: 2011-02-09
 
 __all__ = ["FSISolver"]
 
-from time import time
+from time import time as python_time
 
 from dolfin import *
 from cbc.common import CBCSolver
@@ -47,7 +47,7 @@ class FSISolver(CBCSolver):
         save_mesh(self.problem.mesh(), parameters)
 
         # Adaptive loop
-        cpu_time = time()
+        cpu_time = python_time()
         goal_functional = None
         for level in range(max_num_refinements + 1):
 
@@ -110,7 +110,7 @@ class FSISolver(CBCSolver):
                 info_blue("Reached maximum number of refinement levels (%d)", max_num_refinements)
 
         # Report elapsed time
-        info_blue("Solution computed in %g seconds." % (time() - cpu_time))
+        info_blue("Solution computed in %g seconds." % (python_time() - cpu_time))
 
         # Return solution
         return goal_functional
