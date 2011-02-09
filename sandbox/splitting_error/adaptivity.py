@@ -69,15 +69,13 @@ def estimate_error(problem):
     # Get strong residuals for E_h
     sRh = strong_residuals(U, U0, U1, Z, EZ, dg, kn, problem)
 
-    # FIXME: Check the arguments...
-    # Get weak residuals for E_k 
-    wRk = weak_residuals(U0, U1, w, kn, problem)
+    # Get weak residuals for E_k
+    wRk = weak_residuals(U0, U1, U1, w, kn, problem)
 
-    # FIXME: Check the arguments...
     # Get weak residuals for E_c
-    wRc =  weak_residuals(U0, U1, Z, kn, problem)
+    wRc = weak_residuals(U0, U1, U, Z, kn, problem)
 
-    # Reset vectors for assembly of space residuals
+    # Reset vector for assembly of space residuals
     e_K = None
 
     # Reset variables
@@ -126,10 +124,10 @@ def estimate_error(problem):
         # Reset vectors for assembly of residuals
         eta = [zeros(Omega.num_cells()) for i in range(len(e_K))]
 
-        # Add to eta_K
+        # Add to eta
         for i in range(len(e_K)):
             eta[i] += dt * abs(e_K[i].array())
-            
+
         # Add to E_k
         E_k += dt * s * dt * Rk
 
@@ -143,7 +141,7 @@ def estimate_error(problem):
 
     # Compute sum of space erros indicators
     eta_K = sum(eta)
-
+    
     # Compute space discretization error
     E_h = sum(eta_K)
         
@@ -154,6 +152,7 @@ def estimate_error(problem):
     save_errors(E, E_h, E_k, E_c, ST)
     save_indicators(eta_K, Omega)
     save_stability_factor(T, ST)
+
 
     return E, eta_K, ST, E_h
 
@@ -186,7 +185,7 @@ def compute_time_residual(primal_series, t0, t1, problem):
     kn = Constant(t1 - t0)
 
     # Get weak residuals
-    rk = weak_residuals(U0, U1, w, kn, problem)
+    rk = weak_residuals(U0, U1, U1, w, kn, problem)
 
     # Assemble residual
     r = assemble(rk)

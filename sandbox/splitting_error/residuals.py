@@ -9,17 +9,14 @@ __license__  = "GNU GPL Version 3 or any later version"
 from dolfin import *
 from operators import *
 
-def weak_residuals(U0, U1, w, kn, problem):
-    "Return weak residuals (used in Ek and Ec)"
+def weak_residuals(U0, U1, U, w, kn, problem):
+    "Return weak residuals used for Ek. The primal data is evaluated in at U1"
 
     # Extract variables
-    # Note: w can be a test function or the dual solution
-    uh0, ph0 = U0
-    uh1, ph1 = U1
-    v, q     = w 
-
-    # Define mid point value
-    u_mid = 0.5*(uh0 + uh1)
+    u0, p0 = U0
+    u1, p1 = U1
+    u, p   = U
+    v, q,  = w # Can denote test function or dual solutoion
 
     # Get problem parameters
     Omega = problem.fluid_mesh()
@@ -29,15 +26,13 @@ def weak_residuals(U0, U1, w, kn, problem):
     # Define normals
     n = FacetNormal(Omega)
 
-    # FIXME: How should the mom. eq be evaluated?
-    # FIXME: How should the cont. eq be evaluated?
-  
-    # Define weak residual
-    wR = (1/kn)*rho*inner(v, uh1 - uh0)*dx \
-        + rho*inner(v, dot(grad(u_mid), u_mid))*dx \
-        + inner(epsilon(v), sigma(u_mid, ph0, mu))*dx \
-        - inner(v, dot(sigma(u_mid, ph0, mu), n))*ds \
-        + inner(q, div(uh0))*dx
+    # FIXME: Check epsilon(v) is correct
+    # Define weak residual for the time error 
+    wR  = (1/kn)*rho*inner(v, u1 - u0)*dx \
+        + rho*inner(v, dot(grad(u), u))*dx \
+        + inner(epsilon(v), sigma(u, p, mu))*dx \
+        - inner(v, dot(sigma(u, p, mu), n))*ds \
+        + inner(q, div(u))*dx
     
     return wR
 
@@ -60,20 +55,17 @@ def strong_residuals(U, U0, U1, Z, EZ, dg, kn, problem):
     # Define normals
     n = FacetNormal(Omega)
 
-    # FIXME: How should the mom. eq be evaluated?
-    # FIXME: How should the cont. eq be evaluated?
-
     # Define element residuals for momentum eq.
     sR_mom_K =  dg*(1/kn)*rho*inner(Ez - z, u1 - u0)*dx \
              +  dg*rho*inner(Ez - z, dot(grad(u), u))*dx \
              -  dg*inner(Ez - z, div(sigma(u, p0, mu)))*dx
 
     # Define moment eq. residuals defined on facets (jumps and BCs)
-    sR_mom_dK = avg(dg)*inner(Ez('+') - z('+'), jump(dot(sigma(u, p0, mu), n)))*dS \
-              - dg*inner(Ez - z, dot(sigma(u, p0, mu), n))*ds 
+    sR_mom_dK = avg(dg)*inner(Ez('+') - z('+'), jump(dot(sigma(u, p, mu), n)))*dS \
+              - dg*inner(Ez - z, dot(sigma(u, p, mu), n))*ds 
 
     # Define continuity eq. element residuals
-    sR_con_K =  dg*inner(Ey - y, div(u0))*dx
+    sR_con_K =  dg*inner(Ey - y, div(u))*dx
 
     
     return (sR_mom_K, sR_mom_dK, sR_con_K)
