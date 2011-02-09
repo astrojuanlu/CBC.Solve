@@ -31,6 +31,7 @@ def default_parameters():
     p.add("w_k", 0.45)
     p.add("w_c", 0.1)
     p.add("marking_fraction", 0.5)
+    p.add("refinement_algorithm", "recursive_bisection")
 
     p.add("output_directory", "unspecified")
     p.add("description", "unspecified")

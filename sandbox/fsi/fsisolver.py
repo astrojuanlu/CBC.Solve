@@ -7,7 +7,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 __all__ = ["FSISolver"]
 
 from time import time as python_time
-
+from dolfin import parameters as dolfin_parameters
 from dolfin import *
 from cbc.common import CBCSolver
 
@@ -24,7 +24,7 @@ class FSISolver(CBCSolver):
         CBCSolver.__init__(self)
 
         # Set DOLFIN parameters
-        parameters["form_compiler"]["cpp_optimize"] = True
+
 
         # Store problem
         self.problem = problem
@@ -36,6 +36,10 @@ class FSISolver(CBCSolver):
         tolerance = parameters["tolerance"]
         w_h = parameters["w_h"]
         max_num_refinements = parameters["max_num_refinements"]
+
+        # Set DOLFIN parameters
+        dolfin_parameters["form_compiler"]["cpp_optimize"] = True
+        dolfin_parameters["refinement_algorithm"] = parameters["refinement_algorithm"]
 
         # Create empty solution (return value when primal is not solved)
         U = 5*(None,)

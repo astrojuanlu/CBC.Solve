@@ -10,7 +10,8 @@ p["tolerance"] = 1e-6
 p["initial_timestep"] = 0.025
 p["dorfler_marking"] = True
 p["marking_fraction"] = 0.5
-#p["refinement_algorithm"] = "bisection"
+p["refinement_algorithm"] = "recursive_bisection"
+#p["refinement_algorithm"] = "regular_cut"
 p["description"] = "adaptive, k = 0.025 (bisection)"
 
 # Run problem
