@@ -41,17 +41,16 @@ def weak_residuals(U0, U1, w, kn, problem):
     
     return wR
 
-def strong_residuals(U0, U1, Z, EZ, dg, kn, problem):
+def strong_residuals(U, U0, U1, Z, EZ, dg, kn, problem):
     "Return strong residuals (integrated by parts)"
 
     # Extract variables
-    uh0, ph0 = U0
-    uh1, ph1 = U1
-    z, y     = Z
-    Ez, Ey   = EZ
-
-    # Define mid point value 
-    u_mid = 0.5*(uh0 + uh1)    
+    # Here U, U0, U1, Z and EZ are mid point values
+    u, p   = U   
+    u0, p0 = U0
+    u1, p1 = U1 
+    z, y   = Z   
+    Ez, Ey = EZ  
 
     # Get problem parameters
     Omega = problem.fluid_mesh()
@@ -64,11 +63,17 @@ def strong_residuals(U0, U1, Z, EZ, dg, kn, problem):
     # FIXME: How should the mom. eq be evaluated?
     # FIXME: How should the cont. eq be evaluated?
 
-    # Define strong residual 
-    sR =  dg*(1/kn)*rho*inner(Ez - z, uh1 - uh0)*dx \
-       +  dg*rho*inner(Ez - z, dot(grad(u_mid), u_mid))*dx \
-       +  dg*inner(Ez - z, div(sigma(u_mid, ph0, mu)))*dx \
-       +  avg(dg)*inner(Ez('+') - z('+'), jump(dot(sigma(u_mid, ph0, mu), n)))*dS
+    # Define element residuals for momentum eq.
+    sR_mom_K =  dg*(1/kn)*rho*inner(Ez - z, u1 - u0)*dx \
+             +  dg*rho*inner(Ez - z, dot(grad(u), u))*dx \
+             -  dg*inner(Ez - z, div(sigma(u, p0, mu)))*dx
+
+    # Define moment eq. residuals defined on facets (jumps and BCs)
+    sR_mom_dK = avg(dg)*inner(Ez('+') - z('+'), jump(dot(sigma(u, p0, mu), n)))*dS \
+              - dg*inner(Ez - z, dot(sigma(u, p0, mu), n))*ds 
+
+    # Define continuity eq. element residuals
+    sR_con_K =  dg*inner(Ey - y, div(u0))*dx
 
     
-    return sR
+    return (sR_mom_K, sR_mom_dK, sR_con_K)

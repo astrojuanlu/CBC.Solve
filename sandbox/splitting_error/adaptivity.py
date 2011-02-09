@@ -51,13 +51,12 @@ def estimate_error(problem):
     ZZ1, Z1 = create_dual_functions(Omega)
 
     # Define function spaces for extrapolation
-    V2 = VectorFunctionSpace(Omega, "CG", 2)
     V3 = VectorFunctionSpace(Omega, "CG", 3)
     Q2 = FunctionSpace(Omega, "CG", 2)
 
     # Define functions for extrapolation
-    EZ0 = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
-    EZ1 = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
+    EZ0 = [Function(EV) for EV in (V3, Q2)]
+    EZ1 = [Function(EV) for EV in (V3, Q2)]
 
     # Define midpoint values for primal and dual functions
     U  = [0.5 * (U0[i]  + U1[i])  for i in range(2)]
@@ -68,16 +67,18 @@ def estimate_error(problem):
     kn = Constant(0.0)
 
     # Get strong residuals for E_h
-    sRh = strong_residuals(U0, U1, Z, EZ, dg, kn, problem)
+    sRh = strong_residuals(U, U0, U1, Z, EZ, dg, kn, problem)
 
-    # Get weak residuals for E_k
+    # FIXME: Check the arguments...
+    # Get weak residuals for E_k 
     wRk = weak_residuals(U0, U1, w, kn, problem)
 
+    # FIXME: Check the arguments...
     # Get weak residuals for E_c
     wRc =  weak_residuals(U0, U1, Z, kn, problem)
 
-    # Reset vectors for assembly of residuals
-    eta_K = zeros(Omega.num_cells())
+    # Reset vectors for assembly of space residuals
+    e_K = None
 
     # Reset variables
     E_k   = 0.0
@@ -109,13 +110,9 @@ def estimate_error(problem):
         read_dual_data(ZZ0, t0, dual_series)
         read_dual_data(ZZ1, t1, dual_series)
 
-        # Extrapolate dual data
-        [EZ0[j].extrapolate(Z0[j]) for j in range(2)]
-        [EZ1[j].extrapolate(Z1[j]) for j in range(2)]
-
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
-        eta_sub_sum = assemble(sRh) 
+        e_K = [assemble(sRhi) for sRhi in sRh]
 
         # Assemble weak residuals for time discretization error
         Rk = norm(assemble(wRk))
@@ -126,9 +123,13 @@ def estimate_error(problem):
         # Estimate interpolation error (local weight)
         s = 0.5 * linalg.norm(ZZ0.vector().array() - ZZ1.vector().array(), 2) / dt
 
-        # Add to error indicators
-        eta_K += dt * sum(abs(eta_sub_sum.array()))
+        # Reset vectors for assembly of residuals
+        eta = [zeros(Omega.num_cells()) for i in range(len(e_K))]
 
+        # Add to eta_K
+        for i in range(len(e_K)):
+            eta[i] += dt * abs(e_K[i].array())
+            
         # Add to E_k
         E_k += dt * s * dt * Rk
 
@@ -140,9 +141,12 @@ def estimate_error(problem):
 
         end()
 
+    # Compute sum of space erros indicators
+    eta_K = sum(eta)
+
     # Compute space discretization error
     E_h = sum(eta_K)
-
+        
     # Compute total error
     E = E_h + E_k + abs(E_c)
 
