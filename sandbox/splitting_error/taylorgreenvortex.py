@@ -10,7 +10,7 @@ from fsiproblem import *
 application_parameters = Parameters("application_parameters")
 application_parameters.add("end_time", 0.5)
 application_parameters.add("dt", 0.1)
-application_parameters.add("mesh_scale", 16)
+application_parameters.add("mesh_scale", 2)
 application_parameters.add("TOL", 0.1)
 application_parameters.add("w_h", 0.45) 
 application_parameters.add("w_k", 0.45)
@@ -33,6 +33,10 @@ class TaylorGreenVortex(FSI):
         # Define mesh based on a scale factor 
         mesh_scale = application_parameters["mesh_scale"]
         mesh = UnitSquare(mesh_scale, mesh_scale)
+        
+        # Map to coordinates to [-1, 1]^2
+        map = 2*(mesh.coordinates() - 0.5)
+        mesh.coordinates()[:, :] = map
 
         # Save original mesh
         file = File("adaptivity/mesh_0.xml")
