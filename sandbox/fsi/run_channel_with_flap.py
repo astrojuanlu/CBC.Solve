@@ -1,4 +1,4 @@
-B1;2600;0cfrom fsirun import *
+from fsirun import *
 
 # Set common parameters
 p = default_parameters()
