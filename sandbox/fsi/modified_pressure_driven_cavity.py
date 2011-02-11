@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-09
+# Last changed: 2011-02-11
 
 from fsiproblem import *
 
@@ -42,11 +42,19 @@ inflow_top = 1.5
 inflow_bottom = 1.25
 
 # Define boundaries
-inflow      = "x[0] < DOLFIN_EPS && x[1] > %g - DOLFIN_EPS &&  x[1] < %g + DOLFIN_EPS" % (inflow_bottom, inflow_top)
-outflow     = "x[0] > %g - DOLFIN_EPS && x[1] > %g - DOLFIN_EPS && x[1] < %g + DOLFIN_EPS"  % (cavity_length, inflow_bottom, inflow_top)
-fixed_left  = "x[0] == 0.0  && x[1] >= DOFLIN_EPS"
-fixed_right = "x[0] > %g - DOLFIN_EPS  && x[1] >= 0.0" % structure_right
-noslip      = "on_boundary && !(%s) && !(%s) " % (inflow, outflow)
+inflow      = "x[0] < DOLFIN_EPS && \
+               x[1] > %g - DOLFIN_EPS && \
+               x[1] < %g + DOLFIN_EPS" % (inflow_bottom, inflow_top)
+outflow     = "x[0] > %g - DOLFIN_EPS && \
+               x[1] > %g - DOLFIN_EPS && \
+               x[1] < %g + DOLFIN_EPS" % (cavity_length, inflow_bottom, inflow_top)
+fixed_left  = "x[0] < DOLFIN_EPS && \
+               x[1] > -DOLFIN_EPS && \
+               x[1] < %g + DOLFIN_EPS" % structure_top
+fixed_right = "x[0] > %g - DOLFIN_EPS && \
+               x[1] > -DOLFIN_EPS && \
+               x[1] < %g + DOLFIN_EPS" % (structure_right, structure_top)
+noslip      = "on_boundary && !(%s) && !(%s)" % (inflow, outflow)
 
 # Define structure subdomain
 class Structure(SubDomain):
@@ -68,11 +76,6 @@ class PressureDrivenCavity(FSI):
 
         # Initialize base class
         FSI.__init__(self, mesh)
-
-    #--- Solver options ---
-
-    def convergence_test_timestep(self, mesh):
-        return 0.1 * mesh.hmin()
 
     #--- Common parameters ---
 

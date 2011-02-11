@@ -2,31 +2,16 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-11-01
+# Last changed: 2011-02-11
 
 from fsiproblem import *
 
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
-application_parameters.add("ny", 20)
-application_parameters.add("T", 0.5)
 application_parameters.add("dt", 0.02)
-application_parameters.add("w_h", 0.45) 
-application_parameters.add("w_k", 0.45)
-application_parameters.add("w_c", 0.1)
-application_parameters.add("mesh_alpha", 1.0)
-application_parameters.add("dorfler_fraction", 0.5)
 application_parameters.add("adaptive_tolerance", 0.5)
-application_parameters.parse()
 
-# Save parameters to file
-parameter_info = application_parameters.option_string()
-f = open("adaptivity/channel_flap_parameters.txt", "w")
-f.write("Channel with Flap \n \n ")
-f.write(parameter_info)
-f.close()
-
-# Constants related to the geometry of the channel and the obstruction
+# Constants related to the geometry of the problem
 channel_length  = 4.0
 channel_height  = 1.0
 structure_left  = 1.4
@@ -55,8 +40,8 @@ class ChannelWithFlap(FSI):
 
     def __init__(self):
 
-        ny = application_parameters["ny"]
-        nx = 4*ny
+        ny = 20
+        nx = 80
         mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 
         # Initialize base class
@@ -65,7 +50,7 @@ class ChannelWithFlap(FSI):
     #--- Common parameters ---
 
     def end_time(self):
-        return application_parameters["T"]
+        return 0.5
 
     def initial_timestep(self):
         return application_parameters["dt"]
@@ -86,7 +71,7 @@ class ChannelWithFlap(FSI):
         return application_parameters["adaptive_tolerance"]
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
-        
+
         # Compute average displacement
         structure_area = (structure_right - structure_left) * structure_top
         displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh=U_S.function_space().mesh())
@@ -95,16 +80,16 @@ class ChannelWithFlap(FSI):
         f = open("adaptivity/goal_functional.txt", "a")
         f.write("%g %g \n" % (dt, displacement))
         f.close()
-        
+
         # Compute velocity at outflow
         velocity = u_F((4.0, 0.5))[0]
-        
+
         # Print values of functionals
         info("")
         info_blue("Functional 1 (displacement): %g", displacement)
         info_blue("Functional 2 (velocity):     %g", velocity)
         info("")
-        
+
     def __str__(self):
         return "Channel with flap FSI problem"
 
