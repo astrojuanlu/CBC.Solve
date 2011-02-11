@@ -11,16 +11,12 @@ file = File("application_parameters.xml")
 application_parameters = Parameters("application_parameters")
 file >> application_parameters
 
-# FIXME: Use default parameters while testing
-application_parameters = default_parameters()
-application_parameters["plot_solution"] = True
-
 # Constants related to the geometry of the problem
 channel_length  = 4.0
 channel_height  = 1.0
 structure_left  = 1.4
-structure_right = 1.6
-structure_top   = 0.5
+structure_right = 1.8
+structure_top   = 0.6
 
 # Define boundaries
 inflow  = "x[0] < DOLFIN_EPS && \
@@ -44,8 +40,8 @@ class ChannelWithFlap(FSI):
 
     def __init__(self):
 
-        ny = 20
-        nx = 80
+        ny = 5
+        nx = 20
         mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 
         # Initialize base class
