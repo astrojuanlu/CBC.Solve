@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-10
+# Last changed: 2011-02-11
 
 from dolfin import *
 from operators import Sigma_F as _Sigma_F
@@ -65,12 +65,10 @@ def weak_residuals(U0, U1, U, w, kn, problem):
         + inner(v_F, J(U_M)*P_F*dot(I, dot(inv(F(U_M)).T, N_F)))*ds \
         + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx_F
 
-
     # Structure residual (note the minus sign on N_F('+'))
     R_S = inner(v_S, Dt_P_S)*dx_S + inner(grad(v_S), Sigma_S)*dx_S \
         - inner(v_S('-'), dot(Sigma_S('-') - Sigma_F('+'), -N_F('+')))*d_FSI \
         + inner(q_S, Dt_U_S - P_S)*dx_S
-
 
     # Mesh residual contributions
     R_M = inner(v_M, Dt_U_M)*dx_F + inner(sym(grad(v_M)), Sigma_M)*dx_F \
@@ -150,9 +148,6 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     # Mesh residual contributions
     R_M0 = w*inner(EZ_M - Z_M, Dt_U_M - div(Sigma_M))*dx_F
     R_M1 = avg(w)*inner(EZ_M('+') - Z_M('+'), jump(dot(Sigma_M, N_F)))*dS_F
-    R_M2 = w('+')*inner(EY_M - Y_M, U_M - U_S)('+')*d_FSI # \equiv 0
-
-    # FIXME: Testing
-    #R_M1 = avg(w)*inner(jump(dot(Sigma_M, N_F)), jump(dot(Sigma_M, N_F)))*dS_F
+    R_M2 = w('+')*inner(EY_M - Y_M, U_M - U_S)('+')*d_FSI # this should be zero
 
     return (R_F0, R_F1, R_F2, R_F3), (R_S0, R_S1, R_S2, R_S3), (R_M0, R_M1, R_M2)

@@ -11,6 +11,10 @@ file = File("application_parameters.xml")
 application_parameters = Parameters("application_parameters")
 file >> application_parameters
 
+# FIXME: Use default parameters while testing
+application_parameters = default_parameters()
+application_parameters["plot_solution"] = True
+
 # Constants related to the geometry of the problem
 channel_length  = 4.0
 channel_height  = 1.0
@@ -59,13 +63,7 @@ class ChannelWithFlap(FSI):
         displacement = (1.0/structure_area)*assemble(U_S[0]*dx)
 
         # Compute velocity at outflow
-        velocity = u_F((4.0, 0.5))[0]
-
-        # Print values of functionals
-        info("")
-        info_blue("Functional 1 (displacement): %g", displacement)
-        info_blue("Functional 2 (velocity):     %g", velocity)
-        info("")
+        #velocity = u_F((4.0, 0.5))[0]
 
         return displacement
 
