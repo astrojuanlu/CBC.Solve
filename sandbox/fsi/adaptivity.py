@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-06
+# Last changed: 2011-02-11
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -392,8 +392,6 @@ def save_timestep(t1, Rk, dt, parameters):
     "Save time step to file"
 
     global _refinement_level
-
-    info(parameters, True)
 
     f = open("%s/timesteps.txt" % parameters["output_directory"], "a")
     f.write("%d %g %g %g\n" % (_refinement_level, t1, dt, Rk))
