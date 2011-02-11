@@ -9,20 +9,21 @@ import os
 from dolfin_utils.pjobs import *
 from parameters import *
 
-def run_local(problem, parameters):
+def run_local(problem, parameters, case=None):
     "Run problem on local machine with given parameters."
 
     # Store parameters to file
-    store_parameters(parameters)
+    store_parameters(parameters, problem, case)
 
     # Submit job
     os.system("python %s.py" % problem)
 
-def run_bb(problem, parameters):
+def run_bb(problem, parameters, case=None):
     "Run problem on bigblue with given parameters."
 
     # Store parameters to file
-    store_parameters(parameters)
+    store_parameters(parameters, problem, case)
 
     # Submit job
-    submit("python %s.py" % problem, nodes=1, ppn=8,  keep_environment=True, walltime=24*1000)
+    submit("python %s.py" % problem,
+           nodes=1, ppn=8, keep_environment=True, walltime=24*1000)

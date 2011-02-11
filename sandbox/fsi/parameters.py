@@ -38,12 +38,15 @@ def default_parameters():
 
     return p
 
-def store_parameters(p):
+def store_parameters(p, problem, case):
     "Store parameters to file"
 
     # Set output directory
     if p["output_directory"] == "unspecified":
-        p["output_directory"] = "results-%s" % date()
+        if case is None:
+            p["output_directory"] = "results-%s-%s" % (problem, date())
+        else:
+            p["output_directory"] = "results-%s-%s" % (problem, str(case))
 
     # Save to file application_parameters.xml
     file = File("application_parameters.xml")
