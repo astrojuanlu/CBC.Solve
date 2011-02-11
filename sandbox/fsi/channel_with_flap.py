@@ -6,10 +6,10 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from fsiproblem import *
 
-# Create application parameters set
+# Read parameters
+file = File("application_parameters.xml")
 application_parameters = Parameters("application_parameters")
-application_parameters.add("dt", 0.02)
-application_parameters.add("adaptive_tolerance", 0.5)
+file >> application_parameters
 
 # Constants related to the geometry of the problem
 channel_length  = 4.0
@@ -47,39 +47,16 @@ class ChannelWithFlap(FSI):
         # Initialize base class
         FSI.__init__(self, mesh)
 
-    #--- Common parameters ---
+    #--- Common ---
 
     def end_time(self):
         return 0.5
 
-    def initial_timestep(self):
-        return application_parameters["dt"]
-
-    def space_error_weight(self):
-        return application_parameters["w_h"]
-
-    def time_error_weight(self):
-        return application_parameters["w_k"]
-
-    def non_galerkin_error_weight(self):
-        return application_parameters["w_c"]
-
-    def dorfler_fraction(self):
-        return application_parameters["dorfler_fraction"]
-
-    def adaptive_tolerance(self):
-        return application_parameters["adaptive_tolerance"]
-
-    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dt):
+    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, t0, t1):
 
         # Compute average displacement
         structure_area = (structure_right - structure_left) * structure_top
-        displacement = (1.0/structure_area)*assemble(U_S[0]*dx, mesh=U_S.function_space().mesh())
-
-        # Write to file
-        f = open("adaptivity/goal_functional.txt", "a")
-        f.write("%g %g \n" % (dt, displacement))
-        f.close()
+        displacement = (1.0/structure_area)*assemble(U_S[0]*dx)
 
         # Compute velocity at outflow
         velocity = u_F((4.0, 0.5))[0]
@@ -90,10 +67,12 @@ class ChannelWithFlap(FSI):
         info_blue("Functional 2 (velocity):     %g", velocity)
         info("")
 
+        return displacement
+
     def __str__(self):
         return "Channel with flap FSI problem"
 
-    #--- Parameters for fluid problem ---
+    #--- Fluid problem ---
 
     def fluid_density(self):
         return 1.0
@@ -102,24 +81,24 @@ class ChannelWithFlap(FSI):
         return 0.002
 
     def fluid_velocity_dirichlet_values(self):
-        return [(0, 0)]
+        return [(0.0, 0.0)]
 
     def fluid_velocity_dirichlet_boundaries(self):
         return [noslip]
 
     def fluid_pressure_dirichlet_values(self):
-        return 1, 0
+        return 1.0, 0.0
 
     def fluid_pressure_dirichlet_boundaries(self):
         return inflow, outflow
 
     def fluid_velocity_initial_condition(self):
-        return (0, 0)
+        return (0.0, 0.0)
 
     def fluid_pressure_initial_condition(self):
         return "1 - x[0]"
 
-    #--- Parameters for structure problem ---
+    #--- Structure problem ---
 
     def structure(self):
         return Structure()
@@ -134,7 +113,7 @@ class ChannelWithFlap(FSI):
         return 0.25*125.0
 
     def structure_dirichlet_values(self):
-        return [(0, 0)]
+        return [(0.0, 0.0)]
 
     def structure_dirichlet_boundaries(self):
         return [fixed]
@@ -151,13 +130,8 @@ class ChannelWithFlap(FSI):
         return 5.76
 
     def mesh_alpha(self):
-        return application_parameters["mesh_alpha"]
+        return 1.0
 
-# Solve problem
+# Define and solve problem
 problem = ChannelWithFlap()
-problem.parameters["solver_parameters"]["solve_primal"] = True
-problem.parameters["solver_parameters"]["solve_dual"] = True
-problem.parameters["solver_parameters"]["estimate_error"] = True
-problem.parameters["solver_parameters"]["plot_solution"] = False
-problem.parameters["solver_parameters"]["tolerance"] = problem.adaptive_tolerance()
-u_F, p_F, U_S, P_S, U_M = problem.solve()
+problem.solve(application_parameters)

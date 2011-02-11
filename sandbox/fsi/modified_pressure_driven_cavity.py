@@ -77,7 +77,7 @@ class PressureDrivenCavity(FSI):
         # Initialize base class
         FSI.__init__(self, mesh)
 
-    #--- Common parameters ---
+    #--- Common ---
 
     def end_time(self):
         return 0.25
@@ -103,17 +103,16 @@ class PressureDrivenCavity(FSI):
         return [noslip]
 
     def fluid_pressure_dirichlet_values(self):
-        return [1.0, 0.0]
-        #return [Expression("1.0 - x[0]"), 0.0]
+        return 1.0, 0.0
 
     def fluid_pressure_dirichlet_boundaries(self):
-        return [inflow, outflow]
+        return inflow, outflow
 
     def fluid_velocity_initial_condition(self):
         return (0.0, 0.0)
 
     def fluid_pressure_initial_condition(self):
-        return 0.0
+        return "1 - x[0]"
 
     #--- Structure problem ---
 
