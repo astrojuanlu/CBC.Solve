@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim andAnders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-04
+# Last changed: 2011-02-12
 
 from dolfin import *
 from numpy import array, append
@@ -20,12 +20,21 @@ class FSI(CBCProblem):
         # Initialize base class
         CBCProblem.__init__(self)
 
-        # Create submeshes and mappings
-        self.init_meshes(mesh)
+        # Store original mesh
+        self._original_mesh = mesh
+        self.Omega = None
 
     def solve(self, parameters=default_parameters()):
         "Solve and return computed solution (u_F, p_F, U_S, P_S, U_M, P_M)"
+
+        # Create submeshes and mappings (only first time)
+        if self.Omega is None:
+            self.init_meshes(self._original_mesh)
+
+        # Create solver
         solver = FSISolver(self)
+
+        # Solve
         return solver.solve(parameters)
 
     def init_meshes(self, Omega):
