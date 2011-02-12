@@ -123,9 +123,6 @@ class FluidProblem(NavierStokes):
             for j in range(dim):
                 x1[i][j] = X[i][j] + dofs[j*N + i]
 
-        # FIXME: Is this necessary? Should be taken care of above
-        self.omega_F1.coordinates()[:] = x1
-
         # Smooth the mesh
         self.omega_F1.smooth(num_smoothings)
 
@@ -135,7 +132,7 @@ class FluidProblem(NavierStokes):
             for j in range(dim):
                 wx[j*N + i] = (x1[i][j] - x0[i][j]) / dt
 
-        # FIXME: Is this necessary? Should be taken care of above
+        # Update vector values (necessary since wx is a copy)
         self.w.vector()[:] = wx
 
         # Reassemble matrices
@@ -162,8 +159,8 @@ class StructureProblem(Hyperelasticity):
         Omega_S = problem.structure_mesh()
         self.V_F = VectorFunctionSpace(Omega_F, "CG", 1)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
-        self.v1_F = TestFunction(self.V_F)
-        self.v2_F = TrialFunction(self.V_F)
+        self.test_F = TestFunction(self.V_F)
+        self.trial_F = TrialFunction(self.V_F)
         self.G_F = Function(self.V_F)
         self.G_S = Function(self.V_S)
         self.N_F = FacetNormal(Omega_F)
@@ -205,8 +202,8 @@ class StructureProblem(Hyperelasticity):
 
         # Project traction to piecewise linears on boundary
         info("Assembling traction on fluid domain")
-        a_F = dot(self.v1_F, self.v2_F)*ds
-        L_F = -dot(self.v1_F, dot(Sigma_F, self.N_F))*ds
+        a_F = dot(self.test_F, self.trial_F)*ds
+        L_F = -dot(self.test_F, dot(Sigma_F, self.N_F))*ds
         A_F = assemble(a_F)
         B_F = assemble(L_F)
         A_F.ident_zeros()
