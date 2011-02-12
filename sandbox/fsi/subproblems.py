@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-04
+# Last changed: 2011-02-12
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
@@ -48,8 +48,6 @@ class FluidProblem(NavierStokes):
         # Don't plot and save solution in subsolvers
         self.parameters["solver_parameters"]["plot_solution"] = False
         self.parameters["solver_parameters"]["save_solution"] = False
-
-        #
 
     def mesh(self):
         return self.omega_F1
@@ -312,14 +310,7 @@ class MeshProblem():
 
 def extract_num_dofs(F, S, M):
     "Extract the number of dofs"
-
-    # Extract number of dofs
-    F_dofs = F.num_dofs
-    S_dofs = S.num_dofs
-    M_dofs = M.num_dofs
-    num_dofs_FSM = F_dofs + S_dofs + M_dofs
-
-    return num_dofs_FSM
+    return F.num_dofs + S.num_dofs + M.num_dofs
 
 def extract_solution(F, S, M):
     "Extract solution from sub problems"

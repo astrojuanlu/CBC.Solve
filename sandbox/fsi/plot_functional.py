@@ -10,46 +10,49 @@ from pylab import *
 def read(filename):
     return zip(*[row.split(" ") for row in open(filename).read().split("\n") if " " in row])
 
-# Extract values
-functional_values = []
-integrated_values = []
+# Check all results directories
+functionals = []
 legends = []
+dofs = []
 for directory in glob.glob("results-*"):
     print "Extracting values from %s" % directory
 
-    # Get data
+    # Check for data
     filename = "%s/goal_functional_final.txt" % directory
-    if os.path.isfile(filename):
-        levels, functionals, integrated_functionals = read(filename)
-        print "Found %d values" % len(levels)
-        functional_values.append(levels)
-        functional_values.append(functionals)
-        integrated_values.append(levels)
-        integrated_values.append(integrated_functionals)
+    if not os.path.isfile(filename): continue
 
-        # Get legend
-        filename = "%s/application_parameters.xml" % directory
-        if os.path.isfile(filename):
-            row = [row for row in open(filename).read().split("\n") if "description" in row][0]
-            description = row.split('value="')[1].split('"')[0]
-            legends.append(description)
+    # Get functional values
+    f = read(filename)[2]
+    print "Found %d values" % len(f)
+    functionals.append(f)
 
-# Plot functional values at t = T
+    # Get number of dofs
+    filename = "%s/num_dofs.txt" % directory
+    d = read(filename)[2]
+    dofs.append(d)
+
+    # Get legend
+    filename = "%s/application_parameters.xml" % directory
+    row = [row for row in open(filename).read().split("\n") if "description" in row][0]
+    l = row.split('value="')[1].split('"')[0]
+    legends.append(l)
+
+# Group values
+plotvals = []
+for (x, y) in zip(dofs, functionals):
+    if not len(x) == len(y):
+        raise RuntimeError, ("Data size mismatch: %d %d" % (len(x), len(y)))
+    plotvals.append(x)
+    plotvals.append(y)
+
+# Plot functional values
 figure(1)
-plot(*functional_values, marker='o')
+subplot(2, 1, 1)
+semilogx(*plotvals, marker='o')
 xlabel("Refinement level")
 ylabel("Functional value")
-title("Functional values at end time")
-legend(legends)
-grid(True)
-
-# Plot integrated functional values
-figure(2)
-plot(*integrated_values, marker='o')
-xlabel("Refinement level")
-ylabel("Functional value")
-title("Integrated functional values")
-legend(legends)
+title("Convergence of functional value")
+legend(legends, bbox_to_anchor=(-0.1, -0.3), loc=2, borderaxespad=0)
 grid(True)
 
 show()
