@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-09
+# Last changed: 2011-02-13
 
 import pylab
 from time import time as python_time
@@ -51,8 +51,8 @@ def solve_primal(problem, parameters, ST):
 
     # Define the three subproblems
     F = FluidProblem(problem)
-    S = StructureProblem(problem)
-    M = MeshProblem(problem)
+    S = StructureProblem(problem, parameters)
+    M = MeshProblem(problem, parameters)
 
     # Extract number of dofs
     num_dofs_FSM = extract_num_dofs(F, S, M)
@@ -61,7 +61,8 @@ def solve_primal(problem, parameters, ST):
     U_M = M.update(0)
 
     # Get initial structure displacement (used for plotting and checking convergence)
-    V_S = VectorFunctionSpace(problem.structure_mesh(), "CG", 1)
+    structure_element_degree = parameters["structure_element_degree"]
+    V_S = VectorFunctionSpace(problem.structure_mesh(), "CG", structure_element_degree)
     U_S0 = Function(V_S)
 
     # Save initial solution to file and series

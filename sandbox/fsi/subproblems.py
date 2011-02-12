@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-12
+# Last changed: 2011-02-13
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
@@ -149,16 +149,17 @@ class FluidProblem(NavierStokes):
 # Define structure problem
 class StructureProblem(Hyperelasticity):
 
-    def __init__(self, problem):
+    def __init__(self, problem, parameters):
 
         # Store problem
         self.problem = problem
 
         # Define function spaces and functions for transfer of fluid stress
+        structure_element_degree = parameters["structure_element_degree"]
         Omega_F = problem.fluid_mesh()
         Omega_S = problem.structure_mesh()
-        self.V_F = VectorFunctionSpace(Omega_F, "CG", 1)
-        self.V_S = VectorFunctionSpace(Omega_S, "CG", 1)
+        self.V_F = VectorFunctionSpace(Omega_F, "CG", structure_element_degree)
+        self.V_S = VectorFunctionSpace(Omega_S, "CG", structure_element_degree)
         self.test_F = TestFunction(self.V_F)
         self.trial_F = TrialFunction(self.V_F)
         self.G_F = Function(self.V_F)
@@ -174,6 +175,7 @@ class StructureProblem(Hyperelasticity):
         # Don't plot and save solution in subsolvers
         self.parameters["solver_parameters"]["plot_solution"] = False
         self.parameters["solver_parameters"]["save_solution"] = False
+        self.parameters["solver_parameters"]["element_degree"] = parameters["structure_element_degree"]
 
     def mesh(self):
         return self.problem.structure_mesh()
@@ -244,7 +246,7 @@ class StructureProblem(Hyperelasticity):
 # Define mesh problem (time-dependent linear elasticity)
 class MeshProblem():
 
-    def __init__(self, problem):
+    def __init__(self, problem, parameters):
 
         # Store problem
         self.problem = problem
@@ -267,7 +269,9 @@ class MeshProblem():
         self.num_dofs = u0.vector().size()
 
         # Define boundary condition
-        displacement = Function(V)
+        structure_element_degree = parameters["structure_element_degree"]
+        W = VectorFunctionSpace(Omega_F, "CG", structure_element_degree)
+        displacement = Function(W)
         bc = DirichletBC(V, displacement, DomainBoundary())
 
         # Define the stress tensor
@@ -309,6 +313,15 @@ class MeshProblem():
         return self.u1
 
     def update_structure_displacement(self, U_S):
+
+        F = self.displacement.function_space().mesh()
+        S = U_S.function_space().mesh()
+
+        print F.num_vertices(), F.num_edges()
+        print S.num_vertices(), S.num_edges()
+
+        print self.displacement.vector().size(), U_S.vector().size()
+
         self.displacement.vector().zero()
         self.problem.add_s2f(self.displacement.vector(), U_S.vector())
 

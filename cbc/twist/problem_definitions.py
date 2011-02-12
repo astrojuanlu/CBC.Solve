@@ -12,7 +12,7 @@ from sys import exit
 class StaticHyperelasticity(CBCProblem):
     """Base class for all static hyperelasticity problems"""
 
-    def __init__(self, parameters=None):
+    def __init__(self):
         """Create the static hyperelasticity problem"""
 
         # Set up parameters
@@ -86,7 +86,7 @@ class Hyperelasticity(StaticHyperelasticity):
     """Base class for all quasistatic/dynamic hyperelasticity
     problems"""
 
-    def __init__(self, parameters=None):
+    def __init__(self):
         """Create the hyperelasticity problem"""
 
         # Set up parameters

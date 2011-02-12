@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim andAnders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-12
+# Last changed: 2011-02-13
 
 from dolfin import *
 from numpy import array, append
@@ -59,19 +59,29 @@ class FSI(CBCProblem):
         info("Computing mappings between submeshes")
 
         # Extract matching indices for fluid and structure
-        structure_to_fluid = compute_vertex_map(Omega_S, Omega_F)
+        fluid_to_structure_v = compute_vertex_map(Omega_F, Omega_S)
+        fluid_to_structure_e = compute_edge_map(Omega_F, Omega_S)
 
-        # Extract matching indices for fluid and structure
-        fluid_indices = array([i for i in structure_to_fluid.itervalues()])
-        structure_indices = array([i for i in structure_to_fluid.iterkeys()])
+        # Extract matching vertex indices for fluid and structure
+        v_F = array([i for i in fluid_to_structure_v.iterkeys()])
+        v_S = array([i for i in fluid_to_structure_v.itervalues()])
+
+        # Extract matching edge indices for fluid and structure
+        e_F = array([i for i in fluid_to_structure_e.iterkeys()])
+        e_S = array([i for i in fluid_to_structure_e.itervalues()])
 
         # Extract matching dofs for fluid and structure (for vector P1 elements)
         structure_element_degree = parameters["structure_element_degree"]
+        Nv_F = Omega_F.num_vertices()
+        Nv_S = Omega_S.num_vertices()
+        Ne_F = Omega_F.num_edges()
+        Ne_S = Omega_S.num_edges()
         if structure_element_degree == 1:
-            fdofs = append(fluid_indices, fluid_indices + Omega_F.num_vertices())
-            sdofs = append(structure_indices, structure_indices + Omega_S.num_vertices())
+            fdofs = append(v_F, v_F + Nv_F)
+            sdofs = append(v_S, v_S + Nv_S)
         elif structure_element_degree == 2:
-            error("Not implemented yet.")
+            fdofs = append(append(v_F, Nv_F + e_F), append((Nv_F + Ne_F) + v_F, (Nv_F + Ne_F + Nv_F) + e_F))
+            sdofs = append(append(v_S, Nv_S + e_S), append((Nv_S + Ne_S) + v_S, (Nv_S + Ne_S + Nv_S) + e_S))
         else:
             error("Only know how to map dofs for P1 and P2 elements.")
 

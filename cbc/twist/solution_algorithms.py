@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Anders Logg, 2010
-# Last changed: 2011-02-12
+# Last changed: 2011-02-13
 
 from dolfin import *
 from cbc.common import *
@@ -18,7 +18,7 @@ def default_parameters():
     p.add("plot_solution", True)
     p.add("save_solution", False)
     p.add("store_solution_data", False)
-    p.add("degree", 1)
+    p.add("element_degree", 1)
     return p
 
 class StaticMomentumBalanceSolver(CBCSolver):
@@ -31,8 +31,8 @@ class StaticMomentumBalanceSolver(CBCSolver):
         mesh = problem.mesh()
 
         # Define function spaces
-        degree = parameters["degree"]
-        vector = VectorFunctionSpace(mesh, "CG", degree)
+        element_degree = parameters["element_degree"]
+        vector = VectorFunctionSpace(mesh, "CG", element_degree)
 
         # Create boundary conditions
         bcu = create_dirichlet_conditions(problem.dirichlet_values(),
@@ -133,9 +133,9 @@ class MomentumBalanceSolver(CBCSolver):
         end_time    = problem.end_time()
 
         # Define function spaces
-        degree = parameters["degree"]
-        scalar = FunctionSpace(mesh, "CG", degree)
-        vector = VectorFunctionSpace(mesh, "CG", degree)
+        element_degree = parameters["element_degree"]
+        scalar = FunctionSpace(mesh, "CG", element_degree)
+        vector = VectorFunctionSpace(mesh, "CG", element_degree)
 
         # Get initial conditions
         u0, v0 = problem.initial_conditions()
@@ -398,9 +398,9 @@ class CG1MomentumBalanceSolver(CBCSolver):
         info("Using time step dt = %g" % dt)
 
         # Define function spaces
-        degree = parameters["degree"]
-        scalar = FunctionSpace(mesh, "CG", degree)
-        vector = VectorFunctionSpace(mesh, "CG", degree)
+        element_degree = parameters["element_degree"]
+        scalar = FunctionSpace(mesh, "CG", element_degree)
+        vector = VectorFunctionSpace(mesh, "CG", element_degree)
 
         mixed_element = MixedFunctionSpace([vector, vector])
         V = TestFunction(mixed_element)
