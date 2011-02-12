@@ -18,6 +18,7 @@ def default_parameters():
     p.add("plot_solution", True)
     p.add("save_solution", False)
     p.add("store_solution_data", False)
+    p.add("degree", 1)
     return p
 
 class StaticMomentumBalanceSolver(CBCSolver):
@@ -30,7 +31,8 @@ class StaticMomentumBalanceSolver(CBCSolver):
         mesh = problem.mesh()
 
         # Define function spaces
-        vector = VectorFunctionSpace(mesh, "CG", 1)
+        degree = parameters["degree"]
+        vector = VectorFunctionSpace(mesh, "CG", degree)
 
         # Create boundary conditions
         bcu = create_dirichlet_conditions(problem.dirichlet_values(),
@@ -131,8 +133,9 @@ class MomentumBalanceSolver(CBCSolver):
         end_time    = problem.end_time()
 
         # Define function spaces
-        scalar = FunctionSpace(mesh, "CG", 1)
-        vector = VectorFunctionSpace(mesh, "CG", 1)
+        degree = parameters["degree"]
+        scalar = FunctionSpace(mesh, "CG", degree)
+        vector = VectorFunctionSpace(mesh, "CG", degree)
 
         # Get initial conditions
         u0, v0 = problem.initial_conditions()
@@ -395,8 +398,9 @@ class CG1MomentumBalanceSolver(CBCSolver):
         info("Using time step dt = %g" % dt)
 
         # Define function spaces
-        scalar = FunctionSpace(mesh, "CG", 1)
-        vector = VectorFunctionSpace(mesh, "CG", 1)
+        degree = parameters["degree"]
+        scalar = FunctionSpace(mesh, "CG", degree)
+        vector = VectorFunctionSpace(mesh, "CG", degree)
 
         mixed_element = MixedFunctionSpace([vector, vector])
         V = TestFunction(mixed_element)
