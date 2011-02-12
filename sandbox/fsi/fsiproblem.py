@@ -29,7 +29,7 @@ class FSI(CBCProblem):
 
         # Create submeshes and mappings (only first time)
         if self.Omega is None:
-            self.init_meshes(self._original_mesh)
+            self.init_meshes(self._original_mesh, parameters)
 
         # Create solver
         solver = FSISolver(self)
@@ -37,7 +37,7 @@ class FSI(CBCProblem):
         # Solve
         return solver.solve(parameters)
 
-    def init_meshes(self, Omega):
+    def init_meshes(self, Omega, parameters):
         "Create mappings between submeshes"
 
         info("Exracting fluid and structure submeshes")
@@ -66,8 +66,14 @@ class FSI(CBCProblem):
         structure_indices = array([i for i in structure_to_fluid.iterkeys()])
 
         # Extract matching dofs for fluid and structure (for vector P1 elements)
-        fdofs = append(fluid_indices, fluid_indices + Omega_F.num_vertices())
-        sdofs = append(structure_indices, structure_indices + Omega_S.num_vertices())
+        structure_element_degree = parameters["structure_element_degree"]
+        if structure_element_degree == 1:
+            fdofs = append(fluid_indices, fluid_indices + Omega_F.num_vertices())
+            sdofs = append(structure_indices, structure_indices + Omega_S.num_vertices())
+        elif structure_element_degree == 2:
+            error("Not implemented yet.")
+        else:
+            error("Only know how to map dofs for P1 and P2 elements.")
 
         info("Computing FSI boundary and orientation markers")
 
@@ -86,7 +92,7 @@ class FSI(CBCProblem):
             if len(cells) == 1:
                 continue
             elif len(cells) != 2:
-                raise RuntimeError, "Strange, expecting two facets!"
+                error("Strange, expecting two facets!")
 
             # Create the two cells
             c0, c1 = cells

@@ -21,6 +21,7 @@ def default_parameters():
     p.add("dorfler_marking", True)
     p.add("global_storage", False)
 
+    p.add("structure_element_degree", 1)
     p.add("max_num_refinements", 20)
     p.add("tolerance", 0.1)
     p.add("fixedpoint_tolerance", 1e-8)

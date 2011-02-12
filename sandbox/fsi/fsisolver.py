@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-09
+# Last changed: 2011-02-12
 
 __all__ = ["FSISolver"]
 
@@ -22,9 +22,6 @@ class FSISolver(CBCSolver):
 
         # Initialize base class
         CBCSolver.__init__(self)
-
-        # Set DOLFIN parameters
-
 
         # Store problem
         self.problem = problem
@@ -98,11 +95,11 @@ class FSISolver(CBCSolver):
             elif parameters["uniform_mesh"]:
                 info_red("Refining mesh uniformly")
                 refined_mesh = refine(self.problem.mesh())
-                self.problem.init_meshes(refined_mesh)
+                self.problem.init_meshes(refined_mesh, parameters)
             else:
                 info_red("Refining mesh adaptively")
                 refined_mesh = refine_mesh(self.problem, self.problem.mesh(), indicators, parameters)
-                self.problem.init_meshes(refined_mesh)
+                self.problem.init_meshes(refined_mesh, parameters)
             end()
 
             # Update and save mesh
