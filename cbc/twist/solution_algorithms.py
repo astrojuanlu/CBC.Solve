@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Anders Logg, 2010
-# Last changed: 2011-02-09
+# Last changed: 2011-02-12
 
 from dolfin import *
 from cbc.common import *
@@ -12,17 +12,19 @@ from cbc.twist.kinematics import Grad, DeformationGradient
 from sys import exit
 from numpy import array, loadtxt
 
+def default_parameters():
+    "Return default solver parameters."
+    p = Parameters("solver_parameters")
+    p.add("plot_solution", True)
+    p.add("save_solution", False)
+    p.add("store_solution_data", False)
+    return p
+
 class StaticMomentumBalanceSolver(CBCSolver):
     "Solves the static balance of linear momentum"
 
-    def __init__(self, problem):
+    def __init__(self, problem, parameters):
         """Initialise the static momentum balance solver"""
-
-        # Set up parameters
-        self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", True)
-        self.parameters.add("save_solution", False)
-        self.parameters.add("store_solution_data", False)
 
         # Get problem parameters
         mesh = problem.mesh()
@@ -82,6 +84,9 @@ class StaticMomentumBalanceSolver(CBCSolver):
         equation.parameters["solver"]["newton_solver"]["absolute_tolerance"] = 1e-12
         equation.parameters["solver"]["newton_solver"]["relative_tolerance"] = 1e-16
         equation.parameters["solver"]["newton_solver"]["maximum_iterations"] = 100
+
+        # Store parameters
+        self.parameters = parameters
 
         # Store variables needed for time-stepping
         # FIXME: Figure out why I am needed

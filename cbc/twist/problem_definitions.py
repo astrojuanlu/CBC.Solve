@@ -5,6 +5,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from dolfin import *
 from cbc.common import CBCProblem
 from cbc.twist.solution_algorithms import StaticMomentumBalanceSolver, MomentumBalanceSolver, CG1MomentumBalanceSolver
+from cbc.twist.solution_algorithms import default_parameters as solver_parameters
 from cbc.twist.kinematics import GreenLagrangeStrain
 from sys import exit
 
@@ -14,18 +15,15 @@ class StaticHyperelasticity(CBCProblem):
     def __init__(self, parameters=None):
         """Create the static hyperelasticity problem"""
 
-        # Create solver
-        self.solver = StaticMomentumBalanceSolver(self)
-
         # Set up parameters
         self.parameters = Parameters("problem_parameters")
-        self.parameters.add(self.solver.parameters)
+        self.parameters.add(solver_parameters())
 
     def solve(self):
         """Solve for and return the computed displacement field, u"""
 
-        # Update solver parameters
-        self.solver.parameters.update(self.parameters["solver_parameters"])
+        # Create solver
+        self.solver = StaticMomentumBalanceSolver(self, self.parameters["solver_parameters"])
 
         # Call solver
         return self.solver.solve()
