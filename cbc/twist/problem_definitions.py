@@ -89,22 +89,18 @@ class Hyperelasticity(StaticHyperelasticity):
     def __init__(self, parameters=None):
         """Create the hyperelasticity problem"""
 
-        # Create solver
-        if self.time_stepping() is "CG1":
-            info("Using CG1 time-stepping.")
-            self.solver = CG1MomentumBalanceSolver(self)
-        elif self.time_stepping() is "HHT":
-            info("Using HHT time-stepping.")
-            self.solver = MomentumBalanceSolver(self)
-        else:
-            error("%s time-stepping scheme not supported." % str(self.time_stepping()))
-
         # Set up parameters
         self.parameters = Parameters("problem_parameters")
-        self.parameters.add(self.solver.parameters)
+        self.parameters.add(solver_parameters())
+
+        # Create solver later
+        self.solver = None
 
     def solve(self):
         """Solve for and return the computed displacement field, u"""
+
+        # Create solver
+        self._create_solver()
 
         # Update solver parameters
         self.solver.parameters.update(self.parameters["solver_parameters"])
@@ -114,6 +110,9 @@ class Hyperelasticity(StaticHyperelasticity):
 
     def step(self, dt):
         "Take a time step of size dt"
+
+        # Create solver
+        self._create_solver()
 
         # Update solver parameters
         self.solver.parameters.update(self.parameters["solver_parameters"])
@@ -127,6 +126,7 @@ class Hyperelasticity(StaticHyperelasticity):
 
     def solution(self):
         "Return current solution values"
+        self._create_solver()
         return self.solver.solution()
 
     def end_time(self):
@@ -179,3 +179,20 @@ class Hyperelasticity(StaticHyperelasticity):
         rho0 = self.reference_density()
         ke = assemble(0.5*rho0*inner(v, v)*dx, mesh=v.function_space().mesh())
         return ke
+
+    def _create_solver(self):
+        "Create solver if not already created"
+
+        # Don't create solver if already created
+        if self.solver is not None: return
+
+        # Select solver
+        scheme = self.time_stepping()
+        if scheme is "CG1":
+            info("Using CG1 time-stepping.")
+            self.solver = CG1MomentumBalanceSolver(self, self.parameters["solver_parameters"])
+        elif scheme is "HHT":
+            info("Using HHT time-stepping.")
+            self.solver = MomentumBalanceSolver(self, self.parameters["solver_parameters"])
+        else:
+            error("%s time-stepping scheme not supported." % str(self.time_stepping()))

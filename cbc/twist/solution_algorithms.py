@@ -121,15 +121,9 @@ class StaticMomentumBalanceSolver(CBCSolver):
 class MomentumBalanceSolver(CBCSolver):
     "Solves the quasistatic/dynamic balance of linear momentum"
 
-    def __init__(self, problem):
+    def __init__(self, problem, parameters):
 
         """Initialise the momentum balance solver"""
-
-        # Set up parameters
-        self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", True)
-        self.parameters.add("save_solution", False)
-        self.parameters.add("store_solution_data", False)
 
         # Get problem parameters
         mesh        = problem.mesh()
@@ -306,6 +300,9 @@ class MomentumBalanceSolver(CBCSolver):
         self.displacement_series = None
         self.velocity_series = None
 
+        # Store parameters
+        self.parameters = parameters
+
     def solve(self):
         """Solve the mechanics problem and return the computed
         displacement field"""
@@ -328,9 +325,9 @@ class MomentumBalanceSolver(CBCSolver):
 
         # FIXME: Setup all stuff in the constructor and call assemble instead of VariationalProblem
         equation = VariationalProblem(self.L, self.a, self.bcu, exterior_facet_domains=self.boundary)
-        equation.parameters["newton_solver"]["absolute_tolerance"] = 1e-12
-        equation.parameters["newton_solver"]["relative_tolerance"] = 1e-12
-        equation.parameters["newton_solver"]["maximum_iterations"] = 100
+        equation.parameters["solver"]["newton_solver"]["absolute_tolerance"] = 1e-12
+        equation.parameters["solver"]["newton_solver"]["relative_tolerance"] = 1e-12
+        equation.parameters["solver"]["newton_solver"]["maximum_iterations"] = 100
         equation.solve(self.u1)
         return self.u1
 
@@ -387,15 +384,9 @@ class CG1MomentumBalanceSolver(CBCSolver):
     """Solves the dynamic balance of linear momentum using a CG1
     time-stepping scheme"""
 
-    def __init__(self, problem):
+    def __init__(self, problem, parameters):
 
         """Initialise the momentum balance solver"""
-
-        # Set up parameters
-        self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", True)
-        self.parameters.add("save_solution", False)
-        self.parameters.add("store_solution_data", False)
 
         # Get problem parameters
         mesh        = problem.mesh()
@@ -526,6 +517,9 @@ class CG1MomentumBalanceSolver(CBCSolver):
         self.displacement_velocity_series = None
         self.u_plot = u_plot
 
+        # Store parameters
+        self.parameters = parameters
+
     def solve(self):
         """Solve the mechanics problem and return the computed
         displacement field"""
@@ -547,7 +541,6 @@ class CG1MomentumBalanceSolver(CBCSolver):
         self.k.assign(dt)
 
         equation = VariationalProblem(self.L, self.a, self.bcu, exterior_facet_domains = self.boundary)
-        info(equation.parameters, True)
         equation.parameters["solver"]["newton_solver"]["absolute_tolerance"] = 1e-12
         equation.parameters["solver"]["newton_solver"]["relative_tolerance"] = 1e-12
         equation.parameters["solver"]["newton_solver"]["maximum_iterations"] = 100
