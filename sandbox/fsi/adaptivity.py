@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-11
+# Last changed: 2011-02-12
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -411,7 +411,7 @@ def save_goal_functional(t1, goal_functional, integrated_goal_functional, parame
 
     global _refinement_level
 
-    info("Value of goal functional at t = %g: %g" % (t1, goal_functional))
+    info("Value of goal functional at t = %.16g: %.16g" % (t1, goal_functional))
     f = open("%s/goal_functional.txt" % parameters["output_directory"], "a")
     f.write("%d %.16g %.16g %.16g\n" % (_refinement_level, t1, goal_functional, integrated_goal_functional))
     f.close()

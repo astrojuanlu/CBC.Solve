@@ -75,16 +75,28 @@ class FSI(CBCProblem):
         else:
             error("Only know how to map dofs for P1 and P2 elements.")
 
+        # Extract map from vertices in Omega to vertices in Omega_F
+        vertex_map_to_fluid = {}
+        vertex_map_from_fluid = Omega_F.data().mesh_function("global vertex indices")
+        for i in range(vertex_map_from_fluid.size()):
+            vertex_map_to_fluid[vertex_map_from_fluid[i]] = i
+
         info("Computing FSI boundary and orientation markers")
 
-        # Initialize FSI boundary and orientation markers
+        # Initialize FSI boundary and orientation markers on Omega
         Omega.init(D - 1, D)
-        fsi_boundary = MeshFunction("uint", Omega, D - 1)
+        fsi_boundary = FacetFunction("uint", Omega, D - 1)
         fsi_boundary.set_all(0)
         fsi_orientation = Omega.data().create_mesh_function("facet orientation", D - 1)
         fsi_orientation.set_all(0)
 
-        # Compute FSI boundary and orientation markers
+        # Initialize FSI boundary on Omega_F
+        Omega_F.init(D - 1, D)
+        Omega_F.init(0, 1)
+        fsi_boundary_F = MeshFunction("uint", Omega_F, D - 1)
+        fsi_boundary_F.set_all(0)
+
+        # Compute FSI boundary and orientation markers on Omega
         for facet in facets(Omega):
 
             # Skip facets on the boundary
@@ -92,7 +104,7 @@ class FSI(CBCProblem):
             if len(cells) == 1:
                 continue
             elif len(cells) != 2:
-                error("Strange, expecting two facets!")
+                error("Strange, expecting one or two facets!")
 
             # Create the two cells
             c0, c1 = cells
@@ -110,17 +122,26 @@ class FSI(CBCProblem):
             # Just set c0, will be set only for FSI facets below
             fsi_orientation[facet.index()] = c0
 
+            # Markers:
+            #
+            # 0 = fluid
+            # 1 = structure
+            # 2 = FSI boundary
+
             # Look for points where exactly one is inside the structure
+            facet_index = facet.index()
             if p0_inside and not p1_inside:
-                fsi_boundary[facet.index()] = 2
-                fsi_orientation[facet.index()] = c1
+                fsi_boundary[facet_index] = 2
+                fsi_orientation[facet_index] = c1
+                fsi_boundary_F[_map_to_fluid_facet(facet_index, Omega, Omega_F, vertex_map_to_fluid)] = 2
             elif p1_inside and not p0_inside:
-                fsi_boundary[facet.index()] = 2
-                fsi_orientation[facet.index()] = c0
+                fsi_boundary[facet_index] = 2
+                fsi_orientation[facet_index] = c0
+                fsi_boundary_F[_map_to_fluid_facet(facet_index, Omega, Omega_F, vertex_map_to_fluid)] = 2
             elif p0_inside and p1_inside:
-                fsi_boundary[facet.index()] = 1
+                fsi_boundary[facet_index] = 1
             else:
-                fsi_boundary[facet.index()] = 0
+                fsi_boundary[facet_index] = 0
 
         # Store data
         self.Omega_F = Omega_F
@@ -130,6 +151,7 @@ class FSI(CBCProblem):
         self.sdofs = sdofs
         self.fsi_boundary = fsi_boundary
         self.fsi_orientation = fsi_orientation
+        self.fsi_boundary_F = fsi_boundary_F
 
     def mesh(self):
         "Return mesh for full domain"
@@ -156,3 +178,28 @@ class FSI(CBCProblem):
         xs_array = xs.array()
         xf_array[self.fdofs] += xs_array[self.sdofs]
         xf[:] = xf_array
+
+def _map_to_fluid_facet(facet_index, Omega, Omega_F, vertex_map_to_fluid):
+    "Map facet index in Omega to facet index in Omega_F"
+
+    # Get the two vertices in Omega
+    facet = Facet(Omega, facet_index)
+    v0 = facet.entities(0)[0]
+    v1 = facet.entities(0)[1]
+
+    # Get the two vertices in Omega_F
+    v0 = Vertex(Omega_F, vertex_map_to_fluid[v0])
+    v1 = Vertex(Omega_F, vertex_map_to_fluid[v1])
+
+    # Get the facets of the two vertices in Omega_F
+    f0 = v0.entities(1)
+    f1 = v1.entities(1)
+
+    # Get the common facet index
+    common_facets = set(f0).intersection(set(f1))
+
+    # Check that we get exactly one facet
+    if not len(common_facets) == 1:
+        error("Unable to find facet in fluid mesh.")
+
+    return int(list(common_facets)[0])

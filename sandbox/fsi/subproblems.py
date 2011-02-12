@@ -200,12 +200,26 @@ class StructureProblem(Hyperelasticity):
 
     def update_fluid_stress(self, Sigma_F):
 
-        # Project traction to piecewise linears on boundary
+        # Project traction to a function on the boundary. This ensures
+        # that the integral of G_S inside the structure solver equals
+        # the integral of G_F since G_F and G_S are set equal on the
+        # common boundary, dof by dof. Furthermore, the integral of
+        # G_F against a test function is by the below projection equal
+        # to the integral of the tracion Sigma_F N_F so this transfer
+        # in fact does not involve an approximation.
         info("Assembling traction on fluid domain")
-        a_F = dot(self.test_F, self.trial_F)*ds
-        L_F = -dot(self.test_F, dot(Sigma_F, self.N_F))*ds
-        A_F = assemble(a_F)
-        B_F = assemble(L_F)
+        new = True
+        if new:
+            d_FSI = ds(2)
+            a_F = dot(self.test_F, self.trial_F)*d_FSI
+            L_F = -dot(self.test_F, dot(Sigma_F, self.N_F))*d_FSI
+            A_F = assemble(a_F, exterior_facet_domains=self.problem.fsi_boundary_F)
+            B_F = assemble(L_F, exterior_facet_domains=self.problem.fsi_boundary_F)
+        else:
+            a_F = dot(self.test_F, self.trial_F)*ds
+            L_F = -dot(self.test_F, dot(Sigma_F, self.N_F))*ds
+            A_F = assemble(a_F)
+            B_F = assemble(L_F)
         A_F.ident_zeros()
         solve(A_F, self.G_F.vector(), B_F)
 
