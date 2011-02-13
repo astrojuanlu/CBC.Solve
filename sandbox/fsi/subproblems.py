@@ -165,6 +165,7 @@ class StructureProblem(Hyperelasticity):
         self.G_F = Function(self.V_F)
         self.G_S = Function(self.V_S)
         self.N_F = FacetNormal(Omega_F)
+        self.N_S = FacetNormal(Omega_S)
 
         # Calculate number of dofs
         self.num_dofs = 2 * self.G_S.vector().size()
@@ -211,8 +212,8 @@ class StructureProblem(Hyperelasticity):
         # in fact does not involve an approximation.
         info("Assembling traction on fluid domain")
         new = True
+        d_FSI = ds(2)
         if new:
-            d_FSI = ds(2)
             a_F = dot(self.test_F, self.trial_F)*d_FSI
             L_F = -dot(self.test_F, dot(Sigma_F, self.N_F))*d_FSI
             A_F = assemble(a_F, exterior_facet_domains=self.problem.fsi_boundary_F)
@@ -225,10 +226,30 @@ class StructureProblem(Hyperelasticity):
         A_F.ident_zeros()
         solve(A_F, self.G_F.vector(), B_F)
 
+        # FIXME: Testing
+        integral_form = dot(dot(Sigma_F, self.N_F), self.N_F)*d_FSI
+        integral = assemble(integral_form, exterior_facet_domains=self.problem.fsi_boundary_F)
+        print "INTEGRAL1:", integral
+
+        integral_form = dot(self.G_F, self.N_F)*d_FSI
+        integral = assemble(integral_form, exterior_facet_domains=self.problem.fsi_boundary_F)
+        print "INTEGRAL2:", integral
+
         # Add contribution from fluid vector to structure
         info("Transferring values to structure domain")
         self.G_S.vector().zero()
         self.problem.add_f2s(self.G_S.vector(), self.G_F.vector())
+
+        integral_form = dot(self.G_S, self.N_S)*d_FSI
+        integral = assemble(integral_form, exterior_facet_domains=self.problem.fsi_boundary_S)
+        print "INTEGRAL3:", integral
+
+        # FIXME: Testing
+        from numpy import ones
+        self.G_S.vector()[:] = -0.5*ones(self.G_S.vector().size())
+
+        print "Norm:", norm(self.G_S.vector())
+        #info(self.G_S.vector(), True)
 
     def time_stepping(self):
         return "CG1"
@@ -313,6 +334,10 @@ class MeshProblem():
         return self.u1
 
     def update_structure_displacement(self, U_S):
+
+        # FIXME: Testing
+        return
+
         self.displacement.vector().zero()
         self.problem.add_s2f(self.displacement.vector(), U_S.vector())
 

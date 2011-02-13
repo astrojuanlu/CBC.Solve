@@ -29,7 +29,14 @@ class FSI(CBCProblem):
 
         # Create submeshes and mappings (only first time)
         if self.Omega is None:
-            self.init_meshes(self._original_mesh, parameters)
+
+            # Refine original mesh
+            mesh = self._original_mesh
+            for i in range(parameters["num_initial_refinements"]):
+                mesh = refine(mesh)
+
+            # Initialize meshes
+            self.init_meshes(mesh, parameters)
 
         # Create solver
         solver = FSISolver(self)
@@ -91,6 +98,12 @@ class FSI(CBCProblem):
         for i in range(vertex_map_from_fluid.size()):
             vertex_map_to_fluid[vertex_map_from_fluid[i]] = i
 
+        # Extract map from vertices in Omega to vertices in Omega_S
+        vertex_map_to_structure = {}
+        vertex_map_from_structure = Omega_S.data().mesh_function("global vertex indices")
+        for i in range(vertex_map_from_structure.size()):
+            vertex_map_to_structure[vertex_map_from_structure[i]] = i
+
         info("Computing FSI boundary and orientation markers")
 
         # Initialize FSI boundary and orientation markers on Omega
@@ -105,6 +118,12 @@ class FSI(CBCProblem):
         Omega_F.init(0, 1)
         fsi_boundary_F = MeshFunction("uint", Omega_F, D - 1)
         fsi_boundary_F.set_all(0)
+
+        # Initialize FSI boundary on Omega_S
+        Omega_S.init(D - 1, D)
+        Omega_S.init(0, 1)
+        fsi_boundary_S = MeshFunction("uint", Omega_S, D - 1)
+        fsi_boundary_S.set_all(0)
 
         # Compute FSI boundary and orientation markers on Omega
         for facet in facets(Omega):
@@ -143,11 +162,13 @@ class FSI(CBCProblem):
             if p0_inside and not p1_inside:
                 fsi_boundary[facet_index] = 2
                 fsi_orientation[facet_index] = c1
-                fsi_boundary_F[_map_to_fluid_facet(facet_index, Omega, Omega_F, vertex_map_to_fluid)] = 2
+                fsi_boundary_F[_map_to_facet(facet_index, Omega, Omega_F, vertex_map_to_fluid)] = 2
+                fsi_boundary_S[_map_to_facet(facet_index, Omega, Omega_S, vertex_map_to_structure)] = 2
             elif p1_inside and not p0_inside:
                 fsi_boundary[facet_index] = 2
                 fsi_orientation[facet_index] = c0
-                fsi_boundary_F[_map_to_fluid_facet(facet_index, Omega, Omega_F, vertex_map_to_fluid)] = 2
+                fsi_boundary_F[_map_to_facet(facet_index, Omega, Omega_F, vertex_map_to_fluid)] = 2
+                fsi_boundary_S[_map_to_facet(facet_index, Omega, Omega_S, vertex_map_to_structure)] = 2
             elif p0_inside and p1_inside:
                 fsi_boundary[facet_index] = 1
             else:
@@ -162,6 +183,7 @@ class FSI(CBCProblem):
         self.fsi_boundary = fsi_boundary
         self.fsi_orientation = fsi_orientation
         self.fsi_boundary_F = fsi_boundary_F
+        self.fsi_boundary_S = fsi_boundary_S
 
     def mesh(self):
         "Return mesh for full domain"
@@ -189,19 +211,19 @@ class FSI(CBCProblem):
         xf_array[self.fdofs] += xs_array[self.sdofs]
         xf[:] = xf_array
 
-def _map_to_fluid_facet(facet_index, Omega, Omega_F, vertex_map_to_fluid):
-    "Map facet index in Omega to facet index in Omega_F"
+def _map_to_facet(facet_index, Omega, Omega_X, vertex_map):
+    "Map facet index in Omega to facet index in Omega_X"
 
     # Get the two vertices in Omega
     facet = Facet(Omega, facet_index)
     v0 = facet.entities(0)[0]
     v1 = facet.entities(0)[1]
 
-    # Get the two vertices in Omega_F
-    v0 = Vertex(Omega_F, vertex_map_to_fluid[v0])
-    v1 = Vertex(Omega_F, vertex_map_to_fluid[v1])
+    # Get the two vertices in Omega_X
+    v0 = Vertex(Omega_X, vertex_map[v0])
+    v1 = Vertex(Omega_X, vertex_map[v1])
 
-    # Get the facets of the two vertices in Omega_F
+    # Get the facets of the two vertices in Omega_X
     f0 = v0.entities(1)
     f1 = v1.entities(1)
 

@@ -26,6 +26,7 @@ def default_parameters():
     p.add("tolerance", 0.1)
     p.add("fixedpoint_tolerance", 1e-8)
     p.add("initial_timestep", 0.01)
+    p.add("num_initial_refinements", 0)
     p.add("maximum_iterations", 1000)
     p.add("num_smoothings", 50)
     p.add("w_h", 0.45)
