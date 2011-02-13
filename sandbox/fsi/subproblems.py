@@ -139,7 +139,7 @@ class FluidProblem(NavierStokes):
         self.solver.reassemble()
 
     def update_extra(self):
-        # FIXME: The solver should call this function automatically
+
         # Copy mesh coordinates
         self.omega_F0.coordinates()[:] = self.omega_F1.coordinates()[:]
 
@@ -212,8 +212,8 @@ class StructureProblem(Hyperelasticity):
         # in fact does not involve an approximation.
         info("Assembling traction on fluid domain")
         new = True
-        d_FSI = ds(2)
         if new:
+            d_FSI = ds(2)
             a_F = dot(self.test_F, self.trial_F)*d_FSI
             L_F = -dot(self.test_F, dot(Sigma_F, self.N_F))*d_FSI
             A_F = assemble(a_F, exterior_facet_domains=self.problem.fsi_boundary_F)
@@ -226,30 +226,13 @@ class StructureProblem(Hyperelasticity):
         A_F.ident_zeros()
         solve(A_F, self.G_F.vector(), B_F)
 
-        # FIXME: Testing
-        integral_form = dot(dot(Sigma_F, self.N_F), self.N_F)*d_FSI
-        integral = assemble(integral_form, exterior_facet_domains=self.problem.fsi_boundary_F)
-        print "INTEGRAL1:", integral
-
-        integral_form = dot(self.G_F, self.N_F)*d_FSI
-        integral = assemble(integral_form, exterior_facet_domains=self.problem.fsi_boundary_F)
-        print "INTEGRAL2:", integral
-
         # Add contribution from fluid vector to structure
         info("Transferring values to structure domain")
         self.G_S.vector().zero()
         self.problem.add_f2s(self.G_S.vector(), self.G_F.vector())
 
-        integral_form = dot(self.G_S, self.N_S)*d_FSI
-        integral = assemble(integral_form, exterior_facet_domains=self.problem.fsi_boundary_S)
-        print "INTEGRAL3:", integral
-
-        # FIXME: Testing
-        from numpy import ones
-        self.G_S.vector()[:] = -0.5*ones(self.G_S.vector().size())
-
-        print "Norm:", norm(self.G_S.vector())
-        #info(self.G_S.vector(), True)
+        # Uncomment to debug transfer of stress
+        #self.debug_stress_transfer(Sigma_F)
 
     def time_stepping(self):
         return "CG1"
@@ -260,6 +243,31 @@ class StructureProblem(Hyperelasticity):
 
     def end_time(self):
         return self.problem.end_time()
+
+    def debug_stress_transfer(self, Sigma_F):
+        "Debug transfer of stress"
+
+        d_FSI = ds(2)
+
+        # Compute direct integral of normal traction
+        form = dot(dot(Sigma_F, self.N_F), self.N_F)*d_FSI
+        integral_0 = assemble(form, exterior_facet_domains=self.problem.fsi_boundary_F)
+
+        # Compute integral of projected (and negated) normal traction
+        form = dot(self.G_F, self.N_F)*d_FSI
+        integral_1 = -assemble(form, exterior_facet_domains=self.problem.fsi_boundary_F)
+
+        # Compute integral of transferred projection
+        form = dot(self.G_S, self.N_S)*d_FSI
+        integral_2 = assemble(form, exterior_facet_domains=self.problem.fsi_boundary_S)
+
+        info("Debugging transfer of stress from fluid to structure.")
+        info("The following three integrals should be the same")
+        info("")
+        info("  I0 = %.16g" % integral_0)
+        info("  I1 = %.16g" % integral_1)
+        info("  I2 = %.16g" % integral_2)
+        info("")
 
     def __str__(self):
         return "The structure problem (S)"
@@ -334,10 +342,6 @@ class MeshProblem():
         return self.u1
 
     def update_structure_displacement(self, U_S):
-
-        # FIXME: Testing
-        return
-
         self.displacement.vector().zero()
         self.problem.add_s2f(self.displacement.vector(), U_S.vector())
 

@@ -11,7 +11,7 @@ p["initial_timestep"] = 0.05
 p["num_initial_refinements"] = 0
 #p["plot_solution"] = True
 
-p["structure_element_degree"] = 2
+p["structure_element_degree"] = 1
 
 #problem = "channel_with_flap"
 problem = "modified_pressure_driven_cavity"
