@@ -12,7 +12,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-06
+# Last changed: 2011-02-13
 
 from numpy import append
 from dolfin import *
@@ -43,7 +43,7 @@ def create_dual_series(parameters):
     else:
         return TimeSeries("%s/bin/Z" % parameters["output_directory"])
 
-def read_primal_data(U, t, Omega, Omega_F, Omega_S, series):
+def read_primal_data(U, t, Omega, Omega_F, Omega_S, series, parameters):
     "Read primal variables at given time"
 
     info("Reading primal data at t = %g" % t)
@@ -74,6 +74,8 @@ def read_primal_data(U, t, Omega, Omega_F, Omega_S, series):
     Nv   = Omega.num_vertices()
     Nv_F = Omega_F.num_vertices()
     Ne_F = Omega_F.num_edges()
+    Nv_S = Omega_S.num_vertices()
+    Ne_S = Omega_S.num_edges()
 
     # Compute mapping to global dofs
     global_dofs_U_F = append(vmap_F, vmap_F + Nv)
@@ -84,6 +86,11 @@ def read_primal_data(U, t, Omega, Omega_F, Omega_S, series):
 
     # Get rid of P2 dofs for u_F and create a P1 function
     local_vals_u_F = append(local_vals_u_F[:Nv_F], local_vals_u_F[Nv_F + Ne_F: 2*Nv_F + Ne_F])
+
+    # Get rid of P2 dofs for U_S and P_S if we use P2 elements
+    if parameters["structure_element_degree"] == 2:
+        local_vals_U_S = append(local_vals_U_S[:Nv_S], local_vals_U_S[Nv_S + Ne_S: 2*Nv_S + Ne_S])
+        local_vals_P_S = append(local_vals_P_S[:Nv_S], local_vals_P_S[Nv_S + Ne_S: 2*Nv_S + Ne_S])
 
     # Set degrees of freedom for primal functions
     U_F.vector()[global_dofs_U_F] = local_vals_u_F

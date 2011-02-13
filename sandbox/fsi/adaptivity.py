@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-12
+# Last changed: 2011-02-13
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -38,7 +38,7 @@ def estimate_error(problem, parameters):
     dg = TestFunction(DG)
 
     # Create dual function space and test functions
-    W = create_dual_space(Omega)
+    W = create_dual_space(Omega, parameters)
     w = TestFunctions(W)
 
     # Create time series
@@ -50,17 +50,21 @@ def estimate_error(problem, parameters):
     U1 = create_primal_functions(Omega)
 
     # Create dual functions
-    ZZ0, Z0 = create_dual_functions(Omega)
-    ZZ1, Z1 = create_dual_functions(Omega)
+    ZZ0, Z0 = create_dual_functions(Omega, parameters)
+    ZZ1, Z1 = create_dual_functions(Omega, parameters)
 
     # Define function spaces for extrapolation
     V2 = VectorFunctionSpace(Omega, "CG", 2)
     V3 = VectorFunctionSpace(Omega, "CG", 3)
     Q2 = FunctionSpace(Omega, "CG", 2)
+    if parameters["structure_element_degree"] == 1:
+        VSE = VectorFunctionSpace(Omega, "CG", 2)
+    else:
+        VSE = VectorFunctionSpace(Omega, "CG", 3)
 
     # Define functions for extrapolation
-    EZ0 = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
-    EZ1 = [Function(EV) for EV in (V3, Q2, V2, V2, V2, V2)]
+    EZ0 = [Function(EV) for EV in (V3, Q2, VSE, VSE, V2, V2)]
+    EZ1 = [Function(EV) for EV in (V3, Q2, VSE, VSE, V2, V2)]
 
     # Define midpoint values for primal and dual functions
     U  = [0.5 * (U0[i]  + U1[i])  for i in range(5)]
@@ -110,8 +114,8 @@ def estimate_error(problem, parameters):
         info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
         # Read primal data
-        read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series)
-        read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series)
+        read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
+        read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series, parameters)
 
         # Read dual data
         read_dual_data(ZZ0, t0, dual_series)
@@ -184,7 +188,7 @@ def estimate_error(problem, parameters):
 
     return E, eta_K, ST, E_h
 
-def compute_time_residual(primal_series, t0, t1, problem):
+def compute_time_residual(primal_series, t0, t1, problem, parameters):
     "Compute size of time residual"
 
     info("Computing time residual")
@@ -204,7 +208,7 @@ def compute_time_residual(primal_series, t0, t1, problem):
         U1 = create_primal_functions(Omega)
 
         # Create dual function space and test functions
-        W = create_dual_space(Omega)
+        W = create_dual_space(Omega, parameters)
         w = TestFunctions(W)
 
     # Read solution data
