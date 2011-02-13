@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-09
+# Last changed: 2011-02-13
 
 from time import time as python_time
 from dolfin import *
@@ -48,15 +48,15 @@ def solve_dual(problem, parameters):
     cpu_time = python_time()
 
     # Create mixed function space
-    W = create_dual_space(Omega)
+    W = create_dual_space(Omega, parameters)
 
     # Create test and trial functions
     (v_F, q_F, v_S, q_S, v_M, q_M) = TestFunctions(W)
     (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = TrialFunctions(W)
 
     # Create dual functions
-    Z0, (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = create_dual_functions(Omega)
-    Z1, (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = create_dual_functions(Omega)
+    Z0, (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = create_dual_functions(Omega, parameters)
+    Z1, (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = create_dual_functions(Omega, parameters)
 
     # Create primal functions
     U_F0, P_F0, U_S0, P_S0, U_M0 = U0 = create_primal_functions(Omega)
@@ -94,8 +94,8 @@ def solve_dual(problem, parameters):
         info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
         # Read primal data
-        read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series)
-        read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series)
+        read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
+        read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series, parameters)
 
         # FIXME: Missing exterior_facet_domains, need to figure
         # FIXME: out why they are needed

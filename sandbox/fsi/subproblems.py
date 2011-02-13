@@ -313,15 +313,6 @@ class MeshProblem():
         return self.u1
 
     def update_structure_displacement(self, U_S):
-
-        F = self.displacement.function_space().mesh()
-        S = U_S.function_space().mesh()
-
-        print F.num_vertices(), F.num_edges()
-        print S.num_vertices(), S.num_edges()
-
-        print self.displacement.vector().size(), U_S.vector().size()
-
         self.displacement.vector().zero()
         self.problem.add_s2f(self.displacement.vector(), U_S.vector())
 
