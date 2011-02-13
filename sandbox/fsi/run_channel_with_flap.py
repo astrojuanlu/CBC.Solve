@@ -27,6 +27,9 @@ elif case is 4:
     p["description"] = "adaptive, k = 0.01 (bisection, fixed fraction)"
     p["refinement_algorithm"] = "recursive_bisection"
     p["dorfler_marking"] = False
+elif case is 5:
+    p["description"] = "uniform, k = 0.01"
+    p["uniform_mesh"] = True
 
 # Run problem
 run_local("channel_with_flap", parameters=p, case=case)
