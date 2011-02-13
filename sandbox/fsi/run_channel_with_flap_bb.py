@@ -1,5 +1,4 @@
 from fsirun import *
-from time import sleep
 
 # Cases to investigate
 q_range = [1, 2]
@@ -50,6 +49,3 @@ for q in q_range:
 
                     # Increase counter
                     case += 1
-
-                    # Sleep for a while
-                    sleep(3)

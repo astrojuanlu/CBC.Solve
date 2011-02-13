@@ -13,16 +13,16 @@ def run_local(problem, parameters, case=None):
     "Run problem on local machine with given parameters."
 
     # Store parameters to file
-    store_parameters(parameters, problem, case)
+    filename = store_parameters(parameters, problem, case)
 
     # Submit job
-    os.system("python %s.py" % problem)
+    os.system("python %s.py %s" % (problem, filename))
 
 def run_bb(problem, parameters, case=None):
     "Run problem on bigblue with given parameters."
 
     # Store parameters to file
-    store_parameters(parameters, problem, case)
+    filename = store_parameters(parameters, problem, case)
 
     # Create name
     if case is None:
@@ -31,5 +31,5 @@ def run_bb(problem, parameters, case=None):
         name = problem + "_" + str(case)
 
     # Submit job
-    submit("python %s.py" % problem,
+    submit("python %s.py %s" % (problem, filename),
            nodes=1, ppn=8, keep_environment=True, walltime=24*1000, name=name)
