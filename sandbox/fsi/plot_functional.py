@@ -49,7 +49,7 @@ for (x, y) in zip(dofs, functionals):
 figure(1)
 subplot(2, 1, 1)
 semilogx(*plotvals, marker='o')
-xlabel("Refinement level")
+xlabel("Number of dofs (in space)")
 ylabel("Functional value")
 title("Convergence of functional value")
 legend(legends, bbox_to_anchor=(-0.1, -0.3), loc=2, borderaxespad=0)

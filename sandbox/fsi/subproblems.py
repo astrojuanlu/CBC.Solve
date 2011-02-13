@@ -139,7 +139,7 @@ class FluidProblem(NavierStokes):
         self.solver.reassemble()
 
     def update_extra(self):
-        # FIXME: The solver should call this function automatically
+
         # Copy mesh coordinates
         self.omega_F0.coordinates()[:] = self.omega_F1.coordinates()[:]
 
@@ -165,6 +165,7 @@ class StructureProblem(Hyperelasticity):
         self.G_F = Function(self.V_F)
         self.G_S = Function(self.V_S)
         self.N_F = FacetNormal(Omega_F)
+        self.N_S = FacetNormal(Omega_S)
 
         # Calculate number of dofs
         self.num_dofs = 2 * self.G_S.vector().size()
@@ -230,6 +231,9 @@ class StructureProblem(Hyperelasticity):
         self.G_S.vector().zero()
         self.problem.add_f2s(self.G_S.vector(), self.G_F.vector())
 
+        # Uncomment to debug transfer of stress
+        #self.debug_stress_transfer(Sigma_F)
+
     def time_stepping(self):
         return "CG1"
 
@@ -239,6 +243,31 @@ class StructureProblem(Hyperelasticity):
 
     def end_time(self):
         return self.problem.end_time()
+
+    def debug_stress_transfer(self, Sigma_F):
+        "Debug transfer of stress"
+
+        d_FSI = ds(2)
+
+        # Compute direct integral of normal traction
+        form = dot(dot(Sigma_F, self.N_F), self.N_F)*d_FSI
+        integral_0 = assemble(form, exterior_facet_domains=self.problem.fsi_boundary_F)
+
+        # Compute integral of projected (and negated) normal traction
+        form = dot(self.G_F, self.N_F)*d_FSI
+        integral_1 = -assemble(form, exterior_facet_domains=self.problem.fsi_boundary_F)
+
+        # Compute integral of transferred projection
+        form = dot(self.G_S, self.N_S)*d_FSI
+        integral_2 = assemble(form, exterior_facet_domains=self.problem.fsi_boundary_S)
+
+        info("Debugging transfer of stress from fluid to structure.")
+        info("The following three integrals should be the same")
+        info("")
+        info("  I0 = %.16g" % integral_0)
+        info("  I1 = %.16g" % integral_1)
+        info("  I2 = %.16g" % integral_2)
+        info("")
 
     def __str__(self):
         return "The structure problem (S)"
