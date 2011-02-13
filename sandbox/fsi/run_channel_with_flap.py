@@ -9,7 +9,7 @@ p["uniform_timestep"] = True
 p["tolerance"] = 1e-6
 p["initial_timestep"] = 0.01
 
-p["structure_element_degree"] = 2
+p["structure_element_degree"] = 1
 
 # Choose test case
 case = 1
