@@ -2,22 +2,22 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2011 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-01-28
+# Last changed: 2011-02-19
 
 from fsiproblem import *
 
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
-application_parameters.add("end_time", 0.5)
-application_parameters.add("dt", 0.1)
-application_parameters.add("mesh_scale", 2)
+application_parameters.add("end_time", 2.0)
+application_parameters.add("dt", 0.05)
+application_parameters.add("mesh_scale", 32)
 application_parameters.add("TOL", 0.1)
 application_parameters.add("w_h", 0.45) 
 application_parameters.add("w_k", 0.45)
 application_parameters.add("w_c", 0.1)
 application_parameters.add("fraction", 0.5)
 application_parameters.add("solve_primal", True)
-application_parameters.add("solve_dual", True)
+application_parameters.add("solve_dual", False)
 application_parameters.add("estimate_error", False)
 application_parameters.add("dorfler_marking", True)
 application_parameters.add("uniform_timestep", True)
@@ -48,6 +48,11 @@ class TaylorGreenVortex(FSI):
         f.write(parameter_info)
         f.write(str("Mesh size:  ") + (str(mesh_size)) + "\n \n")
         f.close()
+
+        # Define analytical solution for u and p 
+        self.u_anal = ('-(cos(pi*(x[0]))*sin(pi*(x[1]))) * exp(-2.0*nu*pi*pi*t)',
+                       ' (cos(pi*(x[1]))*sin(pi*(x[0]))) * exp(-2.0*nu*pi*pi*t)')
+        self.p_anal = '-0.25*(cos(2*pi*(x[0])) + cos(2*pi*(x[1]))) * exp(-4.0*nu*pi*pi*t)'
 
         # Initialize base class
         FSI.__init__(self, mesh)
@@ -112,23 +117,48 @@ class TaylorGreenVortex(FSI):
     def density(self):
         return 1.0
 
-    def velocity_dirichlet_values(self):
-        return [(0, 0)]
+# FIXME: Should the NS solver be based on nu?
+    def nu(self, viscosity, density):
+        nu = viscosity / rho
+        return nu
 
-    def velocity_dirichlet_boundaries(self):
-        return ["x[1] < DOLFIN_EPS || x[1] > 1.0 - DOLFIN_EPS"]
-
-    def pressure_dirichlet_values(self):
-        return [1, 0]
-
-    def pressure_dirichlet_boundaries(self):
-        return ["x[0] < DOLFIN_EPS", "x[0] > 1 - DOLFIN_EPS"]
-
+ # --- Initial conditions  ---
+    
     def velocity_initial_condition(self):
-        return (0, 0)
+        u = Expression(self.u_anal)
+        u.t = 0.0
+        return u
 
     def pressure_initial_condition(self):
-        return "1 - x[0]"
+        exact_p = Expression(self.p_anal)
+        exact_p.t = 0.0
+        return exact_p
+
+ # --- Boundary conditions  ---
+
+    def velocity_dirichlet_boundaries(self):
+        return ["on_bondary"]
+
+    def pressure_dirichlet_boundaries(self):
+        return ["on_boundary"]
+    
+    def velocity_dirichlet_values(self):
+        # FIXME: Add when the solver can handle time dependent bcs
+        self.u = Expression(self.u_anal)
+        self.u.t = 0.0
+        return [(self.u)]
+
+    def pressure_dirichlet_values(self):
+        # FIXME: Add when the solver can handle time dependent bcs
+        self.p = Expression(self.p_anal)
+        self.p.t = 0.0
+        return [(self.p)]
+
+#     def update_bcs(self, u, p, t):
+#         self.u.t = t
+#         self.p.t = t
+         
+#         return self.u, self.p
 
 # Define problem
 problem = TaylorGreenVortex()
