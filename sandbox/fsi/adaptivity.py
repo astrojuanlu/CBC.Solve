@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-13
+# Last changed: 2011-02-16
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -212,8 +212,8 @@ def compute_time_residual(primal_series, t0, t1, problem, parameters):
         w = TestFunctions(W)
 
     # Read solution data
-    read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series)
-    read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series)
+    read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
+    read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series, parameters)
 
     # Set time step
     kn = Constant(t1 - t0)
