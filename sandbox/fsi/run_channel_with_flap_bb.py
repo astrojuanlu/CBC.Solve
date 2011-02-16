@@ -14,11 +14,11 @@ for q in q_range:
         for r in r_range:
             for d in d_range:
                 for f in f_range:
-   
+
                     # Handle d and f cases not relevant for uniform refinement
                     if r == "uniform" and not (d is None and f is None): continue
                     if r != "uniform" and (d is None or f is None): continue
-   
+
                     # Set common parameters
                     p = default_parameters()
                     p["solve_primal"] = True
@@ -43,7 +43,7 @@ for q in q_range:
                             p["description"] = "q = %g k = %g (%s, fixed fraction %g)" % (q, k, r, f)
 
                     print case, p["description"]
-                        
+
                     # Run problem
                     run_bb("channel_with_flap", parameters=p, case=case)
 
