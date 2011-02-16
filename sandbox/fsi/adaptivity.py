@@ -116,8 +116,8 @@ def estimate_error(problem, parameters):
 
 
         # FIXME: Testing
-        if t1 > 0.1:
-            break
+        #if t1 > 0.1:
+        #    break
 
 
         # Display progress
