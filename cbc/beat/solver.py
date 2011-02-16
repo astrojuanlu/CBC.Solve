@@ -108,7 +108,7 @@ class FullyImplicit(DynamicBidomainSolver):
             #I_e.t = t
 
             # Solve (non-linear) variational problem
-            pde = VariationalProblem(dE, E, nonlinear=True)
+            pde = VariationalProblem(E, dE)
 
             # Solve
             pde.solve(y)
