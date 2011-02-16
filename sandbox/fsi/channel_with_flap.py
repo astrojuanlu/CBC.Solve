@@ -40,7 +40,10 @@ class ChannelWithFlap(FSI):
 
         ny = 5
         nx = 20
-        mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
+        if application_parameters["crossed_mesh"]:
+            mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny, "crossed")
+        else:
+            mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 
         # Initialize base class
         FSI.__init__(self, mesh)
