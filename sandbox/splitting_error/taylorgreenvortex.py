@@ -26,6 +26,9 @@ application_parameters.parse()
 # Collect parameters
 parameter_info = application_parameters.option_string()
 
+# Define the boundary
+sie_boundary = "on_boundary"
+
 # Define problem class 
 class TaylorGreenVortex(FSI):
     def __init__(self):
@@ -137,10 +140,10 @@ class TaylorGreenVortex(FSI):
  # --- Boundary conditions  ---
 
     def velocity_dirichlet_boundaries(self):
-        return ["on_bondary"]
+        return [sie_boundary]
 
     def pressure_dirichlet_boundaries(self):
-        return ["on_boundary"]
+        return [sie_boundary]
     
     def velocity_dirichlet_values(self):
         # FIXME: Add when the solver can handle time dependent bcs
