@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-from dolfin import Parameters, File
+from dolfin import Parameters, File, info
 from utils import date
 
 def default_parameters():
@@ -40,8 +40,21 @@ def default_parameters():
 
     return p
 
+def read_parameters():
+    """Read parameters from file specified on command-line or return
+    default parameters if no file is specified"""
+    import sys
+    p = default_parameters()
+    try:
+        file = File(sys.argv[1])
+        file >> p
+        info("Parameters read from %s." % sys.argv[1])
+    except:
+        info("No parameters specified, using default parameters.")
+    return p
+
 def store_parameters(p, problem, case):
-    "Store parameters to file"
+    "Store parameters to file and return filename"
 
     # Set output directory
     if p["output_directory"] == "unspecified":
@@ -55,5 +68,8 @@ def store_parameters(p, problem, case):
     file << p
 
     # Save to file <output_directory>/application_parameters.xml
-    file = File("%s/application_parameters.xml" % p["output_directory"])
+    filename = "%s/application_parameters.xml" % p["output_directory"]
+    file = File(filename)
     file << p
+
+    return filename

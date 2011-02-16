@@ -14,7 +14,7 @@ for q in q_range:
         for r in r_range:
             for d in d_range:
                 for f in f_range:
-                 
+   
                     # Handle d and f cases not relevant for uniform refinement
                     if r == "uniform" and not (d is None and f is None): continue
                     if r != "uniform" and (d is None or f is None): continue

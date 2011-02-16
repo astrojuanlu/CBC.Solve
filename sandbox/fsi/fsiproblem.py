@@ -9,7 +9,7 @@ from numpy import array, append
 from cbc.common import CBCProblem
 
 from fsisolver import FSISolver
-from parameters import default_parameters
+from parameters import default_parameters, read_parameters
 
 class FSI(CBCProblem):
     "Base class for all FSI problems"

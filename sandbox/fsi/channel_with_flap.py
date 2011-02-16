@@ -7,9 +7,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from fsiproblem import *
 
 # Read parameters
-file = File("application_parameters.xml")
-application_parameters = Parameters("application_parameters")
-file >> application_parameters
+application_parameters = read_parameters()
 
 # Constants related to the geometry of the problem
 channel_length  = 4.0
