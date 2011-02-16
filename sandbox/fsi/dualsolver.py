@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-13
+# Last changed: 2011-02-16
 
 from time import time as python_time
 from dolfin import *
@@ -75,6 +75,9 @@ def solve_dual(problem, parameters):
 
     # Create dual boundary conditions
     bcs = _create_boundary_conditions(problem, W)
+
+    # Write initial value for dual
+    write_dual_data(Z1, T, dual_series)
 
     # Time-stepping
     T  = problem.end_time()

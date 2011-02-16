@@ -28,6 +28,8 @@ indicator_files = None
 def estimate_error(problem, parameters):
     "Estimate error and compute error indicators"
 
+    set_log_level(DEBUG)
+
     # Get meshes
     Omega = problem.mesh()
     Omega_F = problem.fluid_mesh()
@@ -77,8 +79,13 @@ def estimate_error(problem, parameters):
     # Get strong residuals for E_h
     Rh_F, Rh_S, Rh_M = strong_residuals(U0, U1, U, Z, EZ, dg, kn, problem)
 
+    # old
     # Get weak residuals for E_k
-    Rk_F, Rk_S, Rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
+    #Rk_F, Rk_S, Rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
+
+    # Get weak residuals for E_k
+    Rk0_F, Rk0_S, Rk0_M = weak_residuals(U0, U1, U1, Z0, kn, problem)
+    Rk1_F, Rk1_S, Rk1_M = weak_residuals(U0, U1, U1, Z1, kn, problem)
 
     # Get weak residuals for E_c
     Rc_F, Rc_S, Rc_M = weak_residuals(U0, U1, U, Z, kn, problem)
@@ -107,6 +114,12 @@ def estimate_error(problem, parameters):
         dt = t1 - t0
         kn.assign(dt)
 
+
+        # FIXME: Testing
+        if t1 > 0.1:
+            break
+
+
         # Display progress
         info("")
         info("-"*80)
@@ -132,7 +145,10 @@ def estimate_error(problem, parameters):
         e_M = [assemble(Rh_Mi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Mi in Rh_M]
 
         # Assemble weak residuals for time discretization error
-        Rk = norm(assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains))
+        #Rk = norm(assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains))
+        Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        Rk = 0.5 * (Rk1 - Rk0)
 
         # Assemble weak residuals for computational error
         RcF = assemble(Rc_F, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
@@ -141,6 +157,8 @@ def estimate_error(problem, parameters):
 
         # Estimate interpolation error (local weight)
         s = 0.5 * linalg.norm(ZZ0.vector().array() - ZZ1.vector().array(), 2) / dt
+
+        print "CHECK:", i, Rk, linalg.norm(ZZ0.vector()), linalg.norm(ZZ1.vector()), ZZ0.vector().size()
 
         # Reset vectors for assembly of residuals
         eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
@@ -156,7 +174,8 @@ def estimate_error(problem, parameters):
             eta_M[i] += dt * abs(e_M[i].array())
 
         # Add to E_k
-        E_k += dt * s * dt * Rk
+        #E_k += dt * s * dt * Rk
+        E_k += dt * abs(Rk)
 
         # Add to E_c's
         E_c_F += dt * RcF
@@ -185,6 +204,8 @@ def estimate_error(problem, parameters):
 #    save_computational_errors(E_c_F, E_c_S, E_c_M, parameters)
     save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters)
     save_stability_factor(T, ST, parameters)
+
+    print "CHECK: E_k =", E_k
 
     return E, eta_K, ST, E_h
 
