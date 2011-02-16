@@ -4,13 +4,13 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-12-12
+# Last changed: 2011-02-16
 
 import pylab
-from time import time
+from time import time as python_time
 from dolfin import *
 
-from cbc.common.utils import timestep_range 
+from cbc.common.utils import timestep_range
 from subproblems import *
 from adaptivity import *
 from storage import *
@@ -32,7 +32,7 @@ class PrimalSolver:
         if self.save_solution:
             self.files = (File("pvd/u.pvd"),
                           File("pvd/p.pvd"))
-   
+
         # Create time series for storing solution
         self.time_series = create_primal_series()
 
@@ -43,7 +43,7 @@ class PrimalSolver:
         "Solve the primal FSI problem"
 
         # Record CPU time
-        cpu_time = time()
+        cpu_time = python_time()
 
         # Record number of time steps
         timestep_counter = 0
@@ -59,7 +59,7 @@ class PrimalSolver:
 
 #         # Extract number of dofs
 #         num_dofs_FSM = extract_num_dofs(F)
-      
+
         # Save initial solution to file and series
         U = extract_solution(F)
         self._save_solution(U)
@@ -82,7 +82,7 @@ class PrimalSolver:
             info("-"*80)
             begin("* Starting new time step")
             info_blue("  * t = %g (T = %g, dt = %g)" % (t1, T, dt))
-                
+
             # Solve fluid problem
             u, p = F.step(dt)
 
@@ -102,7 +102,7 @@ class PrimalSolver:
             timestep_counter += 1
             end()
 
-            # Check if we have reached the end time 
+            # Check if we have reached the end time
             if at_end:
                 info("")
                 info_green("Finished time-stepping")
@@ -115,8 +115,8 @@ class PrimalSolver:
                 t0 = t1
                 t1 = t1 + dt
                 at_end = t1 > T - DOLFIN_EPS
-                                
-            # Compute new adaptive time step 
+
+            # Compute new adaptive time step
             else:
                 Rk = compute_time_residual(self.time_series, t0, t1, self.problem)
                 (dt, at_end) = compute_time_step(self.problem, Rk, ST, TOL, dt, t1, T)
@@ -124,8 +124,8 @@ class PrimalSolver:
                 t1 = t1 + dt
 
         # Report elapsed time
-        info_blue("Primal solution computed in %g seconds." % (time() - cpu_time))
-        
+        info_blue("Primal solution computed in %g seconds." % (python_time() - cpu_time))
+
         # Return solution
         return u, p
 

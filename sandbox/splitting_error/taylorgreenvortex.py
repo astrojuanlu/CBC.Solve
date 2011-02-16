@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2011 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-19
+# Last changed: 2011-02-16
 
 from fsiproblem import *
 
@@ -12,7 +12,7 @@ application_parameters.add("end_time", 2.0)
 application_parameters.add("dt", 0.05)
 application_parameters.add("mesh_scale", 32)
 application_parameters.add("TOL", 0.1)
-application_parameters.add("w_h", 0.45) 
+application_parameters.add("w_h", 0.45)
 application_parameters.add("w_k", 0.45)
 application_parameters.add("w_c", 0.1)
 application_parameters.add("fraction", 0.5)
@@ -29,14 +29,14 @@ parameter_info = application_parameters.option_string()
 # Define the boundary
 sie_boundary = "on_boundary"
 
-# Define problem class 
+# Define problem class
 class TaylorGreenVortex(FSI):
     def __init__(self):
-        
-        # Define mesh based on a scale factor 
+
+        # Define mesh based on a scale factor
         mesh_scale = application_parameters["mesh_scale"]
         mesh = UnitSquare(mesh_scale, mesh_scale)
-        
+
         # Map to coordinates to [-1, 1]^2
         map = 2*(mesh.coordinates() - 0.5)
         mesh.coordinates()[:, :] = map
@@ -52,7 +52,7 @@ class TaylorGreenVortex(FSI):
         f.write(str("Mesh size:  ") + (str(mesh_size)) + "\n \n")
         f.close()
 
-        # Define analytical solution for u and p 
+        # Define analytical solution for u and p
         self.u_anal = ('-(cos(pi*(x[0]))*sin(pi*(x[1]))) * exp(-2.0*nu*pi*pi*t)',
                        ' (cos(pi*(x[1]))*sin(pi*(x[0]))) * exp(-2.0*nu*pi*pi*t)')
         self.p_anal = '-0.25*(cos(2*pi*(x[0])) + cos(2*pi*(x[1]))) * exp(-4.0*nu*pi*pi*t)'
@@ -71,7 +71,7 @@ class TaylorGreenVortex(FSI):
 
     def estimate_error(self):
         return application_parameters["estimate_error"]
-    
+
     def dorfler_marking(self):
         return application_parameters["dorfler_marking"]
 
@@ -105,8 +105,9 @@ class TaylorGreenVortex(FSI):
     def evaluate_functional(self, u, p, dt):
 
         # Compute x-component at the point [0.5, 0.5]
-        functional = u((0.0, 0.5))[0]
-        return functional
+        #functional = u((0.0, 0.5))[0]
+        return 0.0
+        #return functional
 
     def __str__(self):
         return "TaylorGreen Vortex test case"
@@ -126,7 +127,7 @@ class TaylorGreenVortex(FSI):
         return nu
 
  # --- Initial conditions  ---
-    
+
     def velocity_initial_condition(self):
         u = Expression(self.u_anal)
         u.t = 0.0
@@ -144,7 +145,7 @@ class TaylorGreenVortex(FSI):
 
     def pressure_dirichlet_boundaries(self):
         return [sie_boundary]
-    
+
     def velocity_dirichlet_values(self):
         # FIXME: Add when the solver can handle time dependent bcs
         self.u = Expression(self.u_anal)
@@ -160,13 +161,13 @@ class TaylorGreenVortex(FSI):
 #     def update_bcs(self, u, p, t):
 #         self.u.t = t
 #         self.p.t = t
-         
+
 #         return self.u, self.p
 
 # Define problem
 problem = TaylorGreenVortex()
 problem.parameters["solver_parameters"]["solve_primal"] = problem.solve_primal()
-problem.parameters["solver_parameters"]["solve_dual"] = problem.solve_dual() 
+problem.parameters["solver_parameters"]["solve_dual"] = problem.solve_dual()
 problem.parameters["solver_parameters"]["estimate_error"] = problem.estimate_error()
 problem.parameters["solver_parameters"]["uniform_timestep"]  = problem.uniform_timestep()
 problem.parameters["solver_parameters"]["tolerance"] = problem.TOL()
