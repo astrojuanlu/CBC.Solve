@@ -46,25 +46,26 @@ for directory in glob.glob("results-*"):
 
     # Get number of dofs
     filename = "%s/num_dofs.txt" % directory
-    d = read_float(filename)[2]
-    D.append(d)
+    if os.path.isfile(filename):
+        d = read_float(filename)[2]
+        D.append(d)
 
     # Get functional values
     filename = "%s/goal_functional_final.txt" % directory
-    m = read_float(filename)[2]
-    M.append(m)
-
-    # Compute error
-    eta = abs(m - reference_value)
-    ETA.append(abs(m - reference_value))
+    if os.path.isfile(filename):
+        m = read_float(filename)[2]
+        M.append(m)
+        eta = abs(m - reference_value)
+        ETA.append(abs(m - reference_value))
 
     # Get error estimates
     filename = "%s/error_estimates.txt" % directory
-    e, eh, ek, ec = read_float(filename)[1:5]
-    E.append(e)
-    Eh.append(eh)
-    Ek.append(ek)
-    Ec.append(ec)
+    if os.path.isfile(filename):
+        e, eh, ek, ec = read_float(filename)[1:5]
+        E.append(e)
+        Eh.append(eh)
+        Ek.append(ek)
+        Ec.append(ec)
 
     # Compute efficiency index
     n = min(len(e), len(eta))
