@@ -9,15 +9,15 @@ __license__  = "GNU GPL Version 3 or any later version"
 from dolfin import *
 from operators import *
 
-def weak_residuals(U0, U1, U, w, kn, problem):
+def weak_residuals(U0, U1, U, Z, kn, problem):
     "Return weak residuals used for Ek. The primal data is evaluated in at U1"
 
     # Extract variables
     u0, p0 = U0
     u1, p1 = U1
     u, p   = U
-    v, q,  = w # Can denote test function or dual solutoion
-
+    z, y   = Z
+   
     # Get problem parameters
     Omega = problem.fluid_mesh()
     rho   = problem.density()
@@ -26,13 +26,12 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     # Define normals
     n = FacetNormal(Omega)
 
-    # FIXME: Check epsilon(v) is correct
     # Define weak residual for the time error 
-    wR  = (1/kn)*rho*inner(v, u1 - u0)*dx \
-        + rho*inner(v, dot(grad(u), u))*dx \
-        + inner(epsilon(v), sigma(u, p, mu))*dx \
-        - inner(v, dot(sigma(u, p, mu), n))*ds \
-        + inner(q, div(u))*dx
+    wR  = (1/kn)*rho*inner(z, u1 - u0)*dx \
+        + rho*inner(z, dot(grad(u), u))*dx \
+        + inner(epsilon(z), sigma(u, p, mu))*dx \
+        - inner(z, dot(sigma(u, p, mu), n))*ds \
+        + inner(y, div(u))*dx
     
     return wR
 
