@@ -73,6 +73,10 @@ class DualSolver:
         # Create dual boundary conditions
         bcs = self._create_boundary_conditions(W)
 
+        # Write and save initial value for the dual functions
+        write_dual_data(dual_sol_1, T, self.dual_series)
+        self._save_solution(dual_sol_1)
+
         # Time-stepping
         T  = self.problem.end_time()
         timestep_range = read_timestep_range(T, self.primal_series)
