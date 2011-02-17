@@ -26,6 +26,7 @@ for q in q_range:
                     p["estimate_error"] = True
                     p["uniform_timestep"] = True
                     p["tolerance"] = 1e-8
+                    p["fixedpoint_tolerance"] = 1e-12
 
                     # Set parameters for current case
                     p["structure_element_degree"] = q
