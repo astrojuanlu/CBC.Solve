@@ -4,9 +4,9 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-08
+# Last changed: 2011-02-17
 
-from time import time
+from time import time as python_time
 from dolfin import *
 from spaces import *
 from storage import *
@@ -40,7 +40,7 @@ class DualSolver:
         "Solve the dual fluid problem"
 
         # Record CPU time
-        cpu_time = time()
+        cpu_time = python_time()
 
         # Get problem parameters
         T = self.problem.end_time()
@@ -72,6 +72,10 @@ class DualSolver:
 
         # Create dual boundary conditions
         bcs = self._create_boundary_conditions(W)
+
+        # Write and save initial value for the dual functions
+        write_dual_data(dual_sol_1, T, self.dual_series)
+        self._save_solution(dual_sol_1)
 
         # Time-stepping
         T  = self.problem.end_time()
@@ -120,7 +124,7 @@ class DualSolver:
             end()
 
         # Report elapsed time
-        info_blue("Dual solution computed in %g seconds." % (time() - cpu_time))
+        info_blue("Dual solution computed in %g seconds." % (python_time() - cpu_time))
 
     def _create_boundary_conditions(self, W):
         "Create boundary conditions for dual problem"

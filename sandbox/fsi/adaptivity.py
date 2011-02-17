@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-16
+# Last changed: 2011-02-18
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -28,7 +28,8 @@ indicator_files = None
 def estimate_error(problem, parameters):
     "Estimate error and compute error indicators"
 
-    set_log_level(DEBUG)
+    # FIXME: Debugging
+    #set_log_level(DEBUG)
 
     # Get meshes
     Omega = problem.mesh()
@@ -115,7 +116,7 @@ def estimate_error(problem, parameters):
         kn.assign(dt)
 
 
-        # FIXME: Testing
+        # FIXME: Debugging
         #if t1 > 0.1:
         #    break
 
@@ -134,6 +135,7 @@ def estimate_error(problem, parameters):
         read_dual_data(ZZ0, t0, dual_series)
         read_dual_data(ZZ1, t1, dual_series)
 
+        # FIXME: Apply boundary conditions
         # Extrapolate dual data
         [EZ0[j].extrapolate(Z0[j]) for j in range(6)]
         [EZ1[j].extrapolate(Z1[j]) for j in range(6)]
@@ -144,11 +146,25 @@ def estimate_error(problem, parameters):
         e_S = [assemble(Rh_Si, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Si in Rh_S]
         e_M = [assemble(Rh_Mi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Mi in Rh_M]
 
+        # FIXME: Debugging
+        #from numpy import ones
+        #ZZ1.vector()[:] = ones(ZZ1.vector().size())
+        #from numpy import ones
+        #U_F1, P_F1, U_S1, P_S1, U_M1 = U1
+        #U_F1.vector()[:] = ones(U_F1.vector().size())
+        #plot(U_F1)
+        #plot(Z1[0])
+
         # Assemble weak residuals for time discretization error
-        #Rk = norm(assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains))
         Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
         Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        Rk = 0.5 * (Rk1 - Rk0)
+        Rk = 0.5 * abs(Rk1 - Rk0)
+
+        # FIXME: Debugging
+        #Rk1 = assemble(Rk1_F, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        #Rk = abs(Rk1)
+
+        print "CHECK:", i, Rk, linalg.norm(ZZ0.vector()), linalg.norm(ZZ1.vector()), ZZ0.vector().size()
 
         # Assemble weak residuals for computational error
         RcF = assemble(Rc_F, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
@@ -157,8 +173,6 @@ def estimate_error(problem, parameters):
 
         # Estimate interpolation error (local weight)
         s = 0.5 * linalg.norm(ZZ0.vector().array() - ZZ1.vector().array(), 2) / dt
-
-        print "CHECK:", i, Rk, linalg.norm(ZZ0.vector()), linalg.norm(ZZ1.vector()), ZZ0.vector().size()
 
         # Reset vectors for assembly of residuals
         eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
@@ -174,8 +188,7 @@ def estimate_error(problem, parameters):
             eta_M[i] += dt * abs(e_M[i].array())
 
         # Add to E_k
-        #E_k += dt * s * dt * Rk
-        E_k += dt * abs(Rk)
+        E_k += dt * Rk
 
         # Add to E_c's
         E_c_F += dt * RcF
@@ -205,7 +218,12 @@ def estimate_error(problem, parameters):
     save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters)
     save_stability_factor(T, ST, parameters)
 
+    # FIXME: Debugging
     print "CHECK: E_k =", E_k
+    interactive()
+    import sys
+    sys.exit(0)
+
 
     return E, eta_K, ST, E_h
 

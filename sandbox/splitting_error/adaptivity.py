@@ -68,9 +68,10 @@ def estimate_error(problem):
 
     # Get strong residuals for E_h
     sRh = strong_residuals(U, U0, U1, Z, EZ, dg, kn, problem)
-
+    
     # Get weak residuals for E_k
-    wRk = weak_residuals(U0, U1, U1, w, kn, problem)
+    wRk0 = weak_residuals(U0, U1, U1, Z0, kn, problem)
+    wRk1 = weak_residuals(U0, U1, U1, Z1, kn, problem)
 
     # Get weak residuals for E_c
     wRc = weak_residuals(U0, U1, U, Z, kn, problem)
@@ -113,7 +114,9 @@ def estimate_error(problem):
         e_K = [assemble(sRhi) for sRhi in sRh]
 
         # Assemble weak residuals for time discretization error
-        Rk = norm(assemble(wRk))
+        Rk0 = assemble(wRk0)
+        Rk1 = assemble(wRk1)
+        Rk = 0.5 * (Rk1 - Rk0)
 
         # Assemble weak residuals for computational error
         Rc = assemble(wRc, mesh=Omega)
@@ -129,7 +132,7 @@ def estimate_error(problem):
             eta[i] += dt * abs(e_K[i].array())
 
         # Add to E_k
-        E_k += dt * s * dt * Rk
+        E_k += dt * s * dt * abs(Rk)
 
         # Add to Ec
         E_c +=  dt * Rc

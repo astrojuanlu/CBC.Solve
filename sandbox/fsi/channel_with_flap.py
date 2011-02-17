@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-11
+# Last changed: 2011-02-18
 
 from fsiproblem import *
 
@@ -53,16 +53,9 @@ class ChannelWithFlap(FSI):
     def end_time(self):
         return 0.5
 
-    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, t0, t1):
-
-        # Compute average displacement
-        structure_area = (structure_right - structure_left) * structure_top
-        displacement = (1.0/structure_area)*assemble(U_S[0]*dx)
-
-        # Compute velocity at outflow
-        #velocity = u_F((4.0, 0.5))[0]
-
-        return displacement
+    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
+        A = (structure_right - structure_left) * structure_top
+        return (1.0/A) * U_S[0] * dx_S
 
     def __str__(self):
         return "Channel with flap FSI problem"
