@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-01-07
+# Last changed: 2011-02-18
 
 from dolfin import *
 from operators import *
@@ -36,6 +36,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     # Define inner products
     dx_F = dx(0)
     dx_S = dx(1)
+    dx_M = dx_F
     d_FSI = dS(2)
 
     # Operators for A_SS
@@ -100,13 +101,12 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_MM = A_MM01 + A_MM02 + A_MM03
     A_system = A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS
 
-    # FIXME: Goal functional should not be defined here
     # Define goal funtional
-    goal_functional = v_S[1]*dx_S
+    goal_functional = problem.evaluate_functional(v_F, q_F, v_S, q_S, v_M, dx_F, dx_S, dx_M)
 
     # Define the dual rhs and lhs
-    A = lhs(A_system) 
-    L = rhs(A_system) + goal_functional 
+    A = lhs(A_system)
+    L = rhs(A_system) + goal_functional
 
     info_blue("Dual forms created")
 

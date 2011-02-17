@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-13
+# Last changed: 2011-02-18
 
 import pylab
 from time import time as python_time
@@ -147,7 +147,7 @@ def solve_primal(problem, parameters, ST):
                 save_no_FSI_iter(t1, iter + 1, parameters)
 
                 # Evaluate user goal functional
-                goal_functional = problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, t0, t1)
+                goal_functional = assemble(problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, dx, dx, dx))
 
                 # Integrate goal functional
                 integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)
