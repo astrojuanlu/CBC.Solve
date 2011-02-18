@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-13
+# Last changed: 2011-02-18
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
@@ -123,8 +123,9 @@ class FluidProblem(NavierStokes):
             for j in range(dim):
                 x1[i][j] = X[i][j] + dofs[j*N + i]
 
+        # FIXME: Debugging
         # Smooth the mesh
-        self.omega_F1.smooth(num_smoothings)
+        #self.omega_F1.smooth(num_smoothings)
 
         # Update mesh velocity
         wx = self.w.vector().array()

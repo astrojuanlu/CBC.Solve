@@ -195,13 +195,13 @@ def estimate_error(problem, parameters):
         E_c_S += dt * RcS
         E_c_M += dt * RcM
 
-        # Sum total computational error
-        E_c = E_c_F + E_c_S + E_c_M
-
         # Add to stability factor
         ST += dt * s
 
         end()
+
+    # Sum total computational error
+    E_c = E_c_F + E_c_S + E_c_M
 
     # Compute sum of error indicators
     eta_K = sum(eta_F) + sum(eta_S) + sum(eta_M)

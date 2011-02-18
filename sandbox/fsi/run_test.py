@@ -3,26 +3,21 @@ from fsirun import *
 # Set common parameters
 p = default_parameters()
 p["solve_primal"] = True
-p["solve_dual"] = False
-p["estimate_error"] = False
+p["solve_dual"] = True
+p["estimate_error"] = True
 p["uniform_timestep"] = True
-p["tolerance"] = 1e-6
+p["tolerance"] = 1e-8
 p["initial_timestep"] = 0.05
 p["num_initial_refinements"] = 0
-#p["plot_solution"] = True
-
 p["structure_element_degree"] = 1
 
-#problem = "channel_with_flap"
-problem = "modified_pressure_driven_cavity"
+p["refinement_algorithm"] = "regular_cut"
+p["dorfler_marking"] = False
+p["marking_fraction"] = 0.3
+
+#p["plot_solution"] = True
+
+problem = "channel_with_flap"
 
 # Run problem
-run_local(problem, parameters=p, case="test")
-
-# Increment = 3.29897e-10 (tolerance = 1e-08), converged after 5 iterations
-# Value of goal functional at t = 0.5: 0.0162199
-# Value of goal functional at T: 0.0162199
-# Primal solution computed in 19.8312 seconds.
-
-# P1 structure: 0.01621987919642476
-# P2 structure: 0.005281059097190604
+run_local(problem, parameters=p, case="test3")
