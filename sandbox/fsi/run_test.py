@@ -20,4 +20,4 @@ p["marking_fraction"] = 0.3
 problem = "channel_with_flap"
 
 # Run problem
-run_local(problem, parameters=p, case="test2")
+run_local(problem, parameters=p, case="test")

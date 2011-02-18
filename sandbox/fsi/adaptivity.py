@@ -174,7 +174,7 @@ def estimate_error(problem, parameters):
         E_c_S += dt * RcS
         E_c_M += dt * RcM
 
-        print "CHECK: RcM =", RcM
+        print "CHECK: RcF = %g  RcS = %g  RcM = %g" % (RcF, RcS, RcM)
 
         # Add to stability factor
         ST += dt * s
