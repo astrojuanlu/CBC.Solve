@@ -164,7 +164,7 @@ def estimate_error(problem, parameters):
         #Rk1 = assemble(Rk1_F, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
         #Rk = abs(Rk1)
 
-        print "CHECK:", i, Rk, linalg.norm(ZZ0.vector()), linalg.norm(ZZ1.vector()), ZZ0.vector().size()
+        #print "CHECK:", i, Rk, linalg.norm(ZZ0.vector()), linalg.norm(ZZ1.vector()), ZZ0.vector().size()
 
         # Assemble weak residuals for computational error
         RcF = assemble(Rc_F, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
@@ -219,11 +219,7 @@ def estimate_error(problem, parameters):
     save_stability_factor(T, ST, parameters)
 
     # FIXME: Debugging
-    print "CHECK: E_k =", E_k
-    interactive()
-    import sys
-    sys.exit(0)
-
+    #print "CHECK: E_k =", E_k
 
     return E, eta_K, ST, E_h
 
