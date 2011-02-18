@@ -4,12 +4,15 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-18
+# Last changed: 2011-02-19
 
 from dolfin import *
 
 # Define identity matrix (2D)
 I = Identity(2)
+
+# FIXME: Cleanup and use the same expressions everywhere
+# Stress is defined in multiple places
 
 def F(v):
     "Return deformation gradient"

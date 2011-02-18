@@ -7,6 +7,8 @@ __license__  = "GNU GPL Version 3 or any later version"
 # Last changed: 2011-02-19
 
 from dolfin import *
+
+from cbc.twist import DeformationGradient, PiolaTransform
 from operators import Sigma_F as _Sigma_F
 from operators import Sigma_S as _Sigma_S
 from operators import Sigma_M as _Sigma_M
@@ -55,7 +57,7 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     Dt_U_M = alpha_M * (1/kn) * (U_M1 - U_M0)
 
     # Define stresses
-    Sigma_F = J(U_M)*dot(_Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T)
+    Sigma_F = PiolaTransform(_Sigma_F(U_F, P_F, U_M, mu_F), U_M)
     Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
     Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
 
