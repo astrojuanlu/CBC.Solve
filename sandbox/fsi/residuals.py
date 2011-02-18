@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-18
+# Last changed: 2011-02-19
 
 from dolfin import *
 from operators import Sigma_F as _Sigma_F
@@ -35,7 +35,7 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     # Define normals
     N = FacetNormal(Omega)
     N_F = N
-    N_S = N
+    N_S = -N
 
     # Define inner products
     dx_F = dx(0)
@@ -65,9 +65,9 @@ def weak_residuals(U0, U1, U, w, kn, problem):
         + inner(v_F, J(U_M)*P_F*dot(I, dot(inv(F(U_M)).T, N_F)))*ds \
         + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx_F
 
-    # Structure residual (note the minus sign on N_F('+'))
+    # Structure residual
     R_S = inner(v_S, Dt_P_S)*dx_S + inner(grad(v_S), Sigma_S)*dx_S \
-        - inner(v_S('-'), dot(Sigma_S('-') - Sigma_F('+'), -N_F('+')))*d_FSI \
+        - inner(v_S('-'), dot(Sigma_F('+'), N_S('+')))*d_FSI \
         + inner(q_S, Dt_U_S - P_S)*dx_S
 
     # Mesh residual contributions
@@ -103,6 +103,8 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     N = FacetNormal(Omega)
     N_F = N
     N_S = N
+
+    # FIXME: Check sign of N_S, should it be -N?
 
     # Define inner products
     dx_F = dx(0)
