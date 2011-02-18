@@ -72,7 +72,7 @@ def solve_dual(problem, parameters):
                              U_F1, P_F1, U_S1, P_S1, U_M1)
 
     # Create dual boundary conditions
-    bcs = _create_boundary_conditions(problem, W)
+    bcs = create_dual_bcs(problem, W)
 
     # Write initial value for dual
     write_dual_data(Z1, T, dual_series)
@@ -133,43 +133,6 @@ def solve_dual(problem, parameters):
 
     # Report elapsed time
     info_blue("Dual solution computed in %g seconds." % (python_time() - cpu_time))
-
-def _create_boundary_conditions(problem, W):
-    "Create boundary conditions for dual problem"
-
-    bcs = []
-
-    # Boundary conditions for dual velocity
-    for boundary in problem.fluid_velocity_dirichlet_boundaries():
-        bcs += [DirichletBC(W.sub(0), (0, 0), boundary)]
-    bcs += [DirichletBC(W.sub(0), (0, 0), problem.fsi_boundary, 1)]
-
-    # Boundary conditions for dual pressure
-    for boundary in problem.fluid_pressure_dirichlet_boundaries():
-        bcs += [DirichletBC(W.sub(1), 0, boundary)]
-
-    # Boundary conditions for dual structure displacement and velocity
-    for boundary in problem.structure_dirichlet_boundaries():
-        bcs += [DirichletBC(W.sub(2), (0, 0), boundary)]
-        bcs += [DirichletBC(W.sub(3), (0, 0), boundary)]
-
-    # Boundary conditions for dual mesh displacement
-    bcs += [DirichletBC(W.sub(4), (0, 0), DomainBoundary())]
-
-    # In addition to the above boundary conditions, we also need to
-    # add homogeneous boundary conditions for Z_F and Z_M on the FSI
-    # boundary. Note that the no-slip boundary condition for U_F does
-    # not include the FSI boundary when interpreted as a boundary
-    # condition for Z_F if it is defined in terms of 'on_boundary'
-    # which has a different meaning for the full mesh.
-
-    # Boundary condition for Z_F on FSI boundary
-    bcs += [DirichletBC(W.sub(0), (0, 0), problem.fsi_boundary, 2)]
-
-    # Boundary condition for Z_M on FSI boundary
-    bcs += [DirichletBC(W.sub(4), (0, 0), problem.fsi_boundary, 2)]
-
-    return bcs
 
 def _save_solution(Z, files):
     "Save solution to VTK"

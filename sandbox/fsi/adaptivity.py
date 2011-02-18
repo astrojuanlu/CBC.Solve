@@ -126,10 +126,13 @@ def estimate_error(problem, parameters):
         read_dual_data(ZZ0, t0, dual_series)
         read_dual_data(ZZ1, t1, dual_series)
 
-        # FIXME: Apply boundary conditions
         # Extrapolate dual data
         [EZ0[j].extrapolate(Z0[j]) for j in range(6)]
         [EZ1[j].extrapolate(Z1[j]) for j in range(6)]
+
+        # Apply dual boundary conditions to extrapolation
+        [apply_bc(EZ0[j], Z0[j]) for j in range(6)]
+        [apply_bc(EZ1[j], Z1[j]) for j in range(6)]
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
@@ -527,3 +530,8 @@ def refinement_level():
     "Return current refinement level"
     global _refinement_level
     return _refinement_level
+
+def apply_bc(u, g):
+    "Apply boundary conditions to u based on g."
+    bc = DirichletBC(u.function_space(), g, DomainBoundary())
+    bc.apply(u.vector())
