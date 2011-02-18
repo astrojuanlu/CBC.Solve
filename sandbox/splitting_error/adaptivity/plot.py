@@ -124,44 +124,6 @@ def plots():
             xlabel("$t$", fontsize=30)
 
 
-    # Plot FSI tolerance and number of FSI iterations for each adaptive loop
-    if plot_FSI_tol == True:
-
-            # Get the level
-            level = at_level
-
-            if at_level > num_levels - 1:
-                info_red("Level do not exist! Highest available level: %d", num_levels - 1) 
-                exit(True)
-                
-            print "Plotting FSI tolerance and no. of itrations (tol=1) at level %d" % level
-
-            # Extract data for FSI tolerance 
-            level_lines_tol = [l for l in lines_tol if int(l.split(" ")[0]) == level]
-            t_tol = [float(l.split(" ")[1]) for l in level_lines_tol]
-            tol   = [float(l.split(" ")[2]) for l in level_lines_tol]
-
-            # Extract data for no. of iterations
-            level_lines_iter = [l for l in lines_iter if int(l.split(" ")[0]) == level]
-            t_iter = [float(l.split(" ")[1]) for l in level_lines_iter]
-            iter   = [float(l.split(" ")[2]) for l in level_lines_iter]
-            
-            # Plot FSI tolerance and no. of FSI iterations
-            figure((level + 50)) 
-            subplot(2, 1, 1); grid(True); plot(t_tol, tol, '-k', linewidth=4.0)
-            ylabel("$TOL_{fSM}$", fontsize=30)
-            title("FSI tolerance & # iter., level %d" %level, fontsize=30)
-            subplot(2, 1, 2); grid(False); 
-            
-            # FIXME: axhspan/vlines do not work on BB
-#            axhspan(0.0, max(iter), xmin=0, xmax=max(t_iter), color='w')
-#            vlines(t_iter, iter, 1.0, color='k', linestyles='-',  linewidth=1.5)
-            plot(t_iter, iter, '-or', linewidth=2); grid(True)
-            ylabel("#iter.", fontsize=30)
-            xlabel("$t$", fontsize=30)
-
-
-
     # --Process goal functional---------------------------------------------- 
     for level in range(num_levels):
            
@@ -398,7 +360,7 @@ def plots():
     # Plot number of (space) dofs and number of time steps
     if plot_dofs_vs_level == True:
         print "Plotting # (space) dofs and #time steps (DT=1)"
-        
+
         figure(9)        
         title("#dofs vs refinement level", fontsize=30)
         semilogy(ref_level_T, h_dofs, '-db', linewidth=3); grid(True)
