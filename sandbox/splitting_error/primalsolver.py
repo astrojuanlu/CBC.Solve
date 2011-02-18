@@ -57,8 +57,8 @@ class PrimalSolver:
         # Define the fluid problem
         F = FluidProblem(self.problem)
 
-#         # Extract number of dofs
-#         num_dofs_FSM = extract_num_dofs(F)
+        # Extract number of dofs
+        num_dofs_FSM = extract_num_dofs(F)
 
         # Save initial solution to file and series
         U = extract_solution(F)
@@ -116,7 +116,7 @@ class PrimalSolver:
             if at_end:
                 info("")
                 info_green("Finished time-stepping")
-#                save_dofs(num_dofs_FSM, timestep_counter)
+                save_dofs(num_dofs_FSM, timestep_counter)
                 end()
                 break
 
