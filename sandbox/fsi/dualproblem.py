@@ -9,6 +9,8 @@ __license__  = "GNU GPL Version 3 or any later version"
 from dolfin import *
 from operators import *
 
+# FIXME: alpha_M is missing!
+
 def create_dual_forms(Omega_F, Omega_S, k, problem,
                       v_F,  q_F,  v_S,  q_S,  v_M,  q_M,
                       Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
@@ -63,7 +65,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_SS   = - (1/k)*inner(Z_S0 - Z_S, rho_S*q_S)*dx_S + inner(grad(Z_S), Sv)*dx_S \
              - (1/k)*inner(Y_S0 - Y_S, v_S)*dx_S - inner(Y_S, q_S)*dx_S
 
-    A_MS   = - inner(Y_M('+'), q_S('+'))*d_FSI
+    A_MS   = - inner(Y_M('+'), v_S('+'))*d_FSI
 
     A_FM01 =  (1/k)*inner(Z_F, rho_F*J(U_M1)*tr(dot(grad(v_M), inv(F(U_M1))))*(U_F0 - U_F1))*dx_F
     A_FM02 =  inner(Z_F, rho_F*J(U_M1)*tr(dot(grad(v_M), inv(F(U_M1))))*dot(grad(U_F1), dot(inv(F(U_M1)), (U_M1 - U_M0)*(1/k))))*dx_F
