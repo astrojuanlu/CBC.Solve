@@ -44,7 +44,7 @@ class FSI(CBCProblem):
         self.Omega = Omega
 
 
-    # Return the fluid mesh as Omege
+    # Return the fluid mesh as Omega
     def fluid_mesh(self):
         "Return mesh for fluid domain"
         return self.Omega
