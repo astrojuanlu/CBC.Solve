@@ -9,8 +9,6 @@ __license__  = "GNU GPL Version 3 or any later version"
 from dolfin import *
 from operators import *
 
-# FIXME: alpha_M is missing!
-
 def create_dual_forms(Omega_F, Omega_S, k, problem,
                       v_F,  q_F,  v_S,  q_S,  v_M,  q_M,
                       Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,

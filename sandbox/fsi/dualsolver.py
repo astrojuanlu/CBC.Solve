@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-16
+# Last changed: 2011-02-18
 
 from time import time as python_time
 from dolfin import *
@@ -12,8 +12,6 @@ from spaces import *
 from storage import *
 from dualproblem import *
 from adaptivity import *
-
-# FIXME: alpha_M missing
 
 def solve_dual(problem, parameters):
     "Solve dual FSI problem"
@@ -100,9 +98,6 @@ def solve_dual(problem, parameters):
         read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
         read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series, parameters)
 
-        # FIXME: Missing exterior_facet_domains, need to figure
-        # FIXME: out why they are needed
-
         # Assemble matrix
         info("Assembling matrix")
         matrix = assemble(A,
@@ -160,6 +155,19 @@ def _create_boundary_conditions(problem, W):
 
     # Boundary conditions for dual mesh displacement
     bcs += [DirichletBC(W.sub(4), (0, 0), DomainBoundary())]
+
+    # In addition to the above boundary conditions, we also need to
+    # add homogeneous boundary conditions for Z_F and Z_M on the FSI
+    # boundary. Note that the no-slip boundary condition for U_F does
+    # not include the FSI boundary when interpreted as a boundary
+    # condition for Z_F if it is defined in terms of 'on_boundary'
+    # which has a different meaning for the full mesh.
+
+    # Boundary condition for Z_F on FSI boundary
+    bcs += [DirichletBC(W.sub(0), (0, 0), problem.fsi_boundary, 2)]
+
+    # Boundary condition for Z_M on FSI boundary
+    bcs += [DirichletBC(W.sub(4), (0, 0), problem.fsi_boundary, 2)]
 
     return bcs
 

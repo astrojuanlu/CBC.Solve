@@ -123,9 +123,8 @@ class FluidProblem(NavierStokes):
             for j in range(dim):
                 x1[i][j] = X[i][j] + dofs[j*N + i]
 
-        # FIXME: Debugging
         # Smooth the mesh
-        #self.omega_F1.smooth(num_smoothings)
+        self.omega_F1.smooth(num_smoothings)
 
         # Update mesh velocity
         wx = self.w.vector().array()
@@ -286,7 +285,6 @@ class MeshProblem():
         lmbda = problem.mesh_lmbda()
         alpha = problem.mesh_alpha()
         Omega_F = problem.fluid_mesh()
-        dt = 0.0
 
         # Define function spaces and functions
         V = VectorFunctionSpace(Omega_F, "CG", 1)

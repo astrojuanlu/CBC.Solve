@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-09
+# Last changed: 2011-02-18
 
 from dolfin import *
 
@@ -30,4 +30,4 @@ def Sigma_S(U_S, mu_S, lmbda_S):
 
 def Sigma_M(U_M, mu_M, lmbda_M):
     "Return mesh stress in reference domain"
-    return 2*mu_M*sym(grad(U_M)) + lmbda_M*tr(sym(grad(U_M)))*I
+    return 2*mu_M*sym(grad(U_M)) + lmbda_M*tr(grad(U_M))*I

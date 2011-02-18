@@ -28,9 +28,6 @@ indicator_files = None
 def estimate_error(problem, parameters):
     "Estimate error and compute error indicators"
 
-    # FIXME: Debugging
-    #set_log_level(DEBUG)
-
     # Get meshes
     Omega = problem.mesh()
     Omega_F = problem.fluid_mesh()
@@ -115,12 +112,6 @@ def estimate_error(problem, parameters):
         dt = t1 - t0
         kn.assign(dt)
 
-
-        # FIXME: Debugging
-        #if t1 > 0.1:
-        #    break
-
-
         # Display progress
         info("")
         info("-"*80)
@@ -146,25 +137,10 @@ def estimate_error(problem, parameters):
         e_S = [assemble(Rh_Si, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Si in Rh_S]
         e_M = [assemble(Rh_Mi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Mi in Rh_M]
 
-        # FIXME: Debugging
-        #from numpy import ones
-        #ZZ1.vector()[:] = ones(ZZ1.vector().size())
-        #from numpy import ones
-        #U_F1, P_F1, U_S1, P_S1, U_M1 = U1
-        #U_F1.vector()[:] = ones(U_F1.vector().size())
-        #plot(U_F1)
-        #plot(Z1[0])
-
         # Assemble weak residuals for time discretization error
         Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
         Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
         Rk = 0.5 * abs(Rk1 - Rk0)
-
-        # FIXME: Debugging
-        #Rk1 = assemble(Rk1_F, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        #Rk = abs(Rk1)
-
-        #print "CHECK:", i, Rk, linalg.norm(ZZ0.vector()), linalg.norm(ZZ1.vector()), ZZ0.vector().size()
 
         # Assemble weak residuals for computational error
         RcF = assemble(Rc_F, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
@@ -195,6 +171,8 @@ def estimate_error(problem, parameters):
         E_c_S += dt * RcS
         E_c_M += dt * RcM
 
+        print "CHECK: RcM =", RcM
+
         # Add to stability factor
         ST += dt * s
 
@@ -214,12 +192,8 @@ def estimate_error(problem, parameters):
 
     # Report results
     save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, ST, parameters)
-#    save_computational_errors(E_c_F, E_c_S, E_c_M, parameters)
     save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters)
     save_stability_factor(T, ST, parameters)
-
-    # FIXME: Debugging
-    #print "CHECK: E_k =", E_k
 
     return E, eta_K, ST, E_h
 
