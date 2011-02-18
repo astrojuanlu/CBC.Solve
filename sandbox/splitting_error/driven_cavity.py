@@ -21,19 +21,19 @@ from fsiproblem import *
 
 # Create application parameters set
 application_parameters = Parameters("application_parameters")
-application_parameters.add("mesh_scale", 32)
+application_parameters.add("mesh_scale", 4)
 application_parameters.add("end_time", 1.0)
 application_parameters.add("dt", 0.25)
 application_parameters.add("TOL", 0.1)
-application_parameters.add("w_h", 0.45) 
-application_parameters.add("w_k", 0.45)
-application_parameters.add("w_c", 0.1)
-application_parameters.add("fraction", 0.2)
+application_parameters.add("w_h", 0.5) 
+application_parameters.add("w_k", 0.5)
+application_parameters.add("w_c", 0.1) # Passive in this problem!
+application_parameters.add("fraction", 0.3)
 application_parameters.add("solve_primal", True)
 application_parameters.add("solve_dual", True)
-application_parameters.add("estimate_error", False)
+application_parameters.add("estimate_error", True)
 application_parameters.add("dorfler_marking", True)
-application_parameters.add("uniform_timestep", True)
+application_parameters.add("uniform_timestep", False)
 application_parameters.parse()
 
 # Collect parameters
@@ -110,11 +110,17 @@ class DrivenCavity(FSI):
     def fraction(self):
         return application_parameters["fraction"]
 
-    def evaluate_functional(self, u, p, dt):
+    def evaluate_functional(self, u, p, dx, ds, t1):
+        "Evaluates the goal functional in the primal problem"
+        "and defines the goal funcional in the dual problem"
 
-        # Compute x-component at the point [0.5, 0.5]
-        functional = u((0.5, 0.5))[0]
-        return functional
+        # Define the Riezs' reprsenter for the goal functional
+        psi = Expression("exp(-(pow(25*(x[0] - 0.75), 2) + pow(25*(x[1] - 0.25), 2)) / 5.0)")
+        
+        # Define the goal functional
+        goal_functional = psi*(u[0] + u[1])*dx
+
+        return goal_functional
 
     def __str__(self):
         return "Driven Cavity test case"
@@ -126,7 +132,7 @@ class DrivenCavity(FSI):
         return 1.0
 
     def viscosity(self):
-        return 0.1
+        return 0.005
 
     def velocity_dirichlet_values(self):
         return [(0.0, 0.0), (1.0, 0.0)]

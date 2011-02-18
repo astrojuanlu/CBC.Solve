@@ -96,7 +96,7 @@ class PrimalSolver:
             write_primal_data(U, t1, self.time_series)
 
             # Evaluate user goal functional
-            goal_functional = self.problem.evaluate_functional(u, p, t1)
+            goal_functional = assemble(self.problem.evaluate_functional(u, p, dx, ds, t1))
 
             # Integrate goal functional
             integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)
