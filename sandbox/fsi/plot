@@ -11,7 +11,7 @@ from numpy import argsort, array
 from pylab import *
 
 # Get command-line parameters
-cases = ("M", "e", "E", "Eh", "Ek", "Ec", "I")
+cases = ("M", "e", "E", "Eh", "Ek", "Ec", "EcF", "EcS", "EcM", "I")
 if len(sys.argv) != 2 or not sys.argv[1] in cases:
     print "Usage: plot <variable>"
     print "where <variable> is one of %s" % ", ".join(cases)
@@ -19,7 +19,7 @@ if len(sys.argv) != 2 or not sys.argv[1] in cases:
 variable = sys.argv[1]
 
 # Set reference value
-reference_value = 0.00364
+reference_value = 0.00363978
 
 def read(filename):
     return zip(*[[x for x in row.split(" ") if len(x) >0] for row in open(filename).read().split("\n") if " " in row and len(row) > 0])
@@ -35,6 +35,9 @@ E   = []
 Eh  = []
 Ek  = []
 Ec  = []
+EcF = []
+EcS = []
+EcM = []
 I   = []
 L   = []
 for directory in glob.glob("results-*"):
@@ -61,11 +64,14 @@ for directory in glob.glob("results-*"):
     # Get error estimates
     filename = "%s/error_estimates.txt" % directory
     if os.path.isfile(filename):
-        e, eh, ek, ec = read_float(filename)[1:5]
+        e, eh, ek, ec, ecf, ecs, ecm = read_float(filename)[1:8]
         E.append(e)
         Eh.append(eh)
         Ek.append(ek)
         Ec.append(ec)
+        EcF.append(abs(ecf))
+        EcS.append(abs(ecs))
+        EcM.append(abs(ecm))
 
     # Compute efficiency index
     n = min(len(e), len(eta))
@@ -111,6 +117,21 @@ elif variable == "Ec":
     Y = Ec
     _title  = "Computational error"
     _ylabel = "$E_c$"
+    _plot   = loglog
+elif variable == "EcF":
+    Y = EcF
+    _title  = "Fluid computational error"
+    _ylabel = "$E_c^F$"
+    _plot   = loglog
+elif variable == "EcS":
+    Y = EcS
+    _title  = "Structure computational error"
+    _ylabel = "$E_c^S$"
+    _plot   = loglog
+elif variable == "EcM":
+    Y = EcM
+    _title  = "Mesh computational error"
+    _ylabel = "$E_c^M$"
     _plot   = loglog
 elif variable == "I":
     Y = I
