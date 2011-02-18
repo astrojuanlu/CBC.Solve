@@ -361,13 +361,13 @@ def save_stability_factor(T, ST):
 #     print "Saving stability factor and exit ..."
 #     exit(True)
 
-def save_goal_functional(t1, goal_functional):
+def save_goal_functional(t1, goal_functional, integrated_goal_functional):
     "Saving goal functional at t = t1"
 
     global refinement_level
 
     f = open("adaptivity/goal_functional.txt", "a")
-    f.write("%d %g %g \n" % (refinement_level, t1, goal_functional))
+    f.write("%d %g %g %g\n" % (refinement_level, t1, goal_functional, integrated_goal_functional))
     f.close()
 
 def save_dofs(num_dofs_FSM, timestep_counter):

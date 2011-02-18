@@ -29,12 +29,12 @@ def create_dual_forms(problem, Omega, k,
     
     # FIXME: Talk to Anders/Mats about this cG(1) formulation 
     # Defined mid point value for the fluid 
-    U = 0.5*(uh0 + uh1)
+    u = 0.5*(uh0 + uh1)
 
     # Define the dual momemtum form
     dual_mom = -(1/k)*rho*inner((z0 - z), v)*dx \
-               + rho*inner(z, dot(grad(U), v))*dx \
-               + rho*inner(z, dot(grad(v), U))*dx \
+               + rho*inner(z, dot(grad(u), v))*dx \
+               + rho*inner(z, dot(grad(v), u))*dx \
                + inner(epsilon(z), sigma(v,q,mu))*dx \
                - inner(z, dot(sigma(v,q,mu), n))*ds
      
@@ -44,13 +44,9 @@ def create_dual_forms(problem, Omega, k,
     # Collect momentum and continuity forms
     dual = dual_mom + dual_cont
 
-    # Define Riezs' representer (Gauss pulse)
-    psi = Expression("exp(-(pow(25*(x[0] - 0.75), 2) + pow(25*(x[1] - 0.25), 2)) / 5.0)")
+    # Get the goal functional specified in the problem
+    goal_functional = problem.evaluate_functional(v, q, dx, ds, ds)
 
-    # FIXME: Should be v*psi*dx ?
-    # Define goal funtional 
-    goal_functional = (v[0] + v[1])*psi*dx
-    
     # Define the dual rhs and lhs
     A = lhs(dual) 
     L = rhs(dual) + goal_functional

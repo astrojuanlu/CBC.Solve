@@ -57,8 +57,8 @@ class PrimalSolver:
         # Define the fluid problem
         F = FluidProblem(self.problem)
 
-#         # Extract number of dofs
-#         num_dofs_FSM = extract_num_dofs(F)
+        # Extract number of dofs
+        num_dofs_FSM = extract_num_dofs(F)
 
         # Save initial solution to file and series
         U = extract_solution(F)
@@ -74,6 +74,10 @@ class PrimalSolver:
         t1 = dt
         at_end = False
 
+        # Initialize integration of goal functional (assuming M(u) = 0 at t = 0)
+        integrated_goal_functional = 0.0
+        old_goal_functional = 0.0
+    
         # Time-stepping loop
         while True:
 
@@ -91,9 +95,15 @@ class PrimalSolver:
             self._save_solution(U)
             write_primal_data(U, t1, self.time_series)
 
-            # Evaluate and save functional
-            goal_functional = self.problem.evaluate_functional(u, p, t1)
-            save_goal_functional(t1, goal_functional)
+            # Evaluate user goal functional
+            goal_functional = assemble(self.problem.evaluate_functional(u, p, dx, ds, t1))
+
+            # Integrate goal functional
+            integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)
+            old_goal_functional = goal_functional
+
+            # Save goal functional
+            save_goal_functional(t1, goal_functional, integrated_goal_functional)#, parameters)
 
             # Move to next time step
             F.update(t1)
@@ -106,7 +116,7 @@ class PrimalSolver:
             if at_end:
                 info("")
                 info_green("Finished time-stepping")
-#                save_dofs(num_dofs_FSM, timestep_counter)
+                save_dofs(num_dofs_FSM, timestep_counter)
                 end()
                 break
 
