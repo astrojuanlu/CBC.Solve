@@ -27,7 +27,6 @@ info_blue("UAh  =  Uniform/Adaptive error vs #space dofs")
 info_blue("I    =  Efficiency Index")
 info_blue("DT   =  #dofs and time steps vs refinemnet level ")
 info_blue("k    =  Time Steps & Residuals")
-info_blue("tol, at_level = FSI Tolerance & #iterations ")
 print ""
 info_blue("BIG_KAHUNA =  plot all!")
 print ""
@@ -57,8 +56,6 @@ for arg in sys.argv[1:]:
         plot_error_estimate = int(val)
     elif key == "k":
          plot_time_step = int(val)
-    elif key == "tol":
-        plot_FSI_tol = int(val)
     elif key == "I":
          plot_efficiency_index = int(val)
     elif key == "M":
@@ -75,8 +72,6 @@ for arg in sys.argv[1:]:
         plot_error_adaptive_vs_uniform = int(val)
     elif key == "UAh":
         plot_error_adaptive_vs_uniform_space_dofs= int(val)
-    elif key == "at_level":
-        at_level = int(val)
     elif key == "BIG_KAHUNA":
         plot_time_step        = 1
         plot_FSI_tol          = 1
@@ -96,12 +91,10 @@ for arg in sys.argv[1:]:
 def plots():
 
     # Read files ("on the run data")
-    lines_iter =  open("no_iterations.txt").read().split("\n")[:-1]
-    lines_tol  =  open("fsi_tolerance.txt").read().split("\n")[:-1]
     lines_goal =  open("goal_functional.txt").read().split("\n")[:-1]
   
     # Determine the number of refinement levels for on the run data
-    num_levels = max(int(l.split(" ")[0]) for l in lines_iter) + 1
+    num_levels = max(int(l.split(" ")[0]) for l in lines_goal) + 1
 
     # Empty old file
     f = open("M_ave.txt", "w")
@@ -271,9 +264,6 @@ def plots():
     E_h   = [float(l.split(" ")[2]) for l in level_lines_error]
     E_k   = [float(l.split(" ")[3]) for l in level_lines_error]
     E_c   = [float(l.split(" ")[4]) for l in level_lines_error]
-    E_c_F = [float(l.split(" ")[5]) for l in level_lines_error]
-    E_c_S = [float(l.split(" ")[6]) for l in level_lines_error]
-    E_c_M = [float(l.split(" ")[7]) for l in level_lines_error]
 
     # Create an array for E (used in efficiency index)
     E_array = array(E)
@@ -325,16 +315,6 @@ def plots():
         legend(["E_k"], loc='best')
         subplot(4, 1, 4); plot(refinement_level, E_c,'-sm');grid(True)
         legend(["E_c"], loc='best')
-        xlabel('Refinement level', fontsize=30)
-        
-        figure(2) 
-        subplot(3, 1, 1); plot(refinement_level, E_c_F, 'db-');grid(True)
-        title("Computational errors ",  fontsize=30)	
-        legend(["Ec_F"], loc='best')
-        subplot(3, 1, 2); plot(refinement_level, E_c_S, '-pr');grid(True)
-        legend(["Ec_S"], loc='best')
-        subplot(3, 1, 3); plot(refinement_level, E_c_M,'-sm');grid(True)
-        legend(["Ec_M"], loc='best')
         xlabel('Refinement level', fontsize=30)
 
     # Plot uniform error vs adaptive error (dofs) 
