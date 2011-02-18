@@ -29,6 +29,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     lmbda_S = problem.structure_lmbda()
     mu_M    = problem.mesh_mu()
     lmbda_M = problem.mesh_lmbda()
+    alpha_M = problem.mesh_alpha()
 
     # Define normals
     N_S = FacetNormal(Omega_S)
@@ -90,7 +91,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_SM05 =  inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), grad(U_M1('+')).T), dot(inv(F(U_M1)).T('+'), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'), N)))))*d_FSI
     A_SM06 = -inner(Z_S('+'), J(U_M1)('+')*dot(dot(P_F1('+')*I('+'), inv(F(U_M1)).T('+')), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'), N))))*d_FSI
 
-    A_MM01 = -(1/k)*inner(v_M, Z_M0 - Z_M)*dx_F + inner(sym(grad(Z_M)), Sigma_M(v_M, mu_M, lmbda_M))*dx_F
+    A_MM01 = -(alpha_M/k)*inner(Z_M0 - Z_M, v_M)*dx_F + inner(sym(grad(Z_M)), Sigma_M(v_M, mu_M, lmbda_M))*dx_F
     A_MM02 = inner(Z_M('+'), v_M('+'))*d_FSI
     A_MM03 = inner(Y_M('+'), q_M('+'))*d_FSI
 
