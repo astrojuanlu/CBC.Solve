@@ -8,6 +8,7 @@ __all__ = ["FSISolver"]
 
 from time import time as python_time
 
+from dolfin import parameters as dolfin_parameters
 from dolfin import *
 from cbc.common import CBCSolver
 
@@ -35,7 +36,9 @@ class FSISolver(CBCSolver):
         self.parameters.add("uniform_timestep", False)
 
         # Set DOLFIN parameters
-        parameters["form_compiler"]["cpp_optimize"] = True
+        ref_type = ["recursive_bisection", "regular_cut"]
+        dolfin_parameters["form_compiler"]["cpp_optimize"] = True
+        dolfin_parameters["refinement_algorithm"] = ref_type[0]
 
         # Store problem
         self.problem = problem
@@ -95,7 +98,7 @@ class FSISolver(CBCSolver):
             mesh_tolerance = tolerance * self.problem.space_error_weight()
             if E_h <= mesh_tolerance:
                 info_blue("Freezing current mesh: E_h = %g <= TOL_h = %g" % (E_h, mesh_tolerance))
-                refined_mesh = self.problem.mesh()
+                refined_mesh = self.problem.fluid_mesh()
             else:
                 info_red("Refining mesh")
                 refined_mesh = refine_mesh(self.problem, self.problem.fluid_mesh(), indicators)
