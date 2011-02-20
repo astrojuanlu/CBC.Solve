@@ -76,7 +76,7 @@ def estimate_error(problem):
     # Get weak residuals for E_c
     wRc = weak_residuals(U0, U1, U, Z, kn, problem)
 
-    # Reset vector for assembly of space residuals
+    # Reset vector for assembly of space residuals (containing all contributions)
     e_K = None
 
     # Reset variables
@@ -142,6 +142,11 @@ def estimate_error(problem):
 
         end()
 
+    # Substract the three contributions from space error 
+    eta_mom_K  = sum(eta[0])
+    eta_mom_dK = sum(eta[1])
+    eta_con_K  = sum(eta[2])
+    
     # Compute sum of space erros indicators
     eta_K = sum(eta)
     
@@ -152,7 +157,7 @@ def estimate_error(problem):
     E = E_h + E_k + abs(E_c)
 
     # Report results
-    save_errors(E, E_h, E_k, E_c, ST)
+    save_errors(E, E_h, E_k, E_c, ST, eta_mom_K, eta_mom_dK, eta_con_K)
     save_indicators(eta_K, Omega)
     save_stability_factor(T, ST)
 
@@ -306,7 +311,7 @@ def save_mesh(mesh):
     file = File("adaptivity/mesh_%d.xml" % refinement_level)
     file << mesh
 
-def save_errors(E, E_h, E_k, E_c, ST):
+def save_errors(E, E_h, E_k, E_c, ST, eta_mom_K, eta_mom_dK, eta_con_K):
     "Save errors to file"
 
     global refinement_level
@@ -335,10 +340,14 @@ S(T)  = %g
     f = open("adaptivity/adaptivity.log", "a")
     f.write(summary)
     f.close()
+    
+#     print eta_mom_K
+#     exit(1)
 
     # Save to file (for plotting)
     g = open("adaptivity/error_estimates.txt", "a")
-    g.write("%d %g %g %g %g \n" %(refinement_level, E, E_h, E_k, abs(E_c)))
+    g.write("%d %g %g %g %g %g %g %g \n" %(refinement_level, E, E_h, E_k, abs(E_c),\
+                                               eta_mom_K, eta_mom_dK, eta_con_K))
     g.close()
 
 def save_timestep(t1, Rk, dt):
