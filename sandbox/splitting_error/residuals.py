@@ -55,13 +55,16 @@ def strong_residuals(U, U0, U1, Z, EZ, dg, kn, problem):
     n = FacetNormal(Omega)
 
     # Define element residuals for momentum eq.
-    sR_mom_K =  dg*(1/kn)*rho*inner(Ez - z, u1 - u0)*dx \
-             +  dg*rho*inner(Ez - z, dot(grad(u), u))*dx \
-             -  dg*inner(Ez - z, div(sigma(u, p0, mu)))*dx
+    sR_mom_K = dg*(1/kn)*rho*inner(Ez - z, u1 - u0)*dx \
+             + dg*rho*inner(Ez - z, dot(grad(u), u))*dx \
 
-    # Define moment eq. residuals defined on facets (jumps and BCs)
-    sR_mom_dK = avg(dg)*inner(Ez('+') - z('+'), jump(dot(sigma(u, p, mu), n)))*dS \
-              - dg*inner(Ez - z, dot(2*mu*0.5*(grad(u) + grad(u).T) , n))*ds 
+    # Define moment eq. residuals defined on facets (jumps and BCs) GRAD U formulation
+    sR_mom_dK = avg(dg)*inner(Ez('+') - z('+'), jump(dot(2*mu*0.5*(grad(u) + grad(u).T), n)))*dS \
+              + dg*inner(Ez - z, dot(sigma(u, p, mu) , n))*ds 
+
+#     # Define moment eq. residuals defined on facets (jumps and BCs) SIGAM formulation
+#     sR_mom_dK = avg(dg)*inner(Ez('+') - z('+'), jump(dot(sigma(u,p,mu), n)))*dS \
+#               + dg*inner(Ez - z, dot(sigma(u, p, mu) , n))*ds 
 
     # Define continuity eq. element residuals
     sR_con_K =  dg*inner(Ey - y, div(u))*dx
