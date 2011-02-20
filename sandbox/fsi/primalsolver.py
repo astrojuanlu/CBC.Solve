@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-18
+# Last changed: 2011-02-19
 
 import pylab
 from time import time as python_time
@@ -54,11 +54,12 @@ def solve_primal(problem, parameters, ST):
     S = StructureProblem(problem, parameters)
     M = MeshProblem(problem, parameters)
 
+    # Get solution values
+    u_F0, u_F1, p_F0, p_F1 = F.solution_values()
+    U_M0, U_M1 = M.solution_values()
+
     # Extract number of dofs
     num_dofs_FSM = extract_num_dofs(F, S, M)
-
-    # Get initial mesh displacement
-    U_M = M.update(0)
 
     # Get initial structure displacement (used for plotting and checking convergence)
     structure_element_degree = parameters["structure_element_degree"]
@@ -99,42 +100,42 @@ def solve_primal(problem, parameters, ST):
 
             # Solve fluid subproblem
             begin("* Solving fluid subproblem (F)")
-            u_F, p_F = F.step(dt)
+            F.step(dt)
             end()
 
             # Transfer fluid stresses to structure
             begin("* Transferring fluid stresses to structure (F --> S)")
-            Sigma_F = F.compute_fluid_stress(u_F, p_F, U_M)
+            Sigma_F = F.compute_fluid_stress(u_F0, u_F1, p_F0, p_F1, U_M0, U_M1)
             S.update_fluid_stress(Sigma_F)
             end()
 
             # Solve structure subproblem
             begin("* Solving structure subproblem (S)")
-            U_S, P_S = S.step(dt)
+            U_S1, P_S1 = S.step(dt)
             end()
 
             # Transfer structure displacement to fluid mesh
             begin("* Transferring structure displacement to fluid mesh (S --> M)")
-            M.update_structure_displacement(U_S)
+            M.update_structure_displacement(U_S1)
             end()
 
             # Solve mesh equation
             begin("* Solving mesh subproblem (M)")
-            U_M = M.step(dt)
+            M.step(dt)
             end()
 
             # Transfer mesh displacement to fluid
             begin("* Transferring mesh displacement to fluid (M --> S)")
-            F.update_mesh_displacement(U_M, dt, num_smoothings)
+            F.update_mesh_displacement(U_M1, dt, num_smoothings)
             end()
 
             # Compute increment of displacement vector
-            U_S0.vector().axpy(-1, U_S.vector())
+            U_S0.vector().axpy(-1, U_S1.vector())
             increment = norm(U_S0.vector())
-            U_S0.vector()[:] = U_S.vector()[:]
+            U_S0.vector()[:] = U_S1.vector()[:]
 
             # Plot solution
-            if plot_solution: _plot_solution(u_F, U_S0, U_M)
+            if plot_solution: _plot_solution(u_F1, U_S1, U_M1)
 
             # Check convergence
             if increment < itertol:
@@ -147,7 +148,7 @@ def solve_primal(problem, parameters, ST):
                 save_no_FSI_iter(t1, iter + 1, parameters)
 
                 # Evaluate user goal functional
-                goal_functional = assemble(problem.evaluate_functional(u_F, p_F, U_S, P_S, U_M, dx, dx, dx))
+                goal_functional = assemble(problem.evaluate_functional(u_F1, p_F1, U_S1, P_S1, U_M1, dx, dx, dx))
 
                 # Integrate goal functional
                 integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)
@@ -214,11 +215,11 @@ def solve_primal(problem, parameters, ST):
     # Return solution
     return goal_functional
 
-def _plot_solution(u_F, U_S0, U_M):
+def _plot_solution(u_F, U_S, U_M):
     "Plot solution"
-    plot(u_F,  title="Fluid velocity")
-    plot(U_S0, title="Structure displacement", mode="displacement")
-    plot(U_M,  title="Mesh displacement", mode="displacement")
+    plot(u_F, title="Fluid velocity")
+    plot(U_S, title="Structure displacement", mode="displacement")
+    plot(U_M, title="Mesh displacement", mode="displacement")
 
 def _save_solution(U, files):
     "Save solution to VTK"

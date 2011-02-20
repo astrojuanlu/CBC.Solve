@@ -12,7 +12,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-16
+# Last changed: 2011-02-20
 
 from numpy import append
 from dolfin import *
@@ -65,32 +65,26 @@ def read_primal_data(U, t, Omega, Omega_F, Omega_S, series, parameters):
     series[3].retrieve(local_vals_P_S, t)
     series[4].retrieve(local_vals_U_M, t)
 
-    # Get vertex mappings from local meshes to global mesh
-    vmap_F = Omega_F.data().mesh_function("global vertex indices").values()
-    vmap_S = Omega_S.data().mesh_function("global vertex indices").values()
+    # Get mappings from local meshes to global mesh
+    v_F = Omega_F.data().mesh_function("global vertex indices").values()
+    v_S = Omega_S.data().mesh_function("global vertex indices").values()
+    e_F = Omega_F.data().mesh_function("global edge indices").values()
+    e_S = Omega_S.data().mesh_function("global edge indices").values()
 
     # Get the number of vertices and edges
-    Omega_F.init(1)
-    Nv   = Omega.num_vertices()
-    Nv_F = Omega_F.num_vertices()
-    Ne_F = Omega_F.num_edges()
-    Nv_S = Omega_S.num_vertices()
-    Ne_S = Omega_S.num_edges()
+    Nv = Omega.num_vertices()
+    Ne = Omega.num_edges()
 
     # Compute mapping to global dofs
-    global_dofs_U_F = append(vmap_F, vmap_F + Nv)
-    global_dofs_P_F = vmap_F
-    global_dofs_U_S = append(vmap_S, vmap_S + Nv)
-    global_dofs_P_S = append(vmap_S, vmap_S + Nv)
-    global_dofs_U_M = append(vmap_F, vmap_F + Nv)
-
-    # Get rid of P2 dofs for u_F and create a P1 function
-    local_vals_u_F = append(local_vals_u_F[:Nv_F], local_vals_u_F[Nv_F + Ne_F: 2*Nv_F + Ne_F])
-
-    # Get rid of P2 dofs for U_S and P_S if we use P2 elements
-    if parameters["structure_element_degree"] == 2:
-        local_vals_U_S = append(local_vals_U_S[:Nv_S], local_vals_U_S[Nv_S + Ne_S: 2*Nv_S + Ne_S])
-        local_vals_P_S = append(local_vals_P_S[:Nv_S], local_vals_P_S[Nv_S + Ne_S: 2*Nv_S + Ne_S])
+    global_dofs_U_F = append(append(v_F, Nv + e_F), append((Nv + Ne) + v_F, (Nv + Ne + Nv) + e_F))
+    global_dofs_P_F = v_F
+    if parameters["structure_element_degree"] == 1:
+        global_dofs_U_S = append(v_S, Nv + v_S)
+        global_dofs_P_S = global_dofs_U_S
+    else:
+        global_dofs_U_S = append(append(v_S, Nv + e_S), append(((Nv + Ne) + v_S, (Nv + Ne + Nv) + e_S)))
+        global_dofs_P_S = global_dofs_U_S
+    global_dofs_U_M = append(v_F, Nv + v_F)
 
     # Set degrees of freedom for primal functions
     U_F.vector()[global_dofs_U_F] = local_vals_u_F

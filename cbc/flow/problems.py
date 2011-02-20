@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-08-16
+# Last changed: 2011-02-19
 
 __all__ = ["NavierStokes", "NavierStokesDual"]
 
@@ -49,6 +49,10 @@ class NavierStokes(CBCProblem):
     def solution(self):
         "Return current solution values"
         return self.solver.solution()
+
+    def solution_values(self):
+        "Return solution values at t_{n-1} and t_n"
+        return self.solver.solution_values()
 
     #--- Functions that must be overloaded by subclasses ---
 

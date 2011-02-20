@@ -6,15 +6,17 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 
-def create_primal_functions(Omega):
+def create_primal_functions(Omega, parameters):
     "Return primal variables on the full domain initialized to zero"
 
     # Create function spaces
-    V_F = VectorFunctionSpace(Omega, "CG", 1)
+    structure_element_degree = parameters["structure_element_degree"]
+    V_F = VectorFunctionSpace(Omega, "CG", 2)
     Q_F = FunctionSpace(Omega, "CG", 1)
-    V_S = VectorFunctionSpace(Omega, "CG", 1)
-    Q_S = VectorFunctionSpace(Omega, "CG", 1)
+    V_S = VectorFunctionSpace(Omega, "CG", structure_element_degree)
+    Q_S = VectorFunctionSpace(Omega, "CG", structure_element_degree)
     V_M = VectorFunctionSpace(Omega, "CG", 1)
+    Q_M = VectorFunctionSpace(Omega, "CG", 1)
 
     # Create primal functions
     U_F = Function(V_F)

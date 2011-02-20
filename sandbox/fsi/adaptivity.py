@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-18
+# Last changed: 2011-02-20
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -38,16 +38,16 @@ def estimate_error(problem, parameters):
     dg = TestFunction(DG)
 
     # Create dual function space and test functions
-    W = create_dual_space(Omega, parameters)
-    w = TestFunctions(W)
+    #W = create_dual_space(Omega, parameters)
+    #w = TestFunctions(W)
 
     # Create time series
     primal_series = create_primal_series(parameters)
     dual_series = create_dual_series(parameters)
 
     # Create primal functions
-    U0 = create_primal_functions(Omega)
-    U1 = create_primal_functions(Omega)
+    U0 = create_primal_functions(Omega, parameters)
+    U1 = create_primal_functions(Omega, parameters)
 
     # Create dual functions
     ZZ0, Z0 = create_dual_functions(Omega, parameters)
@@ -216,8 +216,8 @@ def compute_time_residual(primal_series, t0, t1, problem, parameters):
 
         # Create primal variables
         info("Initializing primal variables for time residual")
-        U0 = create_primal_functions(Omega)
-        U1 = create_primal_functions(Omega)
+        U0 = create_primal_functions(Omega, parameters)
+        U1 = create_primal_functions(Omega, parameters)
 
         # Create dual function space and test functions
         W = create_dual_space(Omega, parameters)

@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-19
+# Last changed: 2011-02-20
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
@@ -36,11 +36,15 @@ class FluidProblem(NavierStokes):
         # Create functions for velocity and pressure on reference domain
         self.V = VectorFunctionSpace(self.Omega_F, "CG", 2)
         self.Q = FunctionSpace(self.Omega_F, "CG", 1)
-        self.U_F = Function(self.V)
-        self.P_F = Function(self.Q)
+        self.U_F0 = Function(self.V)
+        self.U_F1 = Function(self.V)
+        self.P_F0 = Function(self.Q)
+        self.P_F1 = Function(self.Q)
+        self.U_F = 0.5 * (self.U_F0 + self.U_F1)
+        self.P_F = 0.5 * (self.P_F0 + self.P_F1)
 
         # Calculate number of dofs
-        self.num_dofs = self.U_F.vector().size() + self.P_F.vector().size()
+        self.num_dofs = self.V.dim() + self.Q.dim()
 
         # Initialize base class
         NavierStokes.__init__(self)
@@ -87,13 +91,16 @@ class FluidProblem(NavierStokes):
         # Time step will be selected elsewhere
         return self.end_time()
 
-    def compute_fluid_stress(self, u_F, p_F, U_M):
+    def compute_fluid_stress(self, u_F0, u_F1, p_F0, p_F1, U_M0, U_M1):
 
         # Map u and p back to reference domain
-        self.U_F.vector()[:] = u_F.vector()[:]
-        self.P_F.vector()[:] = p_F.vector()[:]
+        self.U_F0.vector()[:] = u_F0.vector()[:]
+        self.U_F1.vector()[:] = u_F1.vector()[:]
+        self.P_F0.vector()[:] = p_F0.vector()[:]
+        self.P_F1.vector()[:] = p_F1.vector()[:]
 
         # Compute mesh deformation gradient
+        U_M = 0.5 * (U_M0 + U_M1)
         F = DeformationGradient(U_M)
         F_inv = inv(F)
         F_inv_T = F_inv.T
@@ -347,6 +354,10 @@ class MeshProblem():
     def solution(self):
         "Return current solution values"
         return self.u1
+
+    def solution_values(self):
+        "Return solution values at t_{n-1} and t_n"
+        return self.u0, self.u1
 
     def __str__(self):
         return "The mesh problem (M)"

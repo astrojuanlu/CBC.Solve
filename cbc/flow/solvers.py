@@ -2,7 +2,7 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-09-16
+# Last changed: 2011-02-20
 
 __all__ = ["NavierStokesSolver", "NavierStokesDualSolver"]
 
@@ -74,11 +74,11 @@ class NavierStokesSolver(CBCSolver):
             return  0.5*(grad(v) + grad(v).T)
 
         # Tentative velocity step (sigma formulation)
-        U = 0.5*(u0 +u)                                                                                                                                     
+        U = 0.5*(u0 + u)
         F1 = rho*(1/k)*inner(v, u - u0)*dx + rho*inner(v, grad(u0)*(u0 - w))*dx \
             + inner(epsilon(v), sigma(U, p0))*dx \
             + inner(v,p0*n)*ds - mu*inner(grad(U).T*n, v)*ds \
-            - inner(v, f)*dx   
+            - inner(v, f)*dx
         a1 = lhs(F1)
         L1 = rhs(F1)
 
@@ -90,7 +90,7 @@ class NavierStokesSolver(CBCSolver):
 #         a1 = lhs(F1)
 #         L1 = rhs(F1)
 
-        
+
         # Pressure correction
         a2 = inner(grad(q), k*grad(p))*dx
         L2 = inner(grad(q), k*grad(p0))*dx - q*div(u1)*dx
@@ -217,6 +217,10 @@ class NavierStokesSolver(CBCSolver):
     def solution(self):
         "Return current solution values"
         return self.u1, self.p1
+
+    def solution_values(self):
+        "Return solution values at t_{n-1} and t_n"
+        return self.u0, self.u1, self.p0, self.p1
 
 class NavierStokesDualSolver(CBCSolver):
     "Navier-Stokes dual solver"

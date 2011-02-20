@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim andAnders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-16
+# Last changed: 2011-02-20
 
 from dolfin import *
 from numpy import array, append
@@ -77,7 +77,7 @@ class FSI(CBCProblem):
         e_F = array([i for i in fluid_to_structure_e.iterkeys()])
         e_S = array([i for i in fluid_to_structure_e.itervalues()])
 
-        # Extract matching dofs for fluid and structure (for vector P1 elements)
+        # Extract matching dofs for fluid and structure
         structure_element_degree = parameters["structure_element_degree"]
         Nv_F = Omega_F.num_vertices()
         Nv_S = Omega_S.num_vertices()
@@ -173,6 +173,10 @@ class FSI(CBCProblem):
                 fsi_boundary[facet_index] = 1
             else:
                 fsi_boundary[facet_index] = 0
+
+        # Initialize global edge indices (used in read_primal_data)
+        init_global_edge_indices(Omega_F, Omega)
+        init_global_edge_indices(Omega_S, Omega)
 
         # Store data
         self.Omega_F = Omega_F
