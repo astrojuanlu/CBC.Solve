@@ -37,10 +37,6 @@ def estimate_error(problem, parameters):
     DG = FunctionSpace(Omega, "DG", 0)
     dg = TestFunction(DG)
 
-    # Create dual function space and test functions
-    #W = create_dual_space(Omega, parameters)
-    #w = TestFunctions(W)
-
     # Create time series
     primal_series = create_primal_series(parameters)
     dual_series = create_dual_series(parameters)

@@ -82,7 +82,7 @@ def read_primal_data(U, t, Omega, Omega_F, Omega_S, series, parameters):
         global_dofs_U_S = append(v_S, Nv + v_S)
         global_dofs_P_S = global_dofs_U_S
     else:
-        global_dofs_U_S = append(append(v_S, Nv + e_S), append(((Nv + Ne) + v_S, (Nv + Ne + Nv) + e_S)))
+        global_dofs_U_S = append(append(v_S, Nv + e_S), append((Nv + Ne) + v_S, (Nv + Ne + Nv) + e_S))
         global_dofs_P_S = global_dofs_U_S
     global_dofs_U_M = append(v_F, Nv + v_F)
 
