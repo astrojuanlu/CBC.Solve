@@ -11,7 +11,7 @@ from numpy import argsort, array
 from pylab import *
 
 # Get command-line parameters
-cases = ("M", "e", "E", "Eh", "Ek", "Ec", "EcF", "EcS", "EcM", "I")
+cases = ("M", "e", "E", "Eh", "Ek", "Ec", "EcF", "EcS", "EcM", "I", "Ih", "Ik", "Ic")
 if len(sys.argv) != 2 or not sys.argv[1] in cases:
     print "Usage: plot <variable>"
     print "where <variable> is one of %s" % ", ".join(cases)
@@ -39,6 +39,9 @@ EcF = []
 EcS = []
 EcM = []
 I   = []
+Ih  = []
+Ik  = []
+Ic  = []
 L   = []
 for directory in glob.glob("results-*"):
     print "Extracting values from %s" % directory
@@ -52,6 +55,8 @@ for directory in glob.glob("results-*"):
     if os.path.isfile(filename):
         d = read_float(filename)[2]
         D.append(d)
+    else:
+        D.append(None)
 
     # Get functional values
     filename = "%s/goal_functional_final.txt" % directory
@@ -60,6 +65,9 @@ for directory in glob.glob("results-*"):
         M.append(m)
         eta = abs(m - reference_value)
         ETA.append(abs(m - reference_value))
+    else:
+        M.append(None)
+        ETA.append(None)
 
     # Get error estimates
     filename = "%s/error_estimates.txt" % directory
@@ -72,11 +80,25 @@ for directory in glob.glob("results-*"):
         EcF.append(abs(ecf))
         EcS.append(abs(ecs))
         EcM.append(abs(ecm))
+    else:
+        E.append(None)
+        Eh.append(None)
+        Ek.append(None)
+        Ec.append(None)
+        EcF.append(None)
+        EcS.append(None)
+        EcM.append(None)
 
     # Compute efficiency index
     n = min(len(e), len(eta))
     i = e[:n] / eta[:n]
+    ih = eh[:n] / eta[:n]
+    ik = ek[:n] / eta[:n]
+    ic = ec[:n] / eta[:n]
     I.append(i)
+    Ih.append(ih)
+    Ik.append(ik)
+    Ic.append(ic)
 
     # Get legend
     filename = "%s/application_parameters.xml" % directory
@@ -135,13 +157,33 @@ elif variable == "EcM":
     _plot   = loglog
 elif variable == "I":
     Y = I
-    _title  = "Efficiency index"
-    _ylabel = "$\eta_h / \eta$"
+    _title  = "Efficiency index (total)"
+    _ylabel = "$E / \eta$"
+    #_plot   = semilogx
+    _plot   = loglog
+elif variable == "Ih":
+    Y = Ih
+    _title  = "Efficiency index ($I_h$)"
+    _ylabel = "$E_h / \eta$"
+    #_plot   = semilogx
+    _plot   = loglog
+elif variable == "Ik":
+    Y = Ik
+    _title  = "Efficiency index ($I_k$)"
+    _ylabel = "$E_k / \eta$"
+    #_plot   = semilogx
+    _plot   = loglog
+elif variable == "Ic":
+    Y = Ic
+    _title  = "Efficiency index ($I_c$)"
+    _ylabel = "$E_c / \eta$"
     #_plot   = semilogx
     _plot   = loglog
 
 # Sort values by legend
-indices = argsort(L)
+
+print len(X), len(Y)
+indices = argsort(L)[:min(len(L), len(X))]
 L = [L[i] for i in indices]
 
  # Group values
@@ -149,6 +191,10 @@ plotvals = []
 for i in indices:
     x = X[i]
     y = Y[i]
+    if x is None or y is None:
+        print "Warning: missing values for %s, skipping" % variable
+        x = [1]
+        y = [1]
     if len(y) < len(x):
         print "Warning: missing values for %s (only %d, expecting %d)" % (variable, len(y), len(x))
         x = x[:len(y)]
@@ -156,11 +202,15 @@ for i in indices:
     plotvals.append(y)
 
 # Set fontsize for legend
-rcParams.update({'legend.fontsize': 11})
+rcParams.update({'legend.fontsize': 9})
 
 # Plot functional values
-max_plots = 9
+max_plots = 13
 for i in range((len(L) - 1) / max_plots + 1):
+
+    if i != 2:
+        continue
+
     figure(i)
     subplot(2, 1, 1)
     xy = plotvals[2*i*max_plots:2*(i + 1)*max_plots]
