@@ -17,8 +17,9 @@ __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution"
 from dolfin import *
 
 from cbc.flow import NavierStokes
-from cbc.twist import Hyperelasticity, StVenantKirchhoff
-from cbc.twist import DeformationGradient, PiolaTransform
+from cbc.twist import Hyperelasticity, StVenantKirchhoff, PiolaTransform
+from operators import Sigma_F as _Sigma_F
+from operators import Sigma_M as _Sigma_M
 
 # Define fluid problem
 class FluidProblem(NavierStokes):
@@ -99,19 +100,14 @@ class FluidProblem(NavierStokes):
         self.P_F0.vector()[:] = p_F0.vector()[:]
         self.P_F1.vector()[:] = p_F1.vector()[:]
 
-        # Compute mesh deformation gradient
+        # Get variables
+        mu_F = self.viscosity()
+        U_F  = self.U_F
+        P_F  = self.P_F
         U_M = 0.5 * (U_M0 + U_M1)
-        F = DeformationGradient(U_M)
-        F_inv = inv(F)
-        F_inv_T = F_inv.T
-        I = variable(Identity(U_M.cell().d))
 
-        # Compute mapped stress sigma_F \circ Phi (here, grad "=" Grad)
-        mu = self.viscosity()
-        sigma_F = mu*(grad(self.U_F)*F_inv + F_inv_T*grad(self.U_F).T) - self.P_F*I
-
-        # Map to physical stress
-        Sigma_F = PiolaTransform(sigma_F, U_M)
+        # Compute physical stress
+        Sigma_F = PiolaTransform(_Sigma_F(U_F, P_F, U_M, mu_F), U_M)
 
         return Sigma_F
 
@@ -175,7 +171,7 @@ class StructureProblem(Hyperelasticity):
         self.N_S = FacetNormal(Omega_S)
 
         # Calculate number of dofs
-        self.num_dofs = 2 * self.G_S.vector().size()
+        self.num_dofs = 2 * self.V_S.dim()
 
         # Initialize base class
         Hyperelasticity.__init__(self)
@@ -301,7 +297,7 @@ class MeshProblem():
         u1 = Function(V)
 
         # Calculate number of dofs
-        self.num_dofs = u0.vector().size()
+        self.num_dofs = V.dim()
 
         # Define boundary condition
         structure_element_degree = parameters["structure_element_degree"]
@@ -309,14 +305,10 @@ class MeshProblem():
         displacement = Function(W)
         bc = DirichletBC(V, displacement, DomainBoundary())
 
-        # Define the stress tensor
-        def sigma(v):
-            return 2.0*mu*sym(grad(v)) + lmbda*tr(grad(v))*Identity(v.cell().d)
-
         # Define cG(1) scheme for time-stepping
         k = Constant(0)
-        a = alpha*inner(v, u)*dx + 0.5*k*inner(sym(grad(v)), sigma(u))*dx
-        L = alpha*inner(v, u0)*dx - 0.5*k*inner(sym(grad(v)), sigma(u0))*dx
+        a = alpha*inner(v, u)*dx + 0.5*k*inner(sym(grad(v)), _Sigma_M(u, mu, lmbda))*dx
+        L = alpha*inner(v, u0)*dx - 0.5*k*inner(sym(grad(v)), _Sigma_M(u0, mu, lmbda))*dx
 
         # Store variables for time stepping
         self.u0 = u0
