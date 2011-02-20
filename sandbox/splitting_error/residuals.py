@@ -61,7 +61,7 @@ def strong_residuals(U, U0, U1, Z, EZ, dg, kn, problem):
 
     # Define moment eq. residuals defined on facets (jumps and BCs)
     sR_mom_dK = avg(dg)*inner(Ez('+') - z('+'), jump(dot(sigma(u, p, mu), n)))*dS \
-              - dg*inner(Ez - z, dot(sigma(u, p, mu), n))*ds 
+              - dg*inner(Ez - z, dot(2*mu*0.5*(grad(u) + grad(u).T) , n))*ds 
 
     # Define continuity eq. element residuals
     sR_con_K =  dg*inner(Ey - y, div(u))*dx
