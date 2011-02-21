@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim andAnders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-20
+# Last changed: 2011-02-21
 
 from dolfin import *
 from numpy import array, append

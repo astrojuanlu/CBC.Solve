@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-01-11
+# Last changed: 2011-02-20
 
 from dolfin import info
 from numpy import zeros, argsort, linalg
@@ -22,8 +22,7 @@ refinement_level = 0
 min_timestep = None
 
 # Create files for plotting error indicators
-indicator_files  = (File("adaptivity/pvd/eta_K.pvd"),
-                    File("adaptivity/pvd/refinement_markers.pvd"))
+indicator_files = None
 
 def estimate_error(problem):
     "Estimate error and compute error indicators"
@@ -78,11 +77,12 @@ def estimate_error(problem):
 
     # Reset vector for assembly of space residuals (containing all contributions)
     e_K = None
-
+    
     # Reset variables
-    E_k   = 0.0
-    E_c   = 0.0
-    ST    = 0.0
+    E_k = 0.0
+    E_c = 0.0
+    E_h = 0.0
+    ST  = 0.0
 
     # Sum residuals over time intervals
     timestep_range = read_timestep_range(problem.end_time(), primal_series)
@@ -158,9 +158,8 @@ def estimate_error(problem):
 
     # Report results
     save_errors(E, E_h, E_k, E_c, ST, eta_mom_K, eta_mom_dK, eta_con_K)
-    save_indicators(eta_K, Omega)
+    save_indicators(eta_K, eta[0], eta[1], eta[2], Omega)
     save_stability_factor(T, ST)
-
 
     return E, eta_K, ST, E_h
 
@@ -393,21 +392,45 @@ def save_dofs(num_dofs_FSM, timestep_counter):
     f.write("%d %g %g %g \n" %(refinement_level, dofs, space_dofs, time_dofs))
     f.close()
 
-def save_indicators(eta_K, Omega):
+def save_indicators(eta_K, eta_mom_K, eta_mom_dK, eta_con_K, Omega):
     "Save mesh function for visualization"
 
+    global indicator_files
+
     # Create mesh functions
-    plot_markers = MeshFunction("double", Omega, Omega.topology().dim())
+    plot_markers_eta_K      = MeshFunction("double", Omega, Omega.topology().dim())
+    plot_markers_eta_mom_K  = MeshFunction("double", Omega, Omega.topology().dim())
+    plot_markers_eta_mom_dK = MeshFunction("double", Omega, Omega.topology().dim())
+    plot_markers_eta_con_K  = MeshFunction("double", Omega, Omega.topology().dim())
 
     # Reset plot markers
-    plot_markers.set_all(0)
+    plot_markers_eta_K.set_all(0)
+    plot_markers_eta_mom_K.set_all(0)
+    plot_markers_eta_mom_dK.set_all(0)
+    plot_markers_eta_con_K.set_all(0) 
 
+    # Create files (including refinment markers not used here)
+    if indicator_files is None:
+        indicator_files = \
+            (File("adaptivity/pvd/eta_K.pvd"), 
+             File("adaptivity/pvd/mom_K.pvd"), 
+             File("adaptivity/pvd/mom_dK.pvd"), 
+             File("adaptivity/pvd/con_K.pvd"), 
+             File("adaptivity/pvd/refinment_markers.pvd"))
+        
     # Extract error indicators
     for i in range(Omega.num_cells()):
-        plot_markers[i] = eta_K[i]
+        plot_markers_eta_K[i]      = eta_K[i]
+        plot_markers_eta_mom_K[i]  = eta_mom_K[i]
+        plot_markers_eta_mom_dK[i] = eta_mom_dK[i]
+        plot_markers_eta_con_K[i]  = eta_con_K[i]
 
     # Save markers
-    indicator_files[0] << plot_markers
+    indicator_files[0] <<  plot_markers_eta_K 
+    indicator_files[1] <<  plot_markers_eta_mom_K
+    indicator_files[2] <<  plot_markers_eta_mom_dK 
+    indicator_files[3] <<  plot_markers_eta_con_K
+        
 
 def save_refinement_markers(mesh, markers):
     "Save refinement markers for visualization"
@@ -424,5 +447,5 @@ def save_refinement_markers(mesh, markers):
             refinement_markers[i] = True
             
     # Save markers
-    indicator_files[1] << refinement_markers
+    indicator_files[4] << refinement_markers
 

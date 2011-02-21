@@ -1,11 +1,14 @@
+# Script to run all test cases for the channel_with_flap problem on
+# the bigblue server.
+
 from fsirun import *
 
 # Cases to investigate
-q_range = [1]
-k_range = [0.01, 0.005]
+q_range = [1, 2]
+k_range = [0.01, 0.005, 0.0025]
 r_range = ["uniform", "recursive_bisection", "regular_cut"]
 d_range = [None, True, False]
-f_range = [None, 0.3, 0.5]
+f_range = [None, 0.15, 0.3, 0.5]
 
 # Iterate over cases
 case = 0
@@ -14,9 +17,6 @@ for q in q_range:
         for r in r_range:
             for d in d_range:
                 for f in f_range:
-
-                    #if case > 0:
-                    #    continue
 
                     # Handle d and f cases not relevant for uniform refinement
                     if r == "uniform" and not (d is None and f is None): continue

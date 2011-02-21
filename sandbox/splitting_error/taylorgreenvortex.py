@@ -102,12 +102,17 @@ class TaylorGreenVortex(FSI):
     def fraction(self):
         return application_parameters["fraction"]
 
-    def evaluate_functional(self, u, p, dt):
+    def evaluate_functional(self, u, p, dx, ds, t1):
+        "Evaluates the goal functional in the primal problem"
+        "and defines the goal funcional in the dual problem"
 
-        # Compute x-component at the point [0.5, 0.5]
-        #functional = u((0.0, 0.5))[0]
-        return 0.0
-        #return functional
+        # Define the Riezs' reprsenter for the goal functional
+        psi = Expression("exp(-(pow(25*(x[0] - 0.25), 2) + pow(25*(x[1] - 0.25), 2)) / 10.0)")
+        
+        # Define the goal functional
+        goal_functional = psi*(u[0] + u[1])*dx
+
+        return goal_functional
 
     def __str__(self):
         return "TaylorGreen Vortex test case"
@@ -158,6 +163,7 @@ class TaylorGreenVortex(FSI):
         self.p.t = 0.0
         return [(self.p)]
 
+#     def update_bcs(self, u, p, t):
 #     def update_bcs(self, u, p, t):
 #         self.u.t = t
 #         self.p.t = t

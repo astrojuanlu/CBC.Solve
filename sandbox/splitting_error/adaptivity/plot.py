@@ -222,10 +222,14 @@ def plots():
     lines_error = open("error_estimates.txt").read().split("\n")[:-1]
     level_lines_error = [l for l in lines_error]
     refinement_level = [float(l.split(" ")[0]) for l in level_lines_error]
-    E     = [float(l.split(" ")[1]) for l in level_lines_error]
-    E_h   = [float(l.split(" ")[2]) for l in level_lines_error]
-    E_k   = [float(l.split(" ")[3]) for l in level_lines_error]
-    E_c   = [float(l.split(" ")[4]) for l in level_lines_error]
+    E          = [float(l.split(" ")[1]) for l in level_lines_error]
+    E_h        = [float(l.split(" ")[2]) for l in level_lines_error]
+    E_k        = [float(l.split(" ")[3]) for l in level_lines_error]
+    E_c        = [float(l.split(" ")[4]) for l in level_lines_error]
+    E_h_mom_K  = [float(l.split(" ")[5]) for l in level_lines_error]
+    E_h_mom_dK = [float(l.split(" ")[6]) for l in level_lines_error]
+    E_h_con_K  = [float(l.split(" ")[7]) for l in level_lines_error]
+
 
     # Create an array for E (used in efficiency index)
     E_array = array(E)
@@ -278,6 +282,20 @@ def plots():
         subplot(4, 1, 4); plot(refinement_level, E_c,'-sm');grid(True)
         legend(["E_c"], loc='best')
         xlabel('Refinement level', fontsize=30)
+
+        figure(2) 
+        subplot(2, 1, 1); 
+        semilogx(refinement_level, E_h, '-ok');grid(True)
+        title("Space error E_h",  fontsize=30)	
+        legend(["E_h"], loc='best')
+        subplot(2, 1, 2); 
+        semilogx(refinement_level, E_h_mom_K, 'db-');grid(True)
+        semilogx(refinement_level, E_h_mom_dK, '-pr');grid(True)
+        semilogx(refinement_level, E_h_con_K,'-sm');grid(True)
+        legend(["mom_K","mom_dK","con_K"], loc='best')
+        xlabel('Refinement level', fontsize=30)
+
+
 
     # Plot uniform error vs adaptive error (dofs) 
     if plot_error_adaptive_vs_uniform == True:
