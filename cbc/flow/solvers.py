@@ -2,7 +2,7 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-20
+# Last changed: 2011-02-22
 
 __all__ = ["NavierStokesSolver", "NavierStokesDualSolver"]
 
@@ -99,6 +99,14 @@ class NavierStokesSolver(CBCSolver):
         a3 = inner(v, u)*dx
         L3 = inner(v, u1)*dx + inner(v, k*grad(p0 - p1))*dx
 
+        # Create solvers
+        solver1 = KrylovSolver("gmres", "ilu")
+        solver2 = KrylovSolver("gmres", "amg_hypre")
+        solver3 = KrylovSolver("gmres", "ilu")
+        solver1.parameters["relative_tolerance"] = 1e-14
+        solver2.parameters["relative_tolerance"] = 1e-14
+        solver3.parameters["relative_tolerance"] = 1e-14
+
         # Store variables needed for time-stepping
         self.dt = dt
         self.k = k
@@ -115,6 +123,9 @@ class NavierStokesSolver(CBCSolver):
         self.a1 = a1
         self.a2 = a2
         self.a3 = a3
+        self.solver1 = solver1
+        self.solver2 = solver2
+        self.solver3 = solver3
 
         # Empty file handlers / time series
         self.velocity_file = None
@@ -153,7 +164,7 @@ class NavierStokesSolver(CBCSolver):
         begin("Computing tentative velocity")
         b = assemble(self.L1)
         [bc.apply(self.A1, b) for bc in self.bcu]
-        solve(self.A1, self.u1.vector(), b, "gmres", "ilu")
+        self.solver1.solve(self.A1, self.u1.vector(), b)
         end()
 
         # Pressure correction
@@ -164,7 +175,7 @@ class NavierStokesSolver(CBCSolver):
         if is_periodic(self.bcp):
             solve(self.A2, self.p1.vector(), b)
         else:
-            solve(self.A2, self.p1.vector(), b, 'gmres', 'amg_hypre')
+            self.solver2.solve(self.A2, self.p1.vector(), b)
         if len(self.bcp) == 0 or is_periodic(self.bcp): normalize(self.p1.vector())
         end()
 
@@ -172,7 +183,7 @@ class NavierStokesSolver(CBCSolver):
         begin("Computing velocity correction")
         b = assemble(self.L3)
         [bc.apply(self.A3, b) for bc in self.bcu]
-        solve(self.A3, self.u1.vector(), b, "gmres", "ilu")
+        self.solver3.solve(self.A3, self.u1.vector(), b)
         end()
 
         return self.u1, self.p1
