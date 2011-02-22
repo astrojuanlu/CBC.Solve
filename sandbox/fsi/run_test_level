@@ -16,6 +16,7 @@ p["initial_timestep"] = 0.05
 p["num_initial_refinements"] = level
 p["fixedpoint_tolerance"] = 1e-12
 p["structure_element_degree"] = 1
+p["max_num_refinements"] = 0
 
 # Initialize data
 if len(sys.argv) > 2 and sys.argv[2] == "init":
