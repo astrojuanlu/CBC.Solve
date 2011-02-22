@@ -208,8 +208,8 @@ rcParams.update({'legend.fontsize': 9})
 max_plots = 13
 for i in range((len(L) - 1) / max_plots + 1):
 
-    if i != 2:
-        continue
+    #if i != 2:
+    #    continue
 
     figure(i)
     subplot(2, 1, 1)
