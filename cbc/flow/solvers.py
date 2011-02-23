@@ -2,7 +2,7 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-22
+# Last changed: 2011-02-23
 
 __all__ = ["NavierStokesSolver", "NavierStokesDualSolver"]
 
@@ -77,7 +77,7 @@ class NavierStokesSolver(CBCSolver):
         U = 0.5*(u0 + u)
         F1 = rho*(1/k)*inner(v, u - u0)*dx + rho*inner(v, grad(u0)*(u0 - w))*dx \
             + inner(epsilon(v), sigma(U, p0))*dx \
-            + inner(v,p0*n)*ds - mu*inner(grad(U).T*n, v)*ds \
+            + inner(v, p0*n)*ds - mu*inner(grad(U).T*n, v)*ds \
             - inner(v, f)*dx
         a1 = lhs(F1)
         L1 = rhs(F1)
