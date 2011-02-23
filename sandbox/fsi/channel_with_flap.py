@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-18
+# Last changed: 2011-02-23
 
 from fsiproblem import *
 
@@ -58,7 +58,7 @@ class ChannelWithFlap(FSI):
         return (1.0/A) * U_S[0] * dx_S
 
     def __str__(self):
-        return "Channel with flap FSI problem"
+        return "Channel flow with an immersed elastic flap"
 
     #--- Fluid problem ---
 
@@ -84,7 +84,7 @@ class ChannelWithFlap(FSI):
         return (0.0, 0.0)
 
     def fluid_pressure_initial_condition(self):
-        return "1 - x[0]"
+        return "1.0 - 0.25*x[0]"
 
     #--- Structure problem ---
 
