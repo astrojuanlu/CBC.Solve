@@ -4,11 +4,12 @@
 from fsirun import *
 
 # Cases to investigate
-q_range = [1, 2]
+#q_range = [1, 2]
+q_range = [1]
 k_range = [0.01, 0.005, 0.0025]
 r_range = ["uniform", "recursive_bisection", "regular_cut"]
 d_range = [None, True, False]
-f_range = [None, 0.15, 0.3, 0.5]
+f_range = [None, 0.1, 0.2, 0.3, 0.4, 0.5]
 
 # Iterate over cases
 case = 0
