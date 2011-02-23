@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-19
+# Last changed: 2011-02-23
 
 import pylab
 from time import time as python_time
@@ -196,7 +196,7 @@ def solve_primal(problem, parameters, ST):
             t0 = t1
             t1 = min(t1 + dt, T)
             dt = t1 - t0
-            at_end = t1 > T - DOLFIN_EPS
+            at_end = abs(t1 - T) / T < 100.0*DOLFIN_EPS
 
         # Compute new adaptive time step
         else:
