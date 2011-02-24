@@ -119,7 +119,7 @@ class PressureDrivenCavity(FSI):
         return Structure()
 
     def structure_density(self):
-        return 2.0
+        return 1.0
 
     def structure_mu(self):
         return 10.0

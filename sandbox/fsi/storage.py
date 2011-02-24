@@ -12,7 +12,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-20
+# Last changed: 2011-02-24
 
 from numpy import append
 from dolfin import *
@@ -109,7 +109,7 @@ def read_timestep_range(T, series):
         error("Missing primal data (empty).")
     elif t[0] > DOLFIN_EPS:
         error("Illegal initial value %.16e for primal data, expecting 0.0." % t[0])
-    elif t[-1] < T - DOLFIN_EPS:
+    elif (t[-1] - T) / T < -100.0 * DOLFIN_EPS:
         error("Illegal final time %.16e for primal data, expecting (at least) %.16e" % (t[-1], T))
 
     return t
