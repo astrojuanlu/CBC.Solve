@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-23
+# Last changed: 2011-02-24
 
 import pylab
 from time import time as python_time
@@ -41,7 +41,13 @@ def solve_primal(problem, parameters, ST):
                  File("%s/pvd/level_%d/U_M.pvd" % (parameters["output_directory"], level)))
 
     # Create time series for storing solution
-    time_series = create_primal_series(parameters)
+    primal_series = create_primal_series(parameters)
+
+    # Create time series for dual solution
+    if level > 0:
+        dual_series = create_dual_series(parameters)
+    else:
+        dual_series = None
 
     # Record CPU time
     cpu_time = python_time()
@@ -69,7 +75,10 @@ def solve_primal(problem, parameters, ST):
     # Save initial solution to file and series
     U = extract_solution(F, S, M)
     if save_solution: _save_solution(U, files)
-    write_primal_data(U, 0, time_series)
+    write_primal_data(U, 0, primal_series)
+
+    # Initialize adaptive data
+    init_adaptive_data(problem, parameters)
 
     # Initialize time-stepping
     t0 = 0.0
@@ -170,7 +179,7 @@ def solve_primal(problem, parameters, ST):
         # Save solution and time series to file
         U = extract_solution(F, S, M)
         if save_solution: _save_solution(U, files)
-        write_primal_data(U, t1, time_series)
+        write_primal_data(U, t1, primal_series)
 
         # Move to next time step
         F.update(t1)
@@ -200,7 +209,7 @@ def solve_primal(problem, parameters, ST):
 
         # Compute new adaptive time step
         else:
-            Rk = compute_time_residual(time_series, t0, t1, problem, parameters)
+            Rk = compute_time_residual(primal_series, dual_series, t0, t1, problem, parameters)
             (dt, at_end) = compute_time_step(problem, Rk, ST, TOL, dt, t1, T, w_k, parameters)
             t0 = t1
             t1 = t1 + dt

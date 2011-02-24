@@ -4,10 +4,10 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-23
+# Last changed: 2011-02-24
 
 from dolfin import info
-from numpy import zeros, argsort, linalg
+from numpy import zeros, ones, argsort, linalg
 
 from residuals import *
 from storage import *
@@ -16,7 +16,7 @@ from utils import *
 from sys import exit
 
 # Variables for time residual
-U0 = U1 = w = None
+U0 = U1 = Z0 = Z1 = ZZ0 = ZZ1 = None
 
 # Variables for storing adaptive data
 _refinement_level = -1
@@ -139,7 +139,7 @@ def estimate_error(problem, parameters):
         # Assemble weak residuals for time discretization error
         Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
         Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        Rk = 0.5 * abs(Rk1 - Rk0)
+        Rk = 0.5 * abs(Rk1 - Rk0) / dt
 
         # Assemble weak residuals for computational error
         RcF = assemble(Rc_F, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
@@ -163,7 +163,7 @@ def estimate_error(problem, parameters):
             eta_M[i] += dt * abs(e_M[i].array())
 
         # Add to E_k
-        E_k += dt * Rk
+        E_k += dt * dt * Rk
 
         # Add to E_c's
         E_c_F += dt * RcF
@@ -194,44 +194,67 @@ def estimate_error(problem, parameters):
 
     return E, eta_K, ST, E_h
 
-def compute_time_residual(primal_series, t0, t1, problem, parameters):
-    "Compute size of time residual"
+def init_adaptive_data(problem, parameters):
+    "Initialize data needed for adaptive time stepping"
 
-    info("Computing time residual")
+    global U0, U1, Z0, Z1, ZZ0, ZZ1
+    Omega = problem.mesh()
 
-    # Get meshes
+    # Create primal functions
+    info("Initializing primal variables for time residual")
+    U0 = create_primal_functions(Omega, parameters)
+    U1 = create_primal_functions(Omega, parameters)
+
+    # Create dual functions
+    info("Initializing dual variables for time residual")
+    ZZ0, Z0 = create_dual_functions(Omega, parameters)
+    ZZ1, Z1 = create_dual_functions(Omega, parameters)
+
+def read_adaptive_data(primal_series, dual_series, t0, t1, problem, parameters):
+    "Read data needed for adaptive time stepping"
+
+    global U0, U1, Z0, Z1, ZZ0, ZZ1
     Omega = problem.mesh()
     Omega_F = problem.fluid_mesh()
     Omega_S = problem.structure_mesh()
 
-    # Initialize solution variables (only first time)
-    global U0, U1, w
-    if t0 == 0.0:
-
-        # Create primal variables
-        info("Initializing primal variables for time residual")
-        U0 = create_primal_functions(Omega, parameters)
-        U1 = create_primal_functions(Omega, parameters)
-
-        # Create dual function space and test functions
-        W = create_dual_space(Omega, parameters)
-        w = TestFunctions(W)
-
-    # Read solution data
+    # Read primal data
     read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
     read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series, parameters)
 
+    # Read dual data if it has been computed
+    if dual_series is not None:
+        read_dual_data(ZZ0, t0, dual_series)
+        read_dual_data(ZZ1, t1, dual_series)
+
+    # Otherwise, create some bogus (but reasonable) data
+    else:
+        dt = t1 - t0
+        ZZ0.vector()[:] = ones(ZZ0.vector().size())
+        ZZ1.vector()[:] = ones(ZZ0.vector().size()) + dt
+
+    return U0, U1, Z0, Z1
+
+def compute_time_residual(primal_series, dual_series, t0, t1, problem, parameters):
+    "Compute size of time residual"
+
+    info("Computing time residual")
+
+    # Get data needed to compute residual
+    U0, U1, Z0, Z1 = read_adaptive_data(primal_series, dual_series, t0, t1, problem, parameters)
+
     # Set time step
-    kn = Constant(t1 - t0)
+    dt = t1 - t0
+    kn = Constant(dt)
 
-    # Get weak residuals
-    r_F, r_S, r_M = weak_residuals(U0, U1, U1, w, kn, problem)
+    # Get weak residuals for E_k
+    Rk0_F, Rk0_S, Rk0_M = weak_residuals(U0, U1, U1, Z0, kn, problem)
+    Rk1_F, Rk1_S, Rk1_M = weak_residuals(U0, U1, U1, Z1, kn, problem)
 
-    # Assemble residual
-    r = assemble(r_F + r_S + r_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-
-    # Compute l^2 norm
-    Rk = norm(r, "l2")
+    # Compute R_k
+    Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+    Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+    Rk = 0.5 * abs(Rk1 - Rk0) / dt
 
     info("Time residual is Rk = %g" % Rk)
 
@@ -290,7 +313,7 @@ def compute_time_step(problem, Rk, ST, TOL, dt, t1, T, w_k, parameters):
     conservation = 1.0    # time step conservation (high value means small change)
 
     # Compute new time step
-    dt_new = safety_factor * TOL * w_k / (ST * Rk)
+    dt_new = safety_factor * w_k * TOL / (T * Rk)
 
     # Modify time step to avoid oscillations
     dt_new = (1.0 + conservation) * dt * dt_new / (dt + conservation * dt_new)

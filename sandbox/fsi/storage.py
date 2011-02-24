@@ -66,10 +66,10 @@ def read_primal_data(U, t, Omega, Omega_F, Omega_S, series, parameters):
     series[4].retrieve(local_vals_U_M, t)
 
     # Get mappings from local meshes to global mesh
-    v_F = Omega_F.data().mesh_function("global vertex indices").values()
-    v_S = Omega_S.data().mesh_function("global vertex indices").values()
-    e_F = Omega_F.data().mesh_function("global edge indices").values()
-    e_S = Omega_S.data().mesh_function("global edge indices").values()
+    v_F = Omega_F.data().mesh_function("global vertex indices").array()
+    v_S = Omega_S.data().mesh_function("global vertex indices").array()
+    e_F = Omega_F.data().mesh_function("global edge indices").array()
+    e_S = Omega_S.data().mesh_function("global edge indices").array()
 
     # Get the number of vertices and edges
     Nv = Omega.num_vertices()
