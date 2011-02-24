@@ -11,7 +11,7 @@ from numpy import argsort, array
 from pylab import *
 
 # Get command-line parameters
-cases = ("M", "e", "E", "Eh", "Ek", "Ec", "EcF", "EcS", "EcM", "I", "Ih", "Ik", "Ic")
+cases = ("M", "e", "E", "Eh", "Ek", "Ec", "EcF", "EcS", "EcM", "I", "Ih", "Ik", "Ic", "k", "Rk")
 if len(sys.argv) != 2 or not sys.argv[1] in cases:
     print "Usage: plot <variable>"
     print "where <variable> is one of %s" % ", ".join(cases)
@@ -32,17 +32,20 @@ D   = []
 M   = []
 ETA = []
 E   = []
-Eh  = []
-Ek  = []
-Ec  = []
-EcF = []
-EcS = []
-EcM = []
+EH  = []
+EK  = []
+EC  = []
+ECF = []
+ECS = []
+ECM = []
 I   = []
-Ih  = []
-Ik  = []
-Ic  = []
+IH  = []
+IK  = []
+IC  = []
 L   = []
+T   = []
+K   = []
+RK  = []
 for directory in glob.glob("results-*"):
     print "Extracting values from %s" % directory
 
@@ -73,32 +76,42 @@ for directory in glob.glob("results-*"):
     filename = "%s/error_estimates.txt" % directory
     if os.path.isfile(filename):
         e, eh, ek, ec, ecf, ecs, ecm = read_float(filename)[1:8]
-        E.append(e)
-        Eh.append(eh)
-        Ek.append(ek)
-        Ec.append(ec)
-        EcF.append(abs(ecf))
-        EcS.append(abs(ecs))
-        EcM.append(abs(ecm))
+        ecf = abs(ecf)
+        ecs = abs(ecs)
+        ecm = abs(ecm)
     else:
-        E.append(None)
-        Eh.append(None)
-        Ek.append(None)
-        Ec.append(None)
-        EcF.append(None)
-        EcS.append(None)
-        EcM.append(None)
+        e = eh = ek = ec = ecf = ecs = ecm = None
+    E.append(e)
+    EH.append(eh)
+    EK.append(ek)
+    EC.append(ec)
+    ECF.append(ecf)
+    ECS.append(ecs)
+    ECM.append(ecm)
 
     # Compute efficiency index
-    n = min(len(e), len(eta))
-    i = e[:n] / eta[:n]
-    ih = eh[:n] / eta[:n]
-    ik = ek[:n] / eta[:n]
-    ic = ec[:n] / eta[:n]
+    if e is not None:
+        n = min(len(e), len(eta))
+        i = e[:n] / eta[:n]
+        ih = eh[:n] / eta[:n]
+        ik = ek[:n] / eta[:n]
+        ic = ec[:n] / eta[:n]
+    else:
+        i = ih = ik = ic = None
     I.append(i)
-    Ih.append(ih)
-    Ik.append(ik)
-    Ic.append(ic)
+    IH.append(ih)
+    IK.append(ik)
+    IC.append(ic)
+
+    # Get time and time steps
+    filename = "%s/timesteps_final.txt" % directory
+    if os.path.isfile(filename):
+        t, k, rk = read_float(filename)
+    else:
+        t = k = rk = None
+    T.append(t)
+    K.append(k)
+    RK.append(rk)
 
     # Get legend
     filename = "%s/application_parameters.xml" % directory
@@ -106,10 +119,9 @@ for directory in glob.glob("results-*"):
     l = row.split('value="')[1].split('"')[0]
     L.append(l)
 
-    print "Found %d values" % len(d)
-
 # Select variable to plot
 X = D
+_marker = 'o'
 if variable == "M":
     Y = M
     _title  = "Convergence of goal functional"
@@ -126,32 +138,32 @@ elif variable == "E":
     _ylabel = "$E$"
     _plot   = loglog
 elif variable == "Eh":
-    Y = Eh
+    Y = EH
     _title  = "Space discretization error"
     _ylabel = "$E_h$"
     _plot   = loglog
 elif variable == "Ek":
-    Y = Ek
+    Y = EK
     _title  = "Time discretization error"
     _ylabel = "$E_k$"
     _plot   = loglog
 elif variable == "Ec":
-    Y = Ec
+    Y = EC
     _title  = "Computational error"
     _ylabel = "$E_c$"
     _plot   = loglog
 elif variable == "EcF":
-    Y = EcF
+    Y = ECF
     _title  = "Fluid computational error"
     _ylabel = "$E_c^F$"
     _plot   = loglog
 elif variable == "EcS":
-    Y = EcS
+    Y = ECS
     _title  = "Structure computational error"
     _ylabel = "$E_c^S$"
     _plot   = loglog
 elif variable == "EcM":
-    Y = EcM
+    Y = ECM
     _title  = "Mesh computational error"
     _ylabel = "$E_c^M$"
     _plot   = loglog
@@ -162,23 +174,39 @@ elif variable == "I":
     #_plot   = semilogx
     _plot   = loglog
 elif variable == "Ih":
-    Y = Ih
+    Y = IH
     _title  = "Efficiency index ($I_h$)"
     _ylabel = "$E_h / \eta$"
     #_plot   = semilogx
     _plot   = loglog
 elif variable == "Ik":
-    Y = Ik
+    Y = IK
     _title  = "Efficiency index ($I_k$)"
     _ylabel = "$E_k / \eta$"
     #_plot   = semilogx
     _plot   = loglog
 elif variable == "Ic":
-    Y = Ic
+    Y = IC
     _title  = "Efficiency index ($I_c$)"
     _ylabel = "$E_c / \eta$"
     #_plot   = semilogx
     _plot   = loglog
+elif variable == "k":
+    X = T
+    Y = K
+    _title  = "Adaptive time steps"
+    _xlabel = "$t$"
+    _ylabel = "$k(t)$"
+    _plot   = plot
+    _marker = None
+elif variable == "Rk":
+    X = T
+    Y = RK
+    _title  = "Time residual"
+    _xlabel = "$t$"
+    _ylabel = "$R_k(t)$"
+    _plot   = plot
+    _marker = None
 
 # Sort values by legend
 
@@ -214,7 +242,10 @@ for i in range((len(L) - 1) / max_plots + 1):
     figure(i)
     subplot(2, 1, 1)
     xy = plotvals[2*i*max_plots:2*(i + 1)*max_plots]
-    _plot(*xy, marker='o')
+    if _marker is None:
+        _plot(*xy)
+    else:
+        _plot(*xy, marker=_marker)
     grid(True)
     xlabel("Number of dofs (in space)")
     ylabel(_ylabel)

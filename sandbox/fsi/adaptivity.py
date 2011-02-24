@@ -21,6 +21,7 @@ U0 = U1 = Z0 = Z1 = ZZ0 = ZZ1 = None
 # Variables for storing adaptive data
 _refinement_level = -1
 min_timestep = None
+_adjustment_factor = None
 
 # Create files for plotting error indicators
 indicator_files = None
@@ -72,10 +73,6 @@ def estimate_error(problem, parameters):
 
     # Get strong residuals for E_h
     Rh_F, Rh_S, Rh_M = strong_residuals(U0, U1, U, Z, EZ, dg, kn, problem)
-
-    # old
-    # Get weak residuals for E_k
-    #Rk_F, Rk_S, Rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
 
     # Get weak residuals for E_k
     Rk0_F, Rk0_S, Rk0_M = weak_residuals(U0, U1, U1, Z0, kn, problem)
@@ -210,6 +207,10 @@ def init_adaptive_data(problem, parameters):
     ZZ0, Z0 = create_dual_functions(Omega, parameters)
     ZZ1, Z1 = create_dual_functions(Omega, parameters)
 
+    # Remove old saved data
+    f = open("%s/timesteps_final.txt" % parameters["output_directory"], "w")
+    f.close()
+
 def read_adaptive_data(primal_series, dual_series, t0, t1, problem, parameters):
     "Read data needed for adaptive time stepping"
 
@@ -307,13 +308,24 @@ def compute_time_step(problem, Rk, ST, TOL, dt, t1, T, w_k, parameters):
     tolerance TOL, and the previous time step dt. The time step is
     adjusted so that we will not step beyond the given end time."""
 
+    global _refinement_level, _adjustment_factor
+
     # Parameters for adaptive time-stepping
     safety_factor = 0.9   # safety factor for time step selection
     snap = 0.9            # snapping to end time when close
     conservation = 1.0    # time step conservation (high value means small change)
 
+    # Adjust factor to get reasonable time steps first time when dual is unknown
+    adjustment_factor = 1.0
+    if _refinement_level == 0:
+        if abs(dt - t1) / t1 < 100.0 * DOLFIN_EPS:
+            adjustment_factor = dt / (safety_factor * w_k * TOL / (T * Rk))
+            _adjustment_factor = adjustment_factor
+        else:
+            adjustment_factor = _adjustment_factor
+
     # Compute new time step
-    dt_new = safety_factor * w_k * TOL / (T * Rk)
+    dt_new = adjustment_factor * safety_factor * w_k * TOL / (T * Rk)
 
     # Modify time step to avoid oscillations
     dt_new = (1.0 + conservation) * dt * dt_new / (dt + conservation * dt_new)
@@ -428,6 +440,10 @@ def save_timestep(t1, Rk, dt, parameters):
 
     f = open("%s/timesteps.txt" % parameters["output_directory"], "a")
     f.write("%d %g %g %g\n" % (_refinement_level, t1, dt, Rk))
+    f.close()
+
+    f = open("%s/timesteps_final.txt" % parameters["output_directory"], "a")
+    f.write("%g %g %g\n" % (t1, dt, Rk))
     f.close()
 
 def save_stability_factor(T, ST, parameters):
