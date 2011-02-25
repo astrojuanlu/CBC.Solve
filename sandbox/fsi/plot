@@ -104,10 +104,10 @@ for directory in glob.glob("results-*"):
     IC.append(ic)
 
     # Get time and time steps
-    filename = "%s/timesteps_final.txt" % directory
-    if os.path.isfile(filename):
-        t, k, rk = read_float(filename)
-    else:
+    filename = "%s/timesteps.txt" % directory
+    try:
+        level, t, k, rk = read_float(filename)
+    except:
         t = k = rk = None
     T.append(t)
     K.append(k)
@@ -209,14 +209,15 @@ elif variable == "Rk":
     _marker = None
 
 # Sort values by legend
-
-print len(X), len(Y)
 indices = argsort(L)[:min(len(L), len(X))]
 L = [L[i] for i in indices]
 
- # Group values
+# Group values
 plotvals = []
+LL = []
 for i in indices:
+
+    # Get (x, y) sequence pair and check dimensions
     x = X[i]
     y = Y[i]
     if x is None or y is None:
@@ -226,8 +227,30 @@ for i in indices:
     if len(y) < len(x):
         print "Warning: missing values for %s (only %d, expecting %d)" % (variable, len(y), len(x))
         x = x[:len(y)]
-    plotvals.append(x)
-    plotvals.append(y)
+
+    # Split values if x is not increasing, which may happen if we have
+    # stored multiple series to one file during refinement
+    offset = 0
+    level = 0
+    for j in range(len(x) - 1):
+
+        # Check for subset of data
+        if x[j + 1] < x[j]:
+            print "Found non-increasing x-values, splitting series"
+            plotvals.append(x[offset:j + 1])
+            plotvals.append(y[offset:j + 1])
+            LL.append(L[i] + " level " + str(level))
+            offset = j + 1
+            level += 1
+
+    # Add final data
+    plotvals.append(x[offset:])
+    plotvals.append(y[offset:])
+    if offset == 0:
+        LL.append(L[i])
+    else:
+        LL.append(L[i] + " level " + str(level))
+L = LL
 
 # Set fontsize for legend
 rcParams.update({'legend.fontsize': 9})
