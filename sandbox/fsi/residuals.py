@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-23
+# Last changed: 2011-02-27
 
 from dolfin import *
 
@@ -13,6 +13,23 @@ from operators import Sigma_F as _Sigma_F
 from operators import Sigma_S as _Sigma_S
 from operators import Sigma_M as _Sigma_M
 from operators import F, J, I
+
+def inner_product(v, w):
+    "Return inner product for mixed fluid/structure space"
+
+    # Define cell integrals
+    dx_F = dx(0)
+    dx_S = dx(1)
+    dx_M = dx_F
+
+    # Extract variables
+    v1_F, q1_F, v1_S, q1_S, v1_M, q1_M = v
+    v2_F, q2_F, v2_S, q2_S, v2_M, q2_M = w
+
+    return \
+        (inner(v1_F, v2_F) + q1_F*q2_F)*dx_F + \
+        (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx_S + \
+        (inner(v1_M, v2_M) + inner(q1_M, q2_M))*dx_M
 
 def weak_residuals(U0, U1, U, w, kn, problem):
     "Return weak residuals"
@@ -39,11 +56,11 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     N_F = N
     N_S = -N
 
-    # Define inner products
+    # Define cell integrals
     dx_F = dx(0)
     dx_S = dx(1)
 
-    # Define "facet" products
+    # Define facet integrals
     dS_F  = dS(0)
     dS_S  = dS(1)
     d_FSI = dS(2)

@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-24
+# Last changed: 2011-02-27
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
@@ -16,7 +16,7 @@ from utils import *
 from sys import exit
 
 # Variables for time residual
-U0 = U1 = Z0 = Z1 = ZZ0 = ZZ1 = None
+U0 = U1 = M = W = w = None
 
 # Variables for storing adaptive data
 _refinement_level = -1
@@ -77,6 +77,7 @@ def estimate_error(problem, parameters):
     # Get weak residuals for E_k
     Rk0_F, Rk0_S, Rk0_M = weak_residuals(U0, U1, U1, Z0, kn, problem)
     Rk1_F, Rk1_S, Rk1_M = weak_residuals(U0, U1, U1, Z1, kn, problem)
+    rk_F, rk_S, rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
 
     # Get weak residuals for E_c
     Rc_F, Rc_S, Rc_M = weak_residuals(U0, U1, U, Z, kn, problem)
@@ -92,7 +93,6 @@ def estimate_error(problem, parameters):
     E_c_F = 0.0
     E_c_S = 0.0
     E_c_M = 0.0
-    ST    = 0.0
 
     # Sum residuals over time intervals
     timestep_range = read_timestep_range(problem.end_time(), primal_series)
@@ -133,7 +133,7 @@ def estimate_error(problem, parameters):
         e_S = [assemble(Rh_Si, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Si in Rh_S]
         e_M = [assemble(Rh_Mi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Mi in Rh_M]
 
-        # Assemble weak residuals for time discretization error
+        # Assemble weak residual for time discretization error (error estimate)
         Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
         Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
         Rk = 0.5 * abs(Rk1 - Rk0) / dt
@@ -142,9 +142,6 @@ def estimate_error(problem, parameters):
         RcF = assemble(Rc_F, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
         RcS = assemble(Rc_S, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
         RcM = assemble(Rc_M, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-
-        # Estimate interpolation error (local weight)
-        s = 0.5 * linalg.norm(ZZ0.vector().array() - ZZ1.vector().array(), 2) / dt
 
         # Reset vectors for assembly of residuals
         eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
@@ -167,9 +164,6 @@ def estimate_error(problem, parameters):
         E_c_S += dt * RcS
         E_c_M += dt * RcM
 
-        # Add to stability factor
-        ST += dt * s
-
         end()
 
     # Sum total computational error
@@ -189,12 +183,12 @@ def estimate_error(problem, parameters):
     save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters)
     save_stability_factor(T, ST, parameters)
 
-    return E, eta_K, ST, E_h
+    return E, eta_K, E_h
 
 def init_adaptive_data(problem, parameters):
     "Initialize data needed for adaptive time stepping"
 
-    global U0, U1, Z0, Z1, ZZ0, ZZ1
+    global U0, U1, M, W, w
     Omega = problem.mesh()
 
     # Create primal functions
@@ -202,10 +196,12 @@ def init_adaptive_data(problem, parameters):
     U0 = create_primal_functions(Omega, parameters)
     U1 = create_primal_functions(Omega, parameters)
 
-    # Create dual functions
-    info("Initializing dual variables for time residual")
-    ZZ0, Z0 = create_dual_functions(Omega, parameters)
-    ZZ1, Z1 = create_dual_functions(Omega, parameters)
+    # Assemble mass matrix
+    W = create_dual_space(Omega, parameters)
+    w = TestFunctions(W)
+    m = inner_product(w, TrialFunctions(W))
+    M = assemble(m, cell_domains=problem.cell_domains)
+    M.ident_zeros()
 
     # Remove old saved data
     f = open("%s/timesteps_final.txt" % parameters["output_directory"], "w")
@@ -223,40 +219,32 @@ def read_adaptive_data(primal_series, dual_series, t0, t1, problem, parameters):
     read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
     read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series, parameters)
 
-    # Read dual data if it has been computed
-    if dual_series is not None:
-        read_dual_data(ZZ0, t0, dual_series)
-        read_dual_data(ZZ1, t1, dual_series)
-
-    # Otherwise, create some bogus (but reasonable) data
-    else:
-        dt = t1 - t0
-        ZZ0.vector()[:] = ones(ZZ0.vector().size())
-        ZZ1.vector()[:] = ones(ZZ0.vector().size()) + dt
-
-    return U0, U1, Z0, Z1
+    return U0, U1
 
 def compute_time_residual(primal_series, dual_series, t0, t1, problem, parameters):
     "Compute size of time residual"
 
     info("Computing time residual")
 
+    global M, W, w
+
     # Get data needed to compute residual
-    U0, U1, Z0, Z1 = read_adaptive_data(primal_series, dual_series, t0, t1, problem, parameters)
+    U0, U1 = read_adaptive_data(primal_series, dual_series, t0, t1, problem, parameters)
 
     # Set time step
     dt = t1 - t0
     kn = Constant(dt)
 
-    # Get weak residuals for E_k
-    Rk0_F, Rk0_S, Rk0_M = weak_residuals(U0, U1, U1, Z0, kn, problem)
-    Rk1_F, Rk1_S, Rk1_M = weak_residuals(U0, U1, U1, Z1, kn, problem)
+    # Assemble right-hand side
+    Rk_F, Rk_S, Rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
+    b = assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
 
-    # Compute R_k
-    Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-    Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-    Rk = 0.5 * abs(Rk1 - Rk0) / dt
+    # Compute projection of R_k
+    Rk = Function(W)
+    solve(M, Rk.vector(), b)
 
+    # Compute norm of Rk
+    Rk = sqrt(assemble(inner_product(Rk.split(), Rk.split()), cell_domains=problem.cell_domains))
     info("Time residual is Rk = %g" % Rk)
 
     return Rk
@@ -303,7 +291,7 @@ def refine_mesh(problem, mesh, indicators, parameters):
 
     return refined_mesh
 
-def compute_time_step(problem, Rk, ST, TOL, dt, t1, T, w_k, parameters):
+def compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters):
     """Compute new time step based on residual R, stability factor S,
     tolerance TOL, and the previous time step dt. The time step is
     adjusted so that we will not step beyond the given end time."""
