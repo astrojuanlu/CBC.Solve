@@ -22,7 +22,7 @@ def default_parameters():
     p.add("global_storage", False)
 
     p.add("structure_element_degree", 1)
-    p.add("max_num_refinements", 20)
+    p.add("max_num_refinements", 100)
     p.add("tolerance", 0.1)
     p.add("fixedpoint_tolerance", 1e-8)
     p.add("initial_timestep", 0.01)
@@ -33,7 +33,7 @@ def default_parameters():
     p.add("w_k", 0.45)
     p.add("w_c", 0.1)
     p.add("marking_fraction", 0.5)
-    p.add("refinement_algorithm", "recursive_bisection")
+    p.add("refinement_algorithm", "regular_cut")
     p.add("crossed_mesh", False)
 
     p.add("output_directory", "unspecified")
