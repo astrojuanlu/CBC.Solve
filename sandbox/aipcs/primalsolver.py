@@ -112,7 +112,7 @@ def solve_primal(problem, parameters):
         if plot_solution: _plot_solution(u_F1, U_S1, U_M1)
 
         # Evaluate user goal functional
-        goal_functional = assemble(problem.evaluate_functional(u_F1, p_F1, U_S1, P_S1, U_M1, dx, dx, dx))
+        goal_functional = assemble(problem.evaluate_functional(u_F1, p_F1, dx))
 
         # Integrate goal functional
         integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)

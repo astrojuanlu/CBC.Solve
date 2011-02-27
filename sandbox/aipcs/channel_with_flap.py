@@ -53,7 +53,7 @@ class ChannelWithFlap(FSI):
     def end_time(self):
         return 0.1
 
-    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
+    def evaluate_functional(self, u_F, p_F, dx_F):
         return u_F[0] * dx_F
 
     def __str__(self):
