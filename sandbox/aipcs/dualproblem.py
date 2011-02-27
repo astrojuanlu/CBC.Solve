@@ -10,11 +10,11 @@ from dolfin import *
 from operators import *
 
 def create_dual_forms(Omega_F, Omega_S, k, problem,
-                      v_F,  q_F,  v_S,  q_S,
-                      Z_F,  Y_F,  Z_S,  Y_S,
-                      Z_F0, Y_F0, Z_S0, Y_S0,
-                      U_F0, P_F0, U_S0, P_S0,
-                      U_F1, P_F1, U_S1, P_S1):
+                      v_F,  q_F,
+                      Z_F,  Y_F,
+                      Z_F0, Y_F0,
+                      U_F0, P_F0,
+                      U_F1, P_F1):
     "Return bilinear and linear forms for one time step."
 
     info_blue("Creating dual forms")
@@ -68,11 +68,6 @@ def create_dual_bcs(problem, W):
     # Boundary conditions for dual pressure
     for boundary in problem.fluid_pressure_dirichlet_boundaries():
         bcs += [DirichletBC(W.sub(1), 0, boundary)]
-
-    # Boundary conditions for dual structure displacement and velocity
-    for boundary in problem.structure_dirichlet_boundaries():
-        bcs += [DirichletBC(W.sub(2), (0, 0), boundary)]
-        bcs += [DirichletBC(W.sub(3), (0, 0), boundary)]
 
     # In addition to the above boundary conditions, we also need to
     # add homogeneous boundary conditions for Z_F and Z_M on the FSI

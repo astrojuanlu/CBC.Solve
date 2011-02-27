@@ -13,16 +13,12 @@ def create_primal_functions(Omega, parameters):
     structure_element_degree = parameters["structure_element_degree"]
     V_F = VectorFunctionSpace(Omega, "CG", 2)
     Q_F = FunctionSpace(Omega, "CG", 1)
-    V_S = VectorFunctionSpace(Omega, "CG", structure_element_degree)
-    Q_S = VectorFunctionSpace(Omega, "CG", structure_element_degree)
 
     # Create primal functions
     U_F = Function(V_F)
     P_F = Function(Q_F)
-    U_S = Function(V_S)
-    P_S = Function(Q_S)
 
-    return U_F, P_F, U_S, P_S
+    return U_F, P_F
 
 def create_dual_space(Omega, parameters):
     "Return dual function space on the full domain"
@@ -31,11 +27,9 @@ def create_dual_space(Omega, parameters):
     structure_element_degree = parameters["structure_element_degree"]
     V_F = VectorFunctionSpace(Omega, "CG", 2)
     Q_F = FunctionSpace(Omega, "CG", 1)
-    V_S = VectorFunctionSpace(Omega, "CG", structure_element_degree)
-    Q_S = VectorFunctionSpace(Omega, "CG", structure_element_degree)
 
     # Create mixed function space
-    W = MixedFunctionSpace([V_F, Q_F, V_S, Q_S])
+    W = MixedFunctionSpace([V_F, Q_F])
 
     return W
 

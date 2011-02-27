@@ -63,9 +63,9 @@ def estimate_error(problem, parameters):
     EZ1 = [Function(EV) for EV in (V3, Q2, VSE, VSE, V2, V2)]
 
     # Define midpoint values for primal and dual functions
-    U  = [0.5 * (U0[i]  + U1[i])  for i in range(4)]
-    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(4)]
-    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(4)]
+    U  = [0.5 * (U0[i]  + U1[i])  for i in range(2)]
+    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(2)]
+    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(2)]
 
     # Define time step (value set in each time step)
     kn = Constant(0.0)
@@ -113,12 +113,12 @@ def estimate_error(problem, parameters):
         read_dual_data(ZZ1, t1, dual_series)
 
         # Extrapolate dual data
-        [EZ0[j].extrapolate(Z0[j]) for j in range(4)]
-        [EZ1[j].extrapolate(Z1[j]) for j in range(4)]
+        [EZ0[j].extrapolate(Z0[j]) for j in range(2)]
+        [EZ1[j].extrapolate(Z1[j]) for j in range(2)]
 
         # Apply dual boundary conditions to extrapolation
-        [apply_bc(EZ0[j], Z0[j]) for j in range(4)]
-        [apply_bc(EZ1[j], Z1[j]) for j in range(4)]
+        [apply_bc(EZ0[j], Z0[j]) for j in range(2)]
+        [apply_bc(EZ1[j], Z1[j]) for j in range(2)]
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")

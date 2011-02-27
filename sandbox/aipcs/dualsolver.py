@@ -30,10 +30,7 @@ def solve_dual(problem, parameters):
     if save_solution:
         Z_F_file = File("%s/pvd/level_%d/Z_F.pvd" % (parameters["output_directory"], level))
         Y_F_file = File("%s/pvd/level_%d/Y_F.pvd" % (parameters["output_directory"], level))
-        Z_S_file = File("%s/pvd/level_%d/Z_S.pvd" % (parameters["output_directory"], level))
-        Y_S_file = File("%s/pvd/level_%d/Y_S.pvd" % (parameters["output_directory"], level))
-        files = [Z_F_file, Y_F_file,
-                 Z_S_file, Y_S_file]
+        files = [Z_F_file, Y_F_file]
 
     # Create time series for storing solution
     primal_series = create_primal_series(parameters)
@@ -46,27 +43,27 @@ def solve_dual(problem, parameters):
     W = create_dual_space(Omega, parameters)
 
     # Create test and trial functions
-    (v_F, q_F, v_S, q_S) = TestFunctions(W)
-    (Z_F, Y_F, Z_S, Y_S) = TrialFunctions(W)
+    (v_F, q_F) = TestFunctions(W)
+    (Z_F, Y_F) = TrialFunctions(W)
 
     # Create dual functions
-    Z0, (Z_F0, Y_F0, Z_S0, Y_S0) = create_dual_functions(Omega, parameters)
-    Z1, (Z_F1, Y_F1, Z_S1, Y_S1) = create_dual_functions(Omega, parameters)
+    Z0, (Z_F0, Y_F0) = create_dual_functions(Omega, parameters)
+    Z1, (Z_F1, Y_F1) = create_dual_functions(Omega, parameters)
 
     # Create primal functions
-    U_F0, P_F0, U_S0, P_S0 = U0 = create_primal_functions(Omega, parameters)
-    U_F1, P_F1, U_S1, P_S1 = U1 = create_primal_functions(Omega, parameters)
+    U_F0, P_F0 = U0 = create_primal_functions(Omega, parameters)
+    U_F1, P_F1 = U1 = create_primal_functions(Omega, parameters)
 
     # Create time step (value set in each time step)
     k = Constant(0.0)
 
     # Create variational forms for dual problem
     A, L = create_dual_forms(Omega_F, Omega_S, k, problem,
-                             v_F,  q_F,  v_S,  q_S,
-                             Z_F,  Y_F,  Z_S,  Y_S,
-                             Z_F0, Y_F0, Z_S0, Y_S0,
-                             U_F0, P_F0, U_S0, P_S0,
-                             U_F1, P_F1, U_S1, P_S1)
+                             v_F,  q_F,
+                             Z_F,  Y_F,
+                             Z_F0, Y_F0,
+                             U_F0, P_F0,
+                             U_F1, P_F1)
 
     # Create dual boundary conditions
     bcs = create_dual_bcs(problem, W)
@@ -121,7 +118,7 @@ def solve_dual(problem, parameters):
         # Save and plot solution
         if save_solution: _save_solution(Z0, files)
         write_dual_data(Z0, t0, dual_series)
-        if plot_solution: _plot_solution(Z_F0, Y_F0, Z_S0, Y_S0)
+        if plot_solution: _plot_solution(Z_F0, Y_F0)
 
         # Copy solution to previous interval (going backwards in time)
         Z1.assign(Z0)
@@ -135,19 +132,15 @@ def _save_solution(Z, files):
     "Save solution to VTK"
 
     # Extract sub functions (shallow copy)
-    (Z_F, Y_F, Z_S, Y_S) = Z.split()
+    (Z_F, Y_F) = Z.split()
 
     # Save to file
     files[0] << Z_F
     files[1] << Y_F
-    files[2] << Z_S
-    files[3] << Y_S
 
-def _plot_solution(Z_F, Y_F, Z_S, Y_S):
+def _plot_solution(Z_F, Y_F):
     "Plot solution"
 
     # Plot solution
     plot(Z_F, title="Dual fluid velocity")
     plot(Y_F, title="Dual fluid pressure")
-    plot(Z_S, title="Dual displacement")
-    plot(Y_S, title="Dual displacement velocity")

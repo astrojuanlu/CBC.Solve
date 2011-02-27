@@ -15,19 +15,16 @@ def inner_product(v, w):
 
     # Define cell integrals
     dx_F = dx(0)
-    dx_S = dx(1)
 
     # Extract variables
-    v1_F, q1_F, v1_S, q1_S = v
-    v2_F, q2_F, v2_S, q2_S = w
+    v1_F, q1_F = v
+    v2_F, q2_F = w
 
     # Inner product on subdomains, requiring ident_zeros
-    m1 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx_F + \
-         (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx_S
+    m1 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx_F
 
     # Inner product on the whole domain
-    m2 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx + \
-         (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx
+    m2 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx
 
     return m2
 
@@ -35,27 +32,22 @@ def weak_residual(U0, U1, U, w, kn, problem):
     "Return weak residuals"
 
     # Extract variables
-    U_F0, P_F0, U_S0, P_S0 = U0
-    U_F1, P_F1, U_S1, P_S1 = U1
-    U_F,  P_F,  U_S,  P_S  = U
-    v_F, q_F, v_S, q_S = w
+    U_F0, P_F0 = U0
+    U_F1, P_F1 = U1
+    U_F,  P_F  = U
+    v_F, q_F = w
 
     # Get problem parameters
     Omega   = problem.mesh()
     rho_F   = problem.fluid_density()
     mu_F    = problem.fluid_viscosity()
-    rho_S   = problem.structure_density()
-    mu_S    = problem.structure_mu()
-    lmbda_S = problem.structure_lmbda()
 
     # Define normals
     N = FacetNormal(Omega)
     N_F = N
-    N_S = -N
 
     # Define cell integrals
     dx_F = dx(0)
-    dx_S = dx(1)
 
     # Define time derivative
     Dt_U_F = rho_F*((U_F1 - U_F0)/kn + dot(grad(U_F), U_F))
@@ -75,11 +67,11 @@ def strong_residual(U0, U1, U, Z, EZ, w, kn, problem):
     "Return strong residuals (integrated by parts)"
 
     # Extract variables
-    U_F0, P_F0, U_S0, P_S0 = U0
-    U_F1, P_F1, U_S1, P_S1 = U1
-    U_F,  P_F,  U_S,  P_S  = U
-    Z_F,  Y_F,  Z_S,  Y_S  = Z
-    EZ_F, EY_F, EZ_S, EY_S = EZ
+    U_F0, P_F0 = U0
+    U_F1, P_F1 = U1
+    U_F,  P_F  = U
+    Z_F,  Y_F  = Z
+    EZ_F, EY_F = EZ
 
     # Get problem parameters
     Omega   = problem.mesh()
@@ -87,25 +79,18 @@ def strong_residual(U0, U1, U, Z, EZ, w, kn, problem):
     Omega_S = problem.structure_mesh()
     rho_F   = problem.fluid_density()
     mu_F    = problem.fluid_viscosity()
-    rho_S   = problem.structure_density()
-    mu_S    = problem.structure_mu()
-    lmbda_S = problem.structure_lmbda()
 
     # Define normals
     N = FacetNormal(Omega)
     N_F = N
-    N_S = N
 
     # FIXME: Check sign of N_S, should it be -N?
 
     # Define inner products
     dx_F = dx(0)
-    dx_S = dx(1)
 
     # Define "facet" products
     dS_F  = dS(0)
-    dS_S  = dS(1)
-    d_FSI = dS(2)
 
     # Define midpoint values
     U_F = 0.5 * (U_F0 + U_F1)
