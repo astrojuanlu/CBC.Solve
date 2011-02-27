@@ -38,7 +38,7 @@ def inner_product(v, w):
 
     return m2
 
-def weak_residuals(U0, U1, U, w, kn, problem):
+def weak_residual(U0, U1, U, w, kn, problem):
     "Return weak residuals"
 
     # Extract variables
@@ -91,12 +91,7 @@ def weak_residuals(U0, U1, U, w, kn, problem):
         + inner(v_F, J(U_M)*P_F*dot(I, dot(inv(F(U_M)).T, N_F)))*ds \
         + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx_F
 
-    # Structure residual
-    R_S = inner(v_S, Dt_P_S)*dx_S + inner(grad(v_S), Sigma_S)*dx_S \
-        - inner(v_S('-'), dot(Sigma_F('+'), N_S('+')))*d_FSI \
-        + inner(q_S, Dt_U_S - P_S)*dx_S
-
-    return R_F, R_S
+    return R_F
 
 def strong_residual(U0, U1, U, Z, EZ, w, kn, problem):
     "Return strong residuals (integrated by parts)"

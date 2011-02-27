@@ -74,11 +74,11 @@ def estimate_error(problem, parameters):
     Rh_F = strong_residual(U0, U1, U, Z, EZ, dg, kn, problem)
 
     # Get weak residuals for E_k
-    Rk0_F, tmp = weak_residuals(U0, U1, U1, Z0, kn, problem)
-    Rk1_F, tmp = weak_residuals(U0, U1, U1, Z1, kn, problem)
+    Rk0_F = weak_residual(U0, U1, U1, Z0, kn, problem)
+    Rk1_F = weak_residual(U0, U1, U1, Z1, kn, problem)
 
     # Get weak residuals for E_c
-    Rc_F, tmp = weak_residuals(U0, U1, U, Z, kn, problem)
+    Rc_F = weak_residual(U0, U1, U, Z, kn, problem)
 
     # Reset vectors for assembly of residuals
     eta_F = None
@@ -217,8 +217,8 @@ def compute_time_residual(primal_series, dual_series, t0, t1, problem, parameter
     kn = Constant(dt)
 
     # Assemble right-hand side
-    Rk_F, Rk_S, Rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
-    r = assemble(Rk_F + Rk_S, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+    Rk_F = weak_residual(U0, U1, U1, w, kn, problem)
+    r = assemble(Rk_F, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
 
     # Compute norm of functional
     R = Vector()
