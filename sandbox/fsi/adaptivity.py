@@ -179,9 +179,8 @@ def estimate_error(problem, parameters):
     E = E_h + E_k + abs(E_c)
 
     # Report results
-    save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, ST, parameters)
+    save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, parameters)
     save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters)
-    save_stability_factor(T, ST, parameters)
 
     return E, eta_K, E_h
 
@@ -200,8 +199,9 @@ def init_adaptive_data(problem, parameters):
     W = create_dual_space(Omega, parameters)
     w = TestFunctions(W)
     m = inner_product(w, TrialFunctions(W))
-    M = assemble(m, cell_domains=problem.cell_domains)
-    M.ident_zeros()
+    M = assemble(m) # note: no cell_domains argument
+    #M = assemble(m, cell_domains=problem.cell_domains)
+    #M.ident_zeros()
 
     # Remove old saved data
     f = open("%s/timesteps_final.txt" % parameters["output_directory"], "w")
@@ -237,14 +237,13 @@ def compute_time_residual(primal_series, dual_series, t0, t1, problem, parameter
 
     # Assemble right-hand side
     Rk_F, Rk_S, Rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
-    b = assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+    r = assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
 
-    # Compute projection of R_k
-    Rk = Function(W)
-    solve(M, Rk.vector(), b)
+    # Compute norm of functional
+    R = Vector()
+    solve(M, R, r)
+    Rk = sqrt(r.inner(R))
 
-    # Compute norm of Rk
-    Rk = sqrt(assemble(inner_product(Rk.split(), Rk.split()), cell_domains=problem.cell_domains))
     info("Time residual is Rk = %g" % Rk)
 
     return Rk
@@ -386,7 +385,7 @@ def save_mesh(mesh, parameters):
     file = File("%s/mesh_%d.xml" % (parameters["output_directory"], _refinement_level))
     file << mesh
 
-def save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, ST, parameters):
+def save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, parameters):
     "Save errors to file"
 
     global _refinement_level
@@ -404,9 +403,8 @@ E_k  = %g
 E_c  = %g
 
 E_tot = %g
-S(T)  = %g
 
-""" % (_refinement_level, E_h, E_k, abs(E_c), E, ST)
+""" % (_refinement_level, E_h, E_k, abs(E_c), E)
 
     # Print summary
     info(summary)
@@ -418,7 +416,7 @@ S(T)  = %g
 
     # Save to file (for plotting)
     g = open("%s/error_estimates.txt" % parameters["output_directory"], "a")
-    g.write("%d %g %g %g %g %g %g %g %g \n" %(_refinement_level, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M, ST))
+    g.write("%d %g %g %g %g %g %g %g\n" %(_refinement_level, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M))
     g.close()
 
 def save_timestep(t1, Rk, dt, parameters):
@@ -432,15 +430,6 @@ def save_timestep(t1, Rk, dt, parameters):
 
     f = open("%s/timesteps_final.txt" % parameters["output_directory"], "a")
     f.write("%g %g %g\n" % (t1, dt, Rk))
-    f.close()
-
-def save_stability_factor(T, ST, parameters):
-    "Save Galerkin stability factor"
-
-    global _refinement_level
-
-    f = open("%s/stability_factor.txt" % parameters["output_directory"], "a")
-    f.write("%g %g\n" % (T, ST))
     f.close()
 
 def save_goal_functional(t1, goal_functional, integrated_goal_functional, parameters):

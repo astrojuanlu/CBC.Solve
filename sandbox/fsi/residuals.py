@@ -26,10 +26,17 @@ def inner_product(v, w):
     v1_F, q1_F, v1_S, q1_S, v1_M, q1_M = v
     v2_F, q2_F, v2_S, q2_S, v2_M, q2_M = w
 
-    return \
-        (inner(v1_F, v2_F) + q1_F*q2_F)*dx_F + \
-        (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx_S + \
-        (inner(v1_M, v2_M) + inner(q1_M, q2_M))*dx_M
+    # Inner product on subdomains, requiring ident_zeros
+    m1 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx_F + \
+         (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx_S + \
+         (inner(v1_M, v2_M) + inner(q1_M, q2_M))*dx_M
+
+    # Inner product on the whole domain
+    m2 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx + \
+         (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx + \
+         (inner(v1_M, v2_M) + inner(q1_M, q2_M))*dx
+
+    return m2
 
 def weak_residuals(U0, U1, U, w, kn, problem):
     "Return weak residuals"
