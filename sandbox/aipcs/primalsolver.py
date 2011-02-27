@@ -98,83 +98,28 @@ def solve_primal(problem, parameters):
         begin("* Starting new time step")
         info_blue("  * t = %g (T = %g, dt = %g)" % (t1, T, dt))
 
-        # Compute tolerance for FSI iterations
-        itertol = compute_itertol(problem, w_c, TOL, dt, t1, parameters)
+        # Solve fluid subproblem
+        begin("* Solving fluid subproblem (F)")
+        F.step(dt)
+        end()
 
-        # Fixed point iteration on FSI problem
-        for iter in range(maxiter):
+        # Solve structure subproblem
+        begin("* Solving structure subproblem (S)")
+        U_S1, P_S1 = S.step(dt)
+        end()
 
-            info("")
-            begin("* Starting nonlinear iteration")
+        # Plot solution
+        if plot_solution: _plot_solution(u_F1, U_S1, U_M1)
 
-            # Solve fluid subproblem
-            begin("* Solving fluid subproblem (F)")
-            F.step(dt)
-            end()
+        # Evaluate user goal functional
+        goal_functional = assemble(problem.evaluate_functional(u_F1, p_F1, U_S1, P_S1, U_M1, dx, dx, dx))
 
-            # Transfer fluid stresses to structure
-            begin("* Transferring fluid stresses to structure (F --> S)")
-            Sigma_F = F.compute_fluid_stress(u_F0, u_F1, p_F0, p_F1, U_M0, U_M1)
-            #S.update_fluid_stress(Sigma_F)
-            end()
+        # Integrate goal functional
+        integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)
+        old_goal_functional = goal_functional
 
-            # Solve structure subproblem
-            begin("* Solving structure subproblem (S)")
-            U_S1, P_S1 = S.step(dt)
-            end()
-
-            # Transfer structure displacement to fluid mesh
-            begin("* Transferring structure displacement to fluid mesh (S --> M)")
-            #M.update_structure_displacement(U_S1)
-            end()
-
-            # Solve mesh equation
-            begin("* Solving mesh subproblem (M)")
-            M.step(dt)
-            end()
-
-            # Transfer mesh displacement to fluid
-            begin("* Transferring mesh displacement to fluid (M --> S)")
-            #F.update_mesh_displacement(U_M1, dt, num_smoothings)
-            end()
-
-            # Compute increment of displacement vector
-            U_S0.vector().axpy(-1, U_S1.vector())
-            increment = norm(U_S0.vector())
-            U_S0.vector()[:] = U_S1.vector()[:]
-
-            # Plot solution
-            if plot_solution: _plot_solution(u_F1, U_S1, U_M1)
-
-            # Check convergence
-            if increment < itertol:
-                info("")
-                info_green("    Increment = %g (tolerance = %g), converged after %d iterations" % \
-                               (increment, itertol, iter + 1))
-                end()
-
-                # Saving number of FSI iterations
-                save_no_FSI_iter(t1, iter + 1, parameters)
-
-                # Evaluate user goal functional
-                goal_functional = assemble(problem.evaluate_functional(u_F1, p_F1, U_S1, P_S1, U_M1, dx, dx, dx))
-
-                # Integrate goal functional
-                integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)
-                old_goal_functional = goal_functional
-
-                # Save goal functional
-                save_goal_functional(t1, goal_functional, integrated_goal_functional, parameters)
-                break
-
-            # Check if we have reached the maximum number of iterations
-            elif iter == maxiter - 1:
-                raise RuntimeError, "FSI iteration failed to converge after %d iterations." % maxiter
-
-            # Print size of increment
-            info("")
-            info_red("    Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, iter + 1))
-            end()
+        # Save goal functional
+        save_goal_functional(t1, goal_functional, integrated_goal_functional, parameters)
 
         # Save solution and time series to file
         U = extract_solution(F, S, M)
@@ -213,6 +158,8 @@ def solve_primal(problem, parameters):
             (dt, at_end) = compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters)
             t0 = t1
             t1 = t1 + dt
+
+        end()
 
     # Save final value of goal functional
     save_goal_functional_final(goal_functional, integrated_goal_functional, parameters)

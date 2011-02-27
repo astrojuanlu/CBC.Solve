@@ -71,7 +71,7 @@ def estimate_error(problem, parameters):
     kn = Constant(0.0)
 
     # Get strong residuals for E_h
-    Rh_F, Rh_S, Rh_M = strong_residuals(U0, U1, U, Z, EZ, dg, kn, problem)
+    Rh_F = strong_residual(U0, U1, U, Z, EZ, dg, kn, problem)
 
     # Get weak residuals for E_k
     Rk0_F, Rk0_S, Rk0_M = weak_residuals(U0, U1, U1, Z0, kn, problem)
@@ -83,8 +83,6 @@ def estimate_error(problem, parameters):
 
     # Reset vectors for assembly of residuals
     eta_F = None
-    eta_S = None
-    eta_M = None
 
     # Reset variables
     E_k   = 0.0
@@ -129,8 +127,6 @@ def estimate_error(problem, parameters):
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
         e_F = [assemble(Rh_Fi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Fi in Rh_F]
-        e_S = [assemble(Rh_Si, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Si in Rh_S]
-        e_M = [assemble(Rh_Mi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Mi in Rh_M]
 
         # Assemble weak residual for time discretization error (error estimate)
         Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
@@ -144,16 +140,10 @@ def estimate_error(problem, parameters):
 
         # Reset vectors for assembly of residuals
         eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
-        eta_S = [zeros(Omega.num_cells()) for i in range(len(e_S))]
-        eta_M = [zeros(Omega.num_cells()) for i in range(len(e_M))]
 
         # Add to error indicators
         for i in range(len(e_F)):
             eta_F[i] += dt * abs(e_F[i].array())
-        for i in range(len(e_S)):
-            eta_S[i] += dt * abs(e_S[i].array())
-        for i in range(len(e_M)):
-            eta_M[i] += dt * abs(e_M[i].array())
 
         # Add to E_k
         E_k += dt * dt * Rk
@@ -169,7 +159,7 @@ def estimate_error(problem, parameters):
     E_c = E_c_F + E_c_S + E_c_M
 
     # Compute sum of error indicators
-    eta_K = sum(eta_F) + sum(eta_S) + sum(eta_M)
+    eta_K = sum(eta_F)
 
     # Compute space discretization error
     E_h = sum(eta_K)
@@ -182,7 +172,7 @@ def estimate_error(problem, parameters):
 
     # Report results
     save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, parameters)
-    save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters)
+    save_indicators(eta_F, eta_K, Omega, parameters)
 
     return E, eta_K, E_h
 
@@ -499,7 +489,7 @@ def save_dofs(num_dofs_FSM, timestep_counter, parameters):
     f.write("%d %g %g %g \n" %(_refinement_level, dofs, space_dofs, time_dofs))
     f.close()
 
-def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters):
+def save_indicators(eta_F, eta_K, Omega, parameters):
     "Save mesh function for visualization"
 
     global indicator_files
@@ -507,26 +497,20 @@ def save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters):
 
     # Create mesh functions
     plot_markers_F = [MeshFunction("double", Omega, Omega.topology().dim()) for i in range(len(eta_F))]
-    plot_markers_S = [MeshFunction("double", Omega, Omega.topology().dim()) for i in range(len(eta_S))]
-    plot_markers_M = [MeshFunction("double", Omega, Omega.topology().dim()) for i in range(len(eta_M))]
     plot_markers_K =  MeshFunction("double", Omega, Omega.topology().dim())
 
     # Extract error indicators
     for i in range(Omega.num_cells()):
         for j in range(len(eta_F)): plot_markers_F[j][i] = eta_F[j][i]
-        for j in range(len(eta_S)): plot_markers_S[j][i] = eta_S[j][i]
-        for j in range(len(eta_M)): plot_markers_M[j][i] = eta_M[j][i]
         plot_markers_K[i] = eta_K[i]
 
     # Sum markers
-    plot_markers = plot_markers_F + plot_markers_S + plot_markers_M + [plot_markers_K]
+    plot_markers = plot_markers_F + [plot_markers_K]
 
     # Create indicator files (including file for refinement markers not used here)
     if indicator_files is None:
         indicator_files = \
             [File("%s/pvd/level_%d/eta_F_%d.pvd" % (parameters["output_directory"], _refinement_level, i)) for i in range(len(eta_F))] + \
-            [File("%s/pvd/level_%d/eta_S_%d.pvd" % (parameters["output_directory"], _refinement_level, i)) for i in range(len(eta_S))] + \
-            [File("%s/pvd/level_%d/eta_M_%d.pvd" % (parameters["output_directory"], _refinement_level, i)) for i in range(len(eta_M))] + \
             [File("%s/pvd/level_%d/eta_K.pvd" % (parameters["output_directory"], _refinement_level))] + \
             [File("%s/pvd/level_%d/refinement_markers.pvd" % (parameters["output_directory"], _refinement_level))]
 
