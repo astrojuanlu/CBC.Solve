@@ -9,7 +9,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from dolfin import *
 from operators import *
 
-def create_dual_forms(Omega_F, Omega_S, k, problem,
+def create_dual_forms(Omega_F, k, problem,
                       v_F,  q_F,
                       Z_F,  Y_F,
                       Z_F0, Y_F0,

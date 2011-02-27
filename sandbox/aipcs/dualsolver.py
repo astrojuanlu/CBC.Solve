@@ -20,7 +20,6 @@ def solve_dual(problem, parameters):
     T = problem.end_time()
     Omega = problem.mesh()
     Omega_F = problem.fluid_mesh()
-    Omega_S = problem.structure_mesh()
     save_solution = parameters["save_solution"]
     plot_solution = parameters["plot_solution"]
 
@@ -58,7 +57,7 @@ def solve_dual(problem, parameters):
     k = Constant(0.0)
 
     # Create variational forms for dual problem
-    A, L = create_dual_forms(Omega_F, Omega_S, k, problem,
+    A, L = create_dual_forms(Omega_F, k, problem,
                              v_F,  q_F,
                              Z_F,  Y_F,
                              Z_F0, Y_F0,
@@ -89,8 +88,8 @@ def solve_dual(problem, parameters):
         info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
         # Read primal data
-        read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
-        read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series, parameters)
+        read_primal_data(U0, t0, Omega, Omega_F, primal_series, parameters)
+        read_primal_data(U1, t1, Omega, Omega_F, primal_series, parameters)
 
         # Assemble matrix
         info("Assembling matrix")

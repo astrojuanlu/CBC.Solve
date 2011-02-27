@@ -31,7 +31,6 @@ def estimate_error(problem, parameters):
     # Get meshes
     Omega = problem.mesh()
     Omega_F = problem.fluid_mesh()
-    Omega_S = problem.structure_mesh()
 
     # Define projection space (piecewise constants)
     DG = FunctionSpace(Omega, "DG", 0)
@@ -105,8 +104,8 @@ def estimate_error(problem, parameters):
         info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
         # Read primal data
-        read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
-        read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series, parameters)
+        read_primal_data(U0, t0, Omega, Omega_F, primal_series, parameters)
+        read_primal_data(U1, t1, Omega, Omega_F, primal_series, parameters)
 
         # Read dual data
         read_dual_data(ZZ0, t0, dual_series)
@@ -194,11 +193,10 @@ def read_adaptive_data(primal_series, dual_series, t0, t1, problem, parameters):
     global U0, U1, Z0, Z1, ZZ0, ZZ1
     Omega = problem.mesh()
     Omega_F = problem.fluid_mesh()
-    Omega_S = problem.structure_mesh()
 
     # Read primal data
-    read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
-    read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series, parameters)
+    read_primal_data(U0, t0, Omega, Omega_F, primal_series, parameters)
+    read_primal_data(U1, t1, Omega, Omega_F, primal_series, parameters)
 
     return U0, U1
 

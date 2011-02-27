@@ -76,7 +76,6 @@ def strong_residual(U0, U1, U, Z, EZ, w, kn, problem):
     # Get problem parameters
     Omega   = problem.mesh()
     Omega_F = problem.fluid_mesh()
-    Omega_S = problem.structure_mesh()
     rho_F   = problem.fluid_density()
     mu_F    = problem.fluid_viscosity()
 

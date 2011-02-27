@@ -37,7 +37,7 @@ def create_dual_series(parameters):
     else:
         return TimeSeries("%s/bin/Z" % parameters["output_directory"])
 
-def read_primal_data(U, t, Omega, Omega_F, Omega_S, series, parameters):
+def read_primal_data(U, t, Omega, Omega_F, series, parameters):
     "Read primal variables at given time"
 
     info("Reading primal data at t = %g" % t)
@@ -55,9 +55,7 @@ def read_primal_data(U, t, Omega, Omega_F, Omega_S, series, parameters):
 
     # Get mappings from local meshes to global mesh
     v_F = Omega_F.data().mesh_function("global vertex indices").array()
-    v_S = Omega_S.data().mesh_function("global vertex indices").array()
     e_F = Omega_F.data().mesh_function("global edge indices").array()
-    e_S = Omega_S.data().mesh_function("global edge indices").array()
 
     # Get the number of vertices and edges
     Nv = Omega.num_vertices()

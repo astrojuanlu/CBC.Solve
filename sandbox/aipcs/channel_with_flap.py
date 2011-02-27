@@ -40,10 +40,14 @@ class ChannelWithFlap(FSI):
 
         ny = 5
         nx = 20
-        if application_parameters["crossed_mesh"]:
-            mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny, "crossed")
-        else:
-            mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
+
+        mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
+
+        #cell_domains = CellFunction("uint", mesh)
+        #cell_domains.set_all(0)
+        #structure = Structure()
+        #structure.mark(cell_domains, 1)
+        #mesh = SubMesh(mesh, cell_domains, 0)
 
         # Initialize base class
         FSI.__init__(self, mesh)
