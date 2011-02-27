@@ -51,11 +51,10 @@ class ChannelWithFlap(FSI):
     #--- Common ---
 
     def end_time(self):
-        return 0.5
+        return 0.1
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
-        A = (structure_right - structure_left) * structure_top
-        return (1.0/A) * U_S[0] * dx_S
+        return u_F[0] * dx_F
 
     def __str__(self):
         return "Channel flow with an immersed elastic flap"
