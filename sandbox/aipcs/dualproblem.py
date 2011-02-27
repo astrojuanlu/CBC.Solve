@@ -22,40 +22,27 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     # Get problem parameters
     rho_F   = problem.fluid_density()
     mu_F    = problem.fluid_viscosity()
-    rho_S   = problem.structure_density()
-    mu_S    = problem.structure_mu()
-    lmbda_S = problem.structure_lmbda()
     mu_M    = problem.mesh_mu()
     lmbda_M = problem.mesh_lmbda()
     alpha_M = problem.mesh_alpha()
 
     # Define normals
-    N_S = FacetNormal(Omega_S)
-    N   = N_S('+')
     N_F = FacetNormal(Omega_F)
 
     # Define inner products
     dx_F = dx(0)
-    dx_S = dx(1)
-    dx_M = dx_F
-    d_FSI = dS(2)
 
-    # Operators for A_SS
-    Fu = F(U_S1)
-    Eu = Fu*Fu.T - I
-    Ev = grad(v_S)*Fu.T + Fu*grad(v_S).T
-    Sv = grad(v_S)*(2*mu_S*Eu + lmbda_S*tr(Eu)*I) + Fu*(2*mu_S*Ev + lmbda_S*tr(Ev)*I)
+    I = Identity(2)
 
     # Dual forms
-    A_FF01 = -(1/k)*inner((Z_F0 - Z_F), rho_F*J(U_M1)*v_F)*dx_F
-    A_FF02 =  inner(Z_F, rho_F*J(U_M1)*dot(dot(grad(v_F), inv(F(U_M1))), (U_F1 - (U_M0 - U_M1)*(1/k))))*dx_F
-    A_FF03 =  inner(Z_F, rho_F*J(U_M1)*dot(grad(U_F1), dot(inv(F(U_M1)), v_F)))*dx(0)
-    A_FF04 =  inner(grad(Z_F), J(U_M1)*mu_F*dot(grad(v_F), dot(inv(F(U_M1)), inv(F(U_M1)).T)))*dx_F
-    A_FF05 =  inner(grad(Z_F), J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)))*dx_F
-    A_FF06 = -inner(grad(Z_F), J(U_M1)*q_F*inv(F(U_M1)).T)*dx_F
-    A_FF07 =  inner(Y_F, div(J(U_M1)*dot(inv(F(U_M1)), v_F)))*dx_F
-
-    G_FF   = -inner(Z_F, dot(J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)), N_F))*ds
+    A_FF01 = -(1/k)*inner((Z_F0 - Z_F), rho_F*v_F)*dx_F
+    A_FF02 =  inner(Z_F, rho_F*dot(grad(v_F), (U_F1 - (U_M0 - U_M1)*(1/k))))*dx_F
+    A_FF03 =  inner(Z_F, rho_F*dot(grad(U_F1), v_F))*dx(0)
+    A_FF04 =  inner(grad(Z_F), mu_F*grad(v_F))*dx_F
+    A_FF05 =  inner(grad(Z_F), mu_F*grad(v_F).T)*dx_F
+    A_FF06 = -inner(grad(Z_F), q_F*I)*dx_F
+    A_FF07 =  inner(Y_F, div(v_F))*dx_F
+    G_FF   = -inner(Z_F, mu_F*dot(grad(v_F).T, N_F))*ds
 
     # Collect forms
     A_system = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + G_FF
