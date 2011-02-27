@@ -21,7 +21,3 @@ def Sigma_F(U_F, P_F, mu_F):
 def Sigma_S(U_S, mu_S, lmbda_S):
     "Return structure stress in reference domain"
     return dot(F(U_S), 2*mu_S*E(U_S) + lmbda_S*tr(E(U_S))*I)
-
-def Sigma_M(U_M, mu_M, lmbda_M):
-    "Return mesh stress in reference domain"
-    return 2*mu_M*sym(grad(U_M)) + lmbda_M*tr(grad(U_M))*I

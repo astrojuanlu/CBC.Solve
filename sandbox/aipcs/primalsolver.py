@@ -37,8 +37,7 @@ def solve_primal(problem, parameters):
         files = (File("%s/pvd/level_%d/u_F.pvd" % (parameters["output_directory"], level)),
                  File("%s/pvd/level_%d/p_F.pvd" % (parameters["output_directory"], level)),
                  File("%s/pvd/level_%d/U_S.pvd" % (parameters["output_directory"], level)),
-                 File("%s/pvd/level_%d/P_S.pvd" % (parameters["output_directory"], level)),
-                 File("%s/pvd/level_%d/U_M.pvd" % (parameters["output_directory"], level)))
+                 File("%s/pvd/level_%d/P_S.pvd" % (parameters["output_directory"], level)))
 
     # Create time series for storing solution
     primal_series = create_primal_series(parameters)
@@ -58,14 +57,12 @@ def solve_primal(problem, parameters):
     # Define the three subproblems
     F = FluidProblem(problem)
     S = StructureProblem(problem, parameters)
-    M = MeshProblem(problem, parameters)
 
     # Get solution values
     u_F0, u_F1, p_F0, p_F1 = F.solution_values()
-    U_M0, U_M1 = M.solution_values()
 
     # Extract number of dofs
-    num_dofs_FSM = extract_num_dofs(F, S, M)
+    num_dofs_FSM = extract_num_dofs(F, S)
 
     # Get initial structure displacement (used for plotting and checking convergence)
     structure_element_degree = parameters["structure_element_degree"]
@@ -73,7 +70,7 @@ def solve_primal(problem, parameters):
     U_S0 = Function(V_S)
 
     # Save initial solution to file and series
-    U = extract_solution(F, S, M)
+    U = extract_solution(F, S)
     if save_solution: _save_solution(U, files)
     write_primal_data(U, 0, primal_series)
 
@@ -109,7 +106,7 @@ def solve_primal(problem, parameters):
         end()
 
         # Plot solution
-        if plot_solution: _plot_solution(u_F1, U_S1, U_M1)
+        if plot_solution: _plot_solution(u_F1, U_S1)
 
         # Evaluate user goal functional
         goal_functional = assemble(problem.evaluate_functional(u_F1, p_F1, dx))
@@ -122,14 +119,13 @@ def solve_primal(problem, parameters):
         save_goal_functional(t1, goal_functional, integrated_goal_functional, parameters)
 
         # Save solution and time series to file
-        U = extract_solution(F, S, M)
+        U = extract_solution(F, S)
         if save_solution: _save_solution(U, files)
         write_primal_data(U, t1, primal_series)
 
         # Move to next time step
         F.update(t1)
         S.update()
-        M.update(t1)
 
         # Update time step counter
         timestep_counter += 1
@@ -171,12 +167,11 @@ def solve_primal(problem, parameters):
     # Return solution
     return goal_functional
 
-def _plot_solution(u_F, U_S, U_M):
+def _plot_solution(u_F, U_S):
     "Plot solution"
     plot(u_F, title="Fluid velocity")
     plot(U_S, title="Structure displacement", mode="displacement")
-    plot(U_M, title="Mesh displacement", mode="displacement")
 
 def _save_solution(U, files):
     "Save solution to VTK"
-    [files[i] << U[i] for i in range(5)]
+    [files[i] << U[i] for i in range(4)]

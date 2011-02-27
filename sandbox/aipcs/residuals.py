@@ -16,21 +16,18 @@ def inner_product(v, w):
     # Define cell integrals
     dx_F = dx(0)
     dx_S = dx(1)
-    dx_M = dx_F
 
     # Extract variables
-    v1_F, q1_F, v1_S, q1_S, v1_M, q1_M = v
-    v2_F, q2_F, v2_S, q2_S, v2_M, q2_M = w
+    v1_F, q1_F, v1_S, q1_S = v
+    v2_F, q2_F, v2_S, q2_S = w
 
     # Inner product on subdomains, requiring ident_zeros
     m1 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx_F + \
-         (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx_S + \
-         (inner(v1_M, v2_M) + inner(q1_M, q2_M))*dx_M
+         (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx_S
 
     # Inner product on the whole domain
     m2 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx + \
-         (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx + \
-         (inner(v1_M, v2_M) + inner(q1_M, q2_M))*dx
+         (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx
 
     return m2
 
@@ -38,10 +35,10 @@ def weak_residual(U0, U1, U, w, kn, problem):
     "Return weak residuals"
 
     # Extract variables
-    U_F0, P_F0, U_S0, P_S0, U_M0 = U0
-    U_F1, P_F1, U_S1, P_S1, U_M1 = U1
-    U_F,  P_F,  U_S,  P_S,  U_M  = U
-    v_F, q_F, v_S, q_S, v_M, q_M = w
+    U_F0, P_F0, U_S0, P_S0 = U0
+    U_F1, P_F1, U_S1, P_S1 = U1
+    U_F,  P_F,  U_S,  P_S  = U
+    v_F, q_F, v_S, q_S = w
 
     # Get problem parameters
     Omega   = problem.mesh()
@@ -50,9 +47,6 @@ def weak_residual(U0, U1, U, w, kn, problem):
     rho_S   = problem.structure_density()
     mu_S    = problem.structure_mu()
     lmbda_S = problem.structure_lmbda()
-    alpha_M = problem.mesh_alpha()
-    mu_M    = problem.mesh_mu()
-    lmbda_M = problem.mesh_lmbda()
 
     # Define normals
     N = FacetNormal(Omega)
@@ -81,11 +75,11 @@ def strong_residual(U0, U1, U, Z, EZ, w, kn, problem):
     "Return strong residuals (integrated by parts)"
 
     # Extract variables
-    U_F0, P_F0, U_S0, P_S0, U_M0       = U0
-    U_F1, P_F1, U_S1, P_S1, U_M1       = U1
-    U_F,  P_F,  U_S,  P_S,  U_M        = U
-    Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M  = Z
-    EZ_F, EY_F, EZ_S, EY_S, EZ_M, EY_M = EZ
+    U_F0, P_F0, U_S0, P_S0 = U0
+    U_F1, P_F1, U_S1, P_S1 = U1
+    U_F,  P_F,  U_S,  P_S  = U
+    Z_F,  Y_F,  Z_S,  Y_S  = Z
+    EZ_F, EY_F, EZ_S, EY_S = EZ
 
     # Get problem parameters
     Omega   = problem.mesh()
@@ -96,9 +90,6 @@ def strong_residual(U0, U1, U, Z, EZ, w, kn, problem):
     rho_S   = problem.structure_density()
     mu_S    = problem.structure_mu()
     lmbda_S = problem.structure_lmbda()
-    alpha_M = problem.mesh_alpha()
-    mu_M    = problem.mesh_mu()
-    lmbda_M = problem.mesh_lmbda()
 
     # Define normals
     N = FacetNormal(Omega)

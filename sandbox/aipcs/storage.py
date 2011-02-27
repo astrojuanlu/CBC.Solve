@@ -12,7 +12,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-24
+# Last changed: 2011-02-27
 
 from numpy import append
 from dolfin import *
@@ -25,15 +25,13 @@ def create_primal_series(parameters):
         p_F = TimeSeries("bin/p_F")
         U_S = TimeSeries("bin/U_S")
         P_S = TimeSeries("bin/P_S")
-        U_M = TimeSeries("bin/U_M")
     else:
         u_F = TimeSeries("%s/bin/u_F" % parameters["output_directory"])
         p_F = TimeSeries("%s/bin/p_F" % parameters["output_directory"])
         U_S = TimeSeries("%s/bin/U_S" % parameters["output_directory"])
         P_S = TimeSeries("%s/bin/P_S" % parameters["output_directory"])
-        U_M = TimeSeries("%s/bin/U_M" % parameters["output_directory"])
 
-    return (u_F, p_F, U_S, P_S, U_M)
+    return (u_F, p_F, U_S, P_S)
 
 def create_dual_series(parameters):
     "Create time series for dual solution"
@@ -49,21 +47,19 @@ def read_primal_data(U, t, Omega, Omega_F, Omega_S, series, parameters):
     info("Reading primal data at t = %g" % t)
 
     # Get primal variables
-    U_F, P_F, U_S, P_S, U_M = U
+    U_F, P_F, U_S, P_S = U
 
     # Create vectors for primal dof values on local meshes
     local_vals_u_F = Vector()
     local_vals_p_F = Vector()
     local_vals_U_S = Vector()
     local_vals_P_S = Vector()
-    local_vals_U_M = Vector()
 
     # Retrieve primal data
     series[0].retrieve(local_vals_u_F, t)
     series[1].retrieve(local_vals_p_F, t)
     series[2].retrieve(local_vals_U_S, t)
     series[3].retrieve(local_vals_P_S, t)
-    series[4].retrieve(local_vals_U_M, t)
 
     # Get mappings from local meshes to global mesh
     v_F = Omega_F.data().mesh_function("global vertex indices").array()
@@ -84,14 +80,12 @@ def read_primal_data(U, t, Omega, Omega_F, Omega_S, series, parameters):
     else:
         global_dofs_U_S = append(append(v_S, Nv + e_S), append((Nv + Ne) + v_S, (Nv + Ne + Nv) + e_S))
         global_dofs_P_S = global_dofs_U_S
-    global_dofs_U_M = append(v_F, Nv + v_F)
 
     # Set degrees of freedom for primal functions
     U_F.vector()[global_dofs_U_F] = local_vals_u_F
     P_F.vector()[global_dofs_P_F] = local_vals_p_F
     U_S.vector()[global_dofs_U_S] = local_vals_U_S
     P_S.vector()[global_dofs_P_S] = local_vals_P_S
-    U_M.vector()[global_dofs_U_M] = local_vals_U_M
 
 def read_dual_data(Z, t, series):
     "Read dual solution at given time"
@@ -116,7 +110,7 @@ def read_timestep_range(T, series):
 
 def write_primal_data(U, t, series):
     "Write primal data at given time"
-    [series[i].store(U[i].vector(), t) for i in range(5)]
+    [series[i].store(U[i].vector(), t) for i in range(4)]
 
 def write_dual_data(Z, t, series):
     "Write dual solution at given time"

@@ -10,11 +10,11 @@ from dolfin import *
 from operators import *
 
 def create_dual_forms(Omega_F, Omega_S, k, problem,
-                      v_F,  q_F,  v_S,  q_S,  v_M,  q_M,
-                      Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
-                      Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0,
-                      U_F0, P_F0, U_S0, P_S0, U_M0,
-                      U_F1, P_F1, U_S1, P_S1, U_M1):
+                      v_F,  q_F,  v_S,  q_S,
+                      Z_F,  Y_F,  Z_S,  Y_S,
+                      Z_F0, Y_F0, Z_S0, Y_S0,
+                      U_F0, P_F0, U_S0, P_S0,
+                      U_F1, P_F1, U_S1, P_S1):
     "Return bilinear and linear forms for one time step."
 
     info_blue("Creating dual forms")
@@ -22,9 +22,6 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     # Get problem parameters
     rho_F   = problem.fluid_density()
     mu_F    = problem.fluid_viscosity()
-    mu_M    = problem.mesh_mu()
-    lmbda_M = problem.mesh_lmbda()
-    alpha_M = problem.mesh_alpha()
 
     # Define normals
     N_F = FacetNormal(Omega_F)
@@ -36,7 +33,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
 
     # Dual forms
     A_FF01 = -(1/k)*inner((Z_F0 - Z_F), rho_F*v_F)*dx_F
-    A_FF02 =  inner(Z_F, rho_F*dot(grad(v_F), (U_F1 - (U_M0 - U_M1)*(1/k))))*dx_F
+    A_FF02 =  inner(Z_F, rho_F*dot(grad(v_F), U_F1))*dx_F
     A_FF03 =  inner(Z_F, rho_F*dot(grad(U_F1), v_F))*dx(0)
     A_FF04 =  inner(grad(Z_F), mu_F*grad(v_F))*dx_F
     A_FF05 =  inner(grad(Z_F), mu_F*grad(v_F).T)*dx_F
@@ -77,9 +74,6 @@ def create_dual_bcs(problem, W):
         bcs += [DirichletBC(W.sub(2), (0, 0), boundary)]
         bcs += [DirichletBC(W.sub(3), (0, 0), boundary)]
 
-    # Boundary conditions for dual mesh displacement
-    bcs += [DirichletBC(W.sub(4), (0, 0), DomainBoundary())]
-
     # In addition to the above boundary conditions, we also need to
     # add homogeneous boundary conditions for Z_F and Z_M on the FSI
     # boundary. Note that the no-slip boundary condition for U_F does
@@ -89,8 +83,5 @@ def create_dual_bcs(problem, W):
 
     # Boundary condition for Z_F on FSI boundary
     bcs += [DirichletBC(W.sub(0), (0, 0), problem.fsi_boundary, 2)]
-
-    # Boundary condition for Z_M on FSI boundary
-    bcs += [DirichletBC(W.sub(4), (0, 0), problem.fsi_boundary, 2)]
 
     return bcs

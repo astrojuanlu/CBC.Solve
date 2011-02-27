@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-20
+# Last changed: 2011-02-27
 
 from time import time as python_time
 from dolfin import *
@@ -32,11 +32,8 @@ def solve_dual(problem, parameters):
         Y_F_file = File("%s/pvd/level_%d/Y_F.pvd" % (parameters["output_directory"], level))
         Z_S_file = File("%s/pvd/level_%d/Z_S.pvd" % (parameters["output_directory"], level))
         Y_S_file = File("%s/pvd/level_%d/Y_S.pvd" % (parameters["output_directory"], level))
-        Z_M_file = File("%s/pvd/level_%d/Z_M.pvd" % (parameters["output_directory"], level))
-        Y_M_file = File("%s/pvd/level_%d/Y_M.pvd" % (parameters["output_directory"], level))
         files = [Z_F_file, Y_F_file,
-                 Z_S_file, Y_S_file,
-                 Z_M_file, Y_M_file]
+                 Z_S_file, Y_S_file]
 
     # Create time series for storing solution
     primal_series = create_primal_series(parameters)
@@ -49,27 +46,27 @@ def solve_dual(problem, parameters):
     W = create_dual_space(Omega, parameters)
 
     # Create test and trial functions
-    (v_F, q_F, v_S, q_S, v_M, q_M) = TestFunctions(W)
-    (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = TrialFunctions(W)
+    (v_F, q_F, v_S, q_S) = TestFunctions(W)
+    (Z_F, Y_F, Z_S, Y_S) = TrialFunctions(W)
 
     # Create dual functions
-    Z0, (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = create_dual_functions(Omega, parameters)
-    Z1, (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = create_dual_functions(Omega, parameters)
+    Z0, (Z_F0, Y_F0, Z_S0, Y_S0) = create_dual_functions(Omega, parameters)
+    Z1, (Z_F1, Y_F1, Z_S1, Y_S1) = create_dual_functions(Omega, parameters)
 
     # Create primal functions
-    U_F0, P_F0, U_S0, P_S0, U_M0 = U0 = create_primal_functions(Omega, parameters)
-    U_F1, P_F1, U_S1, P_S1, U_M1 = U1 = create_primal_functions(Omega, parameters)
+    U_F0, P_F0, U_S0, P_S0 = U0 = create_primal_functions(Omega, parameters)
+    U_F1, P_F1, U_S1, P_S1 = U1 = create_primal_functions(Omega, parameters)
 
     # Create time step (value set in each time step)
     k = Constant(0.0)
 
     # Create variational forms for dual problem
     A, L = create_dual_forms(Omega_F, Omega_S, k, problem,
-                             v_F,  q_F,  v_S,  q_S,  v_M,  q_M,
-                             Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
-                             Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0,
-                             U_F0, P_F0, U_S0, P_S0, U_M0,
-                             U_F1, P_F1, U_S1, P_S1, U_M1)
+                             v_F,  q_F,  v_S,  q_S,
+                             Z_F,  Y_F,  Z_S,  Y_S,
+                             Z_F0, Y_F0, Z_S0, Y_S0,
+                             U_F0, P_F0, U_S0, P_S0,
+                             U_F1, P_F1, U_S1, P_S1)
 
     # Create dual boundary conditions
     bcs = create_dual_bcs(problem, W)
@@ -124,7 +121,7 @@ def solve_dual(problem, parameters):
         # Save and plot solution
         if save_solution: _save_solution(Z0, files)
         write_dual_data(Z0, t0, dual_series)
-        if plot_solution: _plot_solution(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0)
+        if plot_solution: _plot_solution(Z_F0, Y_F0, Z_S0, Y_S0)
 
         # Copy solution to previous interval (going backwards in time)
         Z1.assign(Z0)
@@ -138,17 +135,15 @@ def _save_solution(Z, files):
     "Save solution to VTK"
 
     # Extract sub functions (shallow copy)
-    (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = Z.split()
+    (Z_F, Y_F, Z_S, Y_S) = Z.split()
 
     # Save to file
     files[0] << Z_F
     files[1] << Y_F
     files[2] << Z_S
     files[3] << Y_S
-    files[4] << Z_M
-    files[5] << Y_M
 
-def _plot_solution(Z_F, Y_F, Z_S, Y_S, Z_M, Y_M):
+def _plot_solution(Z_F, Y_F, Z_S, Y_S):
     "Plot solution"
 
     # Plot solution
@@ -156,5 +151,3 @@ def _plot_solution(Z_F, Y_F, Z_S, Y_S, Z_M, Y_M):
     plot(Y_F, title="Dual fluid pressure")
     plot(Z_S, title="Dual displacement")
     plot(Y_S, title="Dual displacement velocity")
-    plot(Z_M, title="Dual mesh displacement")
-    plot(Y_M, title="Dual mesh Lagrange multiplier")

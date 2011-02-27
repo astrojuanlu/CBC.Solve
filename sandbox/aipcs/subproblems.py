@@ -11,7 +11,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2011-02-27
 
-__all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
+__all__ = ["FluidProblem", "StructureProblem", "extract_solution",
            "extract_num_dofs"]
 
 from dolfin import *
@@ -90,55 +90,6 @@ class FluidProblem(NavierStokes):
     def time_step(self):
         # Time step will be selected elsewhere
         return self.end_time()
-
-    def compute_fluid_stress(self, u_F0, u_F1, p_F0, p_F1, U_M0, U_M1):
-
-        # Map u and p back to reference domain
-        self.U_F0.vector()[:] = u_F0.vector()[:]
-        self.U_F1.vector()[:] = u_F1.vector()[:]
-        self.P_F0.vector()[:] = p_F0.vector()[:]
-        self.P_F1.vector()[:] = p_F1.vector()[:]
-
-        # Get variables
-        mu_F = self.viscosity()
-        U_F  = self.U_F
-        P_F  = self.P_F
-        U_M = 0.5 * (U_M0 + U_M1)
-
-        # Compute physical stress
-        Sigma_F = PiolaTransform(_Sigma_F(U_F, P_F, U_M, mu_F), U_M)
-
-        return Sigma_F
-
-    def update_mesh_displacement(self, U_M, dt, num_smoothings):
-
-        # Get mesh coordinate data
-        X  = self.Omega_F.coordinates()
-        x0 = self.omega_F0.coordinates()
-        x1 = self.omega_F1.coordinates()
-        dofs = U_M.vector().array()
-        dim = self.omega_F1.geometry().dim()
-        N = self.omega_F1.num_vertices()
-
-        # Update omega_F1
-        for i in range(N):
-            for j in range(dim):
-                x1[i][j] = X[i][j] + dofs[j*N + i]
-
-        # Smooth the mesh
-        self.omega_F1.smooth(num_smoothings)
-
-        # Update mesh velocity
-        wx = self.w.vector().array()
-        for i in range(N):
-            for j in range(dim):
-                wx[j*N + i] = (x1[i][j] - x0[i][j]) / dt
-
-        # Update vector values (necessary since wx is a copy)
-        self.w.vector()[:] = wx
-
-        # Reassemble matrices
-        self.solver.reassemble()
 
     def update_extra(self):
 
@@ -274,98 +225,18 @@ class StructureProblem(Hyperelasticity):
     def __str__(self):
         return "The structure problem (S)"
 
-# Define mesh problem (time-dependent linear elasticity)
-class MeshProblem():
-
-    def __init__(self, problem, parameters):
-
-        # Store problem
-        self.problem = problem
-
-        # Get problem parameters
-        mu = problem.mesh_mu()
-        lmbda = problem.mesh_lmbda()
-        alpha = problem.mesh_alpha()
-        Omega_F = problem.fluid_mesh()
-
-        # Define function spaces and functions
-        V = VectorFunctionSpace(Omega_F, "CG", 1)
-        v = TestFunction(V)
-        u = TrialFunction(V)
-        u0 = Function(V)
-        u1 = Function(V)
-
-        # Calculate number of dofs
-        self.num_dofs = V.dim()
-
-        # Define boundary condition
-        structure_element_degree = parameters["structure_element_degree"]
-        W = VectorFunctionSpace(Omega_F, "CG", structure_element_degree)
-        displacement = Function(W)
-        bc = DirichletBC(V, displacement, DomainBoundary())
-
-        # Define cG(1) scheme for time-stepping
-        k = Constant(0)
-        a = alpha*inner(v, u)*dx
-        L = alpha*inner(v, u0)*dx
-
-        # Store variables for time stepping
-        self.u0 = u0
-        self.u1 = u1
-        self.a = a
-        self.L = L
-        self.k = k
-        self.displacement = displacement
-        self.bc = bc
-
-    def step(self, dt):
-        "Compute solution for new time step"
-
-        # Update time step
-        self.k.assign(dt)
-
-        # Assemble linear system and apply boundary conditions
-        A = assemble(self.a)
-        b = assemble(self.L)
-        self.bc.apply(A, b)
-
-        # Compute solution
-        solve(A, self.u1.vector(), b)
-
-        return self.u1
-
-    def update(self, t):
-        self.u0.assign(self.u1)
-        return self.u1
-
-    def update_structure_displacement(self, U_S):
-        self.displacement.vector().zero()
-        self.problem.add_s2f(self.displacement.vector(), U_S.vector())
-
-    def solution(self):
-        "Return current solution values"
-        return self.u1
-
-    def solution_values(self):
-        "Return solution values at t_{n-1} and t_n"
-        return self.u0, self.u1
-
-    def __str__(self):
-        return "The mesh problem (M)"
-
-def extract_num_dofs(F, S, M):
+def extract_num_dofs(F, S):
     "Extract the number of dofs"
-    return F.num_dofs + S.num_dofs + M.num_dofs
+    return F.num_dofs + S.num_dofs
 
-def extract_solution(F, S, M):
+def extract_solution(F, S):
     "Extract solution from sub problems"
 
     # Extract solutions from subproblems
     u_F, p_F = F.solution()
     U_S, P_S = S.solution()
-    U_M = M.solution()
 
     # Pack up solutions
-    U = (u_F, p_F, U_S, P_S, U_M)
+    U = (u_F, p_F, U_S, P_S)
 
     return U
