@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-23
+# Last changed: 2011-02-27
 
 from dolfin import *
 from cbc.twist import DeformationGradient as F
@@ -14,9 +14,9 @@ from cbc.twist import GreenLagrangeStrain as E
 # Define identity matrix (2D)
 I = Identity(2)
 
-def Sigma_F(U_F, P_F, U_M, mu_F):
+def Sigma_F(U_F, P_F, mu_F):
     "Return fluid stress in reference domain (not yet Piola mapped)"
-    return mu_F*(grad(U_F)*inv(F(U_M)) + inv(F(U_M)).T*grad(U_F).T) - P_F*I
+    return mu_F*(grad(U_F) + grad(U_F).T) - P_F*I
 
 def Sigma_S(U_S, mu_S, lmbda_S):
     "Return structure stress in reference domain"

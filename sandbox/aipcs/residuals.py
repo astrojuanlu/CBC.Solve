@@ -8,11 +8,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 
-from cbc.twist import PiolaTransform
 from operators import Sigma_F as _Sigma_F
-from operators import Sigma_S as _Sigma_S
-from operators import Sigma_M as _Sigma_M
-from operators import F, J, I
 
 def inner_product(v, w):
     "Return inner product for mixed fluid/structure space"
@@ -67,29 +63,17 @@ def weak_residual(U0, U1, U, w, kn, problem):
     dx_F = dx(0)
     dx_S = dx(1)
 
-    # Define facet integrals
-    dS_F  = dS(0)
-    dS_S  = dS(1)
-    d_FSI = dS(2)
+    # Define time derivative
+    Dt_U_F = rho_F*((U_F1 - U_F0)/kn + dot(grad(U_F), U_F))
 
-    # Define time derivatives
-    dt_U_F = (1/kn) * (U_F1 - U_F0)
-    dt_U_M = (1/kn) * (U_M1 - U_M0)
-    Dt_U_F = rho_F * J(U_M) * (dt_U_F + dot(grad(U_F), dot(inv(F(U_M)), U_F - dt_U_M)))
-    Dt_U_S = (1/kn) * (U_S1 - U_S0)
-    Dt_P_S = rho_S * (1/kn) * (P_S1 - P_S0)
-    Dt_U_M = alpha_M * (1/kn) * (U_M1 - U_M0)
-
-    # Define stresses
-    Sigma_F = PiolaTransform(_Sigma_F(U_F, P_F, U_M, mu_F), U_M)
-    Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
-    Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
+    # Define stress
+    Sigma_F = _Sigma_F(U_F, P_F, mu_F)
 
     # Fluid residual
     R_F = inner(v_F, Dt_U_F)*dx_F + inner(grad(v_F), Sigma_F)*dx_F \
-        - inner(v_F, mu_F*J(U_M)*dot(dot(inv(F(U_M)).T, grad(U_F).T), dot(inv(F(U_M)).T, N_F)))*ds \
-        + inner(v_F, J(U_M)*P_F*dot(I, dot(inv(F(U_M)).T, N_F)))*ds \
-        + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx_F
+        - inner(v_F, mu_F*dot(grad(U_F).T, N_F))*ds \
+        + inner(v_F, P_F*N_F)*ds \
+        + inner(q_F, div(U_F))*dx_F
 
     return R_F
 
@@ -135,27 +119,17 @@ def strong_residual(U0, U1, U, Z, EZ, w, kn, problem):
     # Define midpoint values
     U_F = 0.5 * (U_F0 + U_F1)
     P_F = 0.5 * (P_F0 + P_F1)
-    U_S = 0.5 * (U_S0 + U_S1)
-    P_S = 0.5 * (P_S0 + P_S1)
-    U_M = 0.5 * (U_M0 + U_M1)
 
-    # Define time derivatives
-    dt_U_F = (1/kn) * (U_F1 - U_F0)
-    dt_U_M = (1/kn) * (U_M1 - U_M0)
-    Dt_U_F = rho_F * J(U_M) * (dt_U_F + dot(grad(U_F), dot(inv(F(U_M)), U_F - dt_U_M)))
-    Dt_U_S = (1/kn) * (U_S1 - U_S0)
-    Dt_P_S = rho_S * (1/kn) * (P_S1 - P_S0)
-    Dt_U_M = alpha_M * (1/kn) * (U_M1 - U_M0)
+    # Define time derivative
+    Dt_U_F = rho_F * ((U_F1 - U_F0)/kn + dot(grad(U_F), U_F))
 
-    # Define stresses
-    Sigma_F = PiolaTransform(_Sigma_F(U_F, P_F, U_M, mu_F), U_M)
-    Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
-    Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
+    # Define stress
+    Sigma_F = _Sigma_F(U_F, P_F, mu_F)
 
     # Fluid residual contributions
     R_F0 = w*inner(EZ_F - Z_F, Dt_U_F - div(Sigma_F))*dx_F
     R_F1 = avg(w)*inner(EZ_F('+') - Z_F('+'), jump(Sigma_F, N_F))*dS_F
     R_F2 = w*inner(EZ_F - Z_F, dot(Sigma_F, N_F))*ds
-    R_F3 = w*inner(EY_F - Y_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx_F
+    R_F3 = w*inner(EY_F - Y_F, div(U_F))*dx_F
 
     return (R_F0, R_F1, R_F2, R_F3)

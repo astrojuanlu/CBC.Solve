@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-20
+# Last changed: 2011-02-27
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
@@ -19,7 +19,6 @@ from dolfin import *
 from cbc.flow import NavierStokes
 from cbc.twist import Hyperelasticity, StVenantKirchhoff, PiolaTransform
 from operators import Sigma_F as _Sigma_F
-from operators import Sigma_M as _Sigma_M
 
 # Define fluid problem
 class FluidProblem(NavierStokes):
@@ -307,8 +306,8 @@ class MeshProblem():
 
         # Define cG(1) scheme for time-stepping
         k = Constant(0)
-        a = alpha*inner(v, u)*dx + 0.5*k*inner(sym(grad(v)), _Sigma_M(u, mu, lmbda))*dx
-        L = alpha*inner(v, u0)*dx - 0.5*k*inner(sym(grad(v)), _Sigma_M(u0, mu, lmbda))*dx
+        a = alpha*inner(v, u)*dx
+        L = alpha*inner(v, u0)*dx
 
         # Store variables for time stepping
         self.u0 = u0
