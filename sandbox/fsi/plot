@@ -47,11 +47,28 @@ T   = []
 K   = []
 RK  = []
 for directory in glob.glob("results-*"):
-    print "Extracting values from %s" % directory
 
     # Check for data
     if not os.path.isfile("%s/goal_functional_final.txt" % directory):
         continue
+
+    # Get legend
+    filename = "%s/application_parameters.xml" % directory
+    row = [row for row in open(filename).read().split("\n") if "description" in row][0]
+    l = row.split('value="')[1].split('"')[0]
+
+    # Filter out data based on legend
+    #if not "0.005" in l:
+    #    continue
+    #if not "0.3" in l:
+    #    continue
+    #if not "Dorfler" in l:
+    #    continue
+
+    print "Extracting values from %s" % directory
+
+    # Store legend
+    L.append(l)
 
     # Get number of dofs
     filename = "%s/num_dofs.txt" % directory
@@ -112,12 +129,6 @@ for directory in glob.glob("results-*"):
     T.append(t)
     K.append(k)
     RK.append(rk)
-
-    # Get legend
-    filename = "%s/application_parameters.xml" % directory
-    row = [row for row in open(filename).read().split("\n") if "description" in row][0]
-    l = row.split('value="')[1].split('"')[0]
-    L.append(l)
 
 # Select variable to plot
 X = D
@@ -210,7 +221,6 @@ elif variable == "Rk":
 
 # Sort values by legend
 indices = argsort(L)[:min(len(L), len(X))]
-L = [L[i] for i in indices]
 
 # Group values
 plotvals = []

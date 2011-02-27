@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-25
+# Last changed: 2011-02-27
 
 from fsiproblem import *
 
@@ -51,7 +51,7 @@ class ChannelWithFlap(FSI):
     #--- Common ---
 
     def end_time(self):
-        return 0.2
+        return 0.5
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
         A = (structure_right - structure_left) * structure_top
