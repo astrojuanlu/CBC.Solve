@@ -96,11 +96,7 @@ def weak_residuals(U0, U1, U, w, kn, problem):
         - inner(v_S('-'), dot(Sigma_F('+'), N_S('+')))*d_FSI \
         + inner(q_S, Dt_U_S - P_S)*dx_S
 
-    # Mesh residual contributions
-    R_M = inner(v_M, Dt_U_M)*dx_F + inner(sym(grad(v_M)), Sigma_M)*dx_F \
-        + inner(q_M, U_M - U_S)('+')*d_FSI
-
-    return R_F, R_S, R_M
+    return R_F, R_S
 
 def strong_residual(U0, U1, U, Z, EZ, w, kn, problem):
     "Return strong residuals (integrated by parts)"

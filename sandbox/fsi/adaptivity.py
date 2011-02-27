@@ -76,7 +76,6 @@ def estimate_error(problem, parameters):
     # Get weak residuals for E_k
     Rk0_F, Rk0_S, Rk0_M = weak_residuals(U0, U1, U1, Z0, kn, problem)
     Rk1_F, Rk1_S, Rk1_M = weak_residuals(U0, U1, U1, Z1, kn, problem)
-    rk_F, rk_S, rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
 
     # Get weak residuals for E_c
     Rc_F, Rc_S, Rc_M = weak_residuals(U0, U1, U, Z, kn, problem)

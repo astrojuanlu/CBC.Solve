@@ -74,12 +74,11 @@ def estimate_error(problem, parameters):
     Rh_F = strong_residual(U0, U1, U, Z, EZ, dg, kn, problem)
 
     # Get weak residuals for E_k
-    Rk0_F, Rk0_S, Rk0_M = weak_residuals(U0, U1, U1, Z0, kn, problem)
-    Rk1_F, Rk1_S, Rk1_M = weak_residuals(U0, U1, U1, Z1, kn, problem)
-    rk_F, rk_S, rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
+    Rk0_F, tmp = weak_residuals(U0, U1, U1, Z0, kn, problem)
+    Rk1_F, tmp = weak_residuals(U0, U1, U1, Z1, kn, problem)
 
     # Get weak residuals for E_c
-    Rc_F, Rc_S, Rc_M = weak_residuals(U0, U1, U, Z, kn, problem)
+    Rc_F, tmp = weak_residuals(U0, U1, U, Z, kn, problem)
 
     # Reset vectors for assembly of residuals
     eta_F = None
@@ -87,9 +86,6 @@ def estimate_error(problem, parameters):
     # Reset variables
     E_k   = 0.0
     E_c   = 0.0
-    E_c_F = 0.0
-    E_c_S = 0.0
-    E_c_M = 0.0
 
     # Sum residuals over time intervals
     timestep_range = read_timestep_range(problem.end_time(), primal_series)
@@ -129,14 +125,12 @@ def estimate_error(problem, parameters):
         e_F = [assemble(Rh_Fi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Fi in Rh_F]
 
         # Assemble weak residual for time discretization error (error estimate)
-        Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        Rk0 = assemble(Rk0_F, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        Rk1 = assemble(Rk1_F, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
         Rk = 0.5 * abs(Rk1 - Rk0) / dt
 
         # Assemble weak residuals for computational error
         RcF = assemble(Rc_F, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        RcS = assemble(Rc_S, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        RcM = assemble(Rc_M, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
 
         # Reset vectors for assembly of residuals
         eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
@@ -149,14 +143,9 @@ def estimate_error(problem, parameters):
         E_k += dt * dt * Rk
 
         # Add to E_c's
-        E_c_F += dt * RcF
-        E_c_S += dt * RcS
-        E_c_M += dt * RcM
+        E_c += dt * RcF
 
         end()
-
-    # Sum total computational error
-    E_c = E_c_F + E_c_S + E_c_M
 
     # Compute sum of error indicators
     eta_K = sum(eta_F)
@@ -171,7 +160,7 @@ def estimate_error(problem, parameters):
     adjust_tol_k(E_k, parameters)
 
     # Report results
-    save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, parameters)
+    save_errors(E, E_h, E_k, E_c, parameters)
     save_indicators(eta_F, eta_K, Omega, parameters)
 
     return E, eta_K, E_h
@@ -229,7 +218,7 @@ def compute_time_residual(primal_series, dual_series, t0, t1, problem, parameter
 
     # Assemble right-hand side
     Rk_F, Rk_S, Rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
-    r = assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+    r = assemble(Rk_F + Rk_S, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
 
     # Compute norm of functional
     R = Vector()
@@ -390,7 +379,7 @@ def save_mesh(mesh, parameters):
     file = File("%s/mesh_%d.xml" % (parameters["output_directory"], _refinement_level))
     file << mesh
 
-def save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, parameters):
+def save_errors(E, E_h, E_k, E_c, parameters):
     "Save errors to file"
 
     global _refinement_level
@@ -421,7 +410,7 @@ E_tot = %g
 
     # Save to file (for plotting)
     g = open("%s/error_estimates.txt" % parameters["output_directory"], "a")
-    g.write("%d %g %g %g %g %g %g %g\n" %(_refinement_level, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M))
+    g.write("%d %g %g %g %g\n" %(_refinement_level, E, E_h, E_k, abs(E_c)))
     g.close()
 
 def save_timestep(t1, Rk, dt, TOL_k, parameters):
