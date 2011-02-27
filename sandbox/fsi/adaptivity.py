@@ -16,12 +16,11 @@ from utils import *
 from sys import exit
 
 # Variables for time residual
-U0 = U1 = M = W = w = None
+U0 = U1 = M = W = w = TOL_k = None
 
 # Variables for storing adaptive data
 _refinement_level = -1
 min_timestep = None
-_adjustment_factor = None
 
 # Create files for plotting error indicators
 indicator_files = None
@@ -178,6 +177,9 @@ def estimate_error(problem, parameters):
     # Compute total error
     E = E_h + E_k + abs(E_c)
 
+    # Correct tolerance for adaptive time stepping
+    adjust_tol_k(E_k, parameters)
+
     # Report results
     save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, parameters)
     save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters)
@@ -290,29 +292,42 @@ def refine_mesh(problem, mesh, indicators, parameters):
 
     return refined_mesh
 
+def adjust_tol_k(E_k, parameters):
+    "Adjust tolerance for adaptive time steps"
+
+    global TOL_k
+
+    # Get parameters
+    w_k = parameters["w_k"]
+    TOL = parameters["tolerance"]
+    conservation = 1.0
+
+    # Compute new tolerance
+    TOL_k_new = w_k * TOL / E_k * TOL_k
+
+    # Modify tolerance to avoid oscillations
+    TOL_k_new = (1.0 + conservation) * TOL_k * TOL_k_new / (TOL_k + conservation * TOL_k_new)
+
+    info("Changing TOL_k: %g --> %g" % (TOL_k, TOL_k_new))
+    TOL_k = TOL_k_new
+
 def compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters):
     """Compute new time step based on residual R, stability factor S,
     tolerance TOL, and the previous time step dt. The time step is
     adjusted so that we will not step beyond the given end time."""
 
-    global _refinement_level, _adjustment_factor
+    global _refinement_level, TOL_k
 
-    # Parameters for adaptive time-stepping
-    safety_factor = 0.9   # safety factor for time step selection
-    snap = 0.9            # snapping to end time when close
-    conservation = 1.0    # time step conservation (high value means small change)
+    # Set parameters for adaptive time steps
+    conservation = 1.0
+    snap = 0.9
 
-    # Adjust factor to get reasonable time steps first time when dual is unknown
-    adjustment_factor = 1.0
-    if _refinement_level == 0:
-        if abs(dt - t1) / t1 < 100.0 * DOLFIN_EPS:
-            adjustment_factor = dt / (safety_factor * w_k * TOL / (T * Rk))
-            _adjustment_factor = adjustment_factor
-        else:
-            adjustment_factor = _adjustment_factor
+    # Adjust TOL_k first time when dual is unknown
+    if _refinement_level == 0 and abs(dt - t1) / t1 < 100.0 * DOLFIN_EPS:
+        TOL_k = dt * Rk
 
     # Compute new time step
-    dt_new = adjustment_factor * safety_factor * w_k * TOL / (T * Rk)
+    dt_new = TOL_k / Rk
 
     # Modify time step to avoid oscillations
     dt_new = (1.0 + conservation) * dt * dt_new / (dt + conservation * dt_new)
@@ -330,9 +345,9 @@ def compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters):
         min_timestep = dt_new
 
     # Save time step
-    save_timestep(t1, Rk, dt, parameters)
+    save_timestep(t1, Rk, dt, TOL_k, parameters)
     if at_end:
-        save_timestep(T, Rk, dt_new, parameters)
+        save_timestep(T, Rk, dt_new, TOL_k, parameters)
 
     info("Changing time step: %g --> %g" % (dt, dt_new))
 
@@ -419,17 +434,17 @@ E_tot = %g
     g.write("%d %g %g %g %g %g %g %g\n" %(_refinement_level, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M))
     g.close()
 
-def save_timestep(t1, Rk, dt, parameters):
+def save_timestep(t1, Rk, dt, TOL_k, parameters):
     "Save time step to file"
 
     global _refinement_level
 
     f = open("%s/timesteps.txt" % parameters["output_directory"], "a")
-    f.write("%d %g %g %g\n" % (_refinement_level, t1, dt, Rk))
+    f.write("%d %g %g %g %g\n" % (_refinement_level, t1, dt, Rk, TOL_k))
     f.close()
 
     f = open("%s/timesteps_final.txt" % parameters["output_directory"], "a")
-    f.write("%g %g %g\n" % (t1, dt, Rk))
+    f.write("%g %g %g %g\n" % (t1, dt, Rk, TOL_k))
     f.close()
 
 def save_goal_functional(t1, goal_functional, integrated_goal_functional, parameters):

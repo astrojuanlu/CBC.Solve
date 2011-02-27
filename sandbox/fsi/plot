@@ -106,7 +106,7 @@ for directory in glob.glob("results-*"):
     # Get time and time steps
     filename = "%s/timesteps.txt" % directory
     try:
-        level, t, k, rk = read_float(filename)
+        level, t, k, rk, TOL_k = read_float(filename)
     except:
         t = k = rk = None
     T.append(t)
