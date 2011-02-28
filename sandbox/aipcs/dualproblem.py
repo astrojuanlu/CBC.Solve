@@ -7,7 +7,6 @@ __license__  = "GNU GPL Version 3 or any later version"
 # Last changed: 2011-02-28
 
 from dolfin import *
-from operators import *
 
 def create_dual_forms(Omega, k, problem,
                       v_F,  q_F,
@@ -23,10 +22,9 @@ def create_dual_forms(Omega, k, problem,
     rho_F   = problem.fluid_density()
     mu_F    = problem.fluid_viscosity()
 
-    # Define normals
+    # Define normal and identity matrix
     N_F = FacetNormal(Omega)
-
-    I = Identity(2)
+    I = Identity(U_F0.cell().d)
 
     # Dual forms
     A_FF01 = -(1/k)*inner((Z_F0 - Z_F), rho_F*v_F)*dx

@@ -8,22 +8,16 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 
-from operators import Sigma_F as _Sigma_F
+def _Sigma_F(U_F, P_F, mu_F):
+    "Return fluid stress in reference domain (not yet Piola mapped)"
+    I = Identity(U_F.cell().d)
+    return mu_F*(grad(U_F) + grad(U_F).T) - P_F*I
 
 def inner_product(v, w):
-    "Return inner product for mixed fluid/structure space"
-
-    # Extract variables
+    "Return inner product for mixed velocity/pressure space"
     v1_F, q1_F = v
     v2_F, q2_F = w
-
-    # Inner product on subdomains, requiring ident_zeros
-    m1 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx
-
-    # Inner product on the whole domain
-    m2 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx
-
-    return m2
+    return (inner(v1_F, v2_F) + q1_F*q2_F)*dx
 
 def weak_residual(U0, U1, U, w, kn, problem):
     "Return weak residuals"

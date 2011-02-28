@@ -28,8 +28,6 @@ def solve_primal(problem, parameters):
     save_solution = parameters["save_solution"]
     plot_solution = parameters["plot_solution"]
     uniform_timestep = parameters["uniform_timestep"]
-    maxiter = parameters["maximum_iterations"]
-    num_smoothings = parameters["num_smoothings"]
 
     # Create files for saving to VTK
     level = refinement_level()
@@ -59,7 +57,7 @@ def solve_primal(problem, parameters):
     u_F0, u_F1, p_F0, p_F1 = F.solution_values()
 
     # Extract number of dofs
-    num_dofs_FSM = extract_num_dofs(F)
+    num_dofs = u_F0.vector().size() + p_F0.vector().size()
 
     # Save initial solution to file and series
     U = extract_solution(F)
@@ -120,7 +118,7 @@ def solve_primal(problem, parameters):
         if at_end:
             info("")
             info_green("Finished time-stepping")
-            save_dofs(num_dofs_FSM, timestep_counter, parameters)
+            save_dofs(num_dofs, timestep_counter, parameters)
             end()
             break
 
