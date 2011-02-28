@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-27
+# Last changed: 2011-02-28
 
 import pylab
 from time import time as python_time
@@ -115,9 +115,6 @@ def solve_primal(problem, parameters):
 
         # Update time step counter
         timestep_counter += 1
-
-        # FIXME: This should be done automatically by the solver
-        F.update_extra()
 
         # Check if we have reached the end time
         if at_end:

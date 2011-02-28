@@ -12,7 +12,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-27
+# Last changed: 2011-02-28
 
 from numpy import append
 from dolfin import *
@@ -37,7 +37,7 @@ def create_dual_series(parameters):
     else:
         return TimeSeries("%s/bin/Z" % parameters["output_directory"])
 
-def read_primal_data(U, t, Omega, Omega_F, series, parameters):
+def read_primal_data(U, t, Omega, series, parameters):
     "Read primal variables at given time"
 
     info("Reading primal data at t = %g" % t)
@@ -50,24 +50,8 @@ def read_primal_data(U, t, Omega, Omega_F, series, parameters):
     local_vals_p_F = Vector()
 
     # Retrieve primal data
-    series[0].retrieve(local_vals_u_F, t)
-    series[1].retrieve(local_vals_p_F, t)
-
-    # Get mappings from local meshes to global mesh
-    v_F = Omega_F.data().mesh_function("global vertex indices").array()
-    e_F = Omega_F.data().mesh_function("global edge indices").array()
-
-    # Get the number of vertices and edges
-    Nv = Omega.num_vertices()
-    Ne = Omega.num_edges()
-
-    # Compute mapping to global dofs
-    global_dofs_U_F = append(append(v_F, Nv + e_F), append((Nv + Ne) + v_F, (Nv + Ne + Nv) + e_F))
-    global_dofs_P_F = v_F
-
-    # Set degrees of freedom for primal functions
-    U_F.vector()[global_dofs_U_F] = local_vals_u_F
-    P_F.vector()[global_dofs_P_F] = local_vals_p_F
+    series[0].retrieve(U_F.vector(), t)
+    series[1].retrieve(P_F.vector(), t)
 
 def read_dual_data(Z, t, series):
     "Read dual solution at given time"

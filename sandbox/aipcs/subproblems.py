@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-27
+# Last changed: 2011-02-28
 
 __all__ = ["FluidProblem", "extract_solution", "extract_num_dofs"]
 
@@ -28,13 +28,11 @@ class FluidProblem(NavierStokes):
         self.problem = problem
 
         # Store initial and current mesh
-        self.Omega_F = problem.fluid_mesh()
-        self.omega_F0 = Mesh(self.Omega_F)
-        self.omega_F1 = Mesh(self.Omega_F)
+        self.Omega = problem.mesh()
 
         # Create functions for velocity and pressure on reference domain
-        self.V = VectorFunctionSpace(self.Omega_F, "CG", 2)
-        self.Q = FunctionSpace(self.Omega_F, "CG", 1)
+        self.V = VectorFunctionSpace(self.Omega, "CG", 2)
+        self.Q = FunctionSpace(self.Omega, "CG", 1)
         self.U_F0 = Function(self.V)
         self.U_F1 = Function(self.V)
         self.P_F0 = Function(self.Q)
@@ -53,7 +51,7 @@ class FluidProblem(NavierStokes):
         self.parameters["solver_parameters"]["save_solution"] = False
 
     def mesh(self):
-        return self.omega_F1
+        return self.Omega
 
     def viscosity(self):
         return self.problem.fluid_viscosity()
@@ -89,11 +87,6 @@ class FluidProblem(NavierStokes):
     def time_step(self):
         # Time step will be selected elsewhere
         return self.end_time()
-
-    def update_extra(self):
-
-        # Copy mesh coordinates
-        self.omega_F0.coordinates()[:] = self.omega_F1.coordinates()[:]
 
     def __str__(self):
         return "The fluid problem (F)"

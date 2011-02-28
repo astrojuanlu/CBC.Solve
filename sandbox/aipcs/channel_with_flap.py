@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-27
+# Last changed: 2011-02-28
 
 from fsiproblem import *
 
@@ -43,11 +43,11 @@ class ChannelWithFlap(FSI):
 
         mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 
-        #cell_domains = CellFunction("uint", mesh)
-        #cell_domains.set_all(0)
-        #structure = Structure()
-        #structure.mark(cell_domains, 1)
-        #mesh = SubMesh(mesh, cell_domains, 0)
+        cell_domains = CellFunction("uint", mesh)
+        cell_domains.set_all(0)
+        structure = Structure()
+        structure.mark(cell_domains, 1)
+        mesh = SubMesh(mesh, cell_domains, 0)
 
         # Initialize base class
         FSI.__init__(self, mesh)
@@ -57,8 +57,8 @@ class ChannelWithFlap(FSI):
     def end_time(self):
         return 0.1
 
-    def evaluate_functional(self, u_F, p_F, dx_F):
-        return u_F[0] * dx_F
+    def evaluate_functional(self, u_F, p_F, dx):
+        return u_F[0] * dx
 
     def __str__(self):
         return "Channel flow with an immersed elastic flap"

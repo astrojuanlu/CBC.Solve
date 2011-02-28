@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-27
+# Last changed: 2011-02-28
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
@@ -30,7 +30,6 @@ def estimate_error(problem, parameters):
 
     # Get meshes
     Omega = problem.mesh()
-    Omega_F = problem.fluid_mesh()
 
     # Define projection space (piecewise constants)
     DG = FunctionSpace(Omega, "DG", 0)
@@ -104,8 +103,8 @@ def estimate_error(problem, parameters):
         info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
         # Read primal data
-        read_primal_data(U0, t0, Omega, Omega_F, primal_series, parameters)
-        read_primal_data(U1, t1, Omega, Omega_F, primal_series, parameters)
+        read_primal_data(U0, t0, Omega, primal_series, parameters)
+        read_primal_data(U1, t1, Omega, primal_series, parameters)
 
         # Read dual data
         read_dual_data(ZZ0, t0, dual_series)
@@ -121,15 +120,15 @@ def estimate_error(problem, parameters):
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
-        e_F = [assemble(Rh_Fi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Fi in Rh_F]
+        e_F = [assemble(Rh_Fi) for Rh_Fi in Rh_F]
 
         # Assemble weak residual for time discretization error (error estimate)
-        Rk0 = assemble(Rk0_F, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        Rk1 = assemble(Rk1_F, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        Rk0 = assemble(Rk0_F)
+        Rk1 = assemble(Rk1_F)
         Rk = 0.5 * abs(Rk1 - Rk0) / dt
 
         # Assemble weak residuals for computational error
-        RcF = assemble(Rc_F, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        RcF = assemble(Rc_F, mesh=Omega)
 
         # Reset vectors for assembly of residuals
         eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
@@ -180,8 +179,6 @@ def init_adaptive_data(problem, parameters):
     w = TestFunctions(W)
     m = inner_product(w, TrialFunctions(W))
     M = assemble(m) # note: no cell_domains argument
-    #M = assemble(m, cell_domains=problem.cell_domains)
-    #M.ident_zeros()
 
     # Remove old saved data
     f = open("%s/timesteps_final.txt" % parameters["output_directory"], "w")
@@ -192,11 +189,10 @@ def read_adaptive_data(primal_series, dual_series, t0, t1, problem, parameters):
 
     global U0, U1, Z0, Z1, ZZ0, ZZ1
     Omega = problem.mesh()
-    Omega_F = problem.fluid_mesh()
 
     # Read primal data
-    read_primal_data(U0, t0, Omega, Omega_F, primal_series, parameters)
-    read_primal_data(U1, t1, Omega, Omega_F, primal_series, parameters)
+    read_primal_data(U0, t0, Omega, primal_series, parameters)
+    read_primal_data(U1, t1, Omega, primal_series, parameters)
 
     return U0, U1
 
@@ -216,7 +212,7 @@ def compute_time_residual(primal_series, dual_series, t0, t1, problem, parameter
 
     # Assemble right-hand side
     Rk_F = weak_residual(U0, U1, U1, w, kn, problem)
-    r = assemble(Rk_F, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+    r = assemble(Rk_F)
 
     # Compute norm of functional
     R = Vector()
@@ -520,7 +516,7 @@ def save_refinement_markers(mesh, markers):
             refinement_markers[i] = True
 
     # Save markers
-    indicator_files[4] << refinement_markers
+    indicator_files[2] << refinement_markers
 
 def refinement_level():
     "Return current refinement level"
