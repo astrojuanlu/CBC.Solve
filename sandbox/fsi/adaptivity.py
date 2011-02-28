@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-27
+# Last changed: 2011-02-28
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
@@ -107,7 +107,7 @@ def estimate_error(problem, parameters):
         info("")
         info("-"*80)
         begin("* Evaluating residuals on new time step")
-        info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
+        info_blue("* t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
         # Read primal data
         read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
@@ -176,14 +176,11 @@ def estimate_error(problem, parameters):
     # Compute total error
     E = E_h + E_k + abs(E_c)
 
-    # Correct tolerance for adaptive time stepping
-    adjust_tol_k(E_k, parameters)
-
     # Report results
     save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, parameters)
     save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters)
 
-    return E, eta_K, E_h
+    return E, eta_K, E_h, E_k, E_c
 
 def init_adaptive_data(problem, parameters):
     "Initialize data needed for adaptive time stepping"
@@ -291,8 +288,9 @@ def refine_mesh(problem, mesh, indicators, parameters):
 
     return refined_mesh
 
-def adjust_tol_k(E_k, parameters):
-    "Adjust tolerance for adaptive time steps"
+def refine_timestep(E_k, parameters):
+    """Refine time steps (for next round) by adjusting the tolerance
+    used to determine the adaptive time steps"""
 
     global TOL_k
 

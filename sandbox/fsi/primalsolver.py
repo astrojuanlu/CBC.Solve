@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-27
+# Last changed: 2011-02-28
 
 import pylab
 from time import time as python_time
@@ -149,8 +149,8 @@ def solve_primal(problem, parameters):
             # Check convergence
             if increment < itertol:
                 info("")
-                info_green("    Increment = %g (tolerance = %g), converged after %d iterations" % \
-                               (increment, itertol, iter + 1))
+                info_green("Increment = %g (tolerance = %g), converged after %d iterations" % (increment, itertol, iter + 1))
+                info("")
                 end()
 
                 # Saving number of FSI iterations
@@ -173,7 +173,7 @@ def solve_primal(problem, parameters):
 
             # Print size of increment
             info("")
-            info_red("    Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, iter + 1))
+            info_red("Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, iter + 1))
             end()
 
         # Save solution and time series to file

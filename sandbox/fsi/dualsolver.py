@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-20
+# Last changed: 2011-02-28
 
 from time import time as python_time
 from dolfin import *
@@ -92,7 +92,7 @@ def solve_dual(problem, parameters):
         info("")
         info("-"*80)
         begin("* Starting new time step")
-        info_blue("  * t = %g (T = %g, dt = %g)" % (t0, T, dt))
+        info_blue("* t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
         # Read primal data
         read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)

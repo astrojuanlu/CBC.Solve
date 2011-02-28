@@ -24,7 +24,7 @@ def default_parameters():
     p.add("structure_element_degree", 1)
     p.add("max_num_refinements", 100)
     p.add("tolerance", 0.1)
-    p.add("fixedpoint_tolerance", 1e-8)
+    p.add("fixedpoint_tolerance", 1e-12)
     p.add("initial_timestep", 0.01)
     p.add("num_initial_refinements", 0)
     p.add("maximum_iterations", 1000)
