@@ -20,7 +20,6 @@ U0 = U1 = M = W = w = TOL_k = None
 
 # Variables for storing adaptive data
 _refinement_level = -1
-min_timestep = None
 
 # Create files for plotting error indicators
 indicator_files = None
@@ -308,7 +307,7 @@ def refine_timestep(E_k, parameters):
     info("Changing TOL_k: %g --> %g" % (TOL_k, TOL_k_new))
     TOL_k = TOL_k_new
 
-def compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters):
+def compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters, final):
     """Compute new time step based on residual R, stability factor S,
     tolerance TOL, and the previous time step dt. The time step is
     adjusted so that we will not step beyond the given end time."""
@@ -320,7 +319,7 @@ def compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters):
     snap = 0.9
 
     # Adjust TOL_k first time when dual is unknown
-    if _refinement_level == 0 and abs(dt - t1) / t1 < 100.0 * DOLFIN_EPS:
+    if not final and abs(dt - t1) / t1 < 100.0 * DOLFIN_EPS:
         TOL_k = dt * Rk
 
     # Compute new time step
@@ -336,11 +335,6 @@ def compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters):
         dt_new = T - t1
         at_end = True
 
-    # Store minimum time step
-    global min_timestep
-    if min_timestep is None or dt_new < min_timestep:
-        min_timestep = dt_new
-
     # Save time step
     save_timestep(t1, Rk, dt, TOL_k, parameters)
     if at_end:
@@ -349,20 +343,6 @@ def compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters):
     info("Changing time step: %g --> %g" % (dt, dt_new))
 
     return dt_new, at_end
-
-def initial_timestep(problem, parameters):
-    "Return initial time step"
-
-    global min_timestep
-
-    # Get initial time step from parameters
-    dt = parameters["initial_timestep"]
-
-    # Use the smallest time step so far
-    if (not min_timestep is None) and min_timestep < dt:
-        dt = min_timestep
-
-    return dt
 
 def compute_itertol(problem, w_c, TOL, dt, t1, parameters):
     "Compute tolerance for FSI iterations"

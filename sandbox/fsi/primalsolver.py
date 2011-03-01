@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-28
+# Last changed: 2011-03-01
 
 import pylab
 from time import time as python_time
@@ -16,12 +16,12 @@ from adaptivity import *
 from storage import *
 import sys
 
-def solve_primal(problem, parameters):
+def solve_primal(problem, parameters, final):
     "Solve primal FSI problem"
 
     # Get parameters
     T = problem.end_time()
-    dt = initial_timestep(problem, parameters)
+    dt = parameters["initial_timestep"]
     TOL = parameters["tolerance"]
     w_k = parameters["w_k"]
     w_c = parameters["w_c"]
@@ -210,7 +210,7 @@ def solve_primal(problem, parameters):
         # Compute new adaptive time step
         else:
             Rk = compute_time_residual(primal_series, dual_series, t0, t1, problem, parameters)
-            (dt, at_end) = compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters)
+            (dt, at_end) = compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters, final)
             t0 = t1
             t1 = t1 + dt
 
