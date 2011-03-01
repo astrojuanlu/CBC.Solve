@@ -5,8 +5,9 @@ p = default_parameters()
 p["solve_primal"] = True
 p["solve_dual"] = True
 p["estimate_error"] = True
-p["tolerance"] = 1e-5
-p["initial_timestep"] = 0.05
+p["initial_timestep"] = 0.025
+p["uniform_timestep"] = True
+p["max_num_refinements"] = 0
 
 # Run problem
-run_local(problem, parameters=p, case="test")
+run_local("channel_with_flap", parameters=p, case="test")

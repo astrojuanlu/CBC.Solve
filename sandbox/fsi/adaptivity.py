@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-28
+# Last changed: 2011-03-01
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
@@ -142,9 +142,9 @@ def estimate_error(problem, parameters):
         RcM = assemble(Rc_M, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
 
         # Reset vectors for assembly of residuals
-        eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
-        eta_S = [zeros(Omega.num_cells()) for i in range(len(e_S))]
-        eta_M = [zeros(Omega.num_cells()) for i in range(len(e_M))]
+        if eta_F is None: eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
+        if eta_S is None: eta_S = [zeros(Omega.num_cells()) for i in range(len(e_S))]
+        if eta_M is None: eta_M = [zeros(Omega.num_cells()) for i in range(len(e_M))]
 
         # Add to error indicators
         for i in range(len(e_F)):
