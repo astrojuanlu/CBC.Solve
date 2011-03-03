@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-03-01
+# Last changed: 2011-02-28
 
 __all__ = ["FSISolver"]
 
@@ -53,7 +53,7 @@ class FSISolver(CBCSolver):
             # Solve primal problem
             if parameters["solve_primal"]:
                 begin("Solving primal problem")
-                goal_functional = solve_primal(self.problem, parameters, final)
+                goal_functional = solve_primal(self.problem, parameters)
                 end()
             else:
                 info("Not solving primal problem")
