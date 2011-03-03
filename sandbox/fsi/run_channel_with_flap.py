@@ -2,7 +2,7 @@ from fsirun import *
 
 # Set common parameters
 p = default_parameters()
-p["tolerance"] = 5e-8
+p["tolerance"] = 1e-3
 p["initial_timestep"] = 0.025
 
 # Run problem

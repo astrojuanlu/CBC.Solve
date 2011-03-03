@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-03-01
+# Last changed: 2011-03-03
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
@@ -335,11 +335,11 @@ def compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters):
         info("Close to t = T, snapping time step to end time: %g --> %g" % (dt_new, T - t1))
         dt_new = T - t1
         at_end = True
-
-    # Store minimum time step
-    global min_timestep
-    if min_timestep is None or dt_new < min_timestep:
-        min_timestep = dt_new
+    else:
+        # Store minimum time step (but don't include snapped time steps)
+        global min_timestep
+        if min_timestep is None or dt_new < min_timestep:
+            min_timestep = dt_new
 
     # Save time step
     save_timestep(t1, Rk, dt, TOL_k, parameters)
