@@ -23,9 +23,9 @@ def default_parameters():
 
     p.add("structure_element_degree", 1)
     p.add("max_num_refinements", 100)
-    p.add("tolerance", 0.1)
+    p.add("tolerance", 0.001)
     p.add("fixedpoint_tolerance", 1e-12)
-    p.add("initial_timestep", 0.01)
+    p.add("initial_timestep", 0.05)
     p.add("num_initial_refinements", 0)
     p.add("maximum_iterations", 1000)
     p.add("num_smoothings", 50)
@@ -41,9 +41,15 @@ def default_parameters():
 
     return p
 
+# Note handling of reading/writing parameters below. Both read/write
+# set the output directory and store parameters. This is needes so
+# that we can both run demos directly and from run scripts.
+
 def read_parameters():
-    """Read parameters from file specified on command-line or return
+    """Read parametrs from file specified on command-line or return
     default parameters if no file is specified"""
+
+    # Read parameters from the command-line
     import sys
     p = default_parameters()
     try:
@@ -52,6 +58,16 @@ def read_parameters():
         info("Parameters read from %s." % sys.argv[1])
     except:
         info("No parameters specified, using default parameters.")
+
+    # Set output directory
+    if p["output_directory"] == "unspecified":
+        p["output_directory"] = "results-%s" % date()
+
+    # Save to file <output_directory>/application_parameters.xml
+    filename = "%s/application_parameters.xml" % p["output_directory"]
+    file = File(filename)
+    file << p
+
     return p
 
 def store_parameters(p, problem, case):
@@ -74,3 +90,4 @@ def store_parameters(p, problem, case):
     file << p
 
     return filename
+
