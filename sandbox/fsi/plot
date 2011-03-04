@@ -19,7 +19,8 @@ if len(sys.argv) != 2 or not sys.argv[1] in cases:
 variable = sys.argv[1]
 
 # Set reference value
-reference_value = 0.00363978
+#reference_value = 0.00363978
+reference_value = 0.0036516
 
 def read(filename):
     return zip(*[[x for x in row.split(" ") if len(x) >0] for row in open(filename).read().split("\n") if " " in row and len(row) > 0])
