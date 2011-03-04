@@ -1,5 +1,0 @@
-* Record adaptive history
-* Handle command-line parameters
-* Move goal functional from dualproblem.py
-* Check implementation of dual problem against paper
-* Make sure primal CBC solvers (flow and twist) can handle adaptive time steps
