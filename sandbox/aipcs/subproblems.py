@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-28
+# Last changed: 2011-03-06
 
 __all__ = ["FluidProblem", "extract_solution"]
 
@@ -20,7 +20,7 @@ from cbc.flow import NavierStokes
 # Define fluid problem
 class FluidProblem(NavierStokes):
 
-    def __init__(self, problem):
+    def __init__(self, problem, parameters):
 
         # Store problem
         self.problem = problem
@@ -31,8 +31,8 @@ class FluidProblem(NavierStokes):
         # Initialize base class
         NavierStokes.__init__(self)
 
-        # Don't plot and save solution in subsolvers
-        self.parameters["solver_parameters"]["plot_solution"] = False
+        # Handle plotting and saving
+        self.parameters["solver_parameters"]["plot_solution"] = parameters["plot_solution"]
         self.parameters["solver_parameters"]["save_solution"] = False
 
     def mesh(self):

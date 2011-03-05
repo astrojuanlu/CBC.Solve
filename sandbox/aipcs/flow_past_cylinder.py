@@ -10,11 +10,8 @@ from fsiproblem import *
 application_parameters = read_parameters()
 
 # Constants related to the geometry of the problem
-channel_length  = 4.0
-channel_height  = 1.0
-structure_left  = 1.4
-structure_right = 1.8
-structure_top   = 0.6
+channel_length  = 2.4
+channel_height  = 0.4
 
 # Define boundaries
 inflow  = "x[0] < DOLFIN_EPS && \
@@ -25,28 +22,12 @@ outflow = "x[0] > %g - DOLFIN_EPS && \
            x[1] < %g - DOLFIN_EPS" % (channel_length, channel_height)
 noslip  = "on_boundary && !(%s) && !(%s)" % (inflow, outflow)
 
-# Define structure subdomain
-class Structure(SubDomain):
-    def inside(self, x, on_boundary):
-        return \
-            x[0] > structure_left  - DOLFIN_EPS and \
-            x[0] < structure_right + DOLFIN_EPS and \
-            x[1] < structure_top   + DOLFIN_EPS
-
-class ChannelWithFlap(FSI):
+class FlowPastCylinder(FSI):
 
     def __init__(self):
 
-        ny = 5
-        nx = 20
-
-        mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
-
-        cell_domains = CellFunction("uint", mesh)
-        cell_domains.set_all(0)
-        structure = Structure()
-        structure.mark(cell_domains, 1)
-        mesh = SubMesh(mesh, cell_domains, 0)
+        # Read mesh
+        mesh = Mesh("cylinder.xml.gz")
 
         # Initialize base class
         FSI.__init__(self, mesh)
@@ -54,7 +35,7 @@ class ChannelWithFlap(FSI):
     #--- Common ---
 
     def end_time(self):
-        return 0.1
+        return 8.0
 
     def evaluate_functional(self, u_F, p_F, dx):
         return u_F[0] * dx
@@ -68,7 +49,7 @@ class ChannelWithFlap(FSI):
         return 1.0
 
     def fluid_viscosity(self):
-        return 0.002
+        return 0.001
 
     def fluid_velocity_dirichlet_values(self):
         return [(0.0, 0.0)]
@@ -86,8 +67,8 @@ class ChannelWithFlap(FSI):
         return (0.0, 0.0)
 
     def fluid_pressure_initial_condition(self):
-        return "1.0 - 0.25*x[0]"
+        return "1.0 - x[0]/2.4"
 
 # Define and solve problem
-problem = ChannelWithFlap()
+problem = FlowPastCylinder()
 problem.solve(application_parameters)

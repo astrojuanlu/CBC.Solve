@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-28
+# Last changed: 2011-03-06
 
 import pylab
 from time import time as python_time
@@ -51,7 +51,7 @@ def solve_primal(problem, parameters):
     timestep_counter = 0
 
     # Define the three subproblems
-    F = FluidProblem(problem)
+    F = FluidProblem(problem, parameters)
 
     # Get solution values
     u_F0, u_F1, p_F0, p_F1 = F.solution_values()
@@ -89,9 +89,6 @@ def solve_primal(problem, parameters):
         begin("* Solving fluid subproblem (F)")
         F.step(dt)
         end()
-
-        # Plot solution
-        if plot_solution: _plot_solution(u_F1)
 
         # Evaluate user goal functional
         goal_functional = assemble(problem.evaluate_functional(u_F1, p_F1, dx))
@@ -147,10 +144,6 @@ def solve_primal(problem, parameters):
 
     # Return solution
     return goal_functional
-
-def _plot_solution(u_F):
-    "Plot solution"
-    plot(u_F, title="Fluid velocity")
 
 def _save_solution(U, files):
     "Save solution to VTK"
