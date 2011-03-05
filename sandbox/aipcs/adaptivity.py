@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-28
+# Last changed: 2011-03-06
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
@@ -48,17 +48,12 @@ def estimate_error(problem, parameters):
     ZZ1, Z1 = create_dual_functions(Omega, parameters)
 
     # Define function spaces for extrapolation
-    V2 = VectorFunctionSpace(Omega, "CG", 2)
     V3 = VectorFunctionSpace(Omega, "CG", 3)
     Q2 = FunctionSpace(Omega, "CG", 2)
-    if parameters["structure_element_degree"] == 1:
-        VSE = VectorFunctionSpace(Omega, "CG", 2)
-    else:
-        VSE = VectorFunctionSpace(Omega, "CG", 3)
 
     # Define functions for extrapolation
-    EZ0 = [Function(EV) for EV in (V3, Q2, VSE, VSE, V2, V2)]
-    EZ1 = [Function(EV) for EV in (V3, Q2, VSE, VSE, V2, V2)]
+    EZ0 = [Function(EV) for EV in (V3, Q2)]
+    EZ1 = [Function(EV) for EV in (V3, Q2)]
 
     # Define midpoint values for primal and dual functions
     U  = [0.5 * (U0[i]  + U1[i])  for i in range(2)]

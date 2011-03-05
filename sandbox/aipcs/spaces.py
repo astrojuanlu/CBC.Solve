@@ -10,7 +10,6 @@ def create_primal_functions(Omega, parameters):
     "Return primal variables on the full domain initialized to zero"
 
     # Create function spaces
-    structure_element_degree = parameters["structure_element_degree"]
     V_F = VectorFunctionSpace(Omega, "CG", 2)
     Q_F = FunctionSpace(Omega, "CG", 1)
 
@@ -24,7 +23,6 @@ def create_dual_space(Omega, parameters):
     "Return dual function space on the full domain"
 
     # Create function spaces
-    structure_element_degree = parameters["structure_element_degree"]
     V_F = VectorFunctionSpace(Omega, "CG", 2)
     Q_F = FunctionSpace(Omega, "CG", 1)
 
