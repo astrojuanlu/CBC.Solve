@@ -126,7 +126,7 @@ def estimate_error(problem, parameters):
         RcF = assemble(Rc_F, mesh=Omega)
 
         # Reset vectors for assembly of residuals
-        eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
+        if eta_F is None: eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
 
         # Add to error indicators
         for i in range(len(e_F)):
@@ -306,11 +306,11 @@ def compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters):
         info("Close to t = T, snapping time step to end time: %g --> %g" % (dt_new, T - t1))
         dt_new = T - t1
         at_end = True
-
-    # Store minimum time step
-    global min_timestep
-    if min_timestep is None or dt_new < min_timestep:
-        min_timestep = dt_new
+    else:
+        # Store minimum time step (but don't include snapped time steps)
+        global min_timestep
+        if min_timestep is None or dt_new < min_timestep:
+            min_timestep = dt_new
 
     # Save time step
     save_timestep(t1, Rk, dt, TOL_k, parameters)

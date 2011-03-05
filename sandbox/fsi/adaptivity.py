@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-03-03
+# Last changed: 2011-03-06
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
