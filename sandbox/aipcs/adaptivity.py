@@ -149,14 +149,11 @@ def estimate_error(problem, parameters):
     # Compute total error
     E = E_h + E_k + abs(E_c)
 
-    # Correct tolerance for adaptive time stepping
-    adjust_tol_k(E_k, parameters)
-
     # Report results
     save_errors(E, E_h, E_k, E_c, parameters)
     save_indicators(eta_F, eta_K, Omega, parameters)
 
-    return E, eta_K, E_h
+    return E, eta_K, E_h, E_k, E_c
 
 def init_adaptive_data(problem, parameters):
     "Initialize data needed for adaptive time stepping"
@@ -260,8 +257,9 @@ def refine_mesh(problem, mesh, indicators, parameters):
 
     return refined_mesh
 
-def adjust_tol_k(E_k, parameters):
-    "Adjust tolerance for adaptive time steps"
+def refine_timestep(E_k, parameters):
+    """Refine time steps (for next round) by adjusting the tolerance
+    used to determine the adaptive time steps"""
 
     global TOL_k
 

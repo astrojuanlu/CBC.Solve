@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-28
+# Last changed: 2011-03-06
 
 __all__ = ["FSISolver"]
 
@@ -47,6 +47,7 @@ class FSISolver(CBCSolver):
         # Adaptive loop
         cpu_time = python_time()
         goal_functional = None
+        final = False
         for level in range(max_num_refinements + 1):
 
             # Solve primal problem
@@ -68,7 +69,7 @@ class FSISolver(CBCSolver):
             # Estimate error and compute error indicators
             if parameters["estimate_error"]:
                 begin("Estimating error and computing error indicators")
-                error, indicators, E_h = estimate_error(self.problem, parameters)
+                error, indicators, E_h, E_k, E_c = estimate_error(self.problem, parameters)
                 end()
             else:
                 info("Not estimating error")
@@ -77,7 +78,11 @@ class FSISolver(CBCSolver):
             # Check if error is small enough
             begin("Checking error estimate")
             if error <= tolerance:
-                info_green("Adaptive solver converged: error = %g <= TOL = %g" % (error, tolerance))
+                info_green("Adaptive solver converged on level %d: error = %g <= TOL = %g" % (level, error, tolerance))
+                break
+            elif final:
+                info_green("Adaptive solver converged on level %d: error = %g (TOL = %g)" % (level, error, tolerance))
+                info("Error too large but it doesn't get any better than this. ;-)")
                 break
             else:
                 info_red("Error too large, need to refine: error = %g > TOL = %g" % (error, tolerance))
@@ -87,8 +92,16 @@ class FSISolver(CBCSolver):
             begin("Checking space error estimate")
             mesh_tolerance = w_h * tolerance
             if E_h <= mesh_tolerance:
+
+                # Freeze mesh
                 info_blue("Freezing current mesh: E_h = %g <= TOL_h = %g" % (E_h, mesh_tolerance))
+                info_blue("Starting final round!")
+                final = True
                 refined_mesh = self.problem.mesh()
+
+                # Refine timestep
+                refine_timestep(E_k, parameters)
+
             elif parameters["uniform_mesh"]:
                 info_red("Refining mesh uniformly")
                 refined_mesh = refine(self.problem.mesh())
