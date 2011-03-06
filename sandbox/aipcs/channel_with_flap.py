@@ -37,8 +37,8 @@ class ChannelWithFlap(FSI):
 
     def __init__(self):
 
-        ny = 5
         nx = 20
+        ny = 5
 
         mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 
@@ -54,7 +54,7 @@ class ChannelWithFlap(FSI):
     #--- Common ---
 
     def end_time(self):
-        return 0.1
+        return 4.0
 
     def evaluate_functional(self, u_F, p_F, dx):
         return u_F[0] * dx
@@ -86,7 +86,7 @@ class ChannelWithFlap(FSI):
         return (0.0, 0.0)
 
     def fluid_pressure_initial_condition(self):
-        return "1.0 - 0.25*x[0]"
+        return "1.0 - x[0] / %g" % channel_length
 
 # Define and solve problem
 problem = ChannelWithFlap()
