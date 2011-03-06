@@ -54,7 +54,7 @@ class ChannelWithFlap(FSI):
     #--- Common ---
 
     def end_time(self):
-        return 4.0
+        return 2.5
 
     def evaluate_functional(self, u_F, p_F, dx):
         return u_F[0] * dx
