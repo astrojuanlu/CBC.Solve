@@ -35,6 +35,7 @@ def default_parameters():
 
     p.add("output_directory", "unspecified")
     p.add("description", "unspecified")
+    p.add("goal_functional", 0)
 
     return p
 

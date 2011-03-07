@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-03-06
+# Last changed: 2011-03-07
 
 import pylab
 from time import time as python_time
@@ -91,7 +91,8 @@ def solve_primal(problem, parameters):
         end()
 
         # Evaluate user goal functional
-        goal_functional = assemble(problem.evaluate_functional(u_F1, p_F1, dx))
+        M, cd, efd, ifd = problem.evaluate_functional(u_F1, p_F1)
+        goal_functional = assemble(M, cell_domains=cd, exterior_facet_domains=efd, interior_facet_domains=ifd)
 
         # Integrate goal functional
         integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)

@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-28
+# Last changed: 2011-03-07
 
 from time import time as python_time
 from dolfin import *
@@ -56,12 +56,12 @@ def solve_dual(problem, parameters):
     k = Constant(0.0)
 
     # Create variational forms for dual problem
-    A, L = create_dual_forms(Omega, k, problem,
-                             v_F,  q_F,
-                             Z_F,  Y_F,
-                             Z_F0, Y_F0,
-                             U_F0, P_F0,
-                             U_F1, P_F1)
+    A, L, cd, efd, ifd = create_dual_forms(Omega, k, problem,
+                                           v_F,  q_F,
+                                           Z_F,  Y_F,
+                                           Z_F0, Y_F0,
+                                           U_F0, P_F0,
+                                           U_F1, P_F1)
 
     # Create dual boundary conditions
     bcs = create_dual_bcs(problem, W)
@@ -92,11 +92,11 @@ def solve_dual(problem, parameters):
 
         # Assemble matrix
         info("Assembling matrix")
-        matrix = assemble(A)
+        matrix = assemble(A, cell_domains=cd, exterior_facet_domains=efd, interior_facet_domains=ifd)
 
         # Assemble vector
         info("Assembling vector")
-        vector = assemble(L)
+        vector = assemble(L, cell_domains=cd, exterior_facet_domains=efd, interior_facet_domains=ifd)
 
         # Apply boundary conditions
         info("Applying boundary conditions")

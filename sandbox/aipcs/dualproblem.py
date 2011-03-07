@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-28
+# Last changed: 2011-03-07
 
 from dolfin import *
 
@@ -40,15 +40,15 @@ def create_dual_forms(Omega, k, problem,
     A_system = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + G_FF
 
     # Define goal funtional
-    goal_functional = problem.evaluate_functional(v_F, q_F, dx)
+    M, cd, efd, ifd = problem.evaluate_functional(v_F, q_F)
 
     # Define the dual rhs and lhs
     A = lhs(A_system)
-    L = rhs(A_system) + goal_functional
+    L = rhs(A_system) + M
 
     info_blue("Dual forms created")
 
-    return A, L
+    return A, L, cd, efd, ifd
 
 def create_dual_bcs(problem, W):
     "Create boundary conditions for dual problem"
