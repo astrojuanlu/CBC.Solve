@@ -85,9 +85,6 @@ class ChannelWithFlap(FSI):
 
     def evaluate_functional(self, u, p):
 
-        # Get mesh
-        mesh = u.function_space().mesh()
-
         # Goal functional 0: shear stress on top of flap
         if application_parameters["goal_functional"] == 0:
             info("Goal functional is shear stress on top of flap")
@@ -100,7 +97,7 @@ class ChannelWithFlap(FSI):
         if application_parameters["goal_functional"] == 1:
             info("Goal functional is integration against Gaussian")
 
-            self.psi.c /= assemble(self.psi*dx, mesh=mesh)
+            self.psi.c /= assemble(self.psi*dx, mesh=self.Omega)
             return u[0]*self.psi*dx, None, None, None
 
         # Goal functional 2: outflow

@@ -19,8 +19,8 @@ def create_dual_forms(Omega, k, problem,
     info_blue("Creating dual forms")
 
     # Get problem parameters
-    rho_F   = problem.fluid_density()
-    mu_F    = problem.fluid_viscosity()
+    rho_F = problem.fluid_density()
+    mu_F = problem.fluid_viscosity()
 
     # Define normal and identity matrix
     N_F = FacetNormal(Omega)
