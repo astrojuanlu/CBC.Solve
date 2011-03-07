@@ -37,8 +37,10 @@ class ChannelWithFlap(FSI):
 
     def __init__(self):
 
-        nx = 20
-        ny = 5
+        n = 3
+
+        nx = n*20
+        ny = n*5
 
         mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 
