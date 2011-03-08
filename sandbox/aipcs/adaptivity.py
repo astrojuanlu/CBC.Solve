@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-03-06
+# Last changed: 2011-03-08
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
@@ -64,21 +64,21 @@ def estimate_error(problem, parameters):
     kn = Constant(0.0)
 
     # Get strong residuals for E_h
-    Rh_F = strong_residual(U0, U1, U, Z, EZ, dg, kn, problem)
+    Rh = strong_residual(U0, U1, U, Z, EZ, dg, kn, problem)
 
     # Get weak residuals for E_k
-    Rk0_F = weak_residual(U0, U1, U1, Z0, kn, problem)
-    Rk1_F = weak_residual(U0, U1, U1, Z1, kn, problem)
+    rk0 = weak_residual(U0, U1, U1, Z0, kn, problem)
+    rk1 = weak_residual(U0, U1, U1, Z1, kn, problem)
 
     # Get weak residuals for E_c
-    Rc_F = weak_residual(U0, U1, U, Z, kn, problem)
+    rc = weak_residual(U0, U1, U, Z, kn, problem)
 
     # Reset vectors for assembly of residuals
-    eta_F = None
+    eta = None
 
     # Reset variables
-    E_k   = 0.0
-    E_c   = 0.0
+    E_k = 0.0
+    E_c = 0.0
 
     # Sum residuals over time intervals
     timestep_range = read_timestep_range(problem.end_time(), primal_series)
@@ -115,33 +115,33 @@ def estimate_error(problem, parameters):
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
-        e_F = [assemble(Rh_Fi) for Rh_Fi in Rh_F]
+        e = [assemble(Rhi) for Rhi in Rh]
 
         # Assemble weak residual for time discretization error (error estimate)
-        Rk0 = assemble(Rk0_F)
-        Rk1 = assemble(Rk1_F)
+        Rk0 = assemble(rk0)
+        Rk1 = assemble(rk1)
         Rk = 0.5 * abs(Rk1 - Rk0) / dt
 
         # Assemble weak residuals for computational error
-        RcF = assemble(Rc_F, mesh=Omega)
+        Rc = assemble(rc, mesh=Omega)
 
         # Reset vectors for assembly of residuals
-        if eta_F is None: eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
+        if eta is None: eta = [zeros(Omega.num_cells()) for i in range(len(e))]
 
         # Add to error indicators
-        for i in range(len(e_F)):
-            eta_F[i] += dt * abs(e_F[i].array())
+        for i in range(len(e)):
+            eta[i] += dt * abs(e[i].array())
 
         # Add to E_k
         E_k += dt * dt * Rk
 
         # Add to E_c's
-        E_c += dt * RcF
+        E_c += dt * Rc
 
         end()
 
     # Compute sum of error indicators
-    eta_K = sum(eta_F)
+    eta_K = sum(eta)
 
     # Compute space discretization error
     E_h = sum(eta_K)
@@ -151,7 +151,7 @@ def estimate_error(problem, parameters):
 
     # Report results
     save_errors(E, E_h, E_k, E_c, parameters)
-    save_indicators(eta_F, eta_K, Omega, parameters)
+    save_indicators(eta, eta_K, Omega, parameters)
 
     return E, eta_K, E_h, E_k, E_c
 
