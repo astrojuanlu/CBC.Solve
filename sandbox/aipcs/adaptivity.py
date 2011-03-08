@@ -66,10 +66,6 @@ def estimate_error(problem, parameters):
     # Get strong residuals for E_h
     Rh = strong_residual(U0, U1, U, Z, EZ, dg, kn, problem)
 
-    # Get weak residuals for e_h (sharper bound)
-    rh0 = weak_residual(U0, U1, U1, Z1,  kn, problem)
-    rh1 = weak_residual(U0, U1, U1, EZ1, kn, problem)
-
     # Get weak residuals for E_k
     rk0 = weak_residual(U0, U1, U1, Z0, kn, problem)
     rk1 = weak_residual(U0, U1, U1, Z1, kn, problem)
@@ -81,7 +77,6 @@ def estimate_error(problem, parameters):
     eta = None
 
     # Reset variables
-    e_h = 0.0
     E_k = 0.0
     E_c = 0.0
 
@@ -118,13 +113,9 @@ def estimate_error(problem, parameters):
         [apply_bc(EZ0[j], Z0[j]) for j in range(2)]
         [apply_bc(EZ1[j], Z1[j]) for j in range(2)]
 
-        # Assemble strong residuals for space discretization error E_h
+        # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
         e = [assemble(Rhi) for Rhi in Rh]
-
-        # Assemble weak residuals for space discretization error e_h
-        Rh0 = assemble(rh0)
-        Rh1 = assemble(rh1)
 
         # Assemble weak residual for time discretization error (error estimate)
         Rk0 = assemble(rk0)
@@ -141,13 +132,10 @@ def estimate_error(problem, parameters):
         for i in range(len(e)):
             eta[i] += dt * abs(e[i].array())
 
-        # Add to e_h
-        e_h += dt * abs(Rh0 - Rh1)
-
         # Add to E_k
         E_k += dt * dt * Rk
 
-        # Add to E_c
+        # Add to E_c's
         E_c += dt * Rc
 
         end()
@@ -159,11 +147,10 @@ def estimate_error(problem, parameters):
     E_h = sum(eta_K)
 
     # Compute total error
-    e = e_h + E_k + abs(E_c)
     E = E_h + E_k + abs(E_c)
 
     # Report results
-    save_errors(E, E_h, E_k, E_c, e, e_h, parameters)
+    save_errors(E, E_h, E_k, E_c, parameters)
     save_indicators(eta, eta_K, Omega, parameters)
 
     return E, eta_K, E_h, E_k, E_c
@@ -379,7 +366,7 @@ def save_mesh(mesh, parameters):
     file = File("%s/mesh_%d.xml" % (parameters["output_directory"], _refinement_level))
     file << mesh
 
-def save_errors(E, E_h, E_k, E_c, e, e_h, parameters):
+def save_errors(E, E_h, E_k, E_c, parameters):
     "Save errors to file"
 
     global _refinement_level
@@ -392,15 +379,13 @@ Estimating error
 Adaptive loop no. = %d
 -------------------------
 
-e_h  = %g
 E_h  = %g
 E_k  = %g
 E_c  = %g
 
-e_tot = %g
 E_tot = %g
 
-""" % (_refinement_level, e_h, E_h, E_k, abs(E_c), e, E)
+""" % (_refinement_level, E_h, E_k, abs(E_c), E)
 
     # Print summary
     info(summary)
@@ -412,7 +397,7 @@ E_tot = %g
 
     # Save to file (for plotting)
     g = open("%s/error_estimates.txt" % parameters["output_directory"], "a")
-    g.write("%d %g %g %g %g %g %g\n" %(_refinement_level, E, E_h, E_k, abs(E_c), e, e_h))
+    g.write("%d %g %g %g %g\n" %(_refinement_level, E, E_h, E_k, abs(E_c)))
     g.close()
 
 def save_timestep(t1, Rk, dt, TOL_k, parameters):
