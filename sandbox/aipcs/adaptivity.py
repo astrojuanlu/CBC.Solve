@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-03-06
+# Last changed: 2011-03-08
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
@@ -64,21 +64,26 @@ def estimate_error(problem, parameters):
     kn = Constant(0.0)
 
     # Get strong residuals for E_h
-    Rh_F = strong_residual(U0, U1, U, Z, EZ, dg, kn, problem)
+    Rh = strong_residual(U0, U1, U, Z, EZ, dg, kn, problem)
+
+    # Get weak residuals for e_h (sharper bound)
+    rh0 = weak_residual(U0, U1, U1, Z1,  kn, problem)
+    rh1 = weak_residual(U0, U1, U1, EZ1, kn, problem)
 
     # Get weak residuals for E_k
-    Rk0_F = weak_residual(U0, U1, U1, Z0, kn, problem)
-    Rk1_F = weak_residual(U0, U1, U1, Z1, kn, problem)
+    rk0 = weak_residual(U0, U1, U1, Z0, kn, problem)
+    rk1 = weak_residual(U0, U1, U1, Z1, kn, problem)
 
     # Get weak residuals for E_c
-    Rc_F = weak_residual(U0, U1, U, Z, kn, problem)
+    rc = weak_residual(U0, U1, U, Z, kn, problem)
 
     # Reset vectors for assembly of residuals
-    eta_F = None
+    eta = None
 
     # Reset variables
-    E_k   = 0.0
-    E_c   = 0.0
+    e_h = 0.0
+    E_k = 0.0
+    E_c = 0.0
 
     # Sum residuals over time intervals
     timestep_range = read_timestep_range(problem.end_time(), primal_series)
@@ -113,45 +118,53 @@ def estimate_error(problem, parameters):
         [apply_bc(EZ0[j], Z0[j]) for j in range(2)]
         [apply_bc(EZ1[j], Z1[j]) for j in range(2)]
 
-        # Assemble strong residuals for space discretization error
+        # Assemble strong residuals for space discretization error E_h
         info("Assembling error contributions")
-        e_F = [assemble(Rh_Fi) for Rh_Fi in Rh_F]
+        e = [assemble(Rhi) for Rhi in Rh]
+
+        # Assemble weak residuals for space discretization error e_h
+        Rh0 = assemble(rh0)
+        Rh1 = assemble(rh1)
 
         # Assemble weak residual for time discretization error (error estimate)
-        Rk0 = assemble(Rk0_F)
-        Rk1 = assemble(Rk1_F)
+        Rk0 = assemble(rk0)
+        Rk1 = assemble(rk1)
         Rk = 0.5 * abs(Rk1 - Rk0) / dt
 
         # Assemble weak residuals for computational error
-        RcF = assemble(Rc_F, mesh=Omega)
+        Rc = assemble(rc, mesh=Omega)
 
         # Reset vectors for assembly of residuals
-        if eta_F is None: eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
+        if eta is None: eta = [zeros(Omega.num_cells()) for i in range(len(e))]
 
         # Add to error indicators
-        for i in range(len(e_F)):
-            eta_F[i] += dt * abs(e_F[i].array())
+        for i in range(len(e)):
+            eta[i] += dt * abs(e[i].array())
+
+        # Add to e_h
+        e_h += dt * abs(Rh0 - Rh1)
 
         # Add to E_k
         E_k += dt * dt * Rk
 
-        # Add to E_c's
-        E_c += dt * RcF
+        # Add to E_c
+        E_c += dt * Rc
 
         end()
 
     # Compute sum of error indicators
-    eta_K = sum(eta_F)
+    eta_K = sum(eta)
 
     # Compute space discretization error
     E_h = sum(eta_K)
 
     # Compute total error
+    e = e_h + E_k + abs(E_c)
     E = E_h + E_k + abs(E_c)
 
     # Report results
-    save_errors(E, E_h, E_k, E_c, parameters)
-    save_indicators(eta_F, eta_K, Omega, parameters)
+    save_errors(E, E_h, E_k, E_c, e, e_h, parameters)
+    save_indicators(eta, eta_K, Omega, parameters)
 
     return E, eta_K, E_h, E_k, E_c
 
@@ -366,7 +379,7 @@ def save_mesh(mesh, parameters):
     file = File("%s/mesh_%d.xml" % (parameters["output_directory"], _refinement_level))
     file << mesh
 
-def save_errors(E, E_h, E_k, E_c, parameters):
+def save_errors(E, E_h, E_k, E_c, e, e_h, parameters):
     "Save errors to file"
 
     global _refinement_level
@@ -379,13 +392,15 @@ Estimating error
 Adaptive loop no. = %d
 -------------------------
 
+e_h  = %g
 E_h  = %g
 E_k  = %g
 E_c  = %g
 
+e_tot = %g
 E_tot = %g
 
-""" % (_refinement_level, E_h, E_k, abs(E_c), E)
+""" % (_refinement_level, e_h, E_h, E_k, abs(E_c), e, E)
 
     # Print summary
     info(summary)
@@ -397,7 +412,7 @@ E_tot = %g
 
     # Save to file (for plotting)
     g = open("%s/error_estimates.txt" % parameters["output_directory"], "a")
-    g.write("%d %g %g %g %g\n" %(_refinement_level, E, E_h, E_k, abs(E_c)))
+    g.write("%d %g %g %g %g %g %g\n" %(_refinement_level, E, E_h, E_k, abs(E_c), e, e_h))
     g.close()
 
 def save_timestep(t1, Rk, dt, TOL_k, parameters):
