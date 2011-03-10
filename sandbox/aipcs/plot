@@ -11,7 +11,7 @@ from numpy import argsort, array
 from pylab import *
 
 # Get command-line parameters
-cases = ("M", "e", "E", "Eh", "Ek", "Ec", "I", "Ih", "Ik", "Ic", "k", "Rk")
+cases = ("M", "e", "E", "Eh", "Ek", "Ec", "Ec0", "Ec1", "I", "Ih", "Ik", "Ic", "k", "Rk")
 if len(sys.argv) != 2 or not sys.argv[1] in cases:
     print "Usage: plot <variable>"
     print "where <variable> is one of %s" % ", ".join(cases)
@@ -37,6 +37,8 @@ E   = []
 EH  = []
 EK  = []
 EC  = []
+EC0 = []
+EC1 = []
 I   = []
 IH  = []
 IK  = []
@@ -95,13 +97,15 @@ for directory in glob.glob("results-*"):
     # Get error estimates
     filename = "%s/error_estimates.txt" % directory
     if os.path.isfile(filename):
-        e, eh, ek, ec = read_float(filename)[1:]
+        e, eh, ek, ec, ec0, ec1 = read_float(filename)[1:]
     else:
-        e = eh = ek = ec = None
+        e = eh = ek = ec, ec0, ec1 = None
     E.append(e)
     EH.append(eh)
     EK.append(ek)
     EC.append(ec)
+    EC0.append(abs(ec0))
+    EC1.append(abs(ec1))
 
     # Compute efficiency index
     if e is not None:
@@ -160,6 +164,16 @@ elif variable == "Ec":
     _title  = "Computational error"
     _ylabel = "$E_c$"
     _plot   = loglog
+elif variable == "Ec0":
+    Y = EC0
+    _title  = "Computational error (momentum)"
+    _ylabel = "$E_c^{\mathrm{mom}}$"
+    _plot   = loglog
+elif variable == "Ec1":
+    Y = EC1
+    _title  = "Computational error (continuity)"
+    _ylabel = "$E_c^{\mathrm{con}}$"
+    _plot   = loglog
 elif variable == "I":
     Y = I
     _title  = "Efficiency index (total)"
@@ -203,6 +217,8 @@ elif variable == "Rk":
 
 # Sort values by legend
 indices = argsort(L)[:min(len(L), len(X))]
+
+print X, Y
 
 # Group values
 plotvals = []
