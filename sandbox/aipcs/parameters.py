@@ -18,7 +18,7 @@ def default_parameters():
     p.add("save_series", True)
     p.add("uniform_timestep", False)
     p.add("uniform_mesh", False)
-    p.add("dorfler_marking", True)
+    p.add("dorfler_marking", False)
     p.add("global_storage", False)
 
     p.add("max_num_refinements", 100)
@@ -29,7 +29,7 @@ def default_parameters():
     p.add("w_h", 0.45)
     p.add("w_k", 0.45)
     p.add("w_c", 0.1)
-    p.add("marking_fraction", 0.5)
+    p.add("marking_fraction", 0.3)
     p.add("refinement_algorithm", "regular_cut")
     p.add("crossed_mesh", False)
 
