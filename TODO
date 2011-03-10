@@ -1,8 +1,7 @@
 -*- mode: org; -*-
 
 * cbc.solve
-** Move FSI example into its own class
-** Align the interfaces of cbc.flow and cbc.twist
+** Align the interfaces of the solvers
 *** Make the function names as close as possible
 *** Make the file layout identical
 *** Take useful functions from one to the other
@@ -11,10 +10,12 @@
 *** Share mode code via common
 * cbc.twist
 ** Figure out why the Gent-Thomas material model does not converge
-** Figure out consistent, dynamic time-stepping.
 ** Figure out how to specify material models in terms of principal stretches.
 *** This might require UFL hacking to handle trigonometric functions (and derivatives) of functions.
 ** Figure out how to specify material models in terms of modified strains
 *** This requires specification of higher order tensors and their products (contraction, for instance)
 ** Show how to set Dirichlet boundary conditions for some (not all) of the displacement components
-** Move parameter system to all solver classes
+* cbc.swing
+** Move FSI example into its own class
+
+
