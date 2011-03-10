@@ -4,88 +4,86 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-28
+# Last changed: 2011-03-10
 
 from dolfin import *
 
-def _Sigma_F(U_F, P_F, mu_F):
-    "Return fluid stress in reference domain (not yet Piola mapped)"
-    I = Identity(U_F.cell().d)
-    return mu_F*(grad(U_F) + grad(U_F).T) - P_F*I
+def _Sigma(u, p, mu):
+    "Return fluid stress"
+    I = Identity(u.cell().d)
+    return mu*(grad(u) + grad(u).T) - p*I
 
 def inner_product(v, w):
     "Return inner product for mixed velocity/pressure space"
-    v1_F, q1_F = v
-    v2_F, q2_F = w
-    return (inner(v1_F, v2_F) + q1_F*q2_F)*dx
+    v1, q1 = v
+    v2, q2 = w
+    return (inner(v1, v2) + q1*q2)*dx
 
 def weak_residual(U0, U1, U, w, kn, problem):
     "Return weak residuals"
 
     # Extract variables
-    U_F0, P_F0 = U0
-    U_F1, P_F1 = U1
-    U_F,  P_F  = U
-    v_F, q_F = w
+    U0, P0 = U0
+    U1, P1 = U1
+    U, P = U
+    v, q = w
 
     # Get problem parameters
     Omega = problem.mesh()
-    rho_F = problem.fluid_density()
-    mu_F  = problem.fluid_viscosity()
+    rho = problem.fluid_density()
+    mu = problem.fluid_viscosity()
 
     # Define normals
     N = FacetNormal(Omega)
-    N_F = N
 
     # Define time derivative
-    Dt_U_F = rho_F*((U_F1 - U_F0)/kn + dot(grad(U_F), U_F))
+    Dt_U = rho*((U1 - U0)/kn + dot(grad(U), U))
 
     # Define stress
-    Sigma_F = _Sigma_F(U_F, P_F, mu_F)
+    Sigma = _Sigma(U, P, mu)
 
-    # Fluid residual
-    R_F = inner(v_F, Dt_U_F)*dx + inner(grad(v_F), Sigma_F)*dx \
-        - inner(v_F, mu_F*dot(grad(U_F).T, N_F))*ds \
-        + inner(v_F, P_F*N_F)*ds \
-        + inner(q_F, div(U_F))*dx
+    # Momentum residual
+    r0 = inner(v, Dt_U)*dx + inner(grad(v), Sigma)*dx \
+       - inner(v, mu*dot(grad(U).T, N))*ds \
+       + inner(v, P*N)*ds
 
-    return R_F
+    # Continuity residual
+    r1 = inner(q, div(U))*dx
+
+    return r0, r1
 
 def strong_residual(U0, U1, U, Z, EZ, w, kn, problem):
     "Return strong residuals (integrated by parts)"
 
     # Extract variables
-    U_F0, P_F0 = U0
-    U_F1, P_F1 = U1
-    U_F,  P_F  = U
-    Z_F,  Y_F  = Z
-    EZ_F, EY_F = EZ
+    U0, P0 = U0
+    U1, P1 = U1
+    U,  P  = U
+    Z,  Y  = Z
+    EZ, EY = EZ
 
     # Get problem parameters
     Omega = problem.mesh()
-    rho_F = problem.fluid_density()
-    mu_F  = problem.fluid_viscosity()
+    rho = problem.fluid_density()
+    mu = problem.fluid_viscosity()
 
     # Define normals
     N = FacetNormal(Omega)
-    N_F = N
-
-    # FIXME: Check sign of N_S, should it be -N?
 
     # Define midpoint values
-    U_F = 0.5 * (U_F0 + U_F1)
-    P_F = 0.5 * (P_F0 + P_F1)
+    U = 0.5 * (U0 + U1)
+    P = 0.5 * (P0 + P1)
 
     # Define time derivative
-    Dt_U_F = rho_F * ((U_F1 - U_F0)/kn + dot(grad(U_F), U_F))
+    Dt_U = rho * ((U1 - U0)/kn + dot(grad(U), U))
 
     # Define stress
-    Sigma_F = _Sigma_F(U_F, P_F, mu_F)
+    Sigma = _Sigma(U, P, mu)
 
     # Fluid residual contributions
-    R_F0 = w*inner(EZ_F - Z_F, Dt_U_F - div(Sigma_F))*dx
-    R_F1 = avg(w)*inner(EZ_F('+') - Z_F('+'), jump(Sigma_F, N_F))*dS
-    R_F2 = w*inner(EZ_F - Z_F, dot(Sigma_F, N_F))*ds
-    R_F3 = w*inner(EY_F - Y_F, div(U_F))*dx
+    R0 = w*inner(EZ - Z, Dt_U - div(Sigma))*dx
+    R1 = avg(w)*inner(EZ('+') - Z('+'), jump(Sigma, N))*dS
+    R2 = w*inner(EZ - Z, dot(Sigma, N))*ds
+    R3 = w*inner(EY - Y, div(U))*dx
 
-    return (R_F0, R_F1, R_F2, R_F3)
+    return (R0, R1, R2, R3)
