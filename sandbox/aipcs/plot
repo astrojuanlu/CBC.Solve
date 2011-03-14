@@ -11,17 +11,20 @@ from numpy import argsort, array
 from pylab import *
 
 # Get command-line parameters
-cases = ("M", "e", "E", "Eh", "Ek", "Ec", "Ec0", "Ec1", "I", "Ih", "Ik", "Ic", "k", "Rk")
+cases = ("M", "e", "E", "Eh", "Ek", "Ec", "I", "Ih", "Ik", "Ic", "k", "Rk")
 if len(sys.argv) != 2 or not sys.argv[1] in cases:
     print "Usage: plot <variable>"
     print "where <variable> is one of %s" % ", ".join(cases)
     sys.exit(1)
 variable = sys.argv[1]
 
+# Set goal functional
+goal_functional = 2
+
 # Set reference value
-reference_value = 0.0200
-#reference_value = 0.48555
-#reference_value = 0.27620
+reference_value = {0: 0.0200,
+                   1: 0.2750,
+                   2: 0.48555}[goal_functional]
 
 def read(filename):
     return zip(*[[x for x in row.split(" ") if len(x) >0] for row in open(filename).read().split("\n") if " " in row and len(row) > 0])
@@ -37,8 +40,6 @@ E   = []
 EH  = []
 EK  = []
 EC  = []
-EC0 = []
-EC1 = []
 I   = []
 IH  = []
 IK  = []
@@ -58,15 +59,20 @@ for directory in glob.glob("results-*"):
     row = [row for row in open(filename).read().split("\n") if "description" in row][0]
     l = row.split('value="')[1].split('"')[0]
 
-    # Filter out data based on legend
-    #if not "0.005" in l:
-    #    continue
-    #if not "0.3" in l:
-    #    continue
-    #if not "Dorfler" in l:
-    #    continue
+    # Add case to legend
+    case = directory.split("-")[-1]
+    l = l + (" (case %s)" % case)
 
-    #if "0.02" in l: continue
+    # Remove k = 0.02 (diverging) and k = 0.0025 (takes too long to run)
+    if "k = 0.02" in l: continue
+    if "k = 0.0025" in l: continue
+
+    # Filter out results for goal functional
+    if not ("m = %d" % goal_functional) in l: continue
+
+    #if not "recursive" in l: continue
+    #if not "regular" in l: continue
+    #if not "fixed" in l: continue
 
     print "Extracting values from %s" % directory
 
@@ -97,15 +103,13 @@ for directory in glob.glob("results-*"):
     # Get error estimates
     filename = "%s/error_estimates.txt" % directory
     if os.path.isfile(filename):
-        e, eh, ek, ec, ec0, ec1 = read_float(filename)[1:]
+        e, eh, ek, ec = read_float(filename)[1:]
     else:
-        e = eh = ek = ec, ec0, ec1 = None
+        e = eh = ek = ec = None
     E.append(e)
     EH.append(eh)
     EK.append(ek)
     EC.append(ec)
-    EC0.append(abs(ec0))
-    EC1.append(abs(ec1))
 
     # Compute efficiency index
     if e is not None:
@@ -164,16 +168,6 @@ elif variable == "Ec":
     _title  = "Computational error"
     _ylabel = "$E_c$"
     _plot   = loglog
-elif variable == "Ec0":
-    Y = EC0
-    _title  = "Computational error (momentum)"
-    _ylabel = "$E_c^{\mathrm{mom}}$"
-    _plot   = loglog
-elif variable == "Ec1":
-    Y = EC1
-    _title  = "Computational error (continuity)"
-    _ylabel = "$E_c^{\mathrm{con}}$"
-    _plot   = loglog
 elif variable == "I":
     Y = I
     _title  = "Efficiency index (total)"
@@ -217,8 +211,6 @@ elif variable == "Rk":
 
 # Sort values by legend
 indices = argsort(L)[:min(len(L), len(X))]
-
-print X, Y
 
 # Group values
 plotvals = []
@@ -264,14 +256,14 @@ L = LL
 rcParams.update({'legend.fontsize': 9})
 
 # Plot functional values
-max_plots = 13
+max_plots = 100
 for i in range((len(L) - 1) / max_plots + 1):
 
     #if i != 2:
     #    continue
 
     figure(i)
-    subplot(2, 1, 1)
+    #subplot(2, 1, 1)
     xy = plotvals[2*i*max_plots:2*(i + 1)*max_plots]
     if _marker is None:
         _plot(*xy)
@@ -281,6 +273,6 @@ for i in range((len(L) - 1) / max_plots + 1):
     xlabel("Number of dofs (in space)")
     ylabel(_ylabel)
     title(_title)
-    legend(L[i*max_plots:(i + 1)*max_plots], bbox_to_anchor=(-0.1, -0.3), loc=2, borderaxespad=0)
+    #legend(L[i*max_plots:(i + 1)*max_plots], bbox_to_anchor=(-0.1, -0.3), loc=2, borderaxespad=0)
 
 show()
