@@ -16,8 +16,8 @@ def extrapolate(n, y, tolerance=1e-15, plot=False, call_show=True):
     y = array(y)
 
     # Create initial "bound"
-    Y0 = 0.9*y[-1]
-    Y1 = 1.1*y[-1]
+    Y0 = 0.99*y[-1]
+    Y1 = 1.01*y[-1]
 
     # Compute initial interior points
     phi = (sqrt(5.0) + 1.0) / 2.0
@@ -86,10 +86,21 @@ def _eval(n, y, Y):
     ee = C*(nn**alpha)
 
     # Compute extrapolation sequence
-    yy = Y + ee
+    if y[0] > y[-1]:
+        yy = Y + ee
+    else:
+        yy = Y - ee
 
     # Compute quality of fit
     E = sqrt(sum((log(ee[:len(e)]) - log(e))**2))
+
+    #pylab.subplot(2, 1, 1)
+    #pylab.title("Reference value: %g" % Y)
+    #pylab.semilogx(n, y, 'b-o')
+    #pylab.semilogx(nn, yy, 'g--')
+    #pylab.subplot(2, 1, 2)
+    #pylab.loglog(n, e, 'b-o')
+    #pylab.loglog(nn, ee, 'g--')
 
     return E, e, nn, ee, yy
 
@@ -97,5 +108,10 @@ if __name__ == "__main__":
 
     n = [20570, 30795, 46236, 69177, 104650, 157801, 237263, 358402]
     y = [0.02038030, 0.02046210, 0.02028142, 0.02030110, 0.02019661, 0.02018782, 0.02013778, 0.02010004]
-
     extrapolate(n, y, plot=True)
+
+    #n = [2028, 4104, 8381, 17392, 35274, 69944, 141297]
+    #y = [0.48258016, 0.48458517, 0.48552337, 0.48566151, 0.48563823, 0.48561884, 0.48561005]
+    #extrapolate(n, y, plot=True)
+
+
