@@ -19,7 +19,7 @@ if len(sys.argv) != 2 or not sys.argv[1] in cases:
 variable = sys.argv[1]
 
 # Set reference value
-reference_value = 0.02022
+reference_value = 0.0200
 #reference_value = 0.48555
 #reference_value = 0.27620
 

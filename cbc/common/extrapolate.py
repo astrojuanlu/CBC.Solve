@@ -8,7 +8,7 @@ __date__ = "2011-03-14"
 from numpy import array, polyfit, log, sum, sqrt, exp
 import pylab
 
-def extrapolate(n, y, tolerance=1e-15, plot=False):
+def extrapolate(n, y, tolerance=1e-15, plot=False, call_show=True):
     "Extrapolate functional value Y from sequence of values (n, y)."
 
     # Make sure we have NumPy arrays
@@ -55,6 +55,7 @@ def extrapolate(n, y, tolerance=1e-15, plot=False):
 
     # Plot result
     if plot:
+        pylab.figure()
         pylab.subplot(2, 1, 1)
         pylab.title("Reference value: %g" % Y)
         pylab.semilogx(n, y, 'b-o')
@@ -63,7 +64,8 @@ def extrapolate(n, y, tolerance=1e-15, plot=False):
         pylab.loglog(n, e, 'b-o')
         pylab.loglog(nn, ee, 'g--')
         pylab.grid(True)
-        pylab.show()
+        if call_show:
+            pylab.show()
 
     return Y
 
