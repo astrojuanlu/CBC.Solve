@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-03-08
+# Last changed: 2011-03-17
 
 from fsiproblem import *
 
@@ -72,6 +72,13 @@ class ChannelWithFlap(FSI):
         self.psi.r = 0.15
         self.psi.x0 = 2.2
         self.psi.x1 = 0.3
+
+        # Uncomment for testing
+        #mesh = refine(mesh)
+        #mesh = refine(mesh)
+        #self.psi.c /= assemble(self.psi*dx, mesh=mesh)
+        #print "Normalization:", self.psi.c
+        #plot(self.psi, interactive=True, mesh=mesh)
 
         # Initialize base class
         FSI.__init__(self, mesh)
