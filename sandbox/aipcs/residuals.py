@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-03-10
+# Last changed: 2011-03-28
 
 from dolfin import *
 
@@ -82,7 +82,7 @@ def strong_residual(U0, U1, U, Z, EZ, w, kn, problem):
 
     # Fluid residual contributions
     R0 = w*inner(EZ - Z, Dt_U - div(Sigma))*dx
-    R1 = avg(w)*inner(EZ('+') - Z('+'), jump(Sigma, N))*dS
+    R1 = avg(w)*inner(EZ('+') - Z('+'), jump(mu*grad(U), N))*dS
     R2 = w*inner(EZ - Z, dot(Sigma, N))*ds
     R3 = w*inner(EY - Y, div(U))*dx
 
