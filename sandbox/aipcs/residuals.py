@@ -82,8 +82,8 @@ def strong_residual(U0, U1, U, Z, EZ, w, kn, problem):
 
     # Fluid residual contributions
     R0 = w*inner(EZ - Z, Dt_U - div(Sigma))*dx
-    R1 = avg(w)*inner(EZ('+') - Z('+'), jump(mu*grad(U), N))*dS
-    R2 = w*inner(EZ - Z, dot(Sigma, N))*ds
+    R1 = avg(w)*inner(EZ('+') - Z('+'), jump(Sigma, N))*dS
+    R2 = w*inner(EZ - Z, dot(mu*grad(U), N))*ds
     R3 = w*inner(EY - Y, div(U))*dx
 
     return (R0, R1, R2, R3)
