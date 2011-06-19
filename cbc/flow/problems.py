@@ -2,13 +2,13 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-19
+# Last changed: 2011-06-19
 
-__all__ = ["NavierStokes", "NavierStokesDual"]
+__all__ = ["NavierStokes"]
 
 from dolfin import error, Constant, Parameters
 from cbc.common import CBCProblem
-from cbc.flow.solvers import NavierStokesSolver, NavierStokesDualSolver
+from cbc.flow.solvers import NavierStokesSolver
 from ufl import grad, Identity
 
 class NavierStokes(CBCProblem):
@@ -123,24 +123,3 @@ class NavierStokes(CBCProblem):
     def __str__(self):
         "Return a short description of the problem"
         return "Navier-Stokes problem"
-
-class NavierStokesDual(NavierStokes):
-    "Base class for all Navier-Stokes dual problems"
-
-    def __init__(self, parameters=None):
-        "Create Navier-Stokes dual problem"
-
-        # Create solver
-        self.solver = NavierStokesDualSolver(self)
-
-        # Set up parameters
-        self.parameters = Parameters("dual_problem_parameters")
-        self.parameters.add(self.solver.parameters)
-
-    def functional(self, u, p, V, Q, n):
-        "Return goal functional"
-        missing_function("functional")
-
-    def boundary_markers(self):
-        "Return exterior boundary markers"
-        return None

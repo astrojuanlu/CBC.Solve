@@ -1,92 +1,89 @@
-__author__ = "Anders Logg"
+__author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2010-05-04
+# Last changed: 2011-06-19
 
 from cbc.flow import *
 
-def inflow_boundary(x):
-    return x[0] < DOLFIN_EPS
+# Constants related to the geometry of the problem
+channel_length  = 4.0
+channel_height  = 1.0
+structure_left  = 1.4
+structure_right = 1.8
+structure_top   = 0.6
 
-def outflow_boundary(x):
-    return x[0] > 4.0 - DOLFIN_EPS
+# Define boundaries
+inflow  = "x[0] < DOLFIN_EPS && \
+           x[1] > DOLFIN_EPS && \
+           x[1] < %g - DOLFIN_EPS" % channel_height
+outflow = "x[0] > %g - DOLFIN_EPS && \
+           x[1] > DOLFIN_EPS && \
+           x[1] < %g - DOLFIN_EPS" % (channel_length, channel_height)
+noslip  = "on_boundary && !(%s) && !(%s)" % (inflow, outflow)
+fixed   = "x[1] < DOLFIN_EPS && x[0] > %g - DOLFIN_EPS && x[0] < %g + DOLFIN_EPS" \
+           % (structure_left, structure_right)
 
-def noslip_boundary(x, on_boundary):
-    return \
-        (x[1] < DOLFIN_EPS or x[1] > 1.0 - DOLFIN_EPS) or \
-        (on_boundary and abs(x[0] - 1.5) < 0.1 + DOLFIN_EPS)
+# Define structure subdomain
+class Structure(SubDomain):
+    def inside(self, x, on_boundary):
+        return \
+            x[0] > structure_left  - DOLFIN_EPS and \
+            x[0] < structure_right + DOLFIN_EPS and \
+            x[1] < structure_top   + DOLFIN_EPS
 
-class ChannelWithFlap(NavierStokes):
+class ChannelWithFlap(FSI):
 
-    def mesh(self):
+    def __init__(self):
 
-        # Vertical resolution
-        n = 20
+        ny = 5
+        nx = 20
+        if application_parameters["crossed_mesh"]:
+            mesh = Rectangle(0.0, 0.0,
+                             channel_length, channel_height, nx, ny, "crossed")
+        else:
+            mesh = Rectangle(0.0, 0.0,
+                             channel_length, channel_height, nx, ny)
 
-        # Define geometry for channel
-        channel = Rectangle(0.0, 0.0, 4.0, 1.0, 4*n, n)
+        # Initialize base class
+        FSI.__init__(self, mesh)
 
-        # Define geometry for flap
-        class Flap(SubDomain):
-            def inside(self, x, on_boundary):
-                return x[0] >= 1.4 and x[0] <= 1.6 and x[1] <= 0.5
-        flap = Flap()
+    #--- Common ---
 
-        # Extract mesh for sub domain channel - flap
-        sub_domains = MeshFunction("uint", channel, 2)
-        sub_domains.set_all(0)
-        flap.mark(sub_domains, 1)
-        mesh = SubMesh(channel, sub_domains, 0)
+    def end_time(self):
+        return 0.5
 
-        return mesh
+    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
+        A = (structure_right - structure_left) * structure_top
+        return (1.0/A) * U_S[0] * dx_S
+
+    def density(self):
+        return 1.0
 
     def viscosity(self):
         return 0.002
 
-    def boundary_conditions(self, V, Q):
+    def velocity_dirichlet_values(self):
+        return [(0.0, 0.0)]
 
-        # Create no-slip boundary condition for velocity
-        bcu = DirichletBC(V, Constant((0, 0)), noslip_boundary)
+    def velocity_dirichlet_boundaries(self):
+        return [noslip]
 
-        # Create inflow and outflow boundary conditions for pressure
-        bcp0 = DirichletBC(Q, Constant(1), inflow_boundary)
-        bcp1 = DirichletBC(Q, Constant(0), outflow_boundary)
+    def pressure_dirichlet_values(self):
+        return 1.0, 0.0
 
-        return [bcu], [bcp0, bcp1]
+    def pressure_dirichlet_boundaries(self):
+        return inflow, outflow
 
-    def initial_conditions(self, V, Q):
-        u0 = Constant((0, 0))
-        p0 = Constant(0)
-        return u0, p0
+    def velocity_initial_condition(self):
+        return (0.0, 0.0)
 
-    def end_time(self):
-        return 2.5
-
-    #def time_step(self):
-    #    return 0.00005
-
-    def functional(self, u, p):
-        return u((4.0, 0.5))[0]
-
-    def reference():
-        # Value is 0.481057936133 for n = 8, value below obtained by
-        # Richardson extrapolation for n = 10, 20, 30, ..., 80
-        return 0.4810212
+    def pressure_initial_condition(self):
+        return "1.0 - 0.25*x[0]"
 
     def __str__(self):
-        return "Pressure-driven flow in channel with a flap (2D)"
+        return "Channel flow with an immersed elastic flap"
 
-# Solve problem
+# Define and solve problem
 problem = ChannelWithFlap()
-parameters["form_compiler"]["cpp_optimize"] = True
-problem.parameters["solver_parameters"]["plot_solution"] = True
-problem.parameters["solver_parameters"]["save_solution"] = True
-u, p = problem.solve()
-
-# Print value of functional
-ux = problem.functional(u, p)
-print "ux =", ux
-
-# Hold plots
-interactive()
+problem.solve()

@@ -2,11 +2,12 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-04
+# Last changed: 2011-06-19
 
 from time import time
 from dolfin import info, error, Progress
-from dolfin import compile_subdomains, interpolate, SubDomain, DirichletBC, Constant, Expression
+from dolfin import compile_subdomains, interpolate
+from dolfin import SubDomain, DirichletBC, Constant, Expression
 from dolfin.cpp import GenericFunction
 
 class CBCSolver:
@@ -94,4 +95,5 @@ def create_initial_condition(value, function_space):
         return create_initial_condition(Expression(value), function_space)
 
     # Try wrapping input as a Constant
+    print value
     return create_initial_condition(Constant(value), function_space)

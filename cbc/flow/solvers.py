@@ -2,9 +2,9 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-23
+# Last changed: 2011-06-19
 
-__all__ = ["NavierStokesSolver", "NavierStokesDualSolver"]
+__all__ = ["NavierStokesSolver"]
 
 from dolfin import *
 from cbc.common.utils import *
@@ -21,9 +21,9 @@ class NavierStokesSolver(CBCSolver):
 
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", True)        # Plot when running
-        self.parameters.add("save_solution", True)        # Store solution for later plotting
-        self.parameters.add("store_solution_data", False) # Store solution data in binary format
+        self.parameters.add("plot_solution", True)
+        self.parameters.add("save_solution", True)
+        self.parameters.add("store_solution_data", False)
 
         # Get mesh and time step range
         mesh = problem.mesh()
@@ -81,15 +81,6 @@ class NavierStokesSolver(CBCSolver):
             - inner(v, f)*dx
         a1 = lhs(F1)
         L1 = rhs(F1)
-
-#         # Tentative velocity step (Laplace formulation)
-#         U = 0.5*(u0 + u)
-#         F1 = rho*(1/k)*inner(v, u - u0)*dx + rho*inner(v, grad(u0)*(u0 - w))*dx \
-#             + mu*inner(grad(v), grad(U))*dx + inner(v, grad(p0))*dx \
-#             - inner(v, f)*dx
-#         a1 = lhs(F1)
-#         L1 = rhs(F1)
-
 
         # Pressure correction
         a2 = inner(grad(q), k*grad(p))*dx
@@ -208,8 +199,10 @@ class NavierStokesSolver(CBCSolver):
 
         # Store solution data
         if self.parameters["store_solution_data"]:
-            if self.velocity_series is None: self.velocity_series = TimeSeries("velocity")
-            if self.pressure_series is None: self.pressure_series = TimeSeries("pressure")
+            if self.velocity_series is None:
+                self.velocity_series = TimeSeries("velocity")
+            if self.pressure_series is None:
+                self.pressure_series = TimeSeries("pressure")
             self.velocity_series.store(self.u1.vector(), t)
             self.pressure_series.store(self.p1.vector(), t)
 
@@ -232,154 +225,3 @@ class NavierStokesSolver(CBCSolver):
     def solution_values(self):
         "Return solution values at t_{n-1} and t_n"
         return self.u0, self.u1, self.p0, self.p1
-
-class NavierStokesDualSolver(CBCSolver):
-    "Navier-Stokes dual solver"
-
-    def __init__(self, problem):
-        CBCSolver.__init__(self)
-
-        # Set up parameters
-        self.parameters = Parameters("solver_parameters")
-        self.parameters.add("plot_solution", True)        # Plot when running
-        self.parameters.add("save_solution", True)        # Store solution for later plotting
-        self.parameters.add("store_solution_data", False) # Store solution data in binary format
-
-        # Load primal solutions
-        self.velocity_series = TimeSeries("velocity")
-        self.pressure_series = TimeSeries("pressure")
-
-        # Get mesh and time step range
-        mesh = problem.mesh()
-        n = FacetNormal(mesh)
-        dt, t_range = timestep_range(problem, mesh)
-        info("Using time step dt = %g" % dt)
-
-        # Function spaces
-        V1 = VectorFunctionSpace(mesh, "CG", 1)
-        V = VectorFunctionSpace(mesh, "CG", 2)
-        Q = FunctionSpace(mesh, "CG", 1)
-
-        # Test and trial functions
-        system = MixedFunctionSpace([V, Q])
-        (v, q) = TestFunctions(system)
-        (w, r) = TrialFunctions(system)
-
-        # Functions for plotting without opening multiple windows
-        w_plot = Function(V)
-        r_plot = Function(Q)
-
-        # Initial and boundary conditions (which are homogenised
-        # versions of the primal conditions)
-
-        # FIXME: Initial conditions should not be 0 and should depend
-        # instead on the goal
-        w1 = project(Constant((0.0, 0.0)), V)
-        r1 = project(Constant(0.0), Q)
-
-        bcw, bcr = problem.boundary_conditions(V, Q)
-
-        # Functions
-        w0 = Function(V)
-        r0 = Function(Q)
-        u_h = Function(V)
-        p_h = Function(Q)
-
-        # Coefficients
-        nu = Constant(problem.viscosity())
-        f = problem.body_force(V1)
-
-        # Dual forms
-        sigma = nu*(grad(v) + grad(v).T) - q*Identity(v.cell().d)
-        a_tilde = inner(grad(u_h)*v + grad(v)*u_h, w)*dx \
-            + inner(sigma, 0.5*(grad(w) + grad(w).T))*dx \
-            - nu*inner((grad(v) + grad(v).T)*n, w)*ds \
-            + div(v)*r*dx
-
-        a = inner(v, w)*dx + dt*a_tilde
-
-        goal = problem.functional(v, q, V, Q, n)
-        L = inner(v, w1)*dx + dt*goal
-
-        # Store variables needed for time-stepping
-        self.dt = dt
-        self.t_range = t_range
-        self.bcw = bcw
-        self.bcr = bcr
-        self.w0 = w0
-        self.w1 = w1
-        self.r0 = r0
-        self.r1 = r1
-        self.L = L
-        self.a = a
-        self.u_h = u_h
-        self.p_h = p_h
-        self.w_plot = w_plot
-        self.r_plot = r_plot
-        self.exterior_facet_domains = problem.boundary_markers()
-
-        # Empty file handlers / time series
-        self.dual_velocity_file = None
-        self.dual_pressure_file = None
-        self.dual_velocity_series = None
-        self.dual_pressure_series = None
-
-    def solve(self):
-        "Solve problem and return computed solution (u, p)"
-
-        # Time loop
-        for t in reversed(self.t_range):
-
-            # Load primal solution at the current time step
-            self.velocity_series.retrieve(self.u_h.vector(), t)
-            self.pressure_series.retrieve(self.p_h.vector(), t)
-
-            # Solve for current time step
-            self.step(self.dt)
-
-            # Update
-            self.update()
-            self._end_time_step(t, self.t_range[-1])
-
-        return self.w0, self.r0
-
-    def step(self, dt):
-
-        # Compute dual solution
-        begin("Computing dual solution")
-        pde_dual = VariationalProblem(self.a, self.L, self.bcw + self.bcr, exterior_facet_domains = self.exterior_facet_domains)
-        (self.w0, self.r0) = pde_dual.solve().split(True)
-        end()
-
-        return self.w0, self.r0
-
-    def update(self):
-
-        # Propagate values
-        self.w1.assign(self.w0)
-        self.r1.assign(self.r0)
-
-        # Plot solution
-        if self.parameters["plot_solution"]:
-            # Copy to a fixed function to trick Viper into not opening
-            # up multiple windows
-            self.w_plot.assign(self.w0)
-            self.r_plot.assign(self.r0)
-            plot(self.r_plot, title="Pressure", rescale=True)
-            plot(self.w_plot, title="Velocity", rescale=True)
-
-        # Store solution (for plotting)
-        if self.parameters["save_solution"]:
-            if self.dual_velocity_file is None: self.dual_velocity_file = File("dual_velocity.pvd")
-            if self.dual_pressure_file is None: self.dual_pressure_file = File("dual_pressure.pvd")
-            self.dual_velocity_file << self.w0
-            self.dual_pressure_file << self.r0
-
-        # Store solution data
-        if self.parameters["store_solution_data"]:
-            if self.dual_velocity_series is None: self.velocity_series = TimeSeries("dual_velocity")
-            if self.dual_pressure_series is None: self.pressure_series = TimeSeries("dual_pressure")
-            self.dual_velocity_series.store(self.w0.vector(), t)
-            self.dual_pressure_series.store(self.r0.vector(), t)
-
-        return self.w0, self.r0
