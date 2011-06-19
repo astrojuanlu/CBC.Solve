@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Anders Logg, 2010
-# Last changed: 2011-02-19
+# Last changed: 2011-06-19
 
 from dolfin import *
 from cbc.common import *
@@ -74,6 +74,7 @@ class StaticMomentumBalanceSolver(CBCSolver):
         boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
         boundary.set_all(len(neumann_boundaries) + 1)
 
+        ds = ds[boundary]
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
@@ -82,7 +83,7 @@ class StaticMomentumBalanceSolver(CBCSolver):
         a = derivative(L, u, du)
 
         # Setup problem
-        equation = VariationalProblem(L, a, bcu, exterior_facet_domains=boundary)
+        equation = VariationalProblem(L, a, bcu)
         equation.parameters["solver"]["newton_solver"]["absolute_tolerance"] = 1e-12
         equation.parameters["solver"]["newton_solver"]["relative_tolerance"] = 1e-16
         equation.parameters["solver"]["newton_solver"]["maximum_iterations"] = 100
@@ -211,12 +212,13 @@ class MomentumBalanceSolver(CBCSolver):
         boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
         boundary.set_all(len(neumann_boundaries) + 1)
 
+        ds = ds[boundary]
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
             L_accn = L_accn + inner(neumann_conditions[i], v)*ds(i)
 
-        problem_accn = VariationalProblem(a_accn, L_accn, exterior_facet_domains=boundary)
+        problem_accn = VariationalProblem(a_accn, L_accn)
         a0 = problem_accn.solve()
 
         k = Constant(dt)
@@ -261,6 +263,7 @@ class MomentumBalanceSolver(CBCSolver):
         boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
         boundary.set_all(len(neumann_boundaries) + 1)
 
+        ds = ds[boundary]
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
             info("Applying Neumann boundary condition.")
             info(str(neumann_boundary))
@@ -291,7 +294,6 @@ class MomentumBalanceSolver(CBCSolver):
         self.B = B
         self.dirichlet_values = dirichlet_values
         self.neumann_conditions = neumann_conditions
-        self.boundary = boundary
 
         # FIXME: Figure out why I am needed
         self.mesh = mesh
@@ -327,7 +329,7 @@ class MomentumBalanceSolver(CBCSolver):
         self.k.assign(dt)
 
         # FIXME: Setup all stuff in the constructor and call assemble instead of VariationalProblem
-        equation = VariationalProblem(self.L, self.a, self.bcu, exterior_facet_domains=self.boundary)
+        equation = VariationalProblem(self.L, self.a, self.bcu)
         equation.parameters["solver"]["newton_solver"]["absolute_tolerance"] = 1e-12
         equation.parameters["solver"]["newton_solver"]["relative_tolerance"] = 1e-12
         equation.parameters["solver"]["newton_solver"]["maximum_iterations"] = 100
@@ -508,7 +510,6 @@ class CG1MomentumBalanceSolver(CBCSolver):
         self.B = B
         self.dirichlet_values = dirichlet_values
         self.neumann_conditions = neumann_conditions
-        self.boundary = boundary
 
         # FIXME: Figure out why I am needed
         self.mesh = mesh
@@ -544,7 +545,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
         self.dt = dt
         self.k.assign(dt)
 
-        equation = VariationalProblem(self.L, self.a, self.bcu, exterior_facet_domains = self.boundary)
+        equation = VariationalProblem(self.L, self.a, self.bcu)
         equation.parameters["solver"]["newton_solver"]["absolute_tolerance"] = 1e-12
         equation.parameters["solver"]["newton_solver"]["relative_tolerance"] = 1e-12
         equation.parameters["solver"]["newton_solver"]["maximum_iterations"] = 100
