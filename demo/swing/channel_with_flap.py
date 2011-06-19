@@ -2,9 +2,9 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-27
+# Last changed: 2011-06-20
 
-from fsiproblem import *
+from cbc.swing import *
 
 # Read parameters
 application_parameters = read_parameters()
