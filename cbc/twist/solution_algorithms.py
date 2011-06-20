@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Anders Logg, 2010
-# Last changed: 2011-06-19
+# Last changed: 2011-06-20
 
 from dolfin import *
 from cbc.common import *
@@ -74,11 +74,11 @@ class StaticMomentumBalanceSolver(CBCSolver):
         boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
         boundary.set_all(len(neumann_boundaries) + 1)
 
-        ds = ds[boundary]
+        dsb = ds[boundary]
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
-            L = L - inner(neumann_conditions[i], v)*ds(i)
+            L = L - inner(neumann_conditions[i], v)*dsb(i)
 
         a = derivative(L, u, du)
 
@@ -212,11 +212,11 @@ class MomentumBalanceSolver(CBCSolver):
         boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
         boundary.set_all(len(neumann_boundaries) + 1)
 
-        ds = ds[boundary]
+        dsb = ds[boundary]
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
-            L_accn = L_accn + inner(neumann_conditions[i], v)*ds(i)
+            L_accn = L_accn + inner(neumann_conditions[i], v)*dsb(i)
 
         problem_accn = VariationalProblem(a_accn, L_accn)
         a0 = problem_accn.solve()
@@ -263,13 +263,13 @@ class MomentumBalanceSolver(CBCSolver):
         boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
         boundary.set_all(len(neumann_boundaries) + 1)
 
-        ds = ds[boundary]
+        dsb = ds[boundary]
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
             info("Applying Neumann boundary condition.")
             info(str(neumann_boundary))
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
-            L = L - inner(neumann_conditions[i], v)*ds(i)
+            L = L - inner(neumann_conditions[i], v)*dsb(i)
 
         a = derivative(L, u1, du)
 
@@ -488,12 +488,13 @@ class CG1MomentumBalanceSolver(CBCSolver):
         boundary = MeshFunction("uint", mesh, mesh.topology().dim() - 1)
         boundary.set_all(len(neumann_boundaries) + 1)
 
+        dsb = ds[boundary]
         for (i, neumann_boundary) in enumerate(neumann_boundaries):
             info("Applying Neumann boundary condition.")
             info(str(neumann_boundary))
             compiled_boundary = compile_subdomains(neumann_boundary)
             compiled_boundary.mark(boundary, i)
-            L = L - k*inner(neumann_conditions[i], xi)*ds(i)
+            L = L - k*inner(neumann_conditions[i], xi)*dsb(i)
 
         a = derivative(L, U, dU)
 
