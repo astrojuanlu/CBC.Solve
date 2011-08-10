@@ -2134,7 +2134,7 @@
       <triangle index="1367" v0="735" v1="757" v2="758"/>
     </cells>
       <data>
-        <data_entry name="global vertex indices">
+        <data_entry name="global_vertex_indices">
           <meshfunction type="uint" dim="0" size="759">
             <entity index="0" value="0"/>
             <entity index="1" value="1"/>
