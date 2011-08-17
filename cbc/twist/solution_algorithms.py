@@ -546,11 +546,12 @@ class CG1MomentumBalanceSolver(CBCSolver):
         self.dt = dt
         self.k.assign(dt)
 
-        equation = VariationalProblem(self.L, self.a, self.bcu)
-        equation.parameters["solver"]["newton_solver"]["absolute_tolerance"] = 1e-12
-        equation.parameters["solver"]["newton_solver"]["relative_tolerance"] = 1e-12
-        equation.parameters["solver"]["newton_solver"]["maximum_iterations"] = 100
-        equation.solve(self.U)
+        problem = NonlinearVariationalProblem(self.L, self.U, self.bcu, self.a)
+        solver = NonlinearVariationalSolver(problem)
+        solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-12
+        solver.parameters["newton_solver"]["relative_tolerance"] = 1e-12
+        solver.parameters["newton_solver"]["maximum_iterations"] = 100
+        solver.solve()
         return self.U.split(True)
 
     def update(self):
