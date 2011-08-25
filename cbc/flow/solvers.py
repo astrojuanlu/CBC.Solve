@@ -92,7 +92,7 @@ class NavierStokesSolver(CBCSolver):
 
         # Create solvers
         solver1 = KrylovSolver("gmres", "ilu")
-        solver2 = KrylovSolver("gmres", "amg_hypre")
+        solver2 = KrylovSolver("gmres", "amg")
         solver3 = KrylovSolver("gmres", "ilu")
         solver1.parameters["relative_tolerance"] = 1e-14
         solver2.parameters["relative_tolerance"] = 1e-14
