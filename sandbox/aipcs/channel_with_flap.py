@@ -67,11 +67,13 @@ class ChannelWithFlap(FSI):
         self.top_domain = compile_subdomains(top)
 
         # Create Riesz representer for goal functional
-        self.psi = Expression("c*exp(-((x[0] - x0)*(x[0] - x0) + (x[1] - x1)*(x[1] - x1)) / (2.0*r*r))")
-        self.psi.c = 1.0
-        self.psi.r = 0.15
-        self.psi.x0 = 2.2
-        self.psi.x1 = 0.3
+        self.psi = Expression("c*exp(-((x[0] - x0)*(x[0] - x0) + (x[1] - x1)*(x[1] - x1)) / (2.0*r*r))", c = 1.0, r = 0.15, x0 = 2.2, x1 = 0.3)
+
+        # Old version
+        # self.psi.c = 1.0
+        # self.psi.r = 0.15
+        # self.psi.x0 = 2.2
+        # self.psi.x1 = 0.3
 
         # Uncomment for testing
         #mesh = refine(mesh)
@@ -102,7 +104,7 @@ class ChannelWithFlap(FSI):
         if application_parameters["goal_functional"] == 1:
             info("Goal functional is integration against Gaussian")
 
-            self.psi.c /= assemble(self.psi*dx, mesh=self.Omega)
+            c /= assemble(self.psi*dx, mesh=self.Omega)
             return u[0]*self.psi*dx, None, None, None
 
         # Goal functional 2: outflow
