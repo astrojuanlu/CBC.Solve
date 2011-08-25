@@ -104,7 +104,7 @@ class ChannelWithFlap(FSI):
         if application_parameters["goal_functional"] == 1:
             info("Goal functional is integration against Gaussian")
 
-            c /= assemble(self.psi*dx, mesh=self.Omega)
+            self.psi.c /= assemble(self.psi*dx, mesh=self.Omega)
             return u[0]*self.psi*dx, None, None, None
 
         # Goal functional 2: outflow
