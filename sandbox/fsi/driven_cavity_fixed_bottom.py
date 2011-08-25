@@ -7,17 +7,17 @@ __license__  = "GNU GPL Version 3 or any later version"
 from fsiproblem import *
 
 
-#   REGULIZED VELOCITY PROFILE     
-#  
+#   REGULIZED VELOCITY PROFILE
+#
 #   ------------------------->
-#   
+#
 #   |                        |
 #   |                        |
 #   |                        |
 #   |        FLUID           |
 #   |                        |
 #   |                        |
-#   |                        |  
+#   |                        |
 #   |                        |
 #   __________________________ (2.0, 0.5)
 #   |                        |
@@ -32,7 +32,7 @@ application_parameters.add("end_time", 0.25)
 application_parameters.add("dt", 0.02)
 application_parameters.add("ny", 30)
 application_parameters.add("TOL", 0.1)
-application_parameters.add("w_h", 0.1) 
+application_parameters.add("w_h", 0.1)
 application_parameters.add("w_k", 0.85)
 application_parameters.add("w_c", 0.05)
 application_parameters.add("fraction", 0.5)
@@ -63,7 +63,7 @@ inflow_middle = "x[0] > 0.25 + DOLFIN_EPS  && x[0] < 1.75 - DOLFIN_EPS &&\
 inflow_right = " x[0] > 1.75 && x[0] <= %g &&\
                  x[1] > %g - DOLFIN_EPS " % (cavity_length, cavity_height)
 noslip  =        "on_boundary && !(%s) && !(%s) && !(%s)" % (inflow_left, inflow_middle, inflow_right)
-fixed_left   =   "x[0] == 0.0  && x[1] >= DOFLIN_EPS" 
+fixed_left   =   "x[0] == 0.0  && x[1] >= DOFLIN_EPS"
 fixed_right  =   "x[0] > %g - DOLFIN_EPS  && x[1] >= 0.0" % structure_right
 fixed_bottom =   "x[1] == 0.0"
 
@@ -103,7 +103,7 @@ class DrivenCavityFixedBottom(FSI):
 
     def estimate_error(self):
         return application_parameters["estimate_error"]
-    
+
     def dorfler_marking(self):
         return application_parameters["dorfler_marking"]
 
@@ -142,9 +142,9 @@ class DrivenCavityFixedBottom(FSI):
         displacement = assemble(U_S[1]*dx, mesh=U_S.function_space().mesh())
 
         return displacement
-         
+
     def __str__(self):
-        return "Lid Driven Cavity with an Elastic Fixed Bottom" 
+        return "Lid Driven Cavity with an Elastic Fixed Bottom"
 
     #--- Parameters for fluid problem ---
 
@@ -178,7 +178,7 @@ class DrivenCavityFixedBottom(FSI):
         return Structure()
 
     def structure_density(self):
-        return 3.0 
+        return 3.0
 
     def structure_mu(self):
         return 1.0
