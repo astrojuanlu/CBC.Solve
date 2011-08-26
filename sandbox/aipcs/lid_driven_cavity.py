@@ -9,7 +9,15 @@ from fsiproblem import *
 # Read parameters
 application_parameters = read_parameters()
 
-# Define top boundary
+# Define the inflow boundary for regulized profile
+top_left   = "x[0] == 0.0 && x[0] < 0.25 - DOLFIN_EPS &&\
+              x[1] > 2.0 - DOLFIN_EPS"
+top_middle = "x[0] > 0.25 + DOLFIN_EPS  && x[0] < 1.75 - DOLFIN_EPS &&\
+              x[1] > 2 - DOLFIN_EPS "
+top_right  = "x[0] > 1.75 && x[0] <= 2 &&\
+              x[1] > 2 - DOLFIN_EPS "
+
+# Define the entire top boundary
 top = "near(x[1], 1.0)"
 
 # Define noslip boundary
@@ -20,22 +28,16 @@ class LidDrivenCavity(FSI):
     def __init__(self):
 
         # Number of inital elements
-        n = 2
+        n = 10
         nx = n
         ny = n
 
         # Create mesh
-        mesh = UnitSquare(nx, ny)
+#        mesh = UnitSquare(nx, ny)
+        mesh = Rectangle(0.0, 0.0, 2.0, 2.0, nx, ny)
 
         # Create Riesz representer for goal functional
-        self.psi = Expression("c*exp(-((x[0] - x0)*(x[0] - x0) + (x[1] - x1)*(x[1] - x1)) / (2.0*r*r))", c = 1.0, r = 0.15, x0 = 0.5, x1 = 0.3)
-
-        # Uncomment for testing
-        #mesh = refine(mesh)
-        #mesh = refine(mesh)
-        #self.psi.c /= assemble(self.psi*dx, mesh=mesh)
-        #print "Normalization:", self.psi.c
-        #plot(self.psi, interactive=True, mesh=mesh)
+        self.psi = Expression("c*exp(-((x[0] - x0)*(x[0] - x0) + (x[1] - x1)*(x[1] - x1)) / (2.0*r*r))", c = 1.0, r = 0.10, x0 = 0.5, x1 = 0.75)
 
         # Initialize base class
         FSI.__init__(self, mesh)
@@ -46,9 +48,8 @@ class LidDrivenCavity(FSI):
         return 1.0
 
     def evaluate_functional(self, u, p):
-
         self.psi.c /= assemble(self.psi*dx, mesh=self.Omega)
-        return u[0]*self.psi*dx, None, None, None
+        return u[1]*self.psi*dx, None, None, None
 
     def __str__(self):
         return "Lid-driven cavity problem"
@@ -62,16 +63,17 @@ class LidDrivenCavity(FSI):
         return 1.0
 
     def fluid_velocity_dirichlet_boundaries(self):
-        return [noslip, top]
+        return [noslip, top_left, top_middle, top_right]
 
     def fluid_velocity_dirichlet_values(self):
-        return [(0.0, 0.0), Expression(("4.0*x[0]*(1.0 - x[0])", "0.0"))]
+        # return [(0.0, 0.0), Expression(("4.0*x[0]*(1.0 - x[0])", "0.0"))]
+        return [(0.0, 0.0), Expression(("2*x[1]", "0.0")), Expression(("0.5", "0.0")), Expression(("2*(2-x[1])", "0.0"))]
 
     def fluid_pressure_dirichlet_boundaries(self):
-        return []
+        return [top]
 
     def fluid_pressure_dirichlet_values(self):
-        return []
+        return [0.0]
 
     def fluid_velocity_initial_condition(self):
         return [0.0, 0.0]
