@@ -18,7 +18,7 @@ top_right  = "x[0] > 1.75 && x[0] <= 2 &&\
               x[1] > 2 - DOLFIN_EPS "
 
 # Define the entire top boundary
-top = "near(x[1], 1.0)"
+top = "near(x[1], 2.0)"
 
 # Define noslip boundary
 noslip = "on_boundary && !(%s)" % top
@@ -28,7 +28,7 @@ class LidDrivenCavity(FSI):
     def __init__(self):
 
         # Number of inital elements
-        n = 10
+        n = 4
         nx = n
         ny = n
 
@@ -37,7 +37,12 @@ class LidDrivenCavity(FSI):
         mesh = Rectangle(0.0, 0.0, 2.0, 2.0, nx, ny)
 
         # Create Riesz representer for goal functional
-        self.psi = Expression("c*exp(-((x[0] - x0)*(x[0] - x0) + (x[1] - x1)*(x[1] - x1)) / (2.0*r*r))", c = 1.0, r = 0.10, x0 = 0.5, x1 = 0.75)
+        self.psi = Expression("c*exp(-((x[0] - x0)*(x[0] - x0) + (x[1] - x1)*(x[1] - x1)) / (2.0*r*r))", c = 1.0, r = 0.15, x0 = 1.5, x1 = 1.25)
+
+
+        #self.psi.c /= assemble(self.psi*dx, mesh=mesh)
+        # print "Normalization:", self.psi.c
+        # plot(self.psi, interactive=True, mesh=mesh)
 
         # Initialize base class
         FSI.__init__(self, mesh)
