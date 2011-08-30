@@ -83,10 +83,11 @@ class StaticMomentumBalanceSolver(CBCSolver):
         a = derivative(L, u, du)
 
         # Setup problem
-        equation = VariationalProblem(L, a, bcu)
-        equation.parameters["solver"]["newton_solver"]["absolute_tolerance"] = 1e-12
-        equation.parameters["solver"]["newton_solver"]["relative_tolerance"] = 1e-16
-        equation.parameters["solver"]["newton_solver"]["maximum_iterations"] = 100
+        problem = NonlinearVariationalProblem(L, u, bcu, a)
+        solver = NonlinearVariationalSolver(problem)
+        solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-12
+        solver.parameters["newton_solver"]["relative_tolerance"] = 1e-12
+        solver.parameters["newton_solver"]["maximum_iterations"] = 100
 
         # Store parameters
         self.parameters = parameters
@@ -94,7 +95,7 @@ class StaticMomentumBalanceSolver(CBCSolver):
         # Store variables needed for time-stepping
         # FIXME: Figure out why I am needed
         self.mesh = mesh
-        self.equation = equation
+        self.equation = solver
         self.u = u
 
     def solve(self):
@@ -102,7 +103,7 @@ class StaticMomentumBalanceSolver(CBCSolver):
         displacement field"""
 
         # Solve problem
-        self.equation.solve(self.u)
+        self.equation.solve()
 
         # Plot solution
         if self.parameters["plot_solution"]:
@@ -218,8 +219,14 @@ class MomentumBalanceSolver(CBCSolver):
             compiled_boundary.mark(boundary, i)
             L_accn = L_accn + inner(neumann_conditions[i], v)*dsb(i)
 
-        problem_accn = VariationalProblem(a_accn, L_accn)
-        a0 = problem_accn.solve()
+#        problem_accn = LinearVariationalProblem(a_accn, L_accn, a0)
+#        solver_accn = LinearVariationalSolver(problem_accn)
+#        solver_accn.solve()
+
+
+
+#        problem_accn = VariationalProblem(a_accn, L_accn)
+#        a0 = problem_accn.solve()
 
         k = Constant(dt)
         a1 = a0*(1.0 - 1.0/(2*beta)) - (u0 - u1 + k*v0)/(beta*k**2)
@@ -329,11 +336,12 @@ class MomentumBalanceSolver(CBCSolver):
         self.k.assign(dt)
 
         # FIXME: Setup all stuff in the constructor and call assemble instead of VariationalProblem
-        equation = VariationalProblem(self.L, self.a, self.bcu)
-        equation.parameters["solver"]["newton_solver"]["absolute_tolerance"] = 1e-12
-        equation.parameters["solver"]["newton_solver"]["relative_tolerance"] = 1e-12
-        equation.parameters["solver"]["newton_solver"]["maximum_iterations"] = 100
-        equation.solve(self.u1)
+        problem = NonlinearVariationalProblem(self.L, self.u1, self.bcu, self.a)
+        solver = NonlinearVariationalSolver(problem)
+        solver.parameters["newton_solver"]["absolute_tolerance"] = 1e-12
+        solver.parameters["newton_solver"]["relative_tolerance"] = 1e-12
+        solver.parameters["newton_solver"]["maximum_iterations"] = 100
+        solver.solve()
         return self.u1
 
     def update(self):
