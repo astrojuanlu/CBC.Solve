@@ -20,8 +20,7 @@ class FishyFlow(Hyperelasticity):
         return True
 
     def neumann_conditions(self):
-        flow_push = Expression(("force", "0.0"))
-        flow_push.force = 0.05
+        flow_push = Expression(("force", "0.0"), force=0.05)
         return [flow_push]
 
     def neumann_boundaries(self):
