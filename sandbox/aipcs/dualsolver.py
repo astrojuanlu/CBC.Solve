@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-03-07
+# Last changed: 2011-08-31
 
 from time import time as python_time
 from dolfin import *
@@ -92,11 +92,13 @@ def solve_dual(problem, parameters):
 
         # Assemble matrix
         info("Assembling matrix")
-        matrix = assemble(A, cell_domains=cd, exterior_facet_domains=efd, interior_facet_domains=ifd)
+        matrix = assemble(A, cell_domains=cd,
+                          exterior_facet_domains=efd, interior_facet_domains=ifd)
 
         # Assemble vector
         info("Assembling vector")
-        vector = assemble(L, cell_domains=cd, exterior_facet_domains=efd, interior_facet_domains=ifd)
+        vector = assemble(L, cell_domains=cd,
+                          exterior_facet_domains=efd, interior_facet_domains=ifd)
 
         # Apply boundary conditions
         info("Applying boundary conditions")

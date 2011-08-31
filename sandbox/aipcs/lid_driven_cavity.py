@@ -12,6 +12,9 @@ application_parameters = read_parameters()
 # Define inflow at the top
 top = "near(x[1], 1.0)"
 
+# Define bottom boundary
+bottom = "near(x[1], 0.0)"
+
 # Define noslip boundary
 noslip = "on_boundary && !(%s)" % top
 
@@ -20,7 +23,7 @@ class LidDrivenCavity(FSI):
     def __init__(self):
 
         # Create inital mesh
-        n = 8
+        n = 2
         mesh = UnitSquare(n, n)
 
         # Create Riesz representer for goal functional
@@ -61,10 +64,10 @@ class LidDrivenCavity(FSI):
         # return [(0.0, 0.0), Expression(("1.0 - pow(1.0 - x[0], p)", "0.0"), p=18)]
 
     def fluid_pressure_dirichlet_boundaries(self):
-        return []
+        return [bottom]
 
     def fluid_pressure_dirichlet_values(self):
-        return []
+        return [0.0]
 
     def fluid_velocity_initial_condition(self):
         return [0.0, 0.0]
