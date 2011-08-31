@@ -12,4 +12,4 @@ p["initial_timestep"] = 0.01
 p["goal_functional"] = case
 
 # Run problem
-run_local("channel_with_flap", parameters=p, case=case)
+run_local("channel_with_flap", parameters=p, case=1)

@@ -2,8 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2011 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-08-30
-
+# Last changed: 2011-08-31
 
 from fsiproblem import *
 
@@ -21,11 +20,13 @@ class LidDrivenCavity(FSI):
     def __init__(self):
 
         # Create inital mesh
-        n = 2
+        n = 8
         mesh = UnitSquare(n, n)
 
         # Create Riesz representer for goal functional
-        self.psi = Expression("c*exp(-((x[0] - x0)*(x[0] - x0) + (x[1] - x1)*(x[1] - x1)) / (2.0*r*r))", c = 1.0, r = 0.15, x0 = 0.75, x1 = 0.75)
+        self.psi = Expression("c*exp(-((x[0] - x0)*(x[0] - x0) + \
+                                       (x[1] - x1)*(x[1] - x1)) / (2.0*r*r))",
+                              c = 1.0, r = 0.15, x0 = 0.75, x1 = 0.75)
 
         # Initialize base class
         FSI.__init__(self, mesh)
@@ -60,10 +61,10 @@ class LidDrivenCavity(FSI):
         # return [(0.0, 0.0), Expression(("1.0 - pow(1.0 - x[0], p)", "0.0"), p=18)]
 
     def fluid_pressure_dirichlet_boundaries(self):
-        return [top]
+        return []
 
     def fluid_pressure_dirichlet_values(self):
-        return [0.0]
+        return []
 
     def fluid_velocity_initial_condition(self):
         return [0.0, 0.0]
