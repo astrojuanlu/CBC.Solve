@@ -175,8 +175,8 @@ class FSI(CBCProblem):
                 fsi_boundary[facet_index] = 0
 
         # Initialize global edge indices (used in read_primal_data)
-        init_global_edge_indices(Omega_F, Omega)
-        init_global_edge_indices(Omega_S, Omega)
+        init_parent_edge_indices(Omega_F, Omega)
+        init_parent_edge_indices(Omega_S, Omega)
 
         # Store data
         self.Omega_F = Omega_F

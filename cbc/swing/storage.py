@@ -12,7 +12,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-08-10
+# Last changed: 2011-09-19
 
 from numpy import append
 from dolfin import *
@@ -66,10 +66,10 @@ def read_primal_data(U, t, Omega, Omega_F, Omega_S, series, parameters):
     series[4].retrieve(local_vals_U_M, t)
 
     # Get mappings from local meshes to global mesh
-    v_F = Omega_F.data().mesh_function("global_vertex_indices").array()
-    v_S = Omega_S.data().mesh_function("global_vertex_indices").array()
-    e_F = Omega_F.data().mesh_function("global_edge_indices").array()
-    e_S = Omega_S.data().mesh_function("global_edge_indices").array()
+    v_F = Omega_F.data().mesh_function("parent_vertex_indices").array()
+    v_S = Omega_S.data().mesh_function("parent_vertex_indices").array()
+    e_F = Omega_F.data().mesh_function("parent_edge_indices").array()
+    e_S = Omega_S.data().mesh_function("parent_edge_indices").array()
 
     # Get the number of vertices and edges
     Nv = Omega.num_vertices()
