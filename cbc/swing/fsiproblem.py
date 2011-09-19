@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim andAnders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-08-10
+# Last changed: 2011-09-19
 
 from dolfin import *
 from numpy import array, append
@@ -94,13 +94,13 @@ class FSI(CBCProblem):
 
         # Extract map from vertices in Omega to vertices in Omega_F
         vertex_map_to_fluid = {}
-        vertex_map_from_fluid = Omega_F.data().mesh_function("global_vertex_indices")
+        vertex_map_from_fluid = Omega_F.data().mesh_function("parent_vertex_indices")
         for i in range(vertex_map_from_fluid.size()):
             vertex_map_to_fluid[vertex_map_from_fluid[i]] = i
 
         # Extract map from vertices in Omega to vertices in Omega_S
         vertex_map_to_structure = {}
-        vertex_map_from_structure = Omega_S.data().mesh_function("global_vertex_indices")
+        vertex_map_from_structure = Omega_S.data().mesh_function("parent_vertex_indices")
         for i in range(vertex_map_from_structure.size()):
             vertex_map_to_structure[vertex_map_from_structure[i]] = i
 
