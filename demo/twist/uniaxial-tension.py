@@ -20,10 +20,8 @@ class UniaxialTension(Hyperelasticity):
         return True
 
     def neumann_conditions(self):
-        pull_left   = Expression(("force*t", "0.0", "0.0"))
-        pull_left.force  = -1.0
-        pull_right  = Expression(("force*t", "0.0", "0.0"))
-        pull_right.force =  1.0
+        pull_left   = Expression(("force*t", "0.0", "0.0"), force=-1.0, t=0.0)
+        pull_right  = Expression(("force*t", "0.0", "0.0"), force=1.0, t=0.0)
         return [pull_right, pull_left]
 
     def neumann_boundaries(self):

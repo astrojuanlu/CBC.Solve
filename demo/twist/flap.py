@@ -20,8 +20,7 @@ class Obstruction(Hyperelasticity):
         return True
 
     def neumann_conditions(self):
-        fluid_force = Expression(("magnitude*t", "0.0"))
-        fluid_force.magnitude = 1.5
+        fluid_force = Expression(("magnitude*t", "0.0"), magnitude=1.5, t=0)
         return [fluid_force]
 
     def neumann_boundaries(self):
