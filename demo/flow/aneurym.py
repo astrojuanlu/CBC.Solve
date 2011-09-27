@@ -27,8 +27,9 @@ class Inflow(Expression):
         self.inflow = splrep(t, v)
 
 
-   def eval_data(self, values, data):
-	n = data.cell().normal(data.facet())
+    def eval_cell(self, values, x, ufc_cell):
+        cell = Cell(self.mesh, ufc_cell.index)
+        n = cell.normal(ufc_cell.local_facet)
 	t = self.problem.t
 	val = splev(t - int(t/self.t_period)*self.t_period,
 	self.bc_func)
