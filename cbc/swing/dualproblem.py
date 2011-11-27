@@ -67,7 +67,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_MS   = - inner(Y_M('+'), v_S('+'))*d_FSI
 
     A_FM01 =  (1/k)*inner(Z_F, rho_F*J(U_M1)*tr(dot(grad(v_M), inv(F(U_M1))))*(U_F0 - U_F1))*dx_F
-    A_FM02 =  inner(Z_F, rho_F*J(U_M1)*tr(dot(grad(v_M), inv(F(U_M1))))*dot(grad(U_F1), dot(inv(F(U_M1)), (U_M1 - U_M0)*(1/k))))*dx_F
+    A_FM02 =  inner(Z_F, rho_F*J(U_M1)*tr(dot(grad(v_M), inv(F(U_M1))))*dot(grad(U_F1), dot(inv(F(U_M1)), (U_M1 - U_M0)*(1/k) + U_F1)))*dx_F
     A_FM03 = -inner(Z_F,  rho_F*J(U_M1)*dot((dot(grad(U_F1), dot(inv(F(U_M1)), dot(grad(v_M), inv(F(U_M1)))))), (U_F1 - (U_M0 - U_M1)/k)))*dx_F
     A_FM04 =  (1/k)*inner((Z_F0 - Z_F), rho_F*J(U_M1)*dot(grad(U_F1), dot(inv(F(U_M1)), v_M )))*dx_F
     A_FM05 =  inner(grad(Z_F), J(U_M1)*tr(dot(grad(v_M), inv(F(U_M1))))*dot(Sigma_F(U_F1, P_F1, U_M1, mu_F), inv(F(U_M1)).T))*dx_F
