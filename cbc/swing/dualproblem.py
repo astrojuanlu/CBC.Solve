@@ -89,8 +89,8 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_SM06 = -inner(Z_S('+'), J(U_M1)('+')*dot(dot(P_F1('+')*I('+'), inv(F(U_M1)).T('+')), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'), N))))*d_FSI
 
     A_MM01 = -(alpha_M/k)*inner(Z_M0 - Z_M, v_M)*dx_F + inner(sym(grad(Z_M)), Sigma_M(v_M, mu_M, lmbda_M))*dx_F
-    A_MM02 = inner(Z_M('+'), v_M('+'))*d_FSI
-    A_MM03 = inner(Y_M('+'), q_M('+'))*d_FSI
+    A_MM02 = inner(Z_M('+'), q_M('+'))*d_FSI
+    A_MM03 = inner(Y_M('+'), v_M('+'))*d_FSI
 
     # Collect forms
     A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + G_FF
@@ -146,5 +146,8 @@ def create_dual_bcs(problem, W):
 
     # Boundary condition for Z_M on FSI boundary
     bcs += [DirichletBC(W.sub(4), (0, 0), problem.fsi_boundary, 2)]
+
+    # Boundary condition for Y_M on FSI boundary
+    bcs += [DirichletBC(W.sub(5), (0, 0), problem.fsi_boundary, 2)]
 
     return bcs
