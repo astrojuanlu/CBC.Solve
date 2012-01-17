@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Anders Logg, 2010
-# Last changed: 2011-06-20
+# Last changed: 2012-01-17
 
 from dolfin import *
 from cbc.common import *
@@ -47,6 +47,7 @@ class StaticMomentumBalanceSolver(CBCSolver):
 
         # Driving forces
         B = problem.body_force()
+        if B == []: B = problem.body_force_u(u)
 
         # If no body forces are specified, assume it is 0
         if B == []:
@@ -167,13 +168,6 @@ class MomentumBalanceSolver(CBCSolver):
                                           problem.dirichlet_boundaries(),
                                           vector)
 
-        # Driving forces
-        B  = problem.body_force()
-
-        # If no body forces are specified, assume it is 0
-        if B == []:
-            B = Constant((0,)*vector.mesh().geometry().dim())
-
         # Define fields
         # Test and trial functions
         v  = TestFunction(vector)
@@ -186,6 +180,14 @@ class MomentumBalanceSolver(CBCSolver):
         u0 = interpolate(u0, vector)
         v0 = interpolate(v0, vector)
         v1 = interpolate(v0, vector)
+
+        # Driving forces
+        B  = problem.body_force()
+        if B == []: B = problem.body_force_u(0.5*(u0 + u1))
+
+        # If no body forces are specified, assume it is 0
+        if B == []:
+            B = Constant((0,)*vector.mesh().geometry().dim())
 
         # Parameters pertinent to (HHT) time integration
         # alpha = 1.0
@@ -446,18 +448,24 @@ class CG1MomentumBalanceSolver(CBCSolver):
                                           problem.dirichlet_boundaries(),
                                           vector)
 
+        # Functions
+        xi, eta = split(V)
+        u, v = split(U)
+        u_plot = Function(vector)
+
+        # Project u0 and v0 into U0
+        a_proj = inner(dU, V)*dx
+        L_proj = inner(u0, xi)*dx + inner(v0, eta)*dx
+        solve(a_proj == L_proj, U0)
+        u0, v0 = split(U0)
+
         # Driving forces
         B  = problem.body_force()
+        if B == []: B = problem.body_force_u(0.5*(u0 + u))
 
         # If no body forces are specified, assume it is 0
         if B == []:
             B = Constant((0,)*vector.mesh().geometry().dim())
-
-        # Functions
-        xi, eta = split(V)
-        u, v = split(U)
-        u0, v0 = split(U0)
-        u_plot = Function(vector)
 
         # Evaluate displacements and velocities at mid points
         u_mid = 0.5*(u0 + u)

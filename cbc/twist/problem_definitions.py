@@ -32,6 +32,10 @@ class StaticHyperelasticity(CBCProblem):
         """Return body force, B"""
         return []
 
+    def body_force_u(self, u):
+        """Return body force, B, depending on displacement u"""
+        return []
+
     def dirichlet_values(self):
         """Return Dirichlet boundary conditions for the displacment
         field"""
