@@ -15,7 +15,7 @@ class LinearElastic(MaterialModel):
 
     def strain_energy(self, parameters):
         epsilon = self.epsilon
-        [mu, lmbda] = parameters    
+        [mu, lmbda] = parameters
         return lmbda/2*(tr(epsilon)**2) + mu*tr(epsilon*epsilon)
 
 class StVenantKirchhoff(MaterialModel):
@@ -33,7 +33,7 @@ class StVenantKirchhoff(MaterialModel):
 
 class MooneyRivlin(MaterialModel):
     """Defines the strain energy function for a (two term)
-    Mooney-Rivlin material"""        
+    Mooney-Rivlin material"""
 
     def model_info(self):
         self.num_parameters = 2

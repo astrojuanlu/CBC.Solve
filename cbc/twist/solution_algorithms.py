@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Anders Logg, 2010
-# Last changed: 2012-01-17
+# Last changed: 2012-01-19
 
 from dolfin import *
 from cbc.common import *
@@ -47,7 +47,6 @@ class StaticMomentumBalanceSolver(CBCSolver):
 
         # Driving forces
         B = problem.body_force()
-        if B == []: B = problem.body_force_u(u)
 
         # If no body forces are specified, assume it is 0
         if B == []:
@@ -183,7 +182,6 @@ class MomentumBalanceSolver(CBCSolver):
 
         # Driving forces
         B  = problem.body_force()
-        if B == []: B = problem.body_force_u(0.5*(u0 + u1))
 
         # If no body forces are specified, assume it is 0
         if B == []:
@@ -329,6 +327,8 @@ class MomentumBalanceSolver(CBCSolver):
 
         if self.parameters["plot_solution"]:
             interactive()
+
+        return self.u1
 
     def step(self, dt):
         """Setup and solve the problem at the current time step"""
@@ -554,6 +554,8 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
         if self.parameters["plot_solution"]:
             interactive()
+
+        return self.U.split(True)[0]
 
     def step(self, dt):
         """Setup and solve the problem at the current time step"""
