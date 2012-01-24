@@ -2,7 +2,7 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-06-19
+# Last changed: 2012-01-25
 
 __all__ = ["NavierStokesSolver"]
 
@@ -84,11 +84,11 @@ class NavierStokesSolver(CBCSolver):
 
         # Pressure correction
         a2 = inner(grad(q), k*grad(p))*dx
-        L2 = inner(grad(q), k*grad(p0))*dx - q*div(u1)*dx
+        L2 = inner(grad(q), k*grad(p0))*dx - q*rho*div(u1)*dx
 
         # Velocity correction
-        a3 = inner(v, u)*dx
-        L3 = inner(v, u1)*dx + inner(v, k*grad(p0 - p1))*dx
+        a3 = inner(v, rho*u)*dx
+        L3 = inner(v, rho*u1)*dx + inner(v, k*grad(p0 - p1))*dx
 
         # Create solvers
         solver1 = KrylovSolver("gmres", "ilu")
