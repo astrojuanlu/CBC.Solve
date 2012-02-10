@@ -434,13 +434,15 @@ class CG1MomentumBalanceSolver(CBCSolver):
         if isinstance(u0, str):
             info("Loading initial displacement from file.")
             file_name = u0
+            u0 = Function(vector)
             _u0 = loadtxt(file_name)[:]
-            U0.vector()[0:len(_u0)] = _u0[:]
+            u0.vector()[0:len(_u0)] = _u0[:]
         if isinstance(v0, str):
             info("Loading initial velocity from file.")
             file_name = v0
+            v0 = Function(vector)
             _v0 = loadtxt(file_name)[:]
-            U0.vector()[len(_v0) + 1:2*len(_v0) - 1] = _v0[:]
+            v0.vector()[0:len(_v0)] = _v0[:]
 
         # Create boundary conditions
         dirichlet_values = problem.dirichlet_values()
