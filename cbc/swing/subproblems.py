@@ -68,7 +68,7 @@ class FluidProblem(NavierStokes):
         return self.w
 
     def velocity_dirichlet_values(self):
-        return self.problem.fluid_velocity_dirichlet_values()
+        return self.problem.fluid_velocity_dirichlet_values(self.w)
 
     def velocity_dirichlet_boundaries(self):
         return self.problem.fluid_velocity_dirichlet_boundaries()
