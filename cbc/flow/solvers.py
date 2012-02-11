@@ -35,6 +35,14 @@ class NavierStokesSolver(CBCSolver):
         V = VectorFunctionSpace(mesh, "CG", 2)
         Q = FunctionSpace(mesh, "CG", 1)
 
+        # Coefficients
+        mu = Constant(problem.viscosity())  # Dynamic viscosity [Ps x s]
+        rho = Constant(problem.density())   # Density [kg/m^3]
+        n = FacetNormal(mesh)
+        k = Constant(dt)
+        f = problem.body_force(V1)
+        w = problem.mesh_velocity(V1)
+
         # Create boundary conditions
         bcu = create_dirichlet_conditions(problem.velocity_dirichlet_values(),
                                           problem.velocity_dirichlet_boundaries(),
@@ -56,14 +64,6 @@ class NavierStokesSolver(CBCSolver):
         # Functions
         u1 = interpolate(u0, V)
         p1 = interpolate(p0, Q)
-
-        # Coefficients
-        mu = Constant(problem.viscosity())  # Dynamic viscosity [Ps x s]
-        rho = Constant(problem.density())   # Density [kg/m^3]
-        n = FacetNormal(mesh)
-        k = Constant(dt)
-        f = problem.body_force(V1)
-        w = problem.mesh_velocity(V1)
 
         # Define Cauchy stress tensor
         def sigma(v,w):
