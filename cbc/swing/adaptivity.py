@@ -59,8 +59,8 @@ def estimate_error(problem, parameters):
         VSE = VectorFunctionSpace(Omega, "CG", 3)
 
     # Define functions for extrapolation
-    EZ0 = [Function(EV) for EV in (V3, Q2, VSE, VSE, V2, V2)]
-    EZ1 = [Function(EV) for EV in (V3, Q2, VSE, VSE, V2, V2)]
+    EZ0 = [Function(EV) for EV in (V3, Q2, V3, VSE, VSE, V2, V2)]
+    EZ1 = [Function(EV) for EV in (V3, Q2, V3, VSE, VSE, V2, V2)]
 
     # Define midpoint values for primal and dual functions
     U  = [0.5 * (U0[i]  + U1[i])  for i in range(5)]
@@ -118,12 +118,12 @@ def estimate_error(problem, parameters):
         read_dual_data(ZZ1, t1, dual_series)
 
         # Extrapolate dual data
-        [EZ0[j].extrapolate(Z0[j]) for j in range(6)]
-        [EZ1[j].extrapolate(Z1[j]) for j in range(6)]
+        [EZ0[j].extrapolate(Z0[j]) for j in range(7)]
+        [EZ1[j].extrapolate(Z1[j]) for j in range(7)]
 
         # Apply dual boundary conditions to extrapolation
-        [apply_bc(EZ0[j], Z0[j]) for j in range(6)]
-        [apply_bc(EZ1[j], Z1[j]) for j in range(6)]
+        [apply_bc(EZ0[j], Z0[j]) for j in range(7)]
+        [apply_bc(EZ1[j], Z1[j]) for j in range(7)]
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
