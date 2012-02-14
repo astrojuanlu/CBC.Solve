@@ -49,12 +49,12 @@ def solve_dual(problem, parameters):
     W = create_dual_space(Omega, parameters)
 
     # Create test and trial functions
-    (v_F, q_F, v_S, q_S, v_M, q_M) = TestFunctions(W)
-    (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = TrialFunctions(W)
+    (v_F, q_F, s_F, v_S, q_S, v_M, q_M) = TestFunctions(W)
+    (Z_F, Y_F, X_F, Z_S, Y_S, Z_M, Y_M) = TrialFunctions(W)
 
     # Create dual functions
-    Z0, (Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0) = create_dual_functions(Omega, parameters)
-    Z1, (Z_F1, Y_F1, Z_S1, Y_S1, Z_M1, Y_M1) = create_dual_functions(Omega, parameters)
+    Z0, (Z_F0, Y_F0, X_F0, Z_S0, Y_S0, Z_M0, Y_M0) = create_dual_functions(Omega, parameters)
+    Z1, (Z_F1, Y_F1, X_F1, Z_S1, Y_S1, Z_M1, Y_M1) = create_dual_functions(Omega, parameters)
 
     # Create primal functions
     U_F0, P_F0, U_S0, P_S0, U_M0 = U0 = create_primal_functions(Omega, parameters)
@@ -138,9 +138,10 @@ def _save_solution(Z, files):
     "Save solution to VTK"
 
     # Extract sub functions (shallow copy)
-    (Z_F, Y_F, Z_S, Y_S, Z_M, Y_M) = Z.split()
+    (Z_F, Y_F, X_F, Z_S, Y_S, Z_M, Y_M) = Z.split()
 
     # Save to file
+    # FIXME: Add X_F
     files[0] << Z_F
     files[1] << Y_F
     files[2] << Z_S
@@ -148,9 +149,11 @@ def _save_solution(Z, files):
     files[4] << Z_M
     files[5] << Y_M
 
+# FIXME: Add X_F
 def _plot_solution(Z_F, Y_F, Z_S, Y_S, Z_M, Y_M):
     "Plot solution"
 
+    # FIXME: Add X_F
     # Plot solution
     plot(Z_F, title="Dual fluid velocity")
     plot(Y_F, title="Dual fluid pressure")
