@@ -23,10 +23,11 @@ def inner_product(v, w):
     dx_M = dx_F
 
     # Extract variables
-    v1_F, q1_F, v1_S, q1_S, v1_M, q1_M = v
-    v2_F, q2_F, v2_S, q2_S, v2_M, q2_M = w
+    v1_F, q1_F, s1_F, v1_S, q1_S, v1_M, q1_M = v
+    v2_F, q2_F, s2_F, v2_S, q2_S, v2_M, q2_M = w
 
     # Inner product on subdomains, requiring ident_zeros
+    # FIXME: Add s1_F and s2_F
     m1 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx_F + \
          (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx_S + \
          (inner(v1_M, v2_M) + inner(q1_M, q2_M))*dx_M
@@ -45,7 +46,7 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     U_F0, P_F0, U_S0, P_S0, U_M0 = U0
     U_F1, P_F1, U_S1, P_S1, U_M1 = U1
     U_F,  P_F,  U_S,  P_S,  U_M  = U
-    v_F, q_F, v_S, q_S, v_M, q_M = w
+    v_F, q_F, s_F, v_S, q_S, v_M, q_M = w
 
     # Get problem parameters
     Omega   = problem.mesh()
