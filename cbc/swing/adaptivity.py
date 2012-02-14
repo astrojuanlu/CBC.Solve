@@ -64,8 +64,8 @@ def estimate_error(problem, parameters):
 
     # Define midpoint values for primal and dual functions
     U  = [0.5 * (U0[i]  + U1[i])  for i in range(5)]
-    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(6)]
-    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(6)]
+    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(7)]
+    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(7)]
 
     # Define time step (value set in each time step)
     kn = Constant(0.0)
