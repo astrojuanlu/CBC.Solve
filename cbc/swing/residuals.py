@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-27
+# Last changed: 2012-02-14
 
 from dolfin import *
 
@@ -107,11 +107,11 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     "Return strong residuals (integrated by parts)"
 
     # Extract variables
-    U_F0, P_F0, U_S0, P_S0, U_M0       = U0
-    U_F1, P_F1, U_S1, P_S1, U_M1       = U1
-    U_F,  P_F,  U_S,  P_S,  U_M        = U
-    Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M  = Z
-    EZ_F, EY_F, EZ_S, EY_S, EZ_M, EY_M = EZ
+    U_F0, P_F0, U_S0, P_S0, U_M0        = U0
+    U_F1, P_F1, U_S1, P_S1, U_M1        = U1
+    U_F,  P_F,  U_S,  P_S,  U_M         = U
+    Z_F,  Y_F, X_F, Z_S, Y_S, Z_M, Y_M  = Z
+    EZ_F, EY_F, EX_F ,EZ_S, EY_S, EZ_M, EY_M  = EZ
 
     # Get problem parameters
     Omega   = problem.mesh()
@@ -163,6 +163,7 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
 
     # Fluid residual contributions
+    # FIXME: Add dual Lagrange multiplier EX_F for the fluid
     R_F0 = w*inner(EZ_F - Z_F, Dt_U_F - div(Sigma_F))*dx_F
     R_F1 = avg(w)*inner(EZ_F('+') - Z_F('+'), jump(Sigma_F, N_F))*dS_F
     R_F2 = w*inner(EZ_F - Z_F, dot(Sigma_F, N_F))*ds
