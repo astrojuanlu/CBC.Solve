@@ -54,6 +54,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_FF05 =  inner(grad(Z_F), J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)))*dx_F
     A_FF06 = -inner(grad(Z_F), J(U_M1)*q_F*inv(F(U_M1)).T)*dx_F
     A_FF07 =  inner(Y_F, div(J(U_M1)*dot(inv(F(U_M1)), v_F)))*dx_F
+    A_FF08 =  inner(v_F, X_F)*d_FSI + inner(s_F, Z_F)*d_FSI
 
     G_FF   = -inner(Z_F, dot(J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)), N_F))*ds
 
