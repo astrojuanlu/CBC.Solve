@@ -58,6 +58,9 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
 
     G_FF   = -inner(Z_F, dot(J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)), N_F))*ds
 
+
+    A_FS   = -inner(X_F('+'), v_S('+'))*d_FSI
+
     A_SF01 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(v_F('+')), inv(F(U_M1))('+')), dot(inv(F(U_M1)).T('+'), N)))*d_FSI
     A_SF02 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), grad(v_F('+')).T), dot(inv(F(U_M1)).T('+'), N)))*d_FSI
     A_SF03 =  inner(Z_S('+'), J(U_M1)('+')*q_F('+')*dot(I('+'), dot(inv(F(U_M1)).T('+'), N)))*d_FSI
@@ -100,7 +103,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_FM = A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + G_FM
     A_SM = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06
     A_MM = A_MM01 + A_MM02 + A_MM03
-    A_system = A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS
+    A_system = A_FF + A_FS + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS
 
     # Define goal funtional
     goal_functional = problem.evaluate_functional(v_F, q_F, v_S, q_S, v_M, dx_F, dx_S, dx_M)
