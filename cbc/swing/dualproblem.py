@@ -145,8 +145,11 @@ def create_dual_bcs(problem, W):
     # Boundary condition for Z_F on FSI boundary
     bcs += [DirichletBC(W.sub(0), (0, 0), problem.fsi_boundary, 2)]
 
+    # Boundary condition for X_F on FSI boundary
+    bcs += [DirichletBC(W.sub(2), (0, 0), problem.fsi_boundary, 2)]
+
     # Boundary condition for Z_M on FSI boundary
-    bcs += [DirichletBC(W.sub(4), (0, 0), problem.fsi_boundary, 2)]
+    bcs += [DirichletBC(W.sub(5), (0, 0), problem.fsi_boundary, 2)]
 
     # Boundary condition for Y_M on FSI boundary
     bcs += [DirichletBC(W.sub(5), (0, 0), problem.fsi_boundary, 2)]
