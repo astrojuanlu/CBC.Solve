@@ -135,26 +135,4 @@ def create_dual_bcs(problem, W):
         bcs += [DirichletBC(W.sub(3), (0, 0), boundary)]
         bcs += [DirichletBC(W.sub(4), (0, 0), boundary)]
 
-    # Boundary conditions for dual mesh displacement
-    bcs += [DirichletBC(W.sub(5), (0, 0), DomainBoundary())]
-
-    # In addition to the above boundary conditions, we also need to
-    # add homogeneous boundary conditions for Z_F and Z_M on the FSI
-    # boundary. Note that the no-slip boundary condition for U_F does
-    # not include the FSI boundary when interpreted as a boundary
-    # condition for Z_F if it is defined in terms of 'on_boundary'
-    # which has a different meaning for the full mesh.
-
-    # Boundary condition for Z_F on FSI boundary
-    bcs += [DirichletBC(W.sub(0), (0, 0), problem.fsi_boundary, 2)]
-
-    # Boundary condition for X_F on FSI boundary
-    bcs += [DirichletBC(W.sub(2), (0, 0), problem.fsi_boundary, 2)]
-
-    # Boundary condition for Z_M on FSI boundary
-    bcs += [DirichletBC(W.sub(5), (0, 0), problem.fsi_boundary, 2)]
-
-    # Boundary condition for Y_M on FSI boundary
-    bcs += [DirichletBC(W.sub(5), (0, 0), problem.fsi_boundary, 2)]
-
     return bcs
