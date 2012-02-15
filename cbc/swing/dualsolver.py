@@ -30,13 +30,15 @@ def solve_dual(problem, parameters):
     if save_solution:
         Z_F_file = File("%s/pvd/level_%d/Z_F.pvd" % (parameters["output_directory"], level))
         Y_F_file = File("%s/pvd/level_%d/Y_F.pvd" % (parameters["output_directory"], level))
+        X_F_file = File("%s/pvd/level_%d/X_F.pvd" % (parameters["output_directory"], level))
         Z_S_file = File("%s/pvd/level_%d/Z_S.pvd" % (parameters["output_directory"], level))
         Y_S_file = File("%s/pvd/level_%d/Y_S.pvd" % (parameters["output_directory"], level))
         Z_M_file = File("%s/pvd/level_%d/Z_M.pvd" % (parameters["output_directory"], level))
         Y_M_file = File("%s/pvd/level_%d/Y_M.pvd" % (parameters["output_directory"], level))
         files = [Z_F_file, Y_F_file,
-                 Z_S_file, Y_S_file,
-                 Z_M_file, Y_M_file]
+                 X_F_file, Z_S_file,
+                 Y_S_file, Z_M_file,
+                 Y_M_file]
 
     # Create time series for storing solution
     primal_series = create_primal_series(parameters)
