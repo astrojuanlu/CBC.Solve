@@ -143,22 +143,21 @@ def _save_solution(Z, files):
     (Z_F, Y_F, X_F, Z_S, Y_S, Z_M, Y_M) = Z.split()
 
     # Save to file
-    # FIXME: Add X_F
     files[0] << Z_F
     files[1] << Y_F
-    files[2] << Z_S
-    files[3] << Y_S
-    files[4] << Z_M
-    files[5] << Y_M
+    files[2] << X_F
+    files[3] << Z_S
+    files[4] << Y_S
+    files[5] << Z_M
+    files[6] << Y_M
 
-# FIXME: Add X_F
-def _plot_solution(Z_F, Y_F, Z_S, Y_S, Z_M, Y_M):
+def _plot_solution(Z_F, Y_F, X_F, Z_S, Y_S, Z_M, Y_M):
     "Plot solution"
 
-    # FIXME: Add X_F
     # Plot solution
     plot(Z_F, title="Dual fluid velocity")
     plot(Y_F, title="Dual fluid pressure")
+    plot(X_F, title="Dual fluid Lagrange multiplier")
     plot(Z_S, title="Dual displacement")
     plot(Y_S, title="Dual displacement velocity")
     plot(Z_M, title="Dual mesh displacement")
