@@ -67,9 +67,9 @@ def solve_dual(problem, parameters):
 
     # Create variational forms for dual problem
     A, L = create_dual_forms(Omega_F, Omega_S, k, problem,
-                             v_F,  q_F,  v_S,  q_S,  v_M,  q_M,
-                             Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
-                             Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0,
+                             v_F,  q_F,  s_F,  v_S,  q_S,  v_M,  q_M,
+                             Z_F,  Y_F,  X_F,  Z_S,  Y_S,  Z_M,  Y_M,
+                             Z_F0, Y_F0, X_F0, Z_S0, Y_S0, Z_M0, Y_M0,
                              U_F0, P_F0, U_S0, P_S0, U_M0,
                              U_F1, P_F1, U_S1, P_S1, U_M1)
 
