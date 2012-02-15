@@ -54,7 +54,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_FF05 =  inner(grad(Z_F), J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)))*dx_F
     A_FF06 = -inner(grad(Z_F), J(U_M1)*q_F*inv(F(U_M1)).T)*dx_F
     A_FF07 =  inner(Y_F, div(J(U_M1)*dot(inv(F(U_M1)), v_F)))*dx_F
-    A_FF08 =  inner(v_F, X_F)*d_FSI + inner(s_F, Z_F)*d_FSI
+    A_FF08 =  inner(X_F('+'), v_F('+'))*d_FSI + inner(Z_F('+'), s_F('+'))*d_FSI
 
     G_FF   = -inner(Z_F, dot(J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)), N_F))*ds
 
@@ -94,7 +94,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_MM03 = inner(Y_M('+'), v_M('+'))*d_FSI
 
     # Collect forms
-    A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + G_FF
+    A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + A_FF08 + G_FF
     A_SF = A_SF01 + A_SF02 + A_SF03
     G_FM = G_FM1  + G_FM2  + G_FM3
     A_FM = A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + G_FM
@@ -129,11 +129,11 @@ def create_dual_bcs(problem, W):
 
     # Boundary conditions for dual structure displacement and velocity
     for boundary in problem.structure_dirichlet_boundaries():
-        bcs += [DirichletBC(W.sub(2), (0, 0), boundary)]
         bcs += [DirichletBC(W.sub(3), (0, 0), boundary)]
+        bcs += [DirichletBC(W.sub(4), (0, 0), boundary)]
 
     # Boundary conditions for dual mesh displacement
-    bcs += [DirichletBC(W.sub(4), (0, 0), DomainBoundary())]
+    bcs += [DirichletBC(W.sub(5), (0, 0), DomainBoundary())]
 
     # In addition to the above boundary conditions, we also need to
     # add homogeneous boundary conditions for Z_F and Z_M on the FSI
