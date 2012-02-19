@@ -59,8 +59,8 @@ def estimate_error(problem, parameters):
         VSE = VectorFunctionSpace(Omega, "CG", 3)
 
     # Define functions for extrapolation
-    EZ0 = [Function(EV) for EV in (V3, Q2, V3, VSE, VSE, V2, V2)]
-    EZ1 = [Function(EV) for EV in (V3, Q2, V3, VSE, VSE, V2, V2)]
+    EZ0 = [Function(EV) for EV in (V3, Q2, V2, VSE, VSE, V2, V2)]
+    EZ1 = [Function(EV) for EV in (V3, Q2, V2, VSE, VSE, V2, V2)]
 
     # Define midpoint values for primal and dual functions
     U  = [0.5 * (U0[i]  + U1[i])  for i in range(5)]

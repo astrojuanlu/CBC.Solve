@@ -27,13 +27,12 @@ def inner_product(v, w):
     v2_F, q2_F, s2_F, v2_S, q2_S, v2_M, q2_M = w
 
     # Inner product on subdomains, requiring ident_zeros
-    # FIXME: Add s1_F and s2_F
-    m1 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx_F + \
+    m1 = (inner(v1_F, v2_F) + q1_F*q2_F + inner(s1_F, s2_F))*dx_F + \
          (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx_S + \
          (inner(v1_M, v2_M) + inner(q1_M, q2_M))*dx_M
 
     # Inner product on the whole domain
-    m2 = (inner(v1_F, v2_F) + q1_F*q2_F)*dx + \
+    m2 = (inner(v1_F, v2_F) + q1_F*q2_F + inner(s1_F, s2_F))*dx + \
          (inner(v1_S, v2_S) + inner(q1_S, q2_S))*dx + \
          (inner(v1_M, v2_M) + inner(q1_M, q2_M))*dx
 

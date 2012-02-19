@@ -30,13 +30,15 @@ def solve_dual(problem, parameters):
     if save_solution:
         Z_F_file = File("%s/pvd/level_%d/Z_F.pvd" % (parameters["output_directory"], level))
         Y_F_file = File("%s/pvd/level_%d/Y_F.pvd" % (parameters["output_directory"], level))
+        X_F_file = File("%s/pvd/level_%d/X_F.pvd" % (parameters["output_directory"], level))
         Z_S_file = File("%s/pvd/level_%d/Z_S.pvd" % (parameters["output_directory"], level))
         Y_S_file = File("%s/pvd/level_%d/Y_S.pvd" % (parameters["output_directory"], level))
         Z_M_file = File("%s/pvd/level_%d/Z_M.pvd" % (parameters["output_directory"], level))
         Y_M_file = File("%s/pvd/level_%d/Y_M.pvd" % (parameters["output_directory"], level))
         files = [Z_F_file, Y_F_file,
-                 Z_S_file, Y_S_file,
-                 Z_M_file, Y_M_file]
+                 X_F_file, Z_S_file,
+                 Y_S_file, Z_M_file,
+                 Y_M_file]
 
     # Create time series for storing solution
     primal_series = create_primal_series(parameters)
@@ -65,9 +67,9 @@ def solve_dual(problem, parameters):
 
     # Create variational forms for dual problem
     A, L = create_dual_forms(Omega_F, Omega_S, k, problem,
-                             v_F,  q_F,  v_S,  q_S,  v_M,  q_M,
-                             Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
-                             Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0,
+                             v_F,  q_F,  s_F,  v_S,  q_S,  v_M,  q_M,
+                             Z_F,  Y_F,  X_F,  Z_S,  Y_S,  Z_M,  Y_M,
+                             Z_F0, Y_F0, X_F0, Z_S0, Y_S0, Z_M0, Y_M0,
                              U_F0, P_F0, U_S0, P_S0, U_M0,
                              U_F1, P_F1, U_S1, P_S1, U_M1)
 
@@ -141,22 +143,21 @@ def _save_solution(Z, files):
     (Z_F, Y_F, X_F, Z_S, Y_S, Z_M, Y_M) = Z.split()
 
     # Save to file
-    # FIXME: Add X_F
     files[0] << Z_F
     files[1] << Y_F
-    files[2] << Z_S
-    files[3] << Y_S
-    files[4] << Z_M
-    files[5] << Y_M
+    files[2] << X_F
+    files[3] << Z_S
+    files[4] << Y_S
+    files[5] << Z_M
+    files[6] << Y_M
 
-# FIXME: Add X_F
-def _plot_solution(Z_F, Y_F, Z_S, Y_S, Z_M, Y_M):
+def _plot_solution(Z_F, Y_F, X_F, Z_S, Y_S, Z_M, Y_M):
     "Plot solution"
 
-    # FIXME: Add X_F
     # Plot solution
     plot(Z_F, title="Dual fluid velocity")
     plot(Y_F, title="Dual fluid pressure")
+    plot(X_F, title="Dual fluid Lagrange multiplier")
     plot(Z_S, title="Dual displacement")
     plot(Y_S, title="Dual displacement velocity")
     plot(Z_M, title="Dual mesh displacement")

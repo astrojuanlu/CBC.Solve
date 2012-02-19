@@ -34,7 +34,7 @@ def create_dual_space(Omega, parameters):
     structure_element_degree = parameters["structure_element_degree"]
     V_F = VectorFunctionSpace(Omega, "CG", 2)
     Q_F = FunctionSpace(Omega, "CG", 1)
-    S_F = VectorFunctionSpace(Omega, "CG", 2)
+    S_F = VectorFunctionSpace(Omega, "CG", 1)
     V_S = VectorFunctionSpace(Omega, "CG", structure_element_degree)
     Q_S = VectorFunctionSpace(Omega, "CG", structure_element_degree)
     V_M = VectorFunctionSpace(Omega, "CG", 1)

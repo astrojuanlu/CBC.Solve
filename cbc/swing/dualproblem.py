@@ -4,15 +4,15 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-18
+# Last changed: 2012-02-14
 
 from dolfin import *
 from operators import *
 
 def create_dual_forms(Omega_F, Omega_S, k, problem,
-                      v_F,  q_F,  v_S,  q_S,  v_M,  q_M,
-                      Z_F,  Y_F,  Z_S,  Y_S,  Z_M,  Y_M,
-                      Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0,
+                      v_F,  q_F,  s_F,  v_S,  q_S,  v_M,  q_M,
+                      Z_F,  Y_F,  X_F,  Z_S,  Y_S,  Z_M,  Y_M,
+                      Z_F0, Y_F0, X_F0, Z_S0, Y_S0, Z_M0, Y_M0,
                       U_F0, P_F0, U_S0, P_S0, U_M0,
                       U_F1, P_F1, U_S1, P_S1, U_M1):
     "Return bilinear and linear forms for one time step."
@@ -54,8 +54,12 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_FF05 =  inner(grad(Z_F), J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)))*dx_F
     A_FF06 = -inner(grad(Z_F), J(U_M1)*q_F*inv(F(U_M1)).T)*dx_F
     A_FF07 =  inner(Y_F, div(J(U_M1)*dot(inv(F(U_M1)), v_F)))*dx_F
+    A_FF08 =  inner(X_F('+'), v_F('+'))*d_FSI + inner(Z_F('+'), s_F('+'))*d_FSI
 
     G_FF   = -inner(Z_F, dot(J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)), N_F))*ds
+
+
+    A_FS   = -inner(X_F('+'), q_S('+'))*d_FSI
 
     A_SF01 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(v_F('+')), inv(F(U_M1))('+')), dot(inv(F(U_M1)).T('+'), N)))*d_FSI
     A_SF02 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(inv(F(U_M1)).T('+'), grad(v_F('+')).T), dot(inv(F(U_M1)).T('+'), N)))*d_FSI
@@ -93,13 +97,13 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_MM03 = inner(Y_M('+'), v_M('+'))*d_FSI
 
     # Collect forms
-    A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + G_FF
+    A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + A_FF08 + G_FF
     A_SF = A_SF01 + A_SF02 + A_SF03
     G_FM = G_FM1  + G_FM2  + G_FM3
     A_FM = A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + G_FM
     A_SM = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06
     A_MM = A_MM01 + A_MM02 + A_MM03
-    A_system = A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS
+    A_system = A_FF + A_FS + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS
 
     # Define goal funtional
     goal_functional = problem.evaluate_functional(v_F, q_F, v_S, q_S, v_M, dx_F, dx_S, dx_M)
@@ -128,26 +132,7 @@ def create_dual_bcs(problem, W):
 
     # Boundary conditions for dual structure displacement and velocity
     for boundary in problem.structure_dirichlet_boundaries():
-        bcs += [DirichletBC(W.sub(2), (0, 0), boundary)]
         bcs += [DirichletBC(W.sub(3), (0, 0), boundary)]
-
-    # Boundary conditions for dual mesh displacement
-    bcs += [DirichletBC(W.sub(4), (0, 0), DomainBoundary())]
-
-    # In addition to the above boundary conditions, we also need to
-    # add homogeneous boundary conditions for Z_F and Z_M on the FSI
-    # boundary. Note that the no-slip boundary condition for U_F does
-    # not include the FSI boundary when interpreted as a boundary
-    # condition for Z_F if it is defined in terms of 'on_boundary'
-    # which has a different meaning for the full mesh.
-
-    # Boundary condition for Z_F on FSI boundary
-    bcs += [DirichletBC(W.sub(0), (0, 0), problem.fsi_boundary, 2)]
-
-    # Boundary condition for Z_M on FSI boundary
-    bcs += [DirichletBC(W.sub(4), (0, 0), problem.fsi_boundary, 2)]
-
-    # Boundary condition for Y_M on FSI boundary
-    bcs += [DirichletBC(W.sub(5), (0, 0), problem.fsi_boundary, 2)]
+        bcs += [DirichletBC(W.sub(4), (0, 0), boundary)]
 
     return bcs
