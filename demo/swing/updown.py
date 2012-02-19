@@ -17,7 +17,7 @@ solid_bottom = "x[1] < DOLFIN_EPS"
 # Define structure subdomain
 class Structure(SubDomain):
     def inside(self, x, on_boundary):
-        return x[1] > 0.5 + DOLFIN_EPS
+        return x[1] < 0.5 + DOLFIN_EPS
 
 class UpDown(FSI):
 
@@ -88,7 +88,7 @@ class UpDown(FSI):
         return [(0.0, 0.0)]
 
     def structure_dirichlet_boundaries(self):
-        return [fixed]
+        return [solid_bottom]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"
