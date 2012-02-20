@@ -72,8 +72,7 @@ class NavierStokes(CBCProblem):
 
     def body_force(self, V):
         "Return body force f"
-        f = Constant((0,)*V.mesh().geometry().dim())
-        return f
+        return []
 
     def mesh_velocity(self, V):
          "Return mesh velocity (for ALE formulations)"

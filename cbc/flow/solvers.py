@@ -2,7 +2,8 @@ __author__ = "Kristian Valen-Sendstad and Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-01-25
+# Modified by Harish Narayanan, 2012
+# Last changed: 2012-02-20
 
 __all__ = ["NavierStokesSolver"]
 
@@ -42,6 +43,10 @@ class NavierStokesSolver(CBCSolver):
         k = Constant(dt)
         f = problem.body_force(V1)
         w = problem.mesh_velocity(V1)
+
+        # If no body forces are specified, assume it is 0
+        if f == []:
+            f = Constant((0,)*V1.mesh().geometry().dim())
 
         # Create boundary conditions
         bcu = create_dirichlet_conditions(problem.velocity_dirichlet_values(),
@@ -104,6 +109,7 @@ class NavierStokesSolver(CBCSolver):
         self.t_range = t_range
         self.bcu = bcu
         self.bcp = bcp
+        self.f = f
         self.u0 = u0
         self.u1 = u1
         self.p0 = p0
@@ -180,6 +186,9 @@ class NavierStokesSolver(CBCSolver):
         return self.u1, self.p1
 
     def update(self, t):
+
+        # Update the time on the body force
+        self.f.t = t
 
         # Propagate values
         self.u0.assign(self.u1)
