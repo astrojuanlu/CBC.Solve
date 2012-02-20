@@ -51,7 +51,7 @@ class ChannelWithFlap(FSI):
     #--- Common ---
 
     def end_time(self):
-        return 0.07
+        return 0.5
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
         A = (structure_right - structure_left) * structure_top
@@ -68,8 +68,8 @@ class ChannelWithFlap(FSI):
     def fluid_viscosity(self):
         return 0.002
 
-    def fluid_velocity_dirichlet_values(self, w):
-        return [w]
+    def fluid_velocity_dirichlet_values(self):
+         return [(0.0, 0.0)]
 
     def fluid_velocity_dirichlet_boundaries(self):
         return [noslip]
@@ -92,12 +92,12 @@ class ChannelWithFlap(FSI):
         return Structure()
 
     def structure_density(self):
-#        return 0.25*15.0
-        return 10.0
+        return 0.25*15.0
+#        return 10.0
 
     def structure_mu(self):
-#        return 0.25*75.0
-        return 5.0
+        return 0.25*75.0
+#        return 5.0
 
     def structure_lmbda(self):
         return 0.25*125.0
