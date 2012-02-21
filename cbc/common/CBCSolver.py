@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-06-19
+# Last changed: 2012-02-21
 
 from time import time
 from dolfin import info, error, Progress
@@ -60,24 +60,38 @@ def create_dirichlet_conditions(values, boundaries, function_space):
     """Create Dirichlet boundary conditions for given boundary values,
     boundaries and function space."""
 
-    # FIXME: Handle MeshFunctions!
-
     # Check that the size matches
     if len(values) != len(boundaries):
         error("The number of Dirichlet values does not match the number of Dirichlet boundaries.")
 
-    # Create Dirichlet conditions
     info("Creating %d Dirichlet boundary condition(s)." % len(values))
+
+    # Create Dirichlet conditions
     bcs = []
     for (i, value) in enumerate(values):
-        pretty_str = str(boundaries[i])
-        while "  " in pretty_str: pretty_str = pretty_str.replace("  ", " ")
-        info("Creating Dirichlet boundary condition.")
-        #info(pretty_str)
-        subdomain = boundaries[i]
-        if not isinstance(subdomain, SubDomain):
-            subdomain = compile_subdomains(subdomain)
-        bc = DirichletBC(function_space, value, subdomain)
+
+        # Get current boundary
+        boundary = boundaries[i]
+
+        # Case 0: boundary is a string
+        if isinstance(boundary, str):
+            boundary = compile_subdomains(boundary)
+            bc = DirichletBC(function_space, value, boundary)
+
+        # Case 1: boundary is a SubDomain
+        elif isinstance(boundary, SubDomain):
+            bc = DirichletBC(function_space, value, boundary)
+
+        # Case 2: boundary is defined by a MeshFunction
+        elif isinstance(boundary, tuple):
+            mesh_function, index = boundary
+            bc = DirichletBC(function_space, value, mesh_function, index)
+
+        # Unhandled case
+        else:
+            error("Unhandled boundary specification for boundary condition. "
+                  "Expecting a string, a SubDomain or a (MeshFunction, int) tuple.")
+
         bcs.append(bc)
 
     return bcs
