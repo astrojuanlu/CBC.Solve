@@ -9,10 +9,12 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-20
+# Last changed: 2012-02-21
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
+
+from copy import copy
 
 from dolfin import *
 
@@ -44,6 +46,12 @@ class FluidProblem(NavierStokes):
         self.U_F = 0.5 * (self.U_F0 + self.U_F1)
         self.P_F = 0.5 * (self.P_F0 + self.P_F1)
 
+        # Create mesh function on Omega_F1 for fluid-structure boundary.
+        # This is necessary since the original mesh function is otherwise
+        # defined on Omega_F0 which leads to an error when setting bcs.
+        self.fsi_boundary_F1 = FacetFunction("uint", self.omega_F1)
+        self.fsi_boundary_F1.array()[:] = self.problem.fsi_boundary_F.array()
+
         # Calculate number of dofs
         self.num_dofs = self.V.dim() + self.Q.dim()
 
@@ -68,10 +76,24 @@ class FluidProblem(NavierStokes):
         return self.w
 
     def velocity_dirichlet_values(self):
-        return self.problem.fluid_velocity_dirichlet_values()
+
+        # Get user-defined boundary values
+        values = self.problem.fluid_velocity_dirichlet_values()
+
+        # Add no-slip boundary value at fluid-structure interface (u = w)
+        values.append(self.w)
+
+        return values
 
     def velocity_dirichlet_boundaries(self):
-        return self.problem.fluid_velocity_dirichlet_boundaries()
+
+        # Get user-defined boundaries
+        boundaries = self.problem.fluid_velocity_dirichlet_boundaries()
+
+        # Add no-slip boundary at fluid-structure interface
+        boundaries.append((self.fsi_boundary_F1, 2))
+
+        return boundaries
 
     def pressure_dirichlet_values(self):
         return self.problem.fluid_pressure_dirichlet_values()
