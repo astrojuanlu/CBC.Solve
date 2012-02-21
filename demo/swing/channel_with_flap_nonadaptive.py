@@ -12,6 +12,7 @@ p = default_parameters()
 p["solve_dual"] = False
 p["estimate_error"] = False
 p["plot_solution"] = True
+p["initial_timestep"] = 0.01
 
 # Run problem
 run_local("channel_with_flap", p)

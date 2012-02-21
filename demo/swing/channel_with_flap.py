@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-06-20
+# Last changed: 2012-02-21
 
 from cbc.swing import *
 
@@ -92,8 +92,8 @@ class ChannelWithFlap(FSI):
         return Structure()
 
     def structure_density(self):
-        return 0.25*15.0
-#        return 10.0
+        #return 0.25*15.0
+        return 10.0
 
     def structure_mu(self):
         return 0.25*75.0
