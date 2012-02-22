@@ -1,4 +1,4 @@
-__author__ = "Harish Narayanan"
+__author__ = "Harish Narayanan and Kristoffer Selim"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
@@ -57,15 +57,16 @@ class UpDown(FSI):
         return 0.002
 
     def fluid_velocity_dirichlet_values(self):
-         return [(0.0, 0.0)]
+         return []
 
-    def fluid_velocity_dirichlet_boundaries(self):        return [fluid_bottom]
+    def fluid_velocity_dirichlet_boundaries(self):
+        return []
 
     def fluid_pressure_dirichlet_values(self):
-        return 0.0, 0.0
+        return [0.0]
 
     def fluid_pressure_dirichlet_boundaries(self):
-        return fluid_top, fluid_right
+        return [fluid_top]
 
     def fluid_velocity_initial_condition(self):
         return (0.0, 0.0)
