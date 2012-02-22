@@ -111,6 +111,9 @@ class ChannelWithFlap(FSI):
     def structure_neumann_boundaries(self):
         return "on_boundary"
 
+    def structure_body_force(self):
+        return []
+
     #--- Parameters for mesh problem ---
 
     def mesh_mu(self):
