@@ -27,7 +27,7 @@ class UpDown(FSI):
         if application_parameters["crossed_mesh"]:
             mesh = UnitSquare(N, N, "crossed")
         else:
-            mesh UnitSquare(N, N)
+            mesh = UnitSquare(N, N)
 
         # Initialize base class
         FSI.__init__(self, mesh)
@@ -38,8 +38,8 @@ class UpDown(FSI):
         return 0.10
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
-        A = (structure_right - structure_left) * structure_top
-        return (1.0/A) * U_S[0] * dx_S
+        # FIXME: Add correct form
+        return U_S[0] * dx_S
 
     def __str__(self):
         return "Simple FSI problem with a reference solution"
@@ -52,17 +52,16 @@ class UpDown(FSI):
     def fluid_viscosity(self):
         return 0.002
 
-    def fluid_velocity_dirichlet_values(self, w):
-        return [w]
+    def fluid_velocity_dirichlet_values(self):
+         return [(0.0, 0.0)]
 
-    def fluid_velocity_dirichlet_boundaries(self):
-        return [fluid_bottom]
+    def fluid_velocity_dirichlet_boundaries(self):        return [fluid_bottom]
 
     def fluid_pressure_dirichlet_values(self):
         return 1.0, 0.0
 
     def fluid_pressure_dirichlet_boundaries(self):
-        return fluid_left, fluid_top, fluid_right
+        return fluid_top, fluid_right
 
     def fluid_velocity_initial_condition(self):
         return (0.0, 0.0)
@@ -91,7 +90,12 @@ class UpDown(FSI):
         return [solid_bottom]
 
     def structure_neumann_boundaries(self):
-        return "on_boundary"
+        return [fluid_bottom]
+
+    def structure_body_force(self):
+        return Expression(("0.0", "2*pow(pi, 2.0)*A*rho_S*x[1]*sin(pi*t)"),
+                           pi=DOLFIN_PI, A=0.1, rho_S=self.structure_density(), t=0.0)
+
 
     #--- Parameters for mesh problem ---
 
