@@ -89,12 +89,12 @@ class UpDown(FSI):
 
     def structure_dirichlet_values(self):
         return [Expression(("0.0","-2*A*x[1]*sin(pi*t)"),
-                           A=0.01, pi=DOLFIN_PI, t=0.0),
+                           A=0.02, pi=DOLFIN_PI, t=0.0),
                 (0.0, 0.0),
                 Expression(("0.0","-2*A*x[1]*sin(pi*t)"),
-                           A=0.01, pi=DOLFIN_PI, t=0.0),
+                           A=0.02, pi=DOLFIN_PI, t=0.0),
                 Expression(("0.0","-A*sin(pi*t)"),
-                           A=0.01, pi=DOLFIN_PI, t=0.0)]
+                           A=0.02, pi=DOLFIN_PI, t=0.0)]
 
     def structure_dirichlet_boundaries(self):
         return [solid_left, solid_bottom, solid_right, fluid_bottom]
@@ -104,7 +104,7 @@ class UpDown(FSI):
 
     def structure_body_force(self):
         return Expression(("0.0", "2*pow(pi, 2.0)*A*rho_S*x[1]*sin(pi*t)"),
-                           pi=DOLFIN_PI, A=0.01, rho_S=self.structure_density(), t=0.0)
+                           pi=DOLFIN_PI, A=0.02, rho_S=self.structure_density(), t=0.0)
 
 
     #--- Parameters for mesh problem ---
