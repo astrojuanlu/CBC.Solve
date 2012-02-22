@@ -221,6 +221,9 @@ class StructureProblem(Hyperelasticity):
     def neumann_conditions(self):
         return [self.G_S]
 
+    def body_force(self):
+        return self.problem.structure_body_force()
+
     def material_model(self):
         mu    = self.problem.structure_mu()
         lmbda = self.problem.structure_lmbda()
