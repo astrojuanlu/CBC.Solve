@@ -39,11 +39,10 @@ class UpDown(FSI):
     #--- Common ---
 
     def end_time(self):
-        return 10.0
+        return 0.5
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
-        # FIXME: Add correct form
-        return U_S[0] * dx_S
+        return  u_F[1] * Expression("x[1] > (1.0 - DOLFIN_EPS) ? 1.0 : 0.0") * ds
 
     def __str__(self):
         return "Simple FSI problem with a reference solution"
