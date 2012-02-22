@@ -115,3 +115,8 @@ print("B_F =\n%s" % B_F)
 # Check if (F) is satisfied
 check_F_3 = rho_S*d2U_S_dt2 - Div_Sigma_S - B_S
 print("check_F_3 =\n%s" % Matrix([simplify(check_F_3[0]), simplify(check_F_3[1])]))
+
+# Define a functional
+N_F = Matrix([0.0, 1.0])
+V_F_dot_N_F = (V_F.T*N_F)[0]
+print(integrate(integrate(V_F_dot_N_F, (X, 0, 1)), (t, 0, 0.5)))
