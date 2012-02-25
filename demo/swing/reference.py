@@ -18,6 +18,7 @@ I = Matrix([[1, 0], [0, 1]])
 Grad_U_S = Matrix([[simplify(diff(U_S[0], X)), simplify(diff(U_S[0], Y))],
                    [simplify(diff(U_S[1], X)), simplify(diff(U_S[1], Y))]])
 F_S = I + Grad_U_S
+J_S = F_S.det()
 C = F_S.T*F_S
 E = Rational(1, 2)*(C - I)
 
@@ -26,6 +27,11 @@ Sigma_S = F_S*(2*mu*E + lam*E.trace()*I)
 Div_Sigma_S = Matrix([simplify(diff(Sigma_S[0], X) + diff(Sigma_S[1], Y)),
                       simplify(diff(Sigma_S[2], X) + diff(Sigma_S[3], Y))])
 d2U_S_dt2 = Matrix([simplify(diff(U_S[0], t, 2)), simplify(diff(U_S[1], t, 2))])
+
+# Compute the true Cauchy stress tensor
+sigma_S = (1/J_S)*Sigma_S*F_S.transpose()
+check_solid_stress = sigma_S - sigma_S.transpose()
+print("check solid stress =\n%s" % check_solid_stress)
 
 # Use (S) to determine B_S
 B_S = rho_S*d2U_S_dt2 - Div_Sigma_S
