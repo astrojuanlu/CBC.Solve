@@ -43,7 +43,7 @@ print("-"*72)
 
 # Define a suitable solution field for the mesh displacement
 U_M = Matrix([0,
-              2*A*(1 - Y)*X*(1 - X)*sin(t)])
+              A*(1 - Y)*X*(1 - X)*sin(t)])
 print("U_M =\n%s" % U_M)
 
 # Check whether U_S = U_M on the interface
@@ -105,37 +105,23 @@ check_F_3 = rho_f*dv_f_dt + rho_f*grad_v_f*v_f - div_sigma_f - b_f
 print("rho_f*dv_f_dt + rho_f*grad_v_f*v_f - div_sigma_f - b_f =\n%s" %
       Matrix([simplify(check_F_3[0]), simplify(check_F_3[1])]))
 
+print("-"*72)
+print("Difference in traction on the interface")
+print("-"*72)
+
+# Define the current normal direction at the interface
+# FIXME: Check this super carefully
+U_FSI = U_M.subs({Y:Rational(1, 2)}).subs({X:x})
+n = Matrix([diff(U_FSI[1], x), -1]) / sqrt(diff(U_FSI[1], x)**2 + 1)
+
+sigma_f_int_dot_n = (sigma_f*n)
+sigma_S = (1/J_S)*Sigma_S*F_S.transpose()
+sigma_s = sigma_S.subs({X:x, Y:Rational(1, 2)})
+sigma_s_int_dot_n = sigma_s*n
+
+print("sigma_f*n - sigma_s*n =\n%s" % (sigma_f*n - sigma_s*n))
 
 # # Define a functional
 # N_F = Matrix([0.0, 1.0])
 # V_F_dot_N_F = (V_F.T*N_F)[0]
 # print(integrate(integrate(V_F_dot_N_F, (X, 0, 1)), (t, 0, 0.5)))
-
-#sigma_f_int_dot_n = (sigma_f*n_f)
-
-#sigma_S = (1/J_S)*Sigma_S*F_S.transpose()
-#sigma_s = sigma_S.subs({X:x})
-#sigma_s_int_dot_n = sigma_s*n_f
-
-#print(simplify((sigma_f*n_f - sigma_s*n_f)[0]))
-
-# Find the current normal direction at the interface
-# FIXME: Check this super carefully
-# U_FSI = U_M.subs({Y:Rational(1, 2)}).subs({X:x})
-# n_f = Matrix([diff(U_FSI[1], x), -1]) / sqrt(diff(U_FSI[1], x)**2 + 1)
-
-
-# # Solve for the fluid pressure to satisfy the condition that the solid
-# # and fluid stresses are equal on the boundary
-# p_f_sol_1 = solve(Eq(sigma_f_int_dot_n[0], sigma_s_int_dot_n[0]), p_f)[0]
-# p_f_sol_2 = solve(Eq(sigma_f_int_dot_n[1], sigma_s_int_dot_n[1]), p_f)[0]
-
-# # Insert one of these pressure fields into the definition of the fluid
-# # stress
-# print("p_f =\n%s" % p_f_sol_1)
-# print("p_f =\n%s" % p_f_sol_2)
-# sigma_f = sigma_f.subs(p_f, p_f_sol_2)
-
-# print("check_f_2 =")
-# print(simplify((sigma_f*n_f - sigma_s*n_f)[0]))
-# print(simplify((sigma_f*n_f - sigma_s*n_f)[1]))
