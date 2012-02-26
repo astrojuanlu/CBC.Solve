@@ -10,7 +10,7 @@ A, rho_S, rho_F, mu, lam, eta = symbols('A rho_S rho_F mu lambda eta')
 
 # Define a suitable solution field for the solid displacement
 U_S = Matrix([0.0,
-              A*X*(1 - X)*sin(t)])
+              A*X*(1 - X)*Y*sin(t)])
 print("U_S =\n%s" % U_S)
 
 # The kinematics of the motion are then described as follows
@@ -37,18 +37,13 @@ check_S = rho_S*d2U_S_dt2 - Div_Sigma_S - B_S
 print("rho_S*d2U_S_dt2 - Div_Sigma_S - B_S =\n%s" %
       Matrix([simplify(check_S[0]), simplify(check_S[1])]))
 
-# Compute the Cauchy stress tensor and check if it is symmetric
-sigma_S = (1/J_S)*Sigma_S*F_S.transpose()
-check_solid_stress = sigma_S - sigma_S.transpose()
-print("sigma_S - sigma_S^T =\n%s" % check_solid_stress)
-
 print("-"*72)
 print("Mesh problem in the reference configuration (M)")
 print("-"*72)
 
 # Define a suitable solution field for the mesh displacement
 U_M = Matrix([0.0,
-              2*A*(1 - Y)*X*(1 - X)*sin(t)])
+              A*(1 - Y)*X*(1 - X)*sin(t)])
 print("U_M =\n%s" % U_M)
 
 # Check whether U_S = U_M on the interface
@@ -64,6 +59,13 @@ print("-"*72)
 # no-slip condition
 V_F = Matrix([diff(U_S[0].subs(Y, Rational(1, 2)), t),
               diff(U_S[1].subs(Y, Rational(1, 2)), t)])
+
+# Check whether the reference fluid velocity matches the solid
+# velocity at the interface
+check_V_F = Matrix([
+        diff(U_S[0].subs(Y, Rational(1, 2)), t) - V_F[0].subs(Y, Rational(1, 2)),
+        diff(U_S[0].subs(Y, Rational(1, 2)), t) - V_F[0].subs(Y, Rational(1, 2))])
+print("V_S(0, 1/2) - V_F(0, 1/2) =\n%s" % check_V_F)
 
 # Cast the reference fluid coordinates in terms of the current fluid
 # coordinates
@@ -92,6 +94,7 @@ p_f = symbols('p_f')
 sigma_f = eta*(grad_v_f + grad_v_f.T) - p_f*I
 
 sigma_f_int_dot_n = (sigma_f*n_f)
+sigma_S = (1/J_S)*Sigma_S*F_S.transpose()
 sigma_s = sigma_S.subs({X:x})
 sigma_s_int_dot_n = (sigma_s*n_f)
 
@@ -104,7 +107,6 @@ p_f_sol_2 = solve(Eq(sigma_f_int_dot_n[1], sigma_s_int_dot_n[1]), p_f)[0]
 # stress
 print("p_f =\n%s" % simplify(p_f_sol_1))
 sigma_f = sigma_f.subs(p_f, simplify(p_f_sol_1))
-
 
 # print("check_f_2 =")
 # print(simplify(((sigma_f*n_f - sigma_s*n_f).subs(Y, Rational(1, 2)))[0]))
