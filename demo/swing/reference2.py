@@ -81,12 +81,14 @@ print("v_f =\n%s" % v_f)
 div_v_f = simplify(diff(v_f[0], x) + diff(v_f[1], y))
 print("div(v_f) =\n%s" % div_v_f)
 
-# Construct the fluid stress in terms of a currently unspecified
-# pressure
-p_f = symbols('p_f')
+# Define the fluid pressure
+p_f = (0.5 + A*(1 - y)*x*(1 - x)*sin(t) - y)*sin(t)
+print("p_f =\n%s" % p_f)
+
+# Construct the fluid stress
 grad_v_f = Matrix([[simplify(diff(v_f[0], x)), simplify(diff(v_f[0], y))],
                    [simplify(diff(v_f[1], x)), simplify(diff(v_f[1], y))]])
-sigma_f = eta*(grad_v_f + grad_v_f.T) - p_f(x, y)*I
+sigma_f = eta*(grad_v_f + grad_v_f.T) - p_f*I
 
 # Construct terms of the Navier-Stokes equations starting with the
 # time derivative of the velocity
