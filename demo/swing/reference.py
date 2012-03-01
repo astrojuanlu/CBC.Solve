@@ -10,7 +10,7 @@ A, rho_S, rho_F, mu, lam, eta = symbols('A rho_S rho_F mu lambda eta')
 
 # Define a suitable solution field for the solid displacement
 U_S = Matrix([0.0,
-              -A*sin(pi*t)*2*Y])
+              A*X*(1 - X)*Y*sin(t)])
 print("U_S =\n%s" % U_S)
 
 # The kinematics of the motion are then described as follows
@@ -30,8 +30,6 @@ d2U_S_dt2 = Matrix([simplify(diff(U_S[0], t, 2)), simplify(diff(U_S[1], t, 2))])
 
 # Compute the true Cauchy stress tensor
 sigma_S = (1/J_S)*Sigma_S*F_S.transpose()
-check_solid_stress = sigma_S - sigma_S.transpose()
-print("check solid stress =\n%s" % check_solid_stress)
 
 # Use (S) to determine B_S
 B_S = rho_S*d2U_S_dt2 - Div_Sigma_S
@@ -47,7 +45,7 @@ print("-"*72)
 
 # Define a suitable solution field for the mesh displacement
 U_M = Matrix([0.0,
-              -A*sin(pi*t)*2*(1 - Y)])
+              A*(1 - Y)*X*(1 - X)*sin(t)])
 print("U_M =\n%s" % U_M)
 
 # Check whether U_S = U_M on the interface
@@ -84,7 +82,9 @@ print("check_F_1 =\n%s" % Div_V_F)
 
 # Construct a part of the fluid stress, to determine the fluid
 # pressure based on equality with the solid stress at the interface
-P_F = symbols('P_F')
+P_F = 0.5*(2.0*A*mu*X**2*sin(t)**2 - 2.0*A*mu*X*sin(t)**2 \
+               + 2.0*eta*cos(t) - 2.0*mu*sin(t))/sin(t)
+print("P_F =\n%s" % P_F)
 N_F = Matrix([0, -1.0])
 Grad_V_F = Matrix([[simplify(diff(V_F[0], X)), simplify(diff(V_F[0], Y))],
                    [simplify(diff(V_F[1], X)), simplify(diff(V_F[1], Y))]])
@@ -92,19 +92,9 @@ Grad_V_F = Matrix([[simplify(diff(V_F[0], X)), simplify(diff(V_F[0], Y))],
 Sigma_F = J_M*(eta*(Grad_V_F*F_M_inv + F_M_inv.T*Grad_V_F.T) - P_F*I)*F_M_inv.T
 Sigma_F_int_dot_N = (Sigma_F*N_F).subs(Y, Rational(1, 2))
 Sigma_S_int_dot_N = (Sigma_S*N_F).subs(Y, Rational(1, 2))
+T_diff = Sigma_S_int_dot_N - Sigma_F_int_dot_N
 
-# Solve for the fluid pressure to satisfy the condition that the solid
-# and fluid stresses are equal on the boundary
-P_F_sol_1 = solve(Eq(Sigma_F_int_dot_N[0], Sigma_S_int_dot_N[0]), P_F)
-print("P_F_1 =\n%s" % simplify(P_F_sol_1))
-P_F_sol_2 = solve(Eq(Sigma_F_int_dot_N[1], Sigma_S_int_dot_N[1]), P_F)
-print("P_F_2 =\n%s" % simplify(P_F_sol_2))
-
-# Insert this pressure field into the definition of the fluid stress
-Sigma_F = Sigma_F.subs(P_F, simplify(P_F_sol_2)[0])
-print("check_F_2 =")
-print(simplify(((Sigma_F*N_F - Sigma_S*N_F).subs(Y, Rational(1, 2)))[0]))
-print(simplify(((Sigma_F*N_F - Sigma_S*N_F).subs(Y, Rational(1, 2)))[1]))
+print("Sigma_F_int_dot_N - Sigma_S_int_dot_N =\n%s" % T_diff)
 
 # Construct terms of the Navier-Stokes equations starting with the
 # time derivative of the velocity
