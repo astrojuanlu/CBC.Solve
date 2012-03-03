@@ -103,3 +103,10 @@ r = g_S - g_F - g_0
 r = r.subs(Y, Y_).subs(y, y_).subs(X, x)
 r = Matrix((simplify(r[0]), simplify(r[1])))
 print r
+print
+
+# Compute reference value of functional: integrated Y-displacement
+T = Rational(1, 2)
+M = integrate(integrate(integrate(U_S[1], (X, 0, 1)), (Y, 0, Y_)), (t, 0, T))
+underline("Value of reference functional")
+print "M =", M
