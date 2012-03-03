@@ -23,7 +23,7 @@ nu = 1
 cos2pit = cos(pi*t)**2 - sin(pi*t)**2
 cos2piY = cos(pi*Y)**2 - sin(pi*Y)**2
 
-# Analytic solutions
+# Analytical solutions
 u_F = Matrix([0, 2*pi*C*x*(1 - x)*sin(pi*t)*cos(pi*t)])
 p_F = -2*C**2*(1 - 2*x)**2*sin(pi*t)**3*(sin(pi*t) + pi*cos(pi*t))
 U_S = Matrix([0, C*X*(1 - X)*sin(pi*Y)*sin(pi*t)**2])
@@ -64,9 +64,10 @@ print "U_M =\n", U_M, "\n"
 print
 
 # Print right-hand sides
-underline("Analytical solutions")
+underline("Right-hand sides")
 print "f_F =\n", f_F, "\n"
 print "f_S =\n", f_S, "\n"
+print "f_M =\n", f_M, "\n"
 print "g_0 =\n", g_0, "\n"
 print
 
@@ -150,7 +151,10 @@ grad_u_F_u = grad_u_F*u_F
 r = dot_u_F + grad_u_F_u - div_sigma_F - f_F
 r = Matrix([simplify(r[0]), simplify(r[1])])
 print r
+div_u_F = diff(u_F[0], x) + diff(u_F[1], y)
+print div_u_F
 print
+
 
 # Check that the hyperelastic equation is satisfied
 underline("Checking that hyperelastic equation is satisfied")
