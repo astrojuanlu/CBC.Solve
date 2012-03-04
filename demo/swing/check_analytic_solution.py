@@ -51,19 +51,33 @@ f_M = Matrix([3*C*pi*cos(pi*Y)*sin(pi*t)**2*(2*X - 1),
               + pi*cos(pi*Y)*sin(pi*t)*(2*X - 1) \
               - 2*X*pi*sin(pi*Y)*cos(pi*t)*(X - 1))])
 
-# C++ friendly versions of right-hand sides
+# Additional boundary traction for structure
+g_0 = Matrix([C*(1 - 2*x)*sin(pi*t)*((1 - p_F)*sin(pi*t) - 2*pi*cos(pi*t)) \
+              / sqrt(1 + C**2*(1 - 2*x)**2*sin(pi*t)**4), 0])
+
+# C++ friendly versions of analytical formulas
 
 def pow(expression, power):
     return expression**power
 
 def eval_f_F():
+    A = Integer(1)
+    B = Integer(2)
+    D = Integer(4)
+    E = Integer(8)
     a = sin(pi*t)
     b = cos(pi*t)
-    fx = 8*pow(C, 2)*(1 - 2*x)*pow(a, 3)*(a + pi*b)
-    fy = 2*pow(pi, 2)*C*x*(1 - x)*(pow(b, 2) - pow(a, 2)) + 4*pi*C*a*b
+    fx = E*pow(C, 2)*(A - B*x)*pow(a, 3)*(a + pi*b)
+    fy = B*pow(pi, 2)*C*x*(A - x)*(pow(b, 2) - pow(a, 2)) + D*pi*C*a*b
     return Matrix([fx, fy])
 
 def eval_f_S():
+    A = Integer(1)
+    B = Integer(2)
+    D = Integer(3)
+    E = Integer(6)
+    F = Integer(8)
+    G = Integer(16)
     a = sin(pi*t)
     c = sin(pi*Y)
     d = cos(pi*Y)
@@ -72,25 +86,34 @@ def eval_f_S():
     g = pow(X, 2)
     h = pow(c, 2)
     i = pow(d, 2)
-    fx = C*e*(3*pi*d*(2*X - 1) + C*e*(h*(2*f*X*g - 3*f*g \
-         - (16 - f)*X + 8) - 3*f*X*i*(2*g - 3*X + 1)))
-    fy = C*e*(2*c + pi*(2*X - 1)*d - C*pi*e*( \
-         d*c*(6*g - 6*X + 1) + pi*X*(i - h)*(2*g - 3*X + 1)))
+    fx = C*e*(D*pi*d*(B*X - A) + C*e*(h*(B*f*X*g - D*f*g \
+         - (G - f)*X + F) - D*f*X*i*(B*g - D*X + A)))
+    fy = C*e*(B*c + pi*(B*X - A)*d - C*pi*e*( \
+         d*c*(E*g - E*X + A) + pi*X*(i - h)*(B*g - D*X + A)))
     return Matrix([fx, fy])
 
 def eval_f_M():
+    A = Integer(1)
+    B = Integer(2)
+    D = Integer(3)
     a = sin(pi*t)
     b = cos(pi*t)
     c = sin(pi*Y)
     d = cos(pi*Y)
-    fx = 3*C*pi*d*a**2*(2*X - 1)
-    fy = C*a*(2*c*a + pi*d*a*(2*X - 1) - 2*X*pi*c*b*(X - 1))
+    fx = D*C*pi*d*pow(a, 2)*(B*X - A)
+    fy = C*a*(B*c*a + pi*d*a*(B*X - A) - B*X*pi*c*b*(X - A))
     return Matrix([fx, fy])
 
-# Additional boundary traction for structure
-g_0 = Matrix([C*(1 - 2*x)*sin(pi*t)*((1 - p_F)*sin(pi*t) - 2*pi*cos(pi*t)) \
-              / sqrt(1 + C**2*(1 - 2*x)**2*sin(pi*t)**4), 0])
-
+def eval_g_0():
+    A = Integer(1)
+    B = Integer(2)
+    a = sin(pi*t)
+    b = cos(pi*t)
+    p = -B*pow(C, 2)*pow(A - B*x, 2)*pow(a, 3)*(a + pi*b)
+    gx = C*(A - B*x)*a*((A - p)*a - B*pi*b) / sqrt(A + pow(C, 2)*pow(A - B*x, 2)*pow(a, 4))
+    gy = 0
+    return Matrix([gx, gy])
+    
 # Print solutions
 underline("Analytical solutions")
 print "u_F =\n", u_F, "\n"
@@ -218,6 +241,7 @@ underline("Checking evaluation of C++ style right-hand sides")
 print eval_f_F() - f_F
 print eval_f_S() - f_S
 print eval_f_M() - f_M
+print eval_g_0() - g_0
 print
 
 # Compute reference value of functional: integrated Y-displacement
