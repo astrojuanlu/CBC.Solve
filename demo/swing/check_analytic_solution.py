@@ -51,6 +51,42 @@ f_M = Matrix([3*C*pi*cos(pi*Y)*sin(pi*t)**2*(2*X - 1),
               + pi*cos(pi*Y)*sin(pi*t)*(2*X - 1) \
               - 2*X*pi*sin(pi*Y)*cos(pi*t)*(X - 1))])
 
+# C++ friendly versions of right-hand sides
+
+def pow(expression, power):
+    return expression**power
+
+def eval_f_F():
+    a = sin(pi*t)
+    b = cos(pi*t)
+    fx = 8*pow(C, 2)*(1 - 2*x)*pow(a, 3)*(a + pi*b)
+    fy = 2*pow(pi, 2)*C*x*(1 - x)*(pow(b, 2) - pow(a, 2)) + 4*pi*C*a*b
+    return Matrix([fx, fy])
+
+def eval_f_S():
+    a = sin(pi*t)
+    c = sin(pi*Y)
+    d = cos(pi*Y)
+    e = pow(a, 2)
+    f = pow(pi, 2)
+    g = pow(X, 2)
+    h = pow(c, 2)
+    i = pow(d, 2)
+    fx = C*e*(3*pi*d*(2*X - 1) + C*e*(h*(2*f*X*g - 3*f*g \
+         - (16 - f)*X + 8) - 3*f*X*i*(2*g - 3*X + 1)))
+    fy = C*e*(2*c + pi*(2*X - 1)*d - C*pi*e*( \
+         d*c*(6*g - 6*X + 1) + pi*X*(i - h)*(2*g - 3*X + 1)))
+    return Matrix([fx, fy])
+
+def eval_f_M():
+    a = sin(pi*t)
+    b = cos(pi*t)
+    c = sin(pi*Y)
+    d = cos(pi*Y)
+    fx = 3*C*pi*d*a**2*(2*X - 1)
+    fy = C*a*(2*c*a + pi*d*a*(2*X - 1) - 2*X*pi*c*b*(X - 1))
+    return Matrix([fx, fy])
+
 # Additional boundary traction for structure
 g_0 = Matrix([C*(1 - 2*x)*sin(pi*t)*((1 - p_F)*sin(pi*t) - 2*pi*cos(pi*t)) \
               / sqrt(1 + C**2*(1 - 2*x)**2*sin(pi*t)**4), 0])
@@ -175,6 +211,13 @@ dot_U_M = Matrix([diff(U_M[0], t), diff(U_M[1], t)])
 r = dot_U_M - Div_Sigma_M - f_M
 r = Matrix([simplify(r[0]), simplify(r[1])])
 print r
+print
+
+# Check that C++ style right-hand sides evaluate correctly
+underline("Checking evaluation of C++ style right-hand sides")
+print eval_f_F() - f_F
+print eval_f_S() - f_S
+print eval_f_M() - f_M
 print
 
 # Compute reference value of functional: integrated Y-displacement
