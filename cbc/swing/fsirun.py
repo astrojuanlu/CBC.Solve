@@ -7,6 +7,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 import os
 from dolfin_utils.pjobs import *
+from dolfin_utils.commands import *
 from parameters import *
 
 def run_local(problem, parameters, case=None):
@@ -16,7 +17,9 @@ def run_local(problem, parameters, case=None):
     filename = store_parameters(parameters, problem, case)
 
     # Submit job
-    os.system("python %s.py %s" % (problem, filename))
+    status, output = getstatusoutput("python %s.py %s" % (problem, filename))
+
+    return status, output
 
 def run_bb(problem, parameters, case=None):
     "Run problem on bigblue with given parameters."

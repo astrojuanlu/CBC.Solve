@@ -460,7 +460,8 @@ def save_goal_functional_final(goal_functional, integrated_goal_functional, para
 
     global _refinement_level
 
-    info("Value of goal functional at T: %g" % goal_functional)
+    info("Value of goal functional at T:   %g" % goal_functional)
+    info("Integrated goal functional at T: %g" % integrated_goal_functional)
     f = open("%s/goal_functional_final.txt" % parameters["output_directory"], "a")
     f.write("%d %.16g %.16g\n" % (_refinement_level, goal_functional, integrated_goal_functional))
     f.close()
