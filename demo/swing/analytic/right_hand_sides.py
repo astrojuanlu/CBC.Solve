@@ -145,13 +145,15 @@ public:
     const double X = xx[0];
     const double Y = xx[1];
 
-    const double A = 1.0;
-    const double B = 2.0;
-    const double D = 3.0;
-    const double E = 6.0;
-    const double F = 8.0;
-    const double G = 16.0;
+    const double A = 1;
+    const double B = 2;
+    const double D = 3;
+    const double E = 6;
+    const double F = 8;
+    const double G = 16;
+    const double H = 20;
     const double a = sin(pi*t);
+    const double b = cos(pi*t);
     const double c = sin(pi*Y);
     const double d = cos(pi*Y);
     const double e = pow(a, 2);
@@ -159,10 +161,15 @@ public:
     const double g = pow(X, 2);
     const double h = pow(c, 2);
     const double i = pow(d, 2);
-    const double fx = C*e*(D*pi*d*(B*X - A) + C*e*(h*(B*f*X*g - D*f*g
+    const double j = pow(b, 2);
+    const double k = pow(a, 4);
+    const double l = pow(C, 2);
+    const double m = pow(X, 3);
+    const double fx = C*e*(D*pi*d*(B*X - A) + C*e*(h*(B*f*X*g - D*f*g \
                     - (G - f)*X + F) - D*f*X*i*(B*g - D*X + A)));
-    const double fy = C*e*(B*c + pi*(B*X - A)*d - C*pi*e*(
-                      d*c*(E*g - E*X + A) + pi*X*(i - h)*(B*g - D*X + A)));
+    const double fy = B*C*e*c - C*pi*e*d - l*pi*k*d*c + B*pi*C*X*e*d \
+                    - H*C*f*(g - X)*(j - e)*c - E*l*pi*(g - X)*k*d*c \
+                    + l*f*(D*g - B*m - X)*k*(i - h);
 
     values[0] = fx;
     values[1] = fy;
