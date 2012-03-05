@@ -4,7 +4,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-03-03
+# Last changed: 2012-03-05
 
 from sympy import *
 
@@ -113,7 +113,7 @@ def eval_g_0():
     gx = C*(A - B*x)*a*((A - p)*a - B*pi*b) / sqrt(A + pow(C, 2)*pow(A - B*x, 2)*pow(a, 4))
     gy = 0
     return Matrix([gx, gy])
-    
+
 # Print solutions
 underline("Analytical solutions")
 print "u_F =\n", u_F, "\n"
