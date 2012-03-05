@@ -338,6 +338,10 @@ class MeshProblem():
         a = alpha*inner(v, u)*dx + 0.5*k*inner(sym(grad(v)), _Sigma_M(u, mu, lmbda))*dx
         L = alpha*inner(v, u0)*dx - 0.5*k*inner(sym(grad(v)), _Sigma_M(u0, mu, lmbda))*dx
 
+        # Add right-hand side
+        F_M = self.problem.mesh_right_hand_side()
+        L += k*inner(v, F_M)*dx
+
         # Store variables for time stepping
         self.u0 = u0
         self.u1 = u1
