@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-06-20
+# Last changed: 2012-03-05
 
 import pylab
 from time import time as python_time
@@ -97,6 +97,9 @@ def solve_primal(problem, parameters):
         info("-"*80)
         begin("* Starting new time step")
         info_blue("  * t = %g (T = %g, dt = %g)" % (t1, T, dt))
+
+        # Update of user problem
+        problem.update(t0, t1, dt)
 
         # Compute tolerance for FSI iterations
         itertol = compute_itertol(problem, w_c, TOL, dt, t1, parameters)
