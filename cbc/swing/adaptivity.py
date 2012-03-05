@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-03-06
+# Last changed: 2012-03-05
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
@@ -319,12 +319,12 @@ def compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters):
     conservation = 1.0
     snap = 0.9
 
-    # Adjust TOL_k first time when dual is unknown
-    if _refinement_level == 0 and abs(dt - t1) / t1 < 100.0 * DOLFIN_EPS:
-        TOL_k = dt * Rk
-
     # Compute new time step
-    dt_new = TOL_k / Rk
+    if abs(Rk) > 0.0 and TOL_k is not None:
+        dt_new = TOL_k / Rk
+    else:
+        TOL_k = 1.0
+        dt_new = 2.0 * dt
 
     # Modify time step to avoid oscillations
     dt_new = (1.0 + conservation) * dt * dt_new / (dt + conservation * dt_new)
