@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-02-21
+# Last changed: 2012-03-05
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
@@ -65,11 +65,14 @@ class FluidProblem(NavierStokes):
     def mesh(self):
         return self.omega_F1
 
+    def density(self):
+        return self.problem.fluid_density()
+
     def viscosity(self):
         return self.problem.fluid_viscosity()
 
-    def density(self):
-        return self.problem.fluid_density()
+    def body_force(self, V):
+        return self.problem.fluid_body_force()
 
     def mesh_velocity(self, V):
         self.w = Function(V)
