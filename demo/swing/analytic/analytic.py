@@ -24,6 +24,9 @@ application_parameters["fixedpoint_tolerance"] = 1e-6
 noslip  = "x[0] < DOLFIN_EPS || x[0] > 1.0 - DOLFIN_EPS"
 fixed   = "x[0] < DOLFIN_EPS || x[0] > 1.0 - DOLFIN_EPS || x[1] < DOLFIN_EPS"
 
+# Constant used in definition of analytic solutions
+C = 0.1
+
 # Define structure subdomain
 class Structure(SubDomain):
     def inside(self, x, on_boundary):
@@ -38,14 +41,15 @@ class Analytic(FSI):
         mesh = UnitSquare(n, n)
 
         # Create analytic expressions
-        C = 0.1
         self.f_F = Expression(cpp_f_F)
         self.F_S = Expression(cpp_F_S)
         self.F_M = Expression(cpp_F_M)
         self.p_F = Expression(cpp_p_F)
+        self.G_0 = Expression(cpp_G_0)
         self.f_F.C = C
         self.F_S.C = C
         self.F_M.C = C
+        self.G_0.C = C
 
         # Initialize base class
         FSI.__init__(self, mesh)
@@ -64,6 +68,7 @@ class Analytic(FSI):
         self.F_S.t = t
         self.F_M.t = t
         self.p_F.t = t
+        self.G_0.t = t
 
     def __str__(self):
         return "Channel flow with an immersed elastic flap"
@@ -123,6 +128,9 @@ class Analytic(FSI):
     def structure_body_force(self):
         return self.F_S
 
+    def structure_boundary_traction_extra(self):
+        return self.G_0
+
     #--- Parameters for mesh problem ---
 
     def mesh_mu(self):
@@ -140,3 +148,7 @@ class Analytic(FSI):
 # Define and solve problem
 problem = Analytic()
 problem.solve(application_parameters)
+
+# Print reference value of functional
+M = C / (24.0*pi)
+print "Reference value of goal functional:", M

@@ -194,6 +194,7 @@ class StructureProblem(Hyperelasticity):
         self.G_S = Function(self.V_S)
         self.N_F = FacetNormal(Omega_F)
         self.N_S = FacetNormal(Omega_S)
+        self.G_0 = problem.structure_boundary_traction_extra()
 
         # Calculate number of dofs
         self.num_dofs = 2 * self.V_S.dim()
@@ -246,12 +247,12 @@ class StructureProblem(Hyperelasticity):
         if new:
             d_FSI = ds(2)
             a_F = dot(self.test_F, self.trial_F)*d_FSI
-            L_F = -dot(self.test_F, dot(Sigma_F, self.N_F))*d_FSI
+            L_F = -dot(self.test_F, dot(Sigma_F, self.N_F) + self.G_0)*d_FSI
             A_F = assemble(a_F, exterior_facet_domains=self.problem.fsi_boundary_F)
             B_F = assemble(L_F, exterior_facet_domains=self.problem.fsi_boundary_F)
         else:
             a_F = dot(self.test_F, self.trial_F)*ds
-            L_F = -dot(self.test_F, dot(Sigma_F, self.N_F))*ds
+            L_F = -dot(self.test_F, dot(Sigma_F, self.N_F) + self.G_0)*ds
             A_F = assemble(a_F)
             B_F = assemble(L_F)
         A_F.ident_zeros()

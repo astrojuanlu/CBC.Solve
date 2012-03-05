@@ -233,10 +233,41 @@ public:
     const double p = -B*pow(C, 2)*pow(A - B*x, 2)*pow(a, 3)*(a + pi*b);
     const double gx = C*(A - B*x)*a*((A - p)*a - B*pi*b)
                       / sqrt(A + pow(C, 2)*pow(A - B*x, 2)*pow(a, 4));
-    const double gy = 0;
+    const double gy = 0.0;
 
     values[0] = gx;
     values[1] = gy;
+  }
+
+  double C;
+  double t;
+
+};
+"""
+
+cpp_G_0 = """
+class G_0 : public Expression
+{
+public:
+
+  G_0() : Expression(2), C(0), t(0) {}
+
+  void eval(Array<double>& values, const Array<double>& xx,
+            const ufc::cell& cell) const
+  {
+    const double X = xx[0];
+
+    const double A = 1.0;
+    const double B = 2.0;
+    const double a = sin(pi*t);
+    const double b = cos(pi*t);
+    const double p = -B*pow(C, 2)*pow(A - B*X, 2)*pow(a, 3)*(a + pi*b);
+    const double Gx = C*(A - B*X)*a*((A - p)*a - B*pi*b)
+                        / (A + pow(C, 2)*pow(A - B*X, 2)*pow(a, 4));
+    const double Gy = 0.0;
+
+    values[0] = Gx;
+    values[1] = Gy;
   }
 
   double C;
@@ -257,6 +288,7 @@ if __name__ == "__main__":
     F_S = Expression(cpp_F_S)
     F_M = Expression(cpp_F_M)
     g_0 = Expression(cpp_g_0)
+    G_0 = Expression(cpp_G_0)
     u_F.C = C
     p_F.C = C
     U_S.C = C
@@ -265,6 +297,7 @@ if __name__ == "__main__":
     F_S.C = C
     F_M.C = C
     g_0.C = C
+    G_0.C = C
 
     # Functions used for plotting expressions
     n = 16
@@ -283,6 +316,7 @@ if __name__ == "__main__":
     _F_S = Function(V_S)
     _F_M = Function(V_S)
     _g_0 = Function(V_F)
+    _G_0 = Function(V_M)
 
     # Animate solutions
     T = 0.5
@@ -301,6 +335,7 @@ if __name__ == "__main__":
         F_S.t = t
         F_M.t = t
         g_0.t = t
+        G_0.t = t
 
         _u_F.interpolate(u_F)
         _p_F.interpolate(p_F)
@@ -310,6 +345,7 @@ if __name__ == "__main__":
         _F_S.interpolate(F_S)
         _F_M.interpolate(F_M)
         _g_0.interpolate(g_0)
+        _G_0.interpolate(G_0)
 
         plot(_u_F, title="u_F", autoposition=False)
         plot(_p_F, title="p_F", autoposition=False)
@@ -319,6 +355,7 @@ if __name__ == "__main__":
         plot(_F_S, title="F_S", autoposition=False)
         plot(_F_M, title="F_M", autoposition=False)
         plot(_g_0, title="g_0", autoposition=False)
+        plot(_G_0, title="G_0", autoposition=False)
 
         t += dt
 
