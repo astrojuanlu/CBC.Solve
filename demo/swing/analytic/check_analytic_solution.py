@@ -18,31 +18,35 @@ C = symbols("C")
 mu = 1
 lmbda = 2
 nu = 1
+rho_S = 10
 
 # Simplification not handled by SymPy
+sin2pit = 2*sin(pi*t)*cos(pi*t)
 cos2pit = cos(pi*t)**2 - sin(pi*t)**2
 cos2piY = cos(pi*Y)**2 - sin(pi*Y)**2
 
 # Analytical solutions
-u_F = Matrix([0, 2*pi*C*x*(1 - x)*sin(pi*t)*cos(pi*t)])
+u_F = Matrix([0, C*pi*x*(1 - x)*sin2pit])
 p_F = -2*C**2*(1 - 2*x)**2*sin(pi*t)**3*(sin(pi*t) + pi*cos(pi*t))
 U_S = Matrix([0, C*X*(1 - X)*sin(pi*Y)*sin(pi*t)**2])
 U_M = Matrix([0, C*X*(1 - X)*sin(pi*Y)*sin(pi*t)**2])
 
 # Right-hand side for fluid problem
 f_F = Matrix([8*C**2*(1 - 2*x)*sin(pi*t)**3*(sin(pi*t) + pi*cos(pi*t)),
-              2*pi**2*C*x*(1 - x)*cos2pit \
-                  + 4*pi*C*sin(pi*t)*cos(pi*t)])
+              2*C*pi**2*x*(1 - x)*cos2pit + 2*C*pi*sin2pit])
 
 # Right-hand side for structure problem
 f_S = Matrix([C*sin(pi*t)**2*(3*pi*cos(pi*Y)*(2*X - 1) \
               + C*sin(pi*t)**2*( \
               sin(pi*Y)**2*(2*pi**2*X**3 - 3*pi**2*X**2 - (16 - pi**2)*X + 8) \
-              - 3*pi**2*X*cos(pi*Y)**2*(2*X**2 - 3*X + 1))),
-              C*sin(pi*t)**2*(2*sin(pi*Y) + pi*(2*X - 1)*cos(pi*Y) \
-              - C*pi*sin(pi*t)**2*( \
-              cos(pi*Y)*sin(pi*Y)*(6*X**2 - 6*X + 1) \
-              + pi*X*cos2piY*(2*X**2 - 3*X + 1)))])
+              - 3*pi**2*X*cos(pi*Y)**2*(2*X**2 - 3*X + 1))), \
+              2*C*sin(pi*t)**2*sin(pi*Y) - C*pi*sin(pi*t)**2*cos(pi*Y) \
+              - C**2*pi*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
+              + 2*pi*C*X*sin(pi*t)**2*cos(pi*Y)
+              - 20*C*pi**2*(X**2 - X)*(cos(pi*t)**2 - sin(pi*t)**2)*sin(pi*Y) \
+              - 6*C**2*pi*(X**2 - X)*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
+              + C**2*pi**2*(3*X**2 - 2*X**3 - X)*sin(pi*t)**4*(cos(pi*Y)**2 - sin(pi*Y)**2)
+])
 
 # Right-hand side for structure problem
 f_M = Matrix([3*C*pi*cos(pi*Y)*sin(pi*t)**2*(2*X - 1),
@@ -78,7 +82,9 @@ def eval_f_S():
     E = Integer(6)
     F = Integer(8)
     G = Integer(16)
+    H = Integer(20)
     a = sin(pi*t)
+    b = cos(pi*t)
     c = sin(pi*Y)
     d = cos(pi*Y)
     e = pow(a, 2)
@@ -86,10 +92,14 @@ def eval_f_S():
     g = pow(X, 2)
     h = pow(c, 2)
     i = pow(d, 2)
+    j = pow(b, 2)
+    k = pow(a, 4)
+    l = pow(C, 2)
+    m = pow(X, 3)
     fx = C*e*(D*pi*d*(B*X - A) + C*e*(h*(B*f*X*g - D*f*g \
          - (G - f)*X + F) - D*f*X*i*(B*g - D*X + A)))
-    fy = C*e*(B*c + pi*(B*X - A)*d - C*pi*e*( \
-         d*c*(E*g - E*X + A) + pi*X*(i - h)*(B*g - D*X + A)))
+    fy = B*C*e*c - C*pi*e*d - l*pi*k*d*c + B*pi*C*X*e*d - H*C*f*(g - X)*(j - e)*c \
+         - E*l*pi*(g - X)*k*d*c + l*f*(D*g - B*m - X)*k*(i - h)
     return Matrix([fx, fy])
 
 def eval_f_M():
@@ -219,8 +229,8 @@ print
 underline("Checking that hyperelastic equation is satisfied")
 Div_Sigma_S = Matrix([diff(Sigma_S[0], X) + diff(Sigma_S[1], Y),
                       diff(Sigma_S[1], X) + diff(Sigma_S[1], Y)])
-ddot_U_S = Matrix([diff(diff(U_S[0], t), t), diff(diff(U_S[0], t), t)])
-r = ddot_U_S - Div_Sigma_S - f_S
+ddot_U_S = Matrix([diff(diff(U_S[0], t), t), diff(diff(U_S[1], t), t)])
+r = 10*ddot_U_S - Div_Sigma_S - f_S
 r = Matrix([simplify(r[0]), simplify(r[1])])
 print r
 print
