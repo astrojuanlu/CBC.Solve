@@ -28,6 +28,7 @@ cos2piY = cos(pi*Y)**2 - sin(pi*Y)**2
 # Analytical solutions
 u_F = Matrix([0, C*pi*x*(1 - x)*sin2pit])
 p_F = -2*C**2*(1 - 2*x)**2*sin(pi*t)**3*(sin(pi*t) + pi*cos(pi*t))
+P_F = -2*C**2*(1 - 2*X)**2*sin(pi*t)**3*(sin(pi*t) + pi*cos(pi*t))
 U_S = Matrix([0, C*X*(1 - X)*sin(pi*Y)*sin(pi*t)**2])
 U_M = Matrix([0, C*X*(1 - X)*sin(pi*Y)*sin(pi*t)**2])
 
@@ -58,6 +59,8 @@ f_M = Matrix([3*C*pi*cos(pi*Y)*sin(pi*t)**2*(2*X - 1),
 # Additional boundary traction for structure
 g_0 = Matrix([C*(1 - 2*x)*sin(pi*t)*((1 - p_F)*sin(pi*t) - 2*pi*cos(pi*t)) \
               / sqrt(1 + C**2*(1 - 2*x)**2*sin(pi*t)**4), 0])
+G_0 = Matrix([C*(1 - 2*X)*sin(pi*t)*((1 - P_F)*sin(pi*t) - 2*pi*cos(pi*t)) \
+              / (1 + C**2*(1 - 2*X)**2*sin(pi*t)**4), 0])
 
 # C++ friendly versions of analytical formulas
 
@@ -124,6 +127,16 @@ def eval_g_0():
     gy = 0
     return Matrix([gx, gy])
 
+def eval_G_0():
+    A = Integer(1)
+    B = Integer(2)
+    a = sin(pi*t)
+    b = cos(pi*t)
+    p = -B*pow(C, 2)*pow(A - B*X, 2)*pow(a, 3)*(a + pi*b)
+    Gx = C*(A - B*X)*a*((A - p)*a - B*pi*b) / (A + pow(C, 2)*pow(A - B*X, 2)*pow(a, 4))
+    Gy = 0
+    return Matrix([Gx, Gy])
+
 # Print solutions
 underline("Analytical solutions")
 print "u_F =\n", u_F, "\n"
@@ -138,6 +151,7 @@ print "f_F =\n", f_F, "\n"
 print "f_S =\n", f_S, "\n"
 print "f_M =\n", f_M, "\n"
 print "g_0 =\n", g_0, "\n"
+print "G_0 =\n", g_0, "\n"
 print
 
 # Location of FSI boundary
@@ -224,7 +238,6 @@ div_u_F = diff(u_F[0], x) + diff(u_F[1], y)
 print div_u_F
 print
 
-
 # Check that the hyperelastic equation is satisfied
 underline("Checking that hyperelastic equation is satisfied")
 Div_Sigma_S = Matrix([diff(Sigma_S[0], X) + diff(Sigma_S[1], Y),
@@ -252,6 +265,7 @@ print eval_f_F() - f_F
 print eval_f_S() - f_S
 print eval_f_M() - f_M
 print eval_g_0() - g_0
+print eval_G_0() - G_0
 print
 
 # Compute reference value of functional: integrated Y-displacement
