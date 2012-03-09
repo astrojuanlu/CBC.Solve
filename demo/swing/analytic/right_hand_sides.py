@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-03-05
+# Last changed: 2012-03-09
 
 from dolfin import *
 from time import sleep
@@ -145,13 +145,13 @@ public:
     const double X = xx[0];
     const double Y = xx[1];
 
-    const double A = 1;
-    const double B = 2;
-    const double D = 3;
-    const double E = 6;
-    const double F = 8;
-    const double G = 16;
-    const double H = 20;
+    const double A = 1.0;
+    const double B = 2.0;
+    const double D = 3.0;
+    const double E = 6.0;
+    const double F = 8.0;
+    const double G = 16.0;
+    const double H = 200.0;
     const double a = sin(pi*t);
     const double b = cos(pi*t);
     const double c = sin(pi*Y);

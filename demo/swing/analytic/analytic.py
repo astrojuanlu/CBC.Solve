@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-03-06
+# Last changed: 2012-03-09
 
 from cbc.swing import *
 from right_hand_sides import *
@@ -14,11 +14,11 @@ application_parameters = read_parameters()
 # Used for testing
 #application_parameters["solve_dual"] = False
 #application_parameters["estimate_error"] = False
-#application_parameters["plot_solution"] = False
+#application_parameters["plot_solution"] = True
 #application_parameters["uniform_timestep"] = True
 #application_parameters["uniform_mesh"] = False
 #application_parameters["fixedpoint_tolerance"] = 1e-6
-#application_parameters["initial_timestep"] = 0.0025
+#application_parameters["initial_timestep"] = 0.1
 
 # Define boundaries
 noslip  = "x[0] < DOLFIN_EPS || x[0] > 1.0 - DOLFIN_EPS"
@@ -108,7 +108,7 @@ class Analytic(FSI):
         return Structure()
 
     def structure_density(self):
-        return 10.0
+        return 100.0
 
     def structure_mu(self):
         return 1.0

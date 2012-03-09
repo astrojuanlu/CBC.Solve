@@ -4,7 +4,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-03-05
+# Last changed: 2012-03-09
 
 from sympy import *
 
@@ -18,7 +18,7 @@ C = symbols("C")
 mu = 1
 lmbda = 2
 nu = 1
-rho_S = 10
+rho_S = 100
 
 # Simplification not handled by SymPy
 sin2pit = 2*sin(pi*t)*cos(pi*t)
@@ -44,7 +44,7 @@ f_S = Matrix([C*sin(pi*t)**2*(3*pi*cos(pi*Y)*(2*X - 1) \
               2*C*sin(pi*t)**2*sin(pi*Y) - C*pi*sin(pi*t)**2*cos(pi*Y) \
               - C**2*pi*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
               + 2*pi*C*X*sin(pi*t)**2*cos(pi*Y)
-              - 20*C*pi**2*(X**2 - X)*(cos(pi*t)**2 - sin(pi*t)**2)*sin(pi*Y) \
+              - 200*C*pi**2*(X**2 - X)*(cos(pi*t)**2 - sin(pi*t)**2)*sin(pi*Y) \
               - 6*C**2*pi*(X**2 - X)*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
               + C**2*pi**2*(3*X**2 - 2*X**3 - X)*sin(pi*t)**4*(cos(pi*Y)**2 - sin(pi*Y)**2)
 ])
@@ -85,7 +85,7 @@ def eval_f_S():
     E = Integer(6)
     F = Integer(8)
     G = Integer(16)
-    H = Integer(20)
+    H = Integer(200)
     a = sin(pi*t)
     b = cos(pi*t)
     c = sin(pi*Y)
@@ -243,7 +243,7 @@ underline("Checking that hyperelastic equation is satisfied")
 Div_Sigma_S = Matrix([diff(Sigma_S[0], X) + diff(Sigma_S[1], Y),
                       diff(Sigma_S[1], X) + diff(Sigma_S[1], Y)])
 ddot_U_S = Matrix([diff(diff(U_S[0], t), t), diff(diff(U_S[1], t), t)])
-r = 10*ddot_U_S - Div_Sigma_S - f_S
+r = rho_S*ddot_U_S - Div_Sigma_S - f_S
 r = Matrix([simplify(r[0]), simplify(r[1])])
 print r
 print
