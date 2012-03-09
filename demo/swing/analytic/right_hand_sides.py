@@ -145,13 +145,15 @@ public:
     const double X = xx[0];
     const double Y = xx[1];
 
+    const double rho_S = 100.0;
+
     const double A = 1.0;
     const double B = 2.0;
     const double D = 3.0;
     const double E = 6.0;
     const double F = 8.0;
     const double G = 16.0;
-    const double H = 200.0;
+    const double H = 2.0*rho_S;
     const double a = sin(pi*t);
     const double b = cos(pi*t);
     const double c = sin(pi*Y);
@@ -168,7 +170,7 @@ public:
     const double fx = C*e*(D*pi*d*(B*X - A) + C*e*(h*(B*f*X*g - D*f*g \
                     - (G - f)*X + F) - D*f*X*i*(B*g - D*X + A)));
     const double fy = B*C*e*c - C*pi*e*d - l*pi*k*d*c + B*pi*C*X*e*d \
-                    - H*C*f*(g - X)*(j - e)*c - E*l*pi*(g - X)*k*d*c \
+                    - 2.0*H*C*f*(g - X)*(j - e)*c - E*l*pi*(g - X)*k*d*c \
                     + l*f*(D*g - B*m - X)*k*(i - h);
 
     values[0] = fx;

@@ -44,7 +44,7 @@ f_S = Matrix([C*sin(pi*t)**2*(3*pi*cos(pi*Y)*(2*X - 1) \
               2*C*sin(pi*t)**2*sin(pi*Y) - C*pi*sin(pi*t)**2*cos(pi*Y) \
               - C**2*pi*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
               + 2*pi*C*X*sin(pi*t)**2*cos(pi*Y)
-              - 200*C*pi**2*(X**2 - X)*(cos(pi*t)**2 - sin(pi*t)**2)*sin(pi*Y) \
+              - 2*rho_S*C*pi**2*(X**2 - X)*(cos(pi*t)**2 - sin(pi*t)**2)*sin(pi*Y) \
               - 6*C**2*pi*(X**2 - X)*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
               + C**2*pi**2*(3*X**2 - 2*X**3 - X)*sin(pi*t)**4*(cos(pi*Y)**2 - sin(pi*Y)**2)
 ])
@@ -85,7 +85,7 @@ def eval_f_S():
     E = Integer(6)
     F = Integer(8)
     G = Integer(16)
-    H = Integer(200)
+    H = Integer(rho_S)
     a = sin(pi*t)
     b = cos(pi*t)
     c = sin(pi*Y)
@@ -101,7 +101,7 @@ def eval_f_S():
     m = pow(X, 3)
     fx = C*e*(D*pi*d*(B*X - A) + C*e*(h*(B*f*X*g - D*f*g \
          - (G - f)*X + F) - D*f*X*i*(B*g - D*X + A)))
-    fy = B*C*e*c - C*pi*e*d - l*pi*k*d*c + B*pi*C*X*e*d - H*C*f*(g - X)*(j - e)*c \
+    fy = B*C*e*c - C*pi*e*d - l*pi*k*d*c + B*pi*C*X*e*d - 2*H*C*f*(g - X)*(j - e)*c \
          - E*l*pi*(g - X)*k*d*c + l*f*(D*g - B*m - X)*k*(i - h)
     return Matrix([fx, fy])
 

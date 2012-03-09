@@ -11,6 +11,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from cbc.swing.fsirun import *
 from cbc.swing.parameters import *
 from numpy import pi
+from time import time
 
 # Set up parameters
 p = default_parameters()
@@ -19,23 +20,29 @@ p["estimate_error"] = False
 p["plot_solution"] = False
 p["uniform_timestep"] = True
 p["uniform_mesh"] = False
-p["fixedpoint_tolerance"] = 1e-6
+p["fixedpoint_tolerance"] = 1e-10
 
 # Reference value
 C = 0.1
 M_0 = C / (24.0*pi)
 
 # Run convergence study
-k = 0.1
+k = 0.005
 for n in range(6):
 
     print "Running convergence test with n = %d and k = %g" % (n, k)
 
+    # Set parameters
     p["num_initial_refinements"] = n
     p["initial_timestep"] = k
 
+    # Run test
+    cpu_time = time()
     status, output = run_local("analytic", p)
+    cpu_time = time() - cpu_time
 
+    # Report results
+    print "Completed in %g seconds" % cpu_time
     if status == 0:
         M = float(output.split("Integrated goal functional at T: ")[1].split("\n")[0])
         e = M - M_0
