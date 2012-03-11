@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-03-05
+# Last changed: 2012-03-10
 
 import pylab
 from time import time as python_time
@@ -66,6 +66,8 @@ def solve_primal(problem, parameters):
 
     # Extract number of dofs
     num_dofs_FSM = extract_num_dofs(F, S, M)
+    info("FSI problem has %d dofs (%d + %d + %d)" % \
+        (num_dofs_FSM, F.num_dofs, S.num_dofs, M.num_dofs))
 
     # Get initial structure displacement (used for plotting and checking convergence)
     structure_element_degree = parameters["structure_element_degree"]

@@ -153,7 +153,7 @@ public:
     const double E = 6.0;
     const double F = 8.0;
     const double G = 16.0;
-    const double H = 2.0*rho_S;
+    const double H = rho_S;
     const double a = sin(pi*t);
     const double b = cos(pi*t);
     const double c = sin(pi*Y);

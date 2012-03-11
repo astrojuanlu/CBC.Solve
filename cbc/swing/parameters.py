@@ -4,6 +4,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import Parameters, File, info
 from utils import date
+import os
 
 def default_parameters():
     "Return default values for solver parameters."
@@ -45,6 +46,21 @@ def default_parameters():
 # set the output directory and store parameters. This is needes so
 # that we can both run demos directly and from run scripts.
 
+def set_output_directory(parameters, problem, case):
+    "Set and create output directory"
+
+    # Set output directory
+    if parameters["output_directory"] == "unspecified":
+        if case is None:
+            parameters["output_directory"] = "results-%s-%s" % (problem, date())
+        else:
+            parameters["output_directory"] = "results-%s-%s" % (problem, str(case))
+
+    # Create output directory
+    dir = parameters["output_directory"]
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
 def read_parameters():
     """Read parametrs from file specified on command-line or return
     default parameters if no file is specified"""
@@ -70,23 +86,19 @@ def read_parameters():
 
     return p
 
-def store_parameters(p, problem, case):
+def store_parameters(parameters, problem, case):
     "Store parameters to file and return filename"
 
     # Set output directory
-    if p["output_directory"] == "unspecified":
-        if case is None:
-            p["output_directory"] = "results-%s-%s" % (problem, date())
-        else:
-            p["output_directory"] = "results-%s-%s" % (problem, str(case))
+    set_output_directory(parameters, problem, case)
 
     # Save to file application_parameters.xml
     file = File("application_parameters.xml")
-    file << p
+    file << parameters
 
     # Save to file <output_directory>/application_parameters.xml
-    filename = "%s/application_parameters.xml" % p["output_directory"]
+    filename = "%s/application_parameters.xml" % parameters["output_directory"]
     file = File(filename)
-    file << p
+    file << parameters
 
     return filename

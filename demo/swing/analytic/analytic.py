@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-03-09
+# Last changed: 2012-03-11
 
 from cbc.swing import *
 from right_hand_sides import *
@@ -14,11 +14,11 @@ application_parameters = read_parameters()
 # Used for testing
 #application_parameters["solve_dual"] = False
 #application_parameters["estimate_error"] = False
-#application_parameters["plot_solution"] = True
+#application_parameters["plot_solution"] = False
 #application_parameters["uniform_timestep"] = True
 #application_parameters["uniform_mesh"] = False
-#application_parameters["fixedpoint_tolerance"] = 1e-6
-#application_parameters["initial_timestep"] = 0.1
+#application_parameters["fixedpoint_tolerance"] = 1e-10
+#application_parameters["initial_timestep"] = 0.001
 
 # Define boundaries
 noslip  = "x[0] < DOLFIN_EPS || x[0] > 1.0 - DOLFIN_EPS"
@@ -37,8 +37,11 @@ class Analytic(FSI):
     def __init__(self):
 
         # Create mesh
-        n = 8
+        n = 4
         mesh = UnitSquare(n, n)
+
+        #for i in range(4):
+        #    mesh = refine(mesh)
 
         # Create analytic expressions
         self.f_F = Expression(cpp_f_F)

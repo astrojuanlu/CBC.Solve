@@ -8,6 +8,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 import os
 from dolfin_utils.pjobs import *
 from dolfin_utils.commands import *
+from utils import date
 from parameters import *
 
 def run_local(problem, parameters, case=None):
@@ -16,8 +17,20 @@ def run_local(problem, parameters, case=None):
     # Store parameters to file
     filename = store_parameters(parameters, problem, case)
 
+    # Set output directory
+    set_output_directory(parameters, problem, case)
+
+    # Set name of logfile
+    if case is None:
+        logfile = "output-%s-%s.log" % (problem, date())
+    else:
+        logfile = "output-%s-%s.log" % (problem, str(case))
+    logfile = os.path.join(parameters["output_directory"], logfile)
+
     # Submit job
-    status, output = getstatusoutput("python %s.py %s" % (problem, filename))
+    status, output = getstatusoutput("python %s.py %s | tee %s" % (problem,
+                                                                   filename,
+                                                                   logfile))
 
     return status, output
 
