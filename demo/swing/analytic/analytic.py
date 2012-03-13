@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-03-11
+# Last changed: 2012-03-13
 
 from cbc.swing import *
 from right_hand_sides import *
@@ -12,13 +12,16 @@ from right_hand_sides import *
 application_parameters = read_parameters()
 
 # Used for testing
-#application_parameters["solve_dual"] = False
-#application_parameters["estimate_error"] = False
-#application_parameters["plot_solution"] = False
-#application_parameters["uniform_timestep"] = True
-#application_parameters["uniform_mesh"] = False
-#application_parameters["fixedpoint_tolerance"] = 1e-10
-#application_parameters["initial_timestep"] = 0.001
+application_parameters["solve_primal"] = False
+application_parameters["solve_dual"] = False
+application_parameters["estimate_error"] = True
+application_parameters["plot_solution"] = False
+application_parameters["uniform_timestep"] = True
+application_parameters["uniform_mesh"] = False
+application_parameters["fixedpoint_tolerance"] = 1e-10
+application_parameters["initial_timestep"] = 0.01
+application_parameters["output_directory"] = "results_analytic_test"
+application_parameters["max_num_refinements"] = 0
 
 # Define boundaries
 noslip  = "x[0] < DOLFIN_EPS || x[0] > 1.0 - DOLFIN_EPS"
@@ -60,7 +63,8 @@ class Analytic(FSI):
     #--- Common ---
 
     def end_time(self):
-        return 0.5
+        #return 0.5
+        return 0.1
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
         return U_S[1] * dx_S

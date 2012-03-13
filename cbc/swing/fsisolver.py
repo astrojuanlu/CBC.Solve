@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-03-06
+# Last changed: 2012-03-13
 
 __all__ = ["FSISolver"]
 
@@ -88,6 +88,11 @@ class FSISolver(CBCSolver):
                 info_red("Error too large, need to refine: error = %g > TOL = %g" % (error, tolerance))
             end()
 
+            # Check if we reached the maximum number of refinements
+            if level == max_num_refinements:
+                info_blue("Reached maximum number of refinement levels (%d)", max_num_refinements)
+                return goal_functional
+
             # Check if mesh error is small enough
             begin("Checking space error estimate")
             mesh_tolerance = w_h * tolerance
@@ -115,10 +120,6 @@ class FSISolver(CBCSolver):
             # Update and save mesh
             mesh = refined_mesh
             save_mesh(mesh, parameters)
-
-            # Check if we reached the maximum number of refinements
-            if level == max_num_refinements:
-                info_blue("Reached maximum number of refinement levels (%d)", max_num_refinements)
 
         # Report elapsed time
         info_blue("Solution computed in %g seconds." % (python_time() - cpu_time))

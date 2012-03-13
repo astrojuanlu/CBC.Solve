@@ -22,6 +22,7 @@ p["uniform_timestep"] = True
 p["uniform_mesh"] = False
 p["fixedpoint_tolerance"] = 1e-8
 p["output_directory"] = "results_analytic_convergence_test_dual"
+
 p["max_num_refinements"] = 0
 
 # Reference value
