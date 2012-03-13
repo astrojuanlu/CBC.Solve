@@ -1,12 +1,12 @@
-"""This script runs a convergence test for the analytic test case using uniform
-refinement in space and time."""
+"""This script runs a convergence test for the primal problem of the
+analytic test case using uniform refinement in space and time."""
 
 __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-05
-# Last changed: 2012-03-11
+# Last changed: 2012-03-13
 
 from cbc.swing.fsirun import *
 from cbc.swing.parameters import *
@@ -21,7 +21,7 @@ p["plot_solution"] = False
 p["uniform_timestep"] = True
 p["uniform_mesh"] = False
 p["fixedpoint_tolerance"] = 1e-8
-p["output_directory"] = "analytic-convergence-test"
+p["output_directory"] = "results_analytic_convergence_test_primal"
 
 # Reference value
 C = 0.1
