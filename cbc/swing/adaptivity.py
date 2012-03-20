@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-03-05
+# Last changed: 2012-03-20
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
@@ -127,19 +127,35 @@ def estimate_error(problem, parameters):
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
-        e_F = [assemble(Rh_Fi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Fi in Rh_F]
-        e_S = [assemble(Rh_Si, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Si in Rh_S]
-        e_M = [assemble(Rh_Mi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Mi in Rh_M]
+        e_F = [assemble(Rh_Fi,
+                        interior_facet_domains=problem.fsi_boundary,
+                        cell_domains=problem.cell_domains) for Rh_Fi in Rh_F]
+        e_S = [assemble(Rh_Si,
+                        interior_facet_domains=problem.fsi_boundary,
+                        cell_domains=problem.cell_domains) for Rh_Si in Rh_S]
+        e_M = [assemble(Rh_Mi,
+                        interior_facet_domains=problem.fsi_boundary,
+                        cell_domains=problem.cell_domains) for Rh_Mi in Rh_M]
 
         # Assemble weak residual for time discretization error (error estimate)
-        Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M,
+                       interior_facet_domains=problem.fsi_boundary,
+                       cell_domains=problem.cell_domains)
+        Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M,
+                       interior_facet_domains=problem.fsi_boundary,
+                       cell_domains=problem.cell_domains)
         Rk = 0.5 * abs(Rk1 - Rk0) / dt
 
         # Assemble weak residuals for computational error
-        RcF = assemble(Rc_F, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        RcS = assemble(Rc_S, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        RcM = assemble(Rc_M, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        RcF = assemble(Rc_F, mesh=Omega,
+                       interior_facet_domains=problem.fsi_boundary,
+                       cell_domains=problem.cell_domains)
+        RcS = assemble(Rc_S, mesh=Omega,
+                       interior_facet_domains=problem.fsi_boundary,
+                       cell_domains=problem.cell_domains)
+        RcM = assemble(Rc_M, mesh=Omega,
+                       interior_facet_domains=problem.fsi_boundary,
+                       cell_domains=problem.cell_domains)
 
         # Reset vectors for assembly of residuals
         if eta_F is None: eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
@@ -235,7 +251,9 @@ def compute_time_residual(primal_series, dual_series, t0, t1, problem, parameter
 
     # Assemble right-hand side
     Rk_F, Rk_S, Rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
-    r = assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+    r = assemble(Rk_F + Rk_S + Rk_M,
+                 interior_facet_domains=problem.fsi_boundary,
+                 cell_domains=problem.cell_domains)
 
     # Compute norm of functional
     R = Vector()
