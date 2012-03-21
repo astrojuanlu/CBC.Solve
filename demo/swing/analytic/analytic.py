@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-03-20
+# Last changed: 2012-03-21
 
 from cbc.swing import *
 from right_hand_sides import *
@@ -13,8 +13,8 @@ application_parameters = read_parameters()
 
 # Used for testing
 application_parameters["solve_primal"] = False
-application_parameters["solve_dual"] = True
-application_parameters["estimate_error"] = False
+application_parameters["solve_dual"] = False
+application_parameters["estimate_error"] = True
 application_parameters["plot_solution"] = False
 application_parameters["uniform_timestep"] = True
 application_parameters["uniform_mesh"] = False

@@ -14,11 +14,11 @@ from parameters import *
 def run_local(problem, parameters, case=None):
     "Run problem on local machine with given parameters."
 
-    # Store parameters to file
-    filename = store_parameters(parameters, problem, case)
-
     # Set output directory
     set_output_directory(parameters, problem, case)
+
+    # Store parameters to file
+    filename = store_parameters(parameters, problem, case)
 
     # Set name of logfile
     if case is None:

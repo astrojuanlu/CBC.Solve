@@ -9,7 +9,7 @@ from numpy import array, append
 from cbc.common import CBCProblem
 
 from fsisolver import FSISolver
-from parameters import default_parameters, read_parameters
+from parameters import default_parameters, read_parameters, store_parameters
 
 class FSI(CBCProblem):
     "Base class for all FSI problems"
@@ -26,6 +26,9 @@ class FSI(CBCProblem):
 
     def solve(self, parameters=default_parameters()):
         "Solve and return computed solution (u_F, p_F, U_S, P_S, U_M, P_M)"
+
+        # Store parameters
+        store_parameters(parameters)
 
         # Create submeshes and mappings (only first time)
         if self.Omega is None:

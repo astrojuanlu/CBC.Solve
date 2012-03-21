@@ -42,10 +42,6 @@ def default_parameters():
 
     return p
 
-# Note handling of reading/writing parameters below. Both read/write
-# set the output directory and store parameters. This is needes so
-# that we can both run demos directly and from run scripts.
-
 def set_output_directory(parameters, problem, case):
     "Set and create output directory"
 
@@ -79,18 +75,10 @@ def read_parameters():
     if p["output_directory"] == "unspecified":
         p["output_directory"] = "results-%s" % date()
 
-    # Save to file <output_directory>/application_parameters.xml
-    filename = "%s/application_parameters.xml" % p["output_directory"]
-    file = File(filename)
-    file << p
-
     return p
 
-def store_parameters(parameters, problem, case):
+def store_parameters(parameters):
     "Store parameters to file and return filename"
-
-    # Set output directory
-    set_output_directory(parameters, problem, case)
 
     # Save to file application_parameters.xml
     file = File("application_parameters.xml")
