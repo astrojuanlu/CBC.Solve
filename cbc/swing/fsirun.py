@@ -18,7 +18,7 @@ def run_local(problem, parameters, case=None):
     set_output_directory(parameters, problem, case)
 
     # Store parameters to file
-    filename = store_parameters(parameters, problem, case)
+    filename = store_parameters(parameters)
 
     # Set name of logfile
     if case is None:
@@ -38,7 +38,7 @@ def run_bb(problem, parameters, case=None):
     "Run problem on bigblue with given parameters."
 
     # Store parameters to file
-    filename = store_parameters(parameters, problem, case)
+    filename = store_parameters(parameters)
 
     # Create name
     if case is None:

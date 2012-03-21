@@ -12,16 +12,16 @@ from right_hand_sides import *
 application_parameters = read_parameters()
 
 # Used for testing
-application_parameters["solve_primal"] = False
-application_parameters["solve_dual"] = False
-application_parameters["estimate_error"] = True
-application_parameters["plot_solution"] = False
-application_parameters["uniform_timestep"] = True
-application_parameters["uniform_mesh"] = False
-application_parameters["fixedpoint_tolerance"] = 1e-10
-application_parameters["initial_timestep"] = 0.01
-application_parameters["output_directory"] = "results_analytic_test"
-application_parameters["max_num_refinements"] = 0
+#application_parameters["solve_primal"] = False
+#application_parameters["solve_dual"] = False
+#application_parameters["estimate_error"] = True
+#application_parameters["plot_solution"] = False
+#application_parameters["uniform_timestep"] = True
+#application_parameters["uniform_mesh"] = False
+#application_parameters["fixedpoint_tolerance"] = 1e-10
+#application_parameters["initial_timestep"] = 0.01
+#application_parameters["output_directory"] = "results_analytic_test"
+#application_parameters["max_num_refinements"] = 0
 
 # Define boundaries
 noslip  = "x[0] < DOLFIN_EPS || x[0] > 1.0 - DOLFIN_EPS"
@@ -43,9 +43,6 @@ class Analytic(FSI):
         n = 4
         mesh = UnitSquare(n, n)
 
-        #for i in range(4):
-        #    mesh = refine(mesh)
-
         # Create analytic expressions
         self.f_F = Expression(cpp_f_F)
         self.F_S = Expression(cpp_F_S)
@@ -63,8 +60,7 @@ class Analytic(FSI):
     #--- Common ---
 
     def end_time(self):
-        #return 0.5
-        return 0.1
+        return 0.5
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
         return U_S[1] * dx_S

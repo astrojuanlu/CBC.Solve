@@ -428,9 +428,9 @@ Estimating error
 Adaptive loop no. = %d
 -------------------------
 
-E_h  = %g
-E_k  = %g
-E_c  = %g
+E_h = %g
+E_k = %g
+E_c = %g
 
 E_tot = %g
 
