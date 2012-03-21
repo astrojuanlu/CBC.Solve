@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-28
+# Last changed: 2012-03-21
 
 from time import time as python_time
 from dolfin import *
@@ -104,21 +104,24 @@ def solve_dual(problem, parameters):
         info("Assembling matrix")
         matrix = assemble(A,
                           cell_domains=problem.cell_domains,
+                          exterior_facet_domains=problem.fsi_boundary,
                           interior_facet_domains=problem.fsi_boundary)
 
         # Assemble vector
         info("Assembling vector")
         vector = assemble(L,
                           cell_domains=problem.cell_domains,
+                          exterior_facet_domains=problem.fsi_boundary,
                           interior_facet_domains=problem.fsi_boundary)
+
+        # Remove inactive dofs
+        info("Removing inactive dofs")
+        matrix.ident_zeros()
 
         # Apply boundary conditions
         info("Applying boundary conditions")
         for bc in bcs:
             bc.apply(matrix, vector)
-
-        # Remove inactive dofs
-        matrix.ident_zeros()
 
         # Solve linear system
         solve(matrix, Z0.vector(), vector)
