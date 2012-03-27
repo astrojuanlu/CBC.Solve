@@ -41,6 +41,7 @@ class Twist(StaticHyperelasticity):
         #material = neoHookean([mu])
         #material = Isihara([C10, C01, C20])
         #material = Biderman([C10, C01, C20, C30])
+        #material = Ogden([1.3, 5.0, -2.0, 6.3e5, 0.012e5, -0.1e5])
 
         return material
 
