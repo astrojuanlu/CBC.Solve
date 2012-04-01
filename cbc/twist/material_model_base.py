@@ -49,6 +49,7 @@ class MaterialModel():
         self.e = EulerAlmansiStrain(u)
         [self.I1, self.I2, self.I3] = CauchyGreenInvariants(u)
         [self.I1bar, self.I2bar] = IsochoricCauchyGreenInvariants(u)
+        [self.l1, self.l2, self.l3] = PrincipalStretches(u)
 
     def strain_energy(self, parameters):
         pass
@@ -80,7 +81,9 @@ class MaterialModel():
             gamma2bar = -diff(psibar, I2bar)
             Sbar = 2*(gamma1bar*I + gamma2bar*C_bar)
         #FIXME: This process needs to be completed
-
+        elif self.kinematic_measure == "PrincipalStretches":
+            l1 = self.l1; l2 = self.l2; l3 = self.l3
+            S = 1.0/l1*diff(psi, l1) + 1.0/l2*diff(psi, l2) + 1.0/l3*diff(psi, l3)
         return S
 
     def FirstPiolaKirchhoffStress(self, u):

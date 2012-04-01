@@ -102,3 +102,21 @@ class GentThomas(MaterialModel):
 
         [C1, C2] = parameters
         return C1*(I1 - 3) + C2*ln(I2/3)
+
+class Ogden(MaterialModel):
+    """Defines the strain energy function for a (six parameter) Ogden
+    material"""
+
+    def model_info(self):
+        self.num_parameters = 6
+        self.kinematic_measure = "PrincipalStretches"
+
+    def strain_energy(self, parameters):
+        l1 = self.l1
+        l2 = self.l2
+        l3 = self.l3
+
+        [alpha1, alpha2, alpha3, mu1, mu2, mu3] = parameters
+        return mu1/alpha1*(l1**alpha1 + l2**alpha1 + l3**alpha1 - 3) \
+            +  mu2/alpha2*(l1**alpha2 + l2**alpha2 + l3**alpha2 - 3) \
+            +  mu3/alpha3*(l1**alpha3 + l2**alpha3 + l3**alpha3 - 3)
