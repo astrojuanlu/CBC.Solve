@@ -341,12 +341,16 @@ def refine_timestep(E_k, parameters):
     """Refine time steps (for next round) by adjusting the tolerance
     used to determine the adaptive time steps"""
 
-    global TOL_k
+    global TOL_k, _refinement_level
 
     # Get parameters
     w_k = parameters["w_k"]
     TOL = parameters["tolerance"]
     conservation = 1.0
+
+    # Adjust TOL_k first time when dual is unknown
+    if TOL_k is None:
+        TOL_k = w_k * TOL
 
     # Compute new tolerance
     TOL_k_new = w_k * TOL / E_k * TOL_k

@@ -15,7 +15,7 @@ application_parameters = read_parameters()
 test = True
 if test:
     application_parameters["solve_primal"] = True
-    application_parameters["solve_dual"] = False
+    application_parameters["solve_dual"] = True
     application_parameters["estimate_error"] = True
     application_parameters["plot_solution"] = False
     application_parameters["uniform_timestep"] = True
@@ -23,7 +23,7 @@ if test:
     application_parameters["fixedpoint_tolerance"] = 1e-10
     application_parameters["initial_timestep"] = 0.01
     application_parameters["output_directory"] = "results_analytic_test"
-    application_parameters["max_num_refinements"] = 0
+    #application_parameters["max_num_refinements"] = 0
 
 # Define boundaries
 noslip  = "x[0] < DOLFIN_EPS || x[0] > 1.0 - DOLFIN_EPS"

@@ -23,6 +23,7 @@ p["uniform_timestep"] = True
 p["uniform_mesh"] = False
 p["fixedpoint_tolerance"] = 1e-8
 p["output_directory"] = "results_analytic_convergence_test"
+p["max_num_refinements"] = 0
 
 # Number of refinements
 #num_refinements = 6
