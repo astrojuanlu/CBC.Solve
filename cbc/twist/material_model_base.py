@@ -49,7 +49,9 @@ class MaterialModel():
         self.e = EulerAlmansiStrain(u)
         [self.I1, self.I2, self.I3] = CauchyGreenInvariants(u)
         [self.I1bar, self.I2bar] = IsochoricCauchyGreenInvariants(u)
-        [self.l1, self.l2, self.l3] = PrincipalStretches(u)
+
+        # This breaks CBC.Swing
+        #[self.l1, self.l2, self.l3] = PrincipalStretches(u)
 
     def strain_energy(self, parameters):
         pass

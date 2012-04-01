@@ -6,7 +6,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-05
-# Last changed: 2012-03-21
+# Last changed: 2012-04-01
 
 from cbc.swing.fsirun import *
 from cbc.swing.parameters import *
@@ -34,6 +34,9 @@ M_0 = C / (24.0*pi)
 
 # Function for extracting results
 def get_value(output, prefix):
+
+    print output
+
     return float(output.split(prefix)[1].split("\n")[0])
 
 # Run convergence study
@@ -62,8 +65,10 @@ for n in range(num_refinements):
     E_h = get_value(output, "E_h = ")
     E_k = get_value(output, "E_k = ")
     E_c = get_value(output, "E_c = ")
+    E_0 = get_value(output, "E_0 = ")
     e = M - M_0
     I = E / e
+    I_0 = E_0 / e
 
     # Report results
     print "Completed in %g seconds" % cpu_time
@@ -71,11 +76,13 @@ for n in range(num_refinements):
     print "M   = %g" % M
     print "M_0 = %g" % M_0
     print "e   = %g" % e
+    print "E_0 = %g" % E_0
     print "E   = %g" % E
     print "E_h = %g" % E_h
     print "E_k = %g" % E_k
     print "E_c = %g" % E_c
     print "I   = %g" % I
+    print "I_0 = %g" % I
     print
 
     # Reduce size of time step
