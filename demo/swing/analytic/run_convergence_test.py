@@ -35,9 +35,6 @@ M_0 = C / (24.0*pi)
 
 # Function for extracting results
 def get_value(output, prefix):
-
-    print output
-
     return float(output.split(prefix)[1].split("\n")[0])
 
 # Run convergence study
@@ -74,16 +71,16 @@ for n in range(num_refinements):
     # Report results
     print "Completed in %g seconds" % cpu_time
     print
-    print "M   = %g" % M
-    print "M_0 = %g" % M_0
-    print "e   = %g" % e
-    print "E_0 = %g" % E_0
-    print "E   = %g" % E
-    print "E_h = %g" % E_h
-    print "E_k = %g" % E_k
-    print "E_c = %g" % E_c
-    print "I   = %g" % I
-    print "I_0 = %g" % I
+    print "M   = %.15g" % M
+    print "M_0 = %.15g" % M_0
+    print "e   = %.15g" % e
+    print "E_0 = %.15g" % E_0
+    print "E   = %.15g" % E
+    print "E_h = %.15g" % E_h
+    print "E_k = %.15g" % E_k
+    print "E_c = %.15g" % E_c
+    print "I   = %.15g" % I
+    print "I_0 = %.15g" % I
     print
 
     # Reduce size of time step
