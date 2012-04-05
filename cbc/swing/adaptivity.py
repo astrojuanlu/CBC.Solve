@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-01
+# Last changed: 2012-04-06
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
@@ -483,6 +483,8 @@ E_tot = %g
 
     # Save to file (for plotting)
     g = open("%s/error_estimates.txt" % parameters["output_directory"], "a")
+    if _refinement_level == 0:
+        g.write("level\t E_0\t E\t E_h\t E_k\t |E_c|\t E_c_F\t E_c_S\t E_c\n")
     g.write("%d %g %g %g %g %g %g %g %g\n" %(_refinement_level, E_0, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M))
     g.close()
 

@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-03-13
+# Last changed: 2012-04-05
 
 __all__ = ["FSISolver"]
 
@@ -72,8 +72,8 @@ class FSISolver(CBCSolver):
                 error, indicators, E_h, E_k, E_c = estimate_error(self.problem, parameters)
                 end()
             else:
-                info("Not estimating error")
-                error = 0.0
+                error = max(1.0, 2*tolerance)
+                info("Not estimating error, setting error to max(1, 2*tolerance) = %g" % error)
 
             # Check if error is small enough
             begin("Checking error estimate")
@@ -93,29 +93,31 @@ class FSISolver(CBCSolver):
                 info_blue("Reached maximum number of refinement levels (%d)", max_num_refinements)
                 return goal_functional
 
-            # Check if mesh error is small enough
+            # Mesh adaptivity
             begin("Checking space error estimate")
             mesh_tolerance = w_h * tolerance
-            if E_h <= mesh_tolerance:
-
-                # Freeze mesh
+            if parameters["uniform_mesh"]:
+                info_red("Refining mesh uniformly")
+                refined_mesh = refine(self.problem.mesh())
+                self.problem.init_meshes(refined_mesh, parameters)
+            elif E_h <= mesh_tolerance:
                 info_blue("Freezing current mesh: E_h = %g <= TOL_h = %g" % (E_h, mesh_tolerance))
                 info_blue("Starting final round!")
                 final = True
                 refined_mesh = self.problem.mesh()
-
-                # Refine timestep
-                refine_timestep(E_k, parameters)
-
-            elif parameters["uniform_mesh"]:
-                info_red("Refining mesh uniformly")
-                refined_mesh = refine(self.problem.mesh())
-                self.problem.init_meshes(refined_mesh, parameters)
             else:
                 info_red("Refining mesh adaptively")
                 refined_mesh = refine_mesh(self.problem, self.problem.mesh(), indicators, parameters)
                 self.problem.init_meshes(refined_mesh, parameters)
             end()
+
+            # Time step adaptivity
+            if parameters["uniform_timestep"]:
+                info_red("Refining time step uniformly")
+                parameters["initial_timestep"] = 0.5 * parameters["initial_timestep"]
+            else:
+                info_red("Refining time step adaptively")
+                refine_timestep(E_k, parameters)
 
             # Update and save mesh
             mesh = refined_mesh
