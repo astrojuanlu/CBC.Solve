@@ -14,10 +14,10 @@ application_parameters = read_parameters()
 # Used for testing
 test = True
 if test:
-    application_parameters["solve_primal"] = True
-    application_parameters["solve_dual"] = False
+    application_parameters["solve_primal"] = False
+    application_parameters["solve_dual"] = True
     application_parameters["estimate_error"] = False
-    application_parameters["plot_solution"] = False
+    application_parameters["plot_solution"] = True
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True
     application_parameters["fixedpoint_tolerance"] = 1e-10
@@ -157,3 +157,5 @@ problem.solve(application_parameters)
 # Print reference value of functional
 M = C / (24.0*pi)
 print "Reference value of goal functional:", M
+
+interactive()

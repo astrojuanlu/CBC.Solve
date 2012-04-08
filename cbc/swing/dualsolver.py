@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-03-21
+# Last changed: 2012-04-08
 
 from time import time as python_time
 from dolfin import *
@@ -129,7 +129,7 @@ def solve_dual(problem, parameters):
         # Save and plot solution
         if save_solution: _save_solution(Z0, files)
         write_dual_data(Z0, t0, dual_series)
-        if plot_solution: _plot_solution(Z_F0, Y_F0, Z_S0, Y_S0, Z_M0, Y_M0)
+        if plot_solution: _plot_solution(Z_F0, Y_F0, X_F0, Z_S0, Y_S0, Z_M0, Y_M0)
 
         # Copy solution to previous interval (going backwards in time)
         Z1.assign(Z0)
