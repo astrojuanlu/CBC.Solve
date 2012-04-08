@@ -1,289 +1,115 @@
 #!/usr/bin/env python
 
-"Script for plotting functional values for all result directories"
+"""This script generates plots from data found in a results directory"""
 
-__author__ = "Kristoffer Selim and Anders Logg"
-__copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
+__author__ = "Anders Logg"
+__copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-import os, glob, sys
-from numpy import argsort, array
-from pylab import *
+# First added:  2012-04-08
+# Last changed: 2012-04-09
 
-# Get command-line parameters
-cases = ("M", "e", "E", "Eh", "Ek", "Ec", "EcF", "EcS", "EcM", "I", "Ih", "Ik", "Ic", "k", "Rk")
-if len(sys.argv) != 2 or not sys.argv[1] in cases:
-    print "Usage: plot <variable>"
-    print "where <variable> is one of %s" % ", ".join(cases)
-    sys.exit(1)
-variable = sys.argv[1]
+import sys
+import pylab as pl
 
-# Set reference value
-#reference_value = 0.00363978
-reference_value = 0.02
+def read_ascii(dirname, filename):
+    output = open(dirname + "/" + filename).read()
+    return [[float(word) for word in line.split(" ") if len(word) > 0]
+            for line in output.split("\n") if \
+                (len(line) > 0 and not "level" in line)]
 
-def read(filename):
-    return zip(*[[x for x in row.split(" ") if len(x) >0] for row in open(filename).read().split("\n") if " " in row and len(row) > 0])
+def extract_reference_value():
+    return float(open("reference_value.txt").read())
 
-def read_float(filename):
-    return array([[float(x) for x in column] for column in read(filename)])
+def extract_functional(dirname):
+    output = read_ascii(dirname, "goal_functional_final.txt")
+    M_T = [line[1] for line in output]
+    M_I = [line[2] for line in output]
+    return M_T, M_I
 
-# Check all results directories
-D   = []
-M   = []
-ETA = []
-E   = []
-EH  = []
-EK  = []
-EC  = []
-ECF = []
-ECS = []
-ECM = []
-I   = []
-IH  = []
-IK  = []
-IC  = []
-L   = []
-T   = []
-K   = []
-RK  = []
-for directory in glob.glob("results-*"):
+def extract_errors(dirname):
+    output = read_ascii(dirname, "error_estimates.txt")
+    E_0   = [line[1]  for line in output]
+    E_0_F = [line[2]  for line in output]
+    E_0_S = [line[3]  for line in output]
+    E_0_M = [line[4]  for line in output]
+    E     = [line[5]  for line in output]
+    E_h   = [line[6]  for line in output]
+    E_k   = [line[7]  for line in output]
+    E_c   = [line[8]  for line in output]
+    E_c_F = [line[9]  for line in output]
+    E_c_S = [line[10] for line in output]
+    E_c_M = [line[11] for line in output]
+    return E_0, E_0_F, E_0_S, E_0_M, E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M
 
-    # Check for data
-    if not os.path.isfile("%s/goal_functional_final.txt" % directory):
-        continue
+def extract_num_dofs(dirname):
+    output = read_ascii(dirname, "num_dofs.txt")
+    N = [line[2] for line in output]
+    return N
 
-    # Get legend
-    filename = "%s/application_parameters.xml" % directory
-    row = [row for row in open(filename).read().split("\n") if "description" in row][0]
-    l = row.split('value="')[1].split('"')[0]
+# Check command-line arguments
+if len(sys.argv) != 2:
+    print "Usage: plot <results directory>"
+    exit(1)
 
-    # Filter out data based on legend
-    #if not "0.005" in l:
-    #    continue
-    #if not "0.3" in l:
-    #    continue
-    #if not "Dorfler" in l:
-    #    continue
+# Extract directory
+dirname = sys.argv[1]
+print "Plotting results found in directory", dirname
 
-    print "Extracting values from %s" % directory
+# Extract data
+M_0 = extract_reference_value()
+M_T, M_I = extract_functional(dirname)
+E_0, E_0_F, E_0_S, E_0_M, E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M = extract_errors(dirname)
+N = extract_num_dofs(dirname)
 
-    # Store legend
-    L.append(l)
+# Compute error and efficiency indices
+e = [abs(M_I[i] - M_0) for i in range(len(M_I))]
+I_0 = [E_0[i] / e[i] for i in range(min(len(e), len(E_0)))]
+I = [E[i] / e[i] for i in range(min(len(e), len(E)))]
 
-    # Get number of dofs
-    filename = "%s/num_dofs.txt" % directory
-    if os.path.isfile(filename):
-        d = read_float(filename)[2]
-        D.append(d)
-    else:
-        D.append(None)
+# Plot goal functionals
+pl.figure()
+pl.subplot(2, 1, 1); pl.plot(M_T, '-o')
+pl.grid(True)
+pl.title("Goal functional at final time")
+pl.subplot(2, 1, 2); pl.plot(M_I, '-o')
+pl.grid(True)
+pl.title("Integrated goal functional")
+pl.xlabel("Refinement level")
 
-    # Get functional values
-    filename = "%s/goal_functional_final.txt" % directory
-    if os.path.isfile(filename):
-        m = read_float(filename)[2]
-        M.append(m)
-        eta = abs(m - reference_value)
-        ETA.append(abs(m - reference_value))
-    else:
-        M.append(None)
-        ETA.append(None)
+# Plot errors
+#eplot = pl.loglog
+eplot = pl.plot
+pl.figure()
+pl.subplot(3, 1, 1)
+eplot(N[:len(E)], E, '-o')
+eplot(N[:len(E_0)], E_0, '-^')
+eplot(N[:len(e)], e, '-s')
+pl.legend(["$E$", "$E_0$", "$e$"])
+pl.title("Errors and error estimates")
+pl.grid(True)
+pl.subplot(3, 1, 2)
+eplot(N[:len(E_h)], E_h, 'b-o')
+eplot(N[:len(E_k)], E_k, 'b-^')
+eplot(N[:len(E_c)], E_c, 'b-s')
+pl.legend(["$E_h$", "$E_k$", "$E_c$"])
+pl.grid(True)
+pl.subplot(3, 1, 3)
+eplot(N[:len(E_0)], E_0, 'g-o')
+eplot(N[:len(E_0_F)], E_0_F, 'g-^')
+eplot(N[:len(E_0_S)], E_0_S, 'g-s')
+eplot(N[:len(E_0_M)], E_0_M, 'g-*')
+pl.legend(["$E_0$", "$E_0^F$", "$E_0^S$", "$E_0^M$"])
+pl.grid(True)
+pl.xlabel("Number of degrees of freedom")
 
-    # Get error estimates
-    filename = "%s/error_estimates.txt" % directory
-    if os.path.isfile(filename):
-        e, eh, ek, ec, ecf, ecs, ecm = read_float(filename)[1:8]
-        ecf = abs(ecf)
-        ecs = abs(ecs)
-        ecm = abs(ecm)
-    else:
-        e = eh = ek = ec = ecf = ecs = ecm = None
-    E.append(e)
-    EH.append(eh)
-    EK.append(ek)
-    EC.append(ec)
-    ECF.append(ecf)
-    ECS.append(ecs)
-    ECM.append(ecm)
+# Plot efficiency indices
+pl.figure()
+pl.plot(N[:len(I)], I, '-o')
+pl.plot(N[:len(I_0)], I_0, '-^')
+pl.legend(["$I$", "$I_0$"])
+pl.title("Efficiency indices")
+pl.grid(True)
+pl.xlabel("Number of degrees of freedom")
 
-    # Compute efficiency index
-    if e is not None:
-        n = min(len(e), len(eta))
-        i = e[:n] / eta[:n]
-        ih = eh[:n] / eta[:n]
-        ik = ek[:n] / eta[:n]
-        ic = ec[:n] / eta[:n]
-    else:
-        i = ih = ik = ic = None
-    I.append(i)
-    IH.append(ih)
-    IK.append(ik)
-    IC.append(ic)
-
-    # Get time and time steps
-    filename = "%s/timesteps.txt" % directory
-    try:
-        level, t, k, rk, TOL_k = read_float(filename)
-    except:
-        t = k = rk = None
-    T.append(t)
-    K.append(k)
-    RK.append(rk)
-
-# Select variable to plot
-X = D
-_marker = 'o'
-if variable == "M":
-    Y = M
-    _title  = "Convergence of goal functional"
-    _ylabel = "$\mathcal{M}(u_h)$"
-    _plot   = semilogx
-elif variable == "e":
-    Y = ETA
-    _title  = "Error in goal functional"
-    _ylabel = "$\eta = |\mathcal{M}(u_h) - \mathcal{M}(u)|$"
-    _plot   = loglog
-elif variable == "E":
-    Y = E
-    _title  = "Error estimate (total)"
-    _ylabel = "$E$"
-    _plot   = loglog
-elif variable == "Eh":
-    Y = EH
-    _title  = "Space discretization error"
-    _ylabel = "$E_h$"
-    _plot   = loglog
-elif variable == "Ek":
-    Y = EK
-    _title  = "Time discretization error"
-    _ylabel = "$E_k$"
-    _plot   = loglog
-elif variable == "Ec":
-    Y = EC
-    _title  = "Computational error"
-    _ylabel = "$E_c$"
-    _plot   = loglog
-elif variable == "EcF":
-    Y = ECF
-    _title  = "Fluid computational error"
-    _ylabel = "$E_c^F$"
-    _plot   = loglog
-elif variable == "EcS":
-    Y = ECS
-    _title  = "Structure computational error"
-    _ylabel = "$E_c^S$"
-    _plot   = loglog
-elif variable == "EcM":
-    Y = ECM
-    _title  = "Mesh computational error"
-    _ylabel = "$E_c^M$"
-    _plot   = loglog
-elif variable == "I":
-    Y = I
-    _title  = "Efficiency index (total)"
-    _ylabel = "$E / \eta$"
-    #_plot   = semilogx
-    _plot   = loglog
-elif variable == "Ih":
-    Y = IH
-    _title  = "Efficiency index ($I_h$)"
-    _ylabel = "$E_h / \eta$"
-    #_plot   = semilogx
-    _plot   = loglog
-elif variable == "Ik":
-    Y = IK
-    _title  = "Efficiency index ($I_k$)"
-    _ylabel = "$E_k / \eta$"
-    #_plot   = semilogx
-    _plot   = loglog
-elif variable == "Ic":
-    Y = IC
-    _title  = "Efficiency index ($I_c$)"
-    _ylabel = "$E_c / \eta$"
-    #_plot   = semilogx
-    _plot   = loglog
-elif variable == "k":
-    X = T
-    Y = K
-    _title  = "Adaptive time steps"
-    _xlabel = "$t$"
-    _ylabel = "$k(t)$"
-    _plot   = plot
-    _marker = None
-elif variable == "Rk":
-    X = T
-    Y = RK
-    _title  = "Time residual"
-    _xlabel = "$t$"
-    _ylabel = "$R_k(t)$"
-    _plot   = plot
-    _marker = None
-
-# Sort values by legend
-indices = argsort(L)[:min(len(L), len(X))]
-
-# Group values
-plotvals = []
-LL = []
-for i in indices:
-
-    # Get (x, y) sequence pair and check dimensions
-    x = X[i]
-    y = Y[i]
-    if x is None or y is None:
-        print "Warning: missing values for %s, skipping" % variable
-        x = [1]
-        y = [1]
-    if len(y) < len(x):
-        print "Warning: missing values for %s (only %d, expecting %d)" % (variable, len(y), len(x))
-        x = x[:len(y)]
-
-    # Split values if x is not increasing, which may happen if we have
-    # stored multiple series to one file during refinement
-    offset = 0
-    level = 0
-    for j in range(len(x) - 1):
-
-        # Check for subset of data
-        if x[j + 1] < x[j]:
-            print "Found non-increasing x-values, splitting series"
-            plotvals.append(x[offset:j + 1])
-            plotvals.append(y[offset:j + 1])
-            LL.append(L[i] + " level " + str(level))
-            offset = j + 1
-            level += 1
-
-    # Add final data
-    plotvals.append(x[offset:])
-    plotvals.append(y[offset:])
-    if offset == 0:
-        LL.append(L[i])
-    else:
-        LL.append(L[i] + " level " + str(level))
-L = LL
-
-# Set fontsize for legend
-rcParams.update({'legend.fontsize': 9})
-
-# Plot functional values
-max_plots = 13
-for i in range((len(L) - 1) / max_plots + 1):
-
-    #if i != 2:
-    #    continue
-
-    figure(i)
-    subplot(2, 1, 1)
-    xy = plotvals[2*i*max_plots:2*(i + 1)*max_plots]
-    if _marker is None:
-        _plot(*xy)
-    else:
-        _plot(*xy, marker=_marker)
-    grid(True)
-    xlabel("Number of dofs (in space)")
-    ylabel(_ylabel)
-    title(_title)
-    legend(L[i*max_plots:(i + 1)*max_plots], bbox_to_anchor=(-0.1, -0.3), loc=2, borderaxespad=0)
-
-show()
+pl.show()

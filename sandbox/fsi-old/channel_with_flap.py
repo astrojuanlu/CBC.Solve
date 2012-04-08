@@ -2,12 +2,15 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-27
+# Last changed: 2012-04-09
 
 from fsiproblem import *
 
 # Read parameters
 application_parameters = read_parameters()
+application_parameters["tolerance"] = 1e-6
+
+#application_parameters["max_num_refinements"] = 0
 
 # Constants related to the geometry of the problem
 channel_length  = 4.0

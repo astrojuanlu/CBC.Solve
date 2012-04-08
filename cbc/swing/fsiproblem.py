@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim andAnders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-03-21
+# Last changed: 2012-04-08
 
 from dolfin import *
 from numpy import array, append
@@ -247,6 +247,23 @@ class FSI(CBCProblem):
         xs_array = xs.array()
         xf_array[self.fdofs] += xs_array[self.sdofs]
         xf[:] = xf_array
+
+    #--- Functions
+
+    def update(self, t0, t1, dt):
+        pass
+
+    def fluid_body_force(self):
+        return []
+
+    def structure_body_force(self):
+        return []
+
+    def structure_boundary_traction_extra(self):
+        return Constant((0, 0))
+
+    def mesh_right_hand_side(self):
+        return Constant((0, 0))
 
 def _map_to_facet(facet_index, Omega, Omega_X, vertex_map):
     "Map facet index in Omega to facet index in Omega_X"

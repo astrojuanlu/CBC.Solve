@@ -4,10 +4,11 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-08
+# Last changed: 2012-04-09
 
 from dolfin import info
-from numpy import zeros, ones, argsort, linalg
+from numpy import zeros, ones, argsort, linalg, dot
+import numpy
 
 from residuals import *
 from storage import *
@@ -63,12 +64,18 @@ def estimate_error(problem, parameters):
     EZ1 = [Function(EV) for EV in (V3, Q2, VSE, VSE, V2, V2)]
 
     # Define midpoint values for primal and dual functions
+    num_fields = 6
     U  = [0.5 * (U0[i]  + U1[i])  for i in range(5)]
-    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(6)]
-    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(6)]
+    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(num_fields)]
+    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(num_fields)]
 
     # Define time step (value set in each time step)
     kn = Constant(0.0)
+
+    # Get weak residuals for E_0
+    R0_F0, R0_S0, R0_M0 = weak_residuals(U0, U1, U0, EZ0, kn, problem)
+    R0_F1, R0_S1, R0_M1 = weak_residuals(U0, U1, U1, EZ1, kn, problem)
+    R0_F,  R0_S,  R0_M  = weak_residuals(U0, U1, U,  EZ,  kn, problem)
 
     # Get strong residuals for E_h
     Rh_F, Rh_S, Rh_M = strong_residuals(U0, U1, U, Z, EZ, dg, kn, problem)
@@ -86,6 +93,9 @@ def estimate_error(problem, parameters):
     eta_M = None
 
     # Reset variables
+    E_0_F = 0.0
+    E_0_S = 0.0
+    E_0_M = 0.0
     E_k   = 0.0
     E_c   = 0.0
     E_c_F = 0.0
@@ -118,28 +128,69 @@ def estimate_error(problem, parameters):
         read_dual_data(ZZ1, t1, dual_series)
 
         # Extrapolate dual data
-        [EZ0[j].extrapolate(Z0[j]) for j in range(6)]
-        [EZ1[j].extrapolate(Z1[j]) for j in range(6)]
+        [EZ0[j].extrapolate(Z0[j]) for j in range(num_fields)]
+        [EZ1[j].extrapolate(Z1[j]) for j in range(num_fields)]
 
         # Apply dual boundary conditions to extrapolation
-        [apply_bc(EZ0[j], Z0[j]) for j in range(6)]
-        [apply_bc(EZ1[j], Z1[j]) for j in range(6)]
+        [apply_bc(EZ0[j], Z0[j]) for j in range(num_fields)]
+        [apply_bc(EZ1[j], Z1[j]) for j in range(num_fields)]
+
+        # Assemble weak residuals for error representation
+        e0_F = [assemble(r0, mesh=Omega,
+                         cell_domains=problem.cell_domains,
+                         exterior_facet_domains=problem.fsi_boundary,
+                         interior_facet_domains=problem.fsi_boundary)
+                for r0 in [R0_F0, R0_F1, R0_F]]
+        e0_S = [assemble(r0, mesh=Omega,
+                         cell_domains=problem.cell_domains,
+                         exterior_facet_domains=problem.fsi_boundary,
+                         interior_facet_domains=problem.fsi_boundary)
+                for r0 in [R0_S0, R0_S1, R0_S]]
+        e0_M = [assemble(r0, mesh=Omega,
+                         cell_domains=problem.cell_domains,
+                         exterior_facet_domains=problem.fsi_boundary,
+                         interior_facet_domains=problem.fsi_boundary)
+                for r0 in [R0_M0, R0_M1, R0_M]]
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
-        e_F = [assemble(Rh_Fi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Fi in Rh_F]
-        e_S = [assemble(Rh_Si, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Si in Rh_S]
-        e_M = [assemble(Rh_Mi, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains) for Rh_Mi in Rh_M]
+        e_F = [assemble(Rh_Fi,
+                        cell_domains=problem.cell_domains,
+                        exterior_facet_domains=problem.fsi_boundary,
+                        interior_facet_domains=problem.fsi_boundary) for Rh_Fi in Rh_F]
+        e_S = [assemble(Rh_Si,
+                        cell_domains=problem.cell_domains,
+                        exterior_facet_domains=problem.fsi_boundary,
+                        interior_facet_domains=problem.fsi_boundary) for Rh_Si in Rh_S]
+        e_M = [assemble(Rh_Mi,
+                        cell_domains=problem.cell_domains,
+                        exterior_facet_domains=problem.fsi_boundary,
+                        interior_facet_domains=problem.fsi_boundary) for Rh_Mi in Rh_M]
 
         # Assemble weak residual for time discretization error (error estimate)
-        Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M,
+                       cell_domains=problem.cell_domains,
+                       exterior_facet_domains=problem.fsi_boundary,
+                       interior_facet_domains=problem.fsi_boundary)
+        Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M,
+                       cell_domains=problem.cell_domains,
+                       exterior_facet_domains=problem.fsi_boundary,
+                       interior_facet_domains=problem.fsi_boundary)
         Rk = 0.5 * abs(Rk1 - Rk0) / dt
 
         # Assemble weak residuals for computational error
-        RcF = assemble(Rc_F, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        RcS = assemble(Rc_S, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
-        RcM = assemble(Rc_M, mesh=Omega, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+        RcF = assemble(Rc_F, mesh=Omega,
+                       cell_domains=problem.cell_domains,
+                       exterior_facet_domains=problem.fsi_boundary,
+                       interior_facet_domains=problem.fsi_boundary)
+        RcS = assemble(Rc_S, mesh=Omega,
+                       cell_domains=problem.cell_domains,
+                       exterior_facet_domains=problem.fsi_boundary,
+                       interior_facet_domains=problem.fsi_boundary)
+        RcM = assemble(Rc_M, mesh=Omega,
+                       cell_domains=problem.cell_domains,
+                       exterior_facet_domains=problem.fsi_boundary,
+                       interior_facet_domains=problem.fsi_boundary)
 
         # Reset vectors for assembly of residuals
         if eta_F is None: eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
@@ -154,6 +205,11 @@ def estimate_error(problem, parameters):
         for i in range(len(e_M)):
             eta_M[i] += dt * abs(e_M[i].array())
 
+        # Add to E_0 (3-point Lobatto quadrature)
+        E_0_F += dt * numpy.dot(e0_F, [1.0/6.0, 1.0/6.0, 2.0/3.0])
+        E_0_S += dt * numpy.dot(e0_S, [1.0/6.0, 1.0/6.0, 2.0/3.0])
+        E_0_M += dt * numpy.dot(e0_M, [1.0/6.0, 1.0/6.0, 2.0/3.0])
+
         # Add to E_k
         E_k += dt * dt * Rk
 
@@ -163,6 +219,9 @@ def estimate_error(problem, parameters):
         E_c_M += dt * RcM
 
         end()
+
+    # Sum total error representation
+    E_0 = E_0_F + E_0_S + E_0_M
 
     # Sum total computational error
     E_c = E_c_F + E_c_S + E_c_M
@@ -177,7 +236,8 @@ def estimate_error(problem, parameters):
     E = E_h + E_k + abs(E_c)
 
     # Report results
-    save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, parameters)
+    save_errors(E_0, E_0_F, E_0_S, E_0_M, E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M,
+                parameters)
     save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters)
 
     return E, eta_K, E_h, E_k, E_c
@@ -235,7 +295,10 @@ def compute_time_residual(primal_series, dual_series, t0, t1, problem, parameter
 
     # Assemble right-hand side
     Rk_F, Rk_S, Rk_M = weak_residuals(U0, U1, U1, w, kn, problem)
-    r = assemble(Rk_F + Rk_S + Rk_M, interior_facet_domains=problem.fsi_boundary, cell_domains=problem.cell_domains)
+    r = assemble(Rk_F + Rk_S + Rk_M,
+                 cell_domains=problem.cell_domains,
+                 exterior_facet_domains=problem.fsi_boundary,
+                 interior_facet_domains=problem.fsi_boundary)
 
     # Compute norm of functional
     R = Vector()
@@ -292,12 +355,16 @@ def refine_timestep(E_k, parameters):
     """Refine time steps (for next round) by adjusting the tolerance
     used to determine the adaptive time steps"""
 
-    global TOL_k
+    global TOL_k, _refinement_level
 
     # Get parameters
     w_k = parameters["w_k"]
     TOL = parameters["tolerance"]
     conservation = 1.0
+
+    # Adjust TOL_k first time when dual is unknown
+    if TOL_k is None:
+        TOL_k = w_k * TOL
 
     # Compute new tolerance
     TOL_k_new = w_k * TOL / E_k * TOL_k
@@ -319,12 +386,12 @@ def compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters):
     conservation = 1.0
     snap = 0.9
 
-    # Adjust TOL_k first time when dual is unknown
-    if _refinement_level == 0 and abs(dt - t1) / t1 < 100.0 * DOLFIN_EPS:
-        TOL_k = dt * Rk
-
     # Compute new time step
-    dt_new = TOL_k / Rk
+    if abs(Rk) > 0.0 and TOL_k is not None:
+        dt_new = TOL_k / Rk
+    else:
+        TOL_k = 1.0
+        dt_new = 2.0 * dt
 
     # Modify time step to avoid oscillations
     dt_new = (1.0 + conservation) * dt * dt_new / (dt + conservation * dt_new)
@@ -397,7 +464,8 @@ def save_mesh(mesh, parameters):
     file = File("%s/mesh_%d.xml" % (parameters["output_directory"], _refinement_level))
     file << mesh
 
-def save_errors(E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, parameters):
+def save_errors(E_0, E_0_F, E_0_S, E_0_M, E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M,
+                parameters):
     "Save errors to file"
 
     global _refinement_level
@@ -410,13 +478,15 @@ Estimating error
 Adaptive loop no. = %d
 -------------------------
 
-E_h  = %g
-E_k  = %g
-E_c  = %g
+  E_0 = %g
+
+  E_h = %g
+  E_k = %g
+  E_c = %g
 
 E_tot = %g
 
-""" % (_refinement_level, E_h, E_k, abs(E_c), E)
+""" % (_refinement_level, E_0, E_h, E_k, abs(E_c), E)
 
     # Print summary
     info(summary)
@@ -428,7 +498,13 @@ E_tot = %g
 
     # Save to file (for plotting)
     g = open("%s/error_estimates.txt" % parameters["output_directory"], "a")
-    g.write("%d %g %g %g %g %g %g %g\n" %(_refinement_level, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M))
+    if _refinement_level == 0:
+        g.write("level\t E_0\t E_0_F\t E_0_S\t E_0_M\t E\t E_h\t E_k\t |E_c|\t E_c_F\t E_c_S\t E_c_M\n")
+    g.write("%d %g %g %g %g %g %g %g %g %g %g %g\n" % \
+                (_refinement_level,
+                 E_0, E_0_F, E_0_S, E_0_M,
+                 E, E_h, E_k,
+                 abs(E_c), E_c_F, E_c_S, E_c_M))
     g.close()
 
 def save_timestep(t1, Rk, dt, TOL_k, parameters):
@@ -460,7 +536,8 @@ def save_goal_functional_final(goal_functional, integrated_goal_functional, para
 
     global _refinement_level
 
-    info("Value of goal functional at T: %g" % goal_functional)
+    info("Value of goal functional at T:   %g" % goal_functional)
+    info("Integrated goal functional at T: %g" % integrated_goal_functional)
     f = open("%s/goal_functional_final.txt" % parameters["output_directory"], "a")
     f.write("%d %.16g %.16g\n" % (_refinement_level, goal_functional, integrated_goal_functional))
     f.close()

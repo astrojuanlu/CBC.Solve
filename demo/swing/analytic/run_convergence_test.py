@@ -6,7 +6,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-05
-# Last changed: 2012-04-06
+# Last changed: 2012-04-08
 
 from cbc.swing import *
 

@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-28
+# Last changed: 2012-04-08
 
 import pylab
 from time import time as python_time
@@ -144,7 +144,7 @@ def solve_primal(problem, parameters):
             U_S0.vector()[:] = U_S1.vector()[:]
 
             # Plot solution
-            if plot_solution: _plot_solution(u_F1, U_S1, U_M1)
+            if plot_solution: _plot_solution(u_F1, p_F1, U_S1, U_M1)
 
             # Check convergence
             if increment < itertol:
@@ -224,11 +224,12 @@ def solve_primal(problem, parameters):
     # Return solution
     return goal_functional
 
-def _plot_solution(u_F, U_S, U_M):
+def _plot_solution(u_F, p_F, U_S, U_M):
     "Plot solution"
     plot(u_F, title="Fluid velocity")
-    plot(U_S, title="Structure displacement", mode="displacement")
-    plot(U_M, title="Mesh displacement", mode="displacement")
+    plot(p_F, title="Fluid pressure")
+    #plot(U_S, title="Structure displacement", mode="displacement")
+    #plot(U_M, title="Mesh displacement", mode="displacement")
 
 def _save_solution(U, files):
     "Save solution to VTK"

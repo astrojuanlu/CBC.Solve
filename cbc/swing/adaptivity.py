@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-08
+# Last changed: 2012-04-09
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg
@@ -63,9 +63,10 @@ def estimate_error(problem, parameters):
     EZ1 = [Function(EV) for EV in (V3, Q2, V2, VSE, VSE, V2, V2)]
 
     # Define midpoint values for primal and dual functions
+    num_fields = 7
     U  = [0.5 * (U0[i]  + U1[i])  for i in range(5)]
-    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(7)]
-    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(7)]
+    Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(num_fields)]
+    EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(num_fields)]
 
     # Define time step (value set in each time step)
     kn = Constant(0.0)
@@ -122,12 +123,12 @@ def estimate_error(problem, parameters):
         read_dual_data(ZZ1, t1, dual_series)
 
         # Extrapolate dual data
-        [EZ0[j].extrapolate(Z0[j]) for j in range(7)]
-        [EZ1[j].extrapolate(Z1[j]) for j in range(7)]
+        [EZ0[j].extrapolate(Z0[j]) for j in range(num_fields)]
+        [EZ1[j].extrapolate(Z1[j]) for j in range(num_fields)]
 
         # Apply dual boundary conditions to extrapolation
-        [apply_bc(EZ0[j], Z0[j]) for j in range(7)]
-        [apply_bc(EZ1[j], Z1[j]) for j in range(7)]
+        [apply_bc(EZ0[j], Z0[j]) for j in range(num_fields)]
+        [apply_bc(EZ1[j], Z1[j]) for j in range(num_fields)]
 
         # Assemble weak residuals for error representation
         e0_F = assemble(R0_F, mesh=Omega,
@@ -163,7 +164,6 @@ def estimate_error(problem, parameters):
                        cell_domains=problem.cell_domains,
                        exterior_facet_domains=problem.fsi_boundary,
                        interior_facet_domains=problem.fsi_boundary)
-
         Rk1 = assemble(Rk1_F + Rk1_S + Rk1_M,
                        cell_domains=problem.cell_domains,
                        exterior_facet_domains=problem.fsi_boundary,
@@ -484,7 +484,7 @@ E_tot = %g
     # Save to file (for plotting)
     g = open("%s/error_estimates.txt" % parameters["output_directory"], "a")
     if _refinement_level == 0:
-        g.write("level\t E_0\t E\t E_h\t E_k\t |E_c|\t E_c_F\t E_c_S\t E_c\n")
+        g.write("level\t E_0\t E\t E_h\t E_k\t |E_c|\t E_c_F\t E_c_S\t E_c_M\n")
     g.write("%d %g %g %g %g %g %g %g %g\n" %(_refinement_level, E_0, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M))
     g.close()
 

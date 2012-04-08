@@ -2,12 +2,25 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-02-21
+# Last changed: 2012-04-08
 
 from cbc.swing import *
 
 # Read parameters
 application_parameters = read_parameters()
+
+# Used for testing
+test = True
+if test:
+    application_parameters["output_directory"] = "results_channel_with_flap_test"
+    application_parameters["solve_primal"] = False
+    application_parameters["solve_dual"] = True
+    application_parameters["estimate_error"] = False
+    application_parameters["uniform_timestep"] = True
+    application_parameters["plot_solution"] = True
+    application_parameters["max_num_refinements"] = 0
+
+    application_parameters["initial_timestep"] = 0.05 / 8.0
 
 # Constants related to the geometry of the problem
 channel_length  = 4.0
@@ -38,6 +51,7 @@ class ChannelWithFlap(FSI):
 
     def __init__(self):
 
+        # Create mesh
         ny = 5
         nx = 20
         if application_parameters["crossed_mesh"]:
@@ -45,13 +59,20 @@ class ChannelWithFlap(FSI):
         else:
             mesh = Rectangle(0.0, 0.0, channel_length, channel_height, nx, ny)
 
+        for i in range(3):
+            mesh = refine(mesh)
+
+        # Set material parameters
+        self.E = 100.0
+        self.nu = 0.3
+
         # Initialize base class
         FSI.__init__(self, mesh)
 
     #--- Common ---
 
     def end_time(self):
-        return 0.5
+        return 0.1
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
         A = (structure_right - structure_left) * structure_top
@@ -66,10 +87,10 @@ class ChannelWithFlap(FSI):
         return 1.0
 
     def fluid_viscosity(self):
-        return 0.002
+        return 0.01
 
     def fluid_velocity_dirichlet_values(self):
-         return [(0.0, 0.0)]
+        return [(0.0, 0.0)]
 
     def fluid_velocity_dirichlet_boundaries(self):
         return [noslip]
@@ -92,15 +113,13 @@ class ChannelWithFlap(FSI):
         return Structure()
 
     def structure_density(self):
-        #return 0.25*15.0
-        return 10.0
+        return 100.0
 
     def structure_mu(self):
-        return 0.25*75.0
-#        return 5.0
+        return self.E / (2.0*(1.0 + self.nu))
 
     def structure_lmbda(self):
-        return 0.25*125.0
+        return self.E * self.nu / ((1.0 + self.nu)*(1 - 2*self.nu))
 
     def structure_dirichlet_values(self):
         return [(0.0, 0.0)]
@@ -111,16 +130,13 @@ class ChannelWithFlap(FSI):
     def structure_neumann_boundaries(self):
         return "on_boundary"
 
-    def structure_body_force(self):
-        return []
-
     #--- Parameters for mesh problem ---
 
     def mesh_mu(self):
-        return 3.8461
+        return 1.0
 
     def mesh_lmbda(self):
-        return 5.76
+        return 1.0
 
     def mesh_alpha(self):
         return 1.0
@@ -128,3 +144,5 @@ class ChannelWithFlap(FSI):
 # Define and solve problem
 problem = ChannelWithFlap()
 problem.solve(application_parameters)
+
+interactive()
