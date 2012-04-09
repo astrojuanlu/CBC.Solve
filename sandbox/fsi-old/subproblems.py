@@ -14,8 +14,6 @@ __license__  = "GNU GPL Version 3 or any later version"
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
 
-from copy import copy
-
 from dolfin import *
 
 from cbc.flow import NavierStokes
@@ -84,7 +82,7 @@ class FluidProblem(NavierStokes):
         values = self.problem.fluid_velocity_dirichlet_values()
 
         # Add no-slip boundary value at fluid-structure interface (u = w)
-        values.append(self.w)
+        #values.append(self.w)
 
         return values
 
@@ -94,7 +92,7 @@ class FluidProblem(NavierStokes):
         boundaries = self.problem.fluid_velocity_dirichlet_boundaries()
 
         # Add no-slip boundary at fluid-structure interface
-        boundaries.append((self.fsi_boundary_F1, 2))
+        #boundaries.append((self.fsi_boundary_F1, 2))
 
         return boundaries
 

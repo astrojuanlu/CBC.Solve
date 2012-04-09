@@ -96,6 +96,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_MM01 = -(alpha_M/k)*inner(Z_M0 - Z_M, v_M)*dx_F + inner(sym(grad(Z_M)), Sigma_M(v_M, mu_M, lmbda_M))*dx_F
     A_MM02 = inner(Z_M('+'), q_M('+'))*d_FSI
     A_MM03 = inner(Y_M('+'), v_M('+'))*d_FSI
+    A_MM04 = 1e-6*inner(Y_M, q_M)*dx_F # avoid singular system
 
     # Collect forms
     A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + A_FF08 + G_FF
@@ -103,7 +104,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     G_FM = G_FM1  + G_FM2  + G_FM3
     A_FM = A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + G_FM
     A_SM = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06
-    A_MM = A_MM01 + A_MM02 + A_MM03
+    A_MM = A_MM01 + A_MM02 + A_MM03 + A_MM04
     A_system = A_FF + A_FS + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS
 
     # Define goal funtional
@@ -135,5 +136,8 @@ def create_dual_bcs(problem, W):
     for boundary in problem.structure_dirichlet_boundaries():
         bcs += [DirichletBC(W.sub(3), (0, 0), boundary)]
         bcs += [DirichletBC(W.sub(4), (0, 0), boundary)]
+
+    # Boundary conditions for dual mesh displacement
+    bcs += [DirichletBC(W.sub(5), (0, 0), DomainBoundary())]
 
     return bcs
