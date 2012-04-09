@@ -13,7 +13,10 @@ import sys
 import pylab as pl
 
 def read_ascii(dirname, filename):
-    output = open(dirname + "/" + filename).read()
+    try:
+        output = open(dirname + "/" + filename).read()
+    except:
+        return None
     return [[float(word) for word in line.split(" ") if len(word) > 0]
             for line in output.split("\n") if \
                 (len(line) > 0 and not "level" in line)]
@@ -49,6 +52,7 @@ def extract_num_dofs(dirname):
 
 def extract_timesteps(dirname):
     output = read_ascii(dirname, "timesteps.txt")
+    if output is None: return None, None, None
     maxlevel = int(max(line[0] for line in output))
     t = []
     k = []
@@ -126,17 +130,20 @@ pl.grid(True)
 pl.xlabel("Number of degrees of freedom")
 
 # Plot time steps and residuals
-pl.figure()
-pl.subplot(2, 1, 1)
-for i in range(len(t)):
-    pl.plot(t[i], k[i])
-pl.title("Time steps $k = k(t)$")
-pl.subplot(2, 1, 2)
-pl.grid(True)
-for i in range(len(t)):
-    pl.plot(t[i], Rk[i])
-pl.title("Time residuals $R_k = R_k(t)$")
-pl.xlabel("$t$")
-pl.grid(True)
+if t is not None:
+    pl.figure()
+    pl.subplot(2, 1, 1)
+    for i in range(len(t)):
+        pl.plot(t[i], k[i])
+    pl.title("Time steps $k = k(t)$")
+    pl.grid(True)
+    pl.legend(["%d" % i for i in range(len(t))])
+    pl.subplot(2, 1, 2)
+    for i in range(len(t)):
+        pl.plot(t[i], Rk[i])
+    pl.title("Time residuals $R_k = R_k(t)$")
+    pl.xlabel("$t$")
+    pl.grid(True)
+    pl.legend(["%d" % i for i in range(len(t))])
 
 pl.show()

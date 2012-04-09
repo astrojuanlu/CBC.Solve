@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-09
+# Last changed: 2012-04-10
 
 from fsiproblem import *
 
@@ -10,7 +10,16 @@ from fsiproblem import *
 application_parameters = read_parameters()
 application_parameters["tolerance"] = 1e-6
 
-#application_parameters["max_num_refinements"] = 0
+application_parameters["initial_timestep"] = 0.01
+application_parameters["uniform_timestep"] = True
+#application_parameters["output_directory"] = "results-k=0.005"
+
+application_parameters["output_directory"] = "test"
+application_parameters["solve_primal"] = False
+application_parameters["solve_dual"] = True
+application_parameters["estimate_error"] = True
+
+application_parameters["max_num_refinements"] = 0
 
 # Constants related to the geometry of the problem
 channel_length  = 4.0

@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim andAnders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-08
+# Last changed: 2012-04-09
 
 from dolfin import *
 from numpy import array, append
@@ -128,11 +128,33 @@ class FSI(CBCProblem):
         # Compute FSI boundary and orientation markers on Omega
         for facet in facets(Omega):
 
-            # Skip facets on the boundary
+            # Handle facets on the boundary
             cells = facet.entities(D)
             if len(cells) == 1:
+
+                # Create cell and midpoint
+                c = cells[0]
+                cell = Cell(Omega, c)
+                p = cell.midpoint()
+
+                # Check whether point is inside structure domain
+                facet_index = facet.index()
+                if structure.inside(p0, True):
+
+                    # On structure boundary
+                    fsi_boundary[facet_index] = 1
+                    fsi_orientation[facet_index] = c
+
+                else:
+
+                    # On fluid boundary
+                    fsi_boundary[facet_index] = 0
+                    fsi_orientation[facet_index] = c
+
                 continue
-            elif len(cells) != 2:
+
+            # Sanity check
+            if len(cells) != 2:
                 error("Strange, expecting one or two facets!")
 
             # Create the two cells
@@ -160,18 +182,26 @@ class FSI(CBCProblem):
             # Look for points where exactly one is inside the structure
             facet_index = facet.index()
             if p0_inside and not p1_inside:
+
+                # On FSI boundary
                 fsi_boundary[facet_index] = 2
                 fsi_orientation[facet_index] = c1
                 fsi_boundary_F[_map_to_facet(facet_index, Omega, Omega_F, vertex_map_to_fluid)] = 2
                 fsi_boundary_S[_map_to_facet(facet_index, Omega, Omega_S, vertex_map_to_structure)] = 2
             elif p1_inside and not p0_inside:
+
+                # On FSI boundary
                 fsi_boundary[facet_index] = 2
                 fsi_orientation[facet_index] = c0
                 fsi_boundary_F[_map_to_facet(facet_index, Omega, Omega_F, vertex_map_to_fluid)] = 2
                 fsi_boundary_S[_map_to_facet(facet_index, Omega, Omega_S, vertex_map_to_structure)] = 2
             elif p0_inside and p1_inside:
+
+                # Inside structure domain
                 fsi_boundary[facet_index] = 1
             else:
+
+                # Inside fluid domain
                 fsi_boundary[facet_index] = 0
 
         # Initialize global edge indices (used in read_primal_data)
@@ -214,6 +244,23 @@ class FSI(CBCProblem):
         xs_array = xs.array()
         xf_array[self.fdofs] += xs_array[self.sdofs]
         xf[:] = xf_array
+
+    #--- Functions
+
+    def update(self, t0, t1, dt):
+        pass
+
+    def fluid_body_force(self):
+        return []
+
+    def structure_body_force(self):
+        return []
+
+    def structure_boundary_traction_extra(self):
+        return Constant((0, 0))
+
+    def mesh_right_hand_side(self):
+        return Constant((0, 0))
 
 def _map_to_facet(facet_index, Omega, Omega_X, vertex_map):
     "Map facet index in Omega to facet index in Omega_X"

@@ -14,6 +14,8 @@ __license__  = "GNU GPL Version 3 or any later version"
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
 
+from copy import copy
+
 from dolfin import *
 
 from cbc.flow import NavierStokes
@@ -44,6 +46,12 @@ class FluidProblem(NavierStokes):
         self.U_F = 0.5 * (self.U_F0 + self.U_F1)
         self.P_F = 0.5 * (self.P_F0 + self.P_F1)
 
+        # Create mesh function on Omega_F1 for fluid-structure boundary.
+        # This is necessary since the original mesh function is otherwise
+        # defined on Omega_F0 which leads to an error when setting bcs.
+        self.fsi_boundary_F1 = FacetFunction("uint", self.omega_F1)
+        self.fsi_boundary_F1.array()[:] = self.problem.fsi_boundary_F.array()
+
         # Calculate number of dofs
         self.num_dofs = self.V.dim() + self.Q.dim()
 
@@ -57,21 +65,38 @@ class FluidProblem(NavierStokes):
     def mesh(self):
         return self.omega_F1
 
+    def density(self):
+        return self.problem.fluid_density()
+
     def viscosity(self):
         return self.problem.fluid_viscosity()
 
-    def density(self):
-        return self.problem.fluid_density()
+    def body_force(self, V):
+        return self.problem.fluid_body_force()
 
     def mesh_velocity(self, V):
         self.w = Function(V)
         return self.w
 
     def velocity_dirichlet_values(self):
-        return self.problem.fluid_velocity_dirichlet_values()
+
+        # Get user-defined boundary values
+        values = self.problem.fluid_velocity_dirichlet_values()
+
+        # Add no-slip boundary value at fluid-structure interface (u = w)
+        values.append(self.w)
+
+        return values
 
     def velocity_dirichlet_boundaries(self):
-        return self.problem.fluid_velocity_dirichlet_boundaries()
+
+        # Get user-defined boundaries
+        boundaries = self.problem.fluid_velocity_dirichlet_boundaries()
+
+        # Add no-slip boundary at fluid-structure interface
+        boundaries.append((self.fsi_boundary_F1, 2))
+
+        return boundaries
 
     def pressure_dirichlet_values(self):
         return self.problem.fluid_pressure_dirichlet_values()
@@ -169,6 +194,7 @@ class StructureProblem(Hyperelasticity):
         self.G_S = Function(self.V_S)
         self.N_F = FacetNormal(Omega_F)
         self.N_S = FacetNormal(Omega_S)
+        self.G_0 = problem.structure_boundary_traction_extra()
 
         # Calculate number of dofs
         self.num_dofs = 2 * self.V_S.dim()
@@ -199,6 +225,9 @@ class StructureProblem(Hyperelasticity):
     def neumann_conditions(self):
         return [self.G_S]
 
+    def body_force(self):
+        return self.problem.structure_body_force()
+
     def material_model(self):
         mu    = self.problem.structure_mu()
         lmbda = self.problem.structure_lmbda()
@@ -218,12 +247,12 @@ class StructureProblem(Hyperelasticity):
         if new:
             d_FSI = ds(2)
             a_F = dot(self.test_F, self.trial_F)*d_FSI
-            L_F = -dot(self.test_F, dot(Sigma_F, self.N_F))*d_FSI
+            L_F = -dot(self.test_F, dot(Sigma_F, self.N_F) + self.G_0)*d_FSI
             A_F = assemble(a_F, exterior_facet_domains=self.problem.fsi_boundary_F)
             B_F = assemble(L_F, exterior_facet_domains=self.problem.fsi_boundary_F)
         else:
             a_F = dot(self.test_F, self.trial_F)*ds
-            L_F = -dot(self.test_F, dot(Sigma_F, self.N_F))*ds
+            L_F = -dot(self.test_F, dot(Sigma_F, self.N_F) + self.G_0)*ds
             A_F = assemble(a_F)
             B_F = assemble(L_F)
         A_F.ident_zeros()
@@ -309,6 +338,10 @@ class MeshProblem():
         k = Constant(0)
         a = alpha*inner(v, u)*dx + 0.5*k*inner(sym(grad(v)), _Sigma_M(u, mu, lmbda))*dx
         L = alpha*inner(v, u0)*dx - 0.5*k*inner(sym(grad(v)), _Sigma_M(u0, mu, lmbda))*dx
+
+        # Add right-hand side
+        F_M = self.problem.mesh_right_hand_side()
+        L += k*inner(v, F_M)*dx
 
         # Store variables for time stepping
         self.u0 = u0
