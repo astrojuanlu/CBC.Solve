@@ -47,6 +47,18 @@ def extract_num_dofs(dirname):
     N = [line[2] for line in output]
     return N
 
+def extract_timesteps(dirname):
+    output = read_ascii(dirname, "timesteps.txt")
+    maxlevel = int(max(line[0] for line in output))
+    t = []
+    k = []
+    R = []
+    for i in range(maxlevel + 1):
+        t.append([line[1] for line in output if int(line[0]) == i])
+        k.append([line[2] for line in output if int(line[0]) == i])
+        R.append([line[3] for line in output if int(line[0]) == i])
+    return t, k, R
+
 # Check command-line arguments
 if len(sys.argv) != 2:
     print "Usage: plot <results directory>"
@@ -61,6 +73,7 @@ M_0 = extract_reference_value()
 M_T, M_I = extract_functional(dirname)
 E_0, E_0_F, E_0_S, E_0_M, E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M = extract_errors(dirname)
 N = extract_num_dofs(dirname)
+t, k, Rk = extract_timesteps(dirname)
 
 # Compute error and efficiency indices
 e = [abs(M_I[i] - M_0) for i in range(len(M_I))]
@@ -111,5 +124,19 @@ pl.legend(["$I$", "$I_0$"])
 pl.title("Efficiency indices")
 pl.grid(True)
 pl.xlabel("Number of degrees of freedom")
+
+# Plot time steps and residuals
+pl.figure()
+pl.subplot(2, 1, 1)
+for i in range(len(t)):
+    pl.plot(t[i], k[i])
+pl.title("Time steps $k = k(t)$")
+pl.subplot(2, 1, 2)
+pl.grid(True)
+for i in range(len(t)):
+    pl.plot(t[i], Rk[i])
+pl.title("Time residuals $R_k = R_k(t)$")
+pl.xlabel("$t$")
+pl.grid(True)
 
 pl.show()
