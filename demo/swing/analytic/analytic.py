@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-04-10
+# Last changed: 2012-04-20
 
 from cbc.swing import *
 from right_hand_sides import *
@@ -14,16 +14,19 @@ application_parameters = read_parameters()
 # Used for testing
 test = True
 if test:
-    application_parameters["solve_primal"] = True
-    application_parameters["solve_dual"] = True
+    application_parameters["solve_primal"] = False
+    application_parameters["solve_dual"] = False
     application_parameters["estimate_error"] = True
     application_parameters["plot_solution"] = False
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True
-    application_parameters["fixedpoint_tolerance"] = 1e-10
+    application_parameters["tolerance"] = 1e-16
+    #application_parameters["fixedpoint_tolerance"] = 1e-10
     application_parameters["initial_timestep"] = 0.01
     application_parameters["output_directory"] = "results_analytic_test"
     application_parameters["max_num_refinements"] = 0
+
+    application_parameters["use_exact_solution"] = True
 
 # Define boundaries
 noslip  = "x[0] < DOLFIN_EPS || x[0] > 1.0 - DOLFIN_EPS"
@@ -42,7 +45,7 @@ class Analytic(FSI):
     def __init__(self):
 
         # Create mesh
-        n = 8
+        n = 4
         mesh = UnitSquare(n, n)
 
         # Create analytic expressions
@@ -54,6 +57,7 @@ class Analytic(FSI):
         self.f_F.C = C
         self.F_S.C = C
         self.F_M.C = C
+        self.p_F.C = C
         self.G_0.C = C
 
         # Initialize base class
@@ -74,6 +78,19 @@ class Analytic(FSI):
         self.F_M.t = t
         self.p_F.t = t
         self.G_0.t = t
+
+    def exact_solution(self):
+        u_F = Expression(cpp_u_F)
+        p_F = Expression(cpp_p_F)
+        U_S = Expression(cpp_U_S)
+        P_S = Expression(cpp_P_S)
+        U_M = Expression(cpp_U_M)
+        u_F.C = C
+        p_F.C = C
+        U_S.C = C
+        P_S.C = C
+        U_M.C = C
+        return u_F, p_F, U_S, P_S, U_M
 
     def __str__(self):
         return "Channel flow with an immersed elastic flap"

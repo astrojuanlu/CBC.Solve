@@ -10,14 +10,14 @@ from fsiproblem import *
 application_parameters = read_parameters()
 application_parameters["tolerance"] = 1e-16
 
-application_parameters["initial_timestep"] = 0.0025
+application_parameters["initial_timestep"] = 0.01
 application_parameters["uniform_timestep"] = True
-application_parameters["output_directory"] = "results-k=0.0025"
-#application_parameters["output_directory"] = "test"
+#application_parameters["output_directory"] = "results-k=0.0025"
+application_parameters["output_directory"] = "test_M"
 
-#application_parameters["solve_primal"] = True
-#application_parameters["solve_dual"] = False
-#application_parameters["estimate_error"] = False
+application_parameters["solve_primal"] = True
+application_parameters["solve_dual"] = True
+application_parameters["estimate_error"] = True
 #application_parameters["max_num_refinements"] = 0
 
 # Constants related to the geometry of the problem

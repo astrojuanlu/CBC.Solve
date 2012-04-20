@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-03-21
+# Last changed: 2012-04-10
 
 from dolfin import *
 from operators import *
@@ -47,6 +47,9 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     Ev = grad(v_S)*Fu.T + Fu*grad(v_S).T
     Sv = grad(v_S)*(2*mu_S*Eu + lmbda_S*tr(Eu)*I) + Fu*(2*mu_S*Ev + lmbda_S*tr(Ev)*I)
 
+    # Stabilization for boundary terms
+    eps = Constant(1e-8)
+
     # Dual forms
     A_FF01 = -(1/k)*inner((Z_F0 - Z_F), rho_F*J(U_M1)*v_F)*dx_F
     A_FF02 =  inner(Z_F, rho_F*J(U_M1)*dot(dot(grad(v_F), inv(F(U_M1))), (U_F1 - (U_M0 - U_M1)*(1/k))))*dx_F
@@ -55,11 +58,9 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_FF05 =  inner(grad(Z_F), J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)))*dx_F
     A_FF06 = -inner(grad(Z_F), J(U_M1)*q_F*inv(F(U_M1)).T)*dx_F
     A_FF07 =  inner(Y_F, div(J(U_M1)*dot(inv(F(U_M1)), v_F)))*dx_F
-    A_FF08 =  inner(X_F('+'), v_F('+'))*d_FSI + inner(Z_F('+'), s_F('+'))*d_FSI
+    A_FF08 =  inner(X_F('+'), v_F('+'))*d_FSI + inner(Z_F('+'), s_F('+'))*d_FSI + eps*inner(X_F, s_F)*dx_F
 
     G_FF   = -inner(Z_F, dot(J(U_M1)*mu_F*dot(inv(F(U_M1)).T, dot(grad(v_F).T, inv(F(U_M1)).T)), N_F))*ds_F
-
-
     A_FS   = -inner(X_F('+'), q_S('+'))*d_FSI
 
     A_SF01 = -inner(Z_S('+'), J(U_M1)('+')*mu_F*dot(dot(grad(v_F('+')), inv(F(U_M1))('+')), dot(inv(F(U_M1)).T('+'), N)))*d_FSI
@@ -94,18 +95,17 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     A_SM06 = -inner(Z_S('+'), J(U_M1)('+')*dot(dot(P_F1('+')*I('+'), inv(F(U_M1)).T('+')), dot(grad(v_M('+')).T, dot(inv(F(U_M1)).T('+'), N))))*d_FSI
 
     A_MM01 = -(alpha_M/k)*inner(Z_M0 - Z_M, v_M)*dx_F + inner(sym(grad(Z_M)), Sigma_M(v_M, mu_M, lmbda_M))*dx_F
-    A_MM02 = inner(Z_M('+'), q_M('+'))*d_FSI
+    A_MM02 = inner(Z_M('+'), q_M('+'))*d_FSI + eps*inner(Y_M, q_M)*dx_F
     A_MM03 = inner(Y_M('+'), v_M('+'))*d_FSI
-    A_MM04 = 1e-6*inner(Y_M, q_M)*dx_F # avoid singular system
 
     # Collect forms
-    A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + A_FF08 + G_FF
+    A_FF = A_FF01 + A_FF02 + A_FF03 + A_FF04 + A_FF05 + A_FF06 + A_FF07 + G_FF #+ A_FF08
     A_SF = A_SF01 + A_SF02 + A_SF03
     G_FM = G_FM1  + G_FM2  + G_FM3
     A_FM = A_FM01 + A_FM02 + A_FM03 + A_FM04 + A_FM05 + A_FM06 + A_FM07 + A_FM08 + A_FM09 + A_FM10 + G_FM
     A_SM = A_SM01 + A_SM02 + A_SM03 + A_SM04 + A_SM05 + A_SM06
-    A_MM = A_MM01 + A_MM02 + A_MM03 + A_MM04
-    A_system = A_FF + A_FS + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS
+    A_MM = A_MM01 + A_MM02 + A_MM03
+    A_system = A_FF + A_FM + A_SS + A_SF + A_SM + A_MM + A_MS #+ A_FS
 
     # Define goal funtional
     goal_functional = problem.evaluate_functional(v_F, q_F, v_S, q_S, v_M, dx_F, dx_S, dx_M)

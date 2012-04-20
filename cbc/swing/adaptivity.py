@@ -1,13 +1,15 @@
+
 "This module implements functionality for adaptivity."
 
 __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-09
+# Last changed: 2012-04-10
 
 from dolfin import info
-from numpy import zeros, ones, argsort, linalg
+from numpy import zeros, ones, argsort, linalg, dot
+import numpy
 
 from residuals import *
 from storage import *
@@ -49,6 +51,14 @@ def estimate_error(problem, parameters):
     ZZ0, Z0 = create_dual_functions(Omega, parameters)
     ZZ1, Z1 = create_dual_functions(Omega, parameters)
 
+    # Check if we should use exact solutions (for debugging)
+    if parameters["use_exact_solution"]:
+        UU0 = problem.exact_solution()
+        UU1 = problem.exact_solution()
+    else:
+        UU0 = U0
+        UU1 = U1
+
     # Define function spaces for extrapolation
     V2 = VectorFunctionSpace(Omega, "CG", 2)
     V3 = VectorFunctionSpace(Omega, "CG", 3)
@@ -64,7 +74,7 @@ def estimate_error(problem, parameters):
 
     # Define midpoint values for primal and dual functions
     num_fields = 7
-    U  = [0.5 * (U0[i]  + U1[i])  for i in range(5)]
+    UU = [0.5 * (UU0[i] + UU1[i]) for i in range(5)]
     Z  = [0.5 * (Z0[i]  + Z1[i])  for i in range(num_fields)]
     EZ = [0.5 * (EZ0[i] + EZ1[i]) for i in range(num_fields)]
 
@@ -72,17 +82,19 @@ def estimate_error(problem, parameters):
     kn = Constant(0.0)
 
     # Get weak residuals for E_0
-    R0_F, R0_S, R0_M = weak_residuals(U0, U1, U, EZ, kn, problem)
+    R0_F0, R0_S0, R0_M0 = weak_residuals(UU0, UU1, UU0, EZ0, kn, problem)
+    R0_F1, R0_S1, R0_M1 = weak_residuals(UU0, UU1, UU1, EZ1, kn, problem)
+    R0_F,  R0_S,  R0_M  = weak_residuals(UU0, UU1, UU,  EZ,  kn, problem)
 
     # Get strong residuals for E_h
-    Rh_F, Rh_S, Rh_M = strong_residuals(U0, U1, U, Z, EZ, dg, kn, problem)
+    Rh_F, Rh_S, Rh_M = strong_residuals(UU0, UU1, UU, Z, EZ, dg, kn, problem)
 
     # Get weak residuals for E_k
-    Rk0_F, Rk0_S, Rk0_M = weak_residuals(U0, U1, U1, Z0, kn, problem)
-    Rk1_F, Rk1_S, Rk1_M = weak_residuals(U0, U1, U1, Z1, kn, problem)
+    Rk0_F, Rk0_S, Rk0_M = weak_residuals(UU0, UU1, UU1, Z0, kn, problem)
+    Rk1_F, Rk1_S, Rk1_M = weak_residuals(UU0, UU1, UU1, Z1, kn, problem)
 
     # Get weak residuals for E_c
-    Rc_F, Rc_S, Rc_M = weak_residuals(U0, U1, U, Z, kn, problem)
+    Rc_F, Rc_S, Rc_M = weak_residuals(UU0, UU1, UU, Z, kn, problem)
 
     # Reset vectors for assembly of residuals
     eta_F = None
@@ -90,7 +102,9 @@ def estimate_error(problem, parameters):
     eta_M = None
 
     # Reset variables
-    E_0   = 0.0
+    E_0_F = 0.0
+    E_0_S = 0.0
+    E_0_M = 0.0
     E_k   = 0.0
     E_c   = 0.0
     E_c_F = 0.0
@@ -114,9 +128,13 @@ def estimate_error(problem, parameters):
         begin("* Evaluating residuals on new time step")
         info_blue("* t = %g (T = %g, dt = %g)" % (t0, T, dt))
 
-        # Read primal data
-        read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
-        read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series, parameters)
+        # Update primal solution
+        if parameters["use_exact_solution"]:
+            u0.t = t0
+            u1.t = t1
+        else:
+            read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
+            read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series, parameters)
 
         # Read dual data
         read_dual_data(ZZ0, t0, dual_series)
@@ -131,18 +149,21 @@ def estimate_error(problem, parameters):
         [apply_bc(EZ1[j], Z1[j]) for j in range(num_fields)]
 
         # Assemble weak residuals for error representation
-        e0_F = assemble(R0_F, mesh=Omega,
-                        cell_domains=problem.cell_domains,
-                        exterior_facet_domains=problem.fsi_boundary,
-                        interior_facet_domains=problem.fsi_boundary)
-        e0_S = assemble(R0_S, mesh=Omega,
-                        cell_domains=problem.cell_domains,
-                        exterior_facet_domains=problem.fsi_boundary,
-                        interior_facet_domains=problem.fsi_boundary)
-        e0_M = assemble(R0_M, mesh=Omega,
-                        cell_domains=problem.cell_domains,
-                        exterior_facet_domains=problem.fsi_boundary,
-                        interior_facet_domains=problem.fsi_boundary)
+        e0_F = [assemble(r0, mesh=Omega,
+                         cell_domains=problem.cell_domains,
+                         exterior_facet_domains=problem.fsi_boundary,
+                         interior_facet_domains=problem.fsi_boundary)
+                for r0 in [R0_F0, R0_F1, R0_F]]
+        e0_S = [assemble(r0, mesh=Omega,
+                         cell_domains=problem.cell_domains,
+                         exterior_facet_domains=problem.fsi_boundary,
+                         interior_facet_domains=problem.fsi_boundary)
+                for r0 in [R0_S0, R0_S1, R0_S]]
+        e0_M = [assemble(r0, mesh=Omega,
+                         cell_domains=problem.cell_domains,
+                         exterior_facet_domains=problem.fsi_boundary,
+                         interior_facet_domains=problem.fsi_boundary)
+                for r0 in [R0_M0, R0_M1, R0_M]]
 
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
@@ -197,8 +218,10 @@ def estimate_error(problem, parameters):
         for i in range(len(e_M)):
             eta_M[i] += dt * abs(e_M[i].array())
 
-        # Add to E_0
-        E_0 += dt*(e0_F + e0_S + e0_M)
+        # Add to E_0 (3-point Lobatto quadrature)
+        E_0_F += dt * numpy.dot(e0_F, [1.0/6.0, 1.0/6.0, 2.0/3.0])
+        E_0_S += dt * numpy.dot(e0_S, [1.0/6.0, 1.0/6.0, 2.0/3.0])
+        E_0_M += dt * numpy.dot(e0_M, [1.0/6.0, 1.0/6.0, 2.0/3.0])
 
         # Add to E_k
         E_k += dt * dt * Rk
@@ -209,6 +232,9 @@ def estimate_error(problem, parameters):
         E_c_M += dt * RcM
 
         end()
+
+    # Sum total error representation
+    E_0 = E_0_F + E_0_S + E_0_M
 
     # Sum total computational error
     E_c = E_c_F + E_c_S + E_c_M
@@ -223,7 +249,8 @@ def estimate_error(problem, parameters):
     E = E_h + E_k + abs(E_c)
 
     # Report results
-    save_errors(E_0, E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, parameters)
+    save_errors(E_0, E_0_F, E_0_S, E_0_M, E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M,
+                parameters)
     save_indicators(eta_F, eta_S, eta_M, eta_K, Omega, parameters)
 
     return E, eta_K, E_h, E_k, E_c
@@ -450,7 +477,8 @@ def save_mesh(mesh, parameters):
     file = File("%s/mesh_%d.xml" % (parameters["output_directory"], _refinement_level))
     file << mesh
 
-def save_errors(E_0, E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M, parameters):
+def save_errors(E_0, E_0_F, E_0_S, E_0_M, E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M,
+                parameters):
     "Save errors to file"
 
     global _refinement_level
@@ -484,8 +512,12 @@ E_tot = %g
     # Save to file (for plotting)
     g = open("%s/error_estimates.txt" % parameters["output_directory"], "a")
     if _refinement_level == 0:
-        g.write("level\t E_0\t E\t E_h\t E_k\t |E_c|\t E_c_F\t E_c_S\t E_c_M\n")
-    g.write("%d %g %g %g %g %g %g %g %g\n" %(_refinement_level, E_0, E, E_h, E_k, abs(E_c), E_c_F, E_c_S, E_c_M))
+        g.write("level\t E_0\t E_0_F\t E_0_S\t E_0_M\t E\t E_h\t E_k\t |E_c|\t E_c_F\t E_c_S\t E_c_M\n")
+    g.write("%d %g %g %g %g %g %g %g %g %g %g %g\n" % \
+                (_refinement_level,
+                 E_0, E_0_F, E_0_S, E_0_M,
+                 E, E_h, E_k,
+                 abs(E_c), E_c_F, E_c_S, E_c_M))
     g.close()
 
 def save_timestep(t1, Rk, dt, TOL_k, parameters):

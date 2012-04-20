@@ -4,7 +4,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-03-09
+# Last changed: 2012-04-10
 
 from sympy import *
 
@@ -30,6 +30,7 @@ u_F = Matrix([0, C*pi*x*(1 - x)*sin2pit])
 p_F = -2*C**2*(1 - 2*x)**2*sin(pi*t)**3*(sin(pi*t) + pi*cos(pi*t))
 P_F = -2*C**2*(1 - 2*X)**2*sin(pi*t)**3*(sin(pi*t) + pi*cos(pi*t))
 U_S = Matrix([0, C*X*(1 - X)*sin(pi*Y)*sin(pi*t)**2])
+P_S = Matrix([0, 2*pi*C*X*(1 - X)*sin(pi*Y)*sin(pi*t)*cos(pi*t)])
 U_M = Matrix([0, C*X*(1 - X)*sin(pi*Y)*sin(pi*t)**2])
 
 # Right-hand side for fluid problem

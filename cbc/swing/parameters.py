@@ -36,6 +36,7 @@ def default_parameters():
     p.add("marking_fraction", 0.5)
     p.add("refinement_algorithm", "regular_cut")
     p.add("crossed_mesh", False)
+    p.add("use_exact_solution", False)
 
     p.add("output_directory", "unspecified")
     p.add("description", "unspecified")

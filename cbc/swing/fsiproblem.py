@@ -2,7 +2,7 @@ __author__ = "Kristoffer Selim andAnders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-08
+# Last changed: 2012-04-10
 
 from dolfin import *
 from numpy import array, append
@@ -248,7 +248,7 @@ class FSI(CBCProblem):
         xf_array[self.fdofs] += xs_array[self.sdofs]
         xf[:] = xf_array
 
-    #--- Functions
+    #--- Optional functions ---
 
     def update(self, t0, t1, dt):
         pass
@@ -264,6 +264,9 @@ class FSI(CBCProblem):
 
     def mesh_right_hand_side(self):
         return Constant((0, 0))
+
+    def exact_solution(self):
+        return None
 
 def _map_to_facet(facet_index, Omega, Omega_X, vertex_map):
     "Map facet index in Omega to facet index in Omega_X"

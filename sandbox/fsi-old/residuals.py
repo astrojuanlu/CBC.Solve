@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-02-27
+# Last changed: 2012-04-10
 
 from dolfin import *
 
@@ -170,7 +170,7 @@ def strong_residuals(U0, U1, U, Z, EZ, w, kn, problem):
     # Structure residual contributions (note the minus sign on N_F('+'))
     R_S0 = w*inner(EZ_S - Z_S, Dt_P_S - div(Sigma_S))*dx_S
     R_S1 = avg(w)*inner(EZ_S('-') - Z_S('-'), jump(Sigma_S, N_S))*dS_S
-    R_S2 = w('-')*inner(EZ_S('-') - Z_S('-'), dot(Sigma_S('-') - Sigma_F('+'), -N_F('+')))*d_FSI
+    R_S2 = w('-')*inner(EZ_S('-') - Z_S('-'), dot(Sigma_S('-') - Sigma_F('+'), N_F('+')))*d_FSI
     R_S3 = w*inner(EY_S - Y_S, Dt_U_S - P_S)*dx_S
 
     # Mesh residual contributions

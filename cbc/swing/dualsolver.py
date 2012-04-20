@@ -125,6 +125,7 @@ def solve_dual(problem, parameters):
 
         # Solve linear system
         solve(matrix, Z0.vector(), vector)
+        info("Solved linear system: ||Z|| = " + str(Z0.vector().norm("l2")))
 
         # Save and plot solution
         if save_solution: _save_solution(Z0, files)

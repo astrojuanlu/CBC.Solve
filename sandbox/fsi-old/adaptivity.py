@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-09
+# Last changed: 2012-04-10
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg, dot
@@ -231,6 +231,9 @@ def estimate_error(problem, parameters):
 
     # Compute space discretization error
     E_h = sum(eta_K)
+
+    # FIXME: Testing
+    E_h = sum(sum(eta_S))
 
     # Compute total error
     E = E_h + E_k + abs(E_c)
