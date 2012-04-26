@@ -11,7 +11,7 @@ from right_hand_sides import *
 # Read parameters
 application_parameters = read_parameters()
 
-ref = 1
+ref = 0
 # Used for testing
 test = True
 if test:
@@ -32,7 +32,7 @@ if test:
 info(application_parameters, True)
 
 # Define boundaries
-top  = "near(x[1], 1.0)"
+top = "near(x[1], 1.0)"
 noslip  = "near(x[0], 0.0) || near(x[0], 1.0)"
 fixed   = "near(x[0], 0.0) || near(x[0], 1.0) || near(x[1], 0.0)"
 
@@ -54,8 +54,8 @@ class Analytic(FSI):
 
         # Create analytic expressions
         self.f_F = Expression(cpp_f_F)
-        self.F_S = Expression(cpp_F_S)
-        self.F_M = Expression(cpp_F_M)
+        self.F_S = Expression(mer_cpp_F_S)
+        self.F_M = Expression(mer_cpp_F_M)
         self.G_0 = Expression(cpp_G_0)
         self.f_F.C = C
         self.F_S.C = C
@@ -95,7 +95,7 @@ class Analytic(FSI):
                         # give better results ... Formulas in paper
                         # say t. Ok!
 
-        self.U_M.t = t1 # Used as bc for structure if given.
+        self.U_M.t = t1 # Used as bc for mesh if given.
         self.U_S.t = t1 # Used as bc for structure if given.
         self.u_F.t = t1 # Used as bc for fluid velocity, checked.
 

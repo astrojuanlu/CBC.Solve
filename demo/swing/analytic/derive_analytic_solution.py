@@ -92,44 +92,6 @@ fy = 2*C*sinpt2*sinpY - 200*C*pi2*X2*cospt**2*sinpY \
 # Revised right-hand-side for structure_problem
 mer_f_S = Matrix([fx, fy])
 
-# Revised right-hand-side for structure_problem
-# mer_f_S = Matrix([-3*pi*C*sin(pi*t)**2*cos(pi*Y) \
-#                        + 6*pi*C*X*sin(pi*t)**2*cos(pi*Y) \
-#                        + 8*C**2*sin(pi*Y)**2*sin(pi*t)**4 \
-#                        - 16*X*C**2*sin(pi*Y)**2*sin(pi*t)**4 \
-#                        + X*pi**2*C**2*sin(pi*Y)**2*sin(pi*t)**4 \
-#                        - 6*pi**2*C**2*X**3*cos(pi*Y)**2*sin(pi*t)**4 \
-#                        - 3*X*pi**2*C**2*cos(pi*Y)**2*sin(pi*t)**4 \
-#                        - 3*pi**2*C**2*X**2*sin(pi*Y)**2*sin(pi*t)**4 \
-#                        + 2*pi**2*C**2*X**3*sin(pi*Y)**2*sin(pi*t)**4 \
-#                        + 9*pi**2*C**2*X**2*cos(pi*Y)**2*sin(pi*t)**4,
-#                    2*C*sin(pi*t)**2*sin(pi*Y) \
-#                        - 200*C*pi**2*X**2*cos(pi*t)**2*sin(pi*Y) \
-#                        - 196*C*X*pi**2*sin(pi*t)**2*sin(pi*Y) \
-#                        - 8*pi*C**2*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
-#                        + 196*C*pi**2*X**2*sin(pi*t)**2*sin(pi*Y) \
-#                        + 200*C*X*pi**2*cos(pi*t)**2*sin(pi*Y) \
-#                        - 72*pi**2*C**3*X**3*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
-#                        - 40*pi*C**2*X**2*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
-#                        - 24*pi**3*C**2*X**3*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
-#                        - 18*pi**4*C**3*X**4*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
-#                        - 8*X*pi**2*C**3*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
-#                        - 6*pi**4*C**3*X**6*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
-#                        + 6*pi**4*C**3*X**3*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
-#                        + 12*pi**3*C**2*X**2*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
-#                        + 12*pi**3*C**2*X**4*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
-#                        + 18*pi**4*C**3*X**5*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
-#                        + 36*pi**2*C**3*X**4*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
-#                        + 40*pi*X*C**2*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
-#                        + 44*pi**2*C**3*X**2*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
-#                        + 12*C**3*sin(pi*Y)**3*sin(pi*t)**6 \
-#                        - 48*X*C**3*sin(pi*Y)**3*sin(pi*t)**6 \
-#                        + 48*C**3*X**2*sin(pi*Y)**3*sin(pi*t)**6 \
-#                        - 10*pi**2*C**3*X**2*sin(pi*Y)**3*sin(pi*t)**6 \
-#                        - 8*pi**2*C**3*X**4*sin(pi*Y)**3*sin(pi*t)**6 \
-#                        + 2*X*pi**2*C**3*sin(pi*Y)**3*sin(pi*t)**6 \
-#                        + 16*pi**2*C**3*X**3*sin(pi*Y)**3*sin(pi*t)**6])
-
 # Right-hand side for mesh problem
 f_M = Matrix([3*C*pi*cos(pi*Y)*sin(pi*t)**2*(2*X - 1),
               C*sin(pi*t)*( \

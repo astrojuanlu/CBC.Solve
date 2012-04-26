@@ -239,6 +239,40 @@ public:
 };
 """
 
+mer_cpp_F_M = """
+class F_M : public Expression
+{
+public:
+
+  F_M() : Expression(2), C(0), t(0) {}
+
+  void eval(Array<double>& values, const Array<double>& xx,
+            const ufc::cell& cell) const
+  {
+    const double X = xx[0];
+    const double Y = xx[1];
+
+    const double sinpt2 = pow(sin(pi*t), 2);
+    const double pi2 = pow(pi, 2);
+    const double X2 = pow(X, 2);
+
+    const double fx = -3*pi*C*sinpt2*cos(pi*Y) + 6*pi*C*X*sinpt2*cos(pi*Y);
+    const double fy = 2*C*sinpt2*sin(pi*Y) \
+                       - 4*C*pi2*X2*sinpt2*sin(pi*Y) \
+                       + 4*C*X*pi2*sinpt2*sin(pi*Y) \
+                       - 2*pi*C*X2*cos(pi*t)*sin(pi*Y)*sin(pi*t) \
+                       + 2*pi*C*X*cos(pi*t)*sin(pi*Y)*sin(pi*t);
+
+    values[0] = fx;
+    values[1] = fy;
+  }
+
+  double C;
+  double t;
+
+};
+"""
+
 cpp_g_0 = """
 class g_0 : public Expression
 {
@@ -398,7 +432,7 @@ if __name__ == "__main__":
     U_M = Expression(cpp_U_M)
     f_F = Expression(cpp_f_F)
     F_S = Expression(mer_cpp_F_S)
-    F_M = Expression(cpp_F_M)
+    F_M = Expression(mer_cpp_F_M)
     g_0 = Expression(cpp_g_0)
     G_0 = Expression(cpp_G_0)
     u_F.C = C
@@ -464,8 +498,8 @@ if __name__ == "__main__":
         #plot(_U_S, title="U_S", autoposition=False, mode="displacement")
         #plot(_U_M, title="U_M", autoposition=False, mode="displacement")
         #plot(_f_F, title="f_F", autoposition=False)
-        plot(_F_S, title="F_S", autoposition=False)
-        #plot(_F_M, title="F_M", autoposition=False)
+        #plot(_F_S, title="F_S", autoposition=False)
+        plot(_F_M, title="F_M", autoposition=False)
         #plot(_g_0, title="g_0", autoposition=False)
         #plot(_G_0, title="G_0", autoposition=False)
 
