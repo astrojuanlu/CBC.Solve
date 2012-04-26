@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-04-10
+# Last changed: 2012-04-26
 
 from dolfin import *
 from time import sleep
@@ -301,6 +301,93 @@ public:
 };
 """
 
+mer_cpp_F_S = """
+class F_S : public Expression
+{
+public:
+
+  F_S() : Expression(2), C(0), t(0) {}
+
+  void eval(Array<double>& values, const Array<double>& xx,
+            const ufc::cell& cell) const
+  {
+    const double X = xx[0];
+    const double Y = xx[1];
+
+    const double sinpY = sin(pi*Y);
+    const double sinpY2 = pow(sin(pi*Y), 2);
+    const double sinpY3 = pow(sin(pi*Y), 3);
+
+    const double sinpt = sin(pi*t);
+    const double sinpt2 = pow(sinpt, 2);
+    const double sinpt4 = pow(sinpt, 4);
+    const double sinpt6 = pow(sinpt, 6);
+
+    // const double cospt = cos(pi*t);
+    const double cospt2 = pow(cos(pi*t), 2);
+    const double cospY = cos(pi*Y);
+    const double cospY2 = pow(cos(pi*Y), 2);
+
+    const double X2 = pow(X, 2);
+    const double X3 = pow(X, 3);
+    const double X4 = pow(X, 4);
+    const double X5 = pow(X, 5);
+    const double X6 = pow(X, 6);
+
+    const double C2 = pow(C, 2);
+    const double C3 = pow(C, 3);
+
+    const double pi2 = pow(pi, 2);
+    const double pi3 = pow(pi, 3);
+    const double pi4 = pow(pi, 4);
+
+    const double A = 3.0;
+    const double B = 6.0;
+    const double D = 8.0;
+    const double E = 16.0;
+    const double F = 9.0;
+    const double G = 196.0;
+    const double H = 200.0;
+    const double I = 18.0;
+    const double J = 12.0;
+    const double K = 36.0;
+    const double L = 40.0;
+    const double M = 44.0;
+    const double two = 2.0;
+    const double N = 48.0;
+    const double P = 10.0;
+
+    const double Fx = -A*pi*C*sinpt2*cospY + B*pi*C*X*sinpt2*cospY
+    + D*C2*sinpY2*sinpt4 - E*X*C2*sinpY2*sinpt4
+    + X*pi2*C2*sinpY2*sinpt4 - B*pi2*C2*X3*cospY2*sinpt4
+    - A*X*pi2*C2*cospY2*sinpt4 - A*pi2*C2*X2*sinpY2*sinpt4
+    + two*pi2*C2*X3*sinpY2*sinpt4 + F*pi2*C2*X2*cospY2*sinpt4;
+
+    const double Fy = 2*C*sinpt2*sinpY - H*C*pi2*X2*cospt2*sinpY
+    - G*C*X*pi2*sinpt2*sinpY - D*pi*C2*sinpt4*cospY*sinpY
+    + G*C*pi2*X2*sinpt2*sinpY + H*C*X*pi2*cospt2*sinpY
+    - 72*pi2*C3*X3*cospY2*sinpt6*sinpY - L*pi*C2*X2*sinpt4*cospY*sinpY
+    - 24*pi3*C2*X3*sinpt4*cospY*sinpY - I*pi4*C3*X4*cospY2*sinpt6*sinpY
+    - D*X*pi2*C3*cospY2*sinpt6*sinpY - B*pi4*C3*X6*cospY2*sinpt6*sinpY
+    + B*pi4*C3*X3*cospY2*sinpt6*sinpY + J*pi3*C2*X2*sinpt4*cospY*sinpY
+    + J*pi3*C2*X4*sinpt4*cospY*sinpY + I*pi4*C3*X5*cospY2*sinpt6*sinpY
+    + K*pi2*C3*X4*cospY2*sinpt6*sinpY + L*pi*X*C2*sinpt4*cospY*sinpY
+    + M*pi2*C3*X2*cospY2*sinpt6*sinpY + J*C3*sinpY3*sinpt6
+    - N*X*C3*sinpY3*sinpt6 + N*C3*X2*sinpY3*sinpt6
+    - P*pi2*C3*X2*sinpY3*sinpt6 - D*pi2*C3*X4*sinpY3*sinpt6
+    + two*X*pi2*C3*sinpY3*sinpt6 + E*pi2*C3*X3*sinpY3*sinpt6;
+
+    values[0] = Fx;
+    values[1] = Fy;
+  }
+
+  double C;
+  double t;
+
+};
+"""
+
+
 if __name__ == "__main__":
 
     # Instantiate expressions
@@ -310,7 +397,7 @@ if __name__ == "__main__":
     U_S = Expression(cpp_U_S)
     U_M = Expression(cpp_U_M)
     f_F = Expression(cpp_f_F)
-    F_S = Expression(cpp_F_S)
+    F_S = Expression(mer_cpp_F_S)
     F_M = Expression(cpp_F_M)
     g_0 = Expression(cpp_g_0)
     G_0 = Expression(cpp_G_0)
@@ -372,15 +459,15 @@ if __name__ == "__main__":
         _g_0.interpolate(g_0)
         _G_0.interpolate(G_0)
 
-        plot(_u_F, title="u_F", autoposition=False)
-        plot(_p_F, title="p_F", autoposition=False)
-        plot(_U_S, title="U_S", autoposition=False, mode="displacement")
-        plot(_U_M, title="U_M", autoposition=False, mode="displacement")
-        plot(_f_F, title="f_F", autoposition=False)
+        #plot(_u_F, title="u_F", autoposition=False)
+        #plot(_p_F, title="p_F", autoposition=False)
+        #plot(_U_S, title="U_S", autoposition=False, mode="displacement")
+        #plot(_U_M, title="U_M", autoposition=False, mode="displacement")
+        #plot(_f_F, title="f_F", autoposition=False)
         plot(_F_S, title="F_S", autoposition=False)
-        plot(_F_M, title="F_M", autoposition=False)
-        plot(_g_0, title="g_0", autoposition=False)
-        plot(_G_0, title="G_0", autoposition=False)
+        #plot(_F_M, title="F_M", autoposition=False)
+        #plot(_g_0, title="g_0", autoposition=False)
+        #plot(_G_0, title="G_0", autoposition=False)
 
         t += dt
 
