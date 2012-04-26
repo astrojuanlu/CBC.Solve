@@ -6,6 +6,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2012-04-26
 
+import math
 import pylab
 from time import time as python_time
 from dolfin import *
@@ -120,6 +121,7 @@ def solve_primal(problem, parameters):
             # Transfer fluid stresses to structure
             begin("* Transferring fluid stresses to structure (F --> S)")
             Sigma_F = F.compute_fluid_stress(u_F0, u_F1, p_F0, p_F1, U_M0, U_M1)
+
             S.update_fluid_stress(Sigma_F)
             end()
 
@@ -151,8 +153,25 @@ def solve_primal(problem, parameters):
             # Check convergence
             if increment < itertol:
 
+                (u_F_ex, p_F_ex, U_S_ex, P_S_ex, U_M_ex) \
+                    = problem.exact_solution()
+                u_F_ex.t = t1
+                p_F_ex.t = t1
+                U_S_ex.t = t1
+                U_M_ex.t = t1
+                print "||u_F_ex - u_F || = ", errornorm(u_F_ex, u_F1)
+                print "||u_F_ex|| = ", norm(u_F_ex, mesh=problem.fluid_mesh())
+                print "||p_F_ex - p_F || = ", errornorm(p_F_ex, p_F1)
+                print "||p_F_ex|| = ", norm(p_F_ex, mesh=problem.fluid_mesh())
+                print "||U_S_ex - U_S || = ", errornorm(U_S_ex, U_S1)
+                print "||U_S_ex|| = ", norm(U_S_ex,
+                                            mesh=problem.structure_mesh())
+                print "||U_M_ex - U_M || = ", errornorm(U_M_ex, U_M1)
+                print "||U_M_ex|| = ", norm(U_M_ex,
+                                            mesh=problem.fluid_mesh())
+
                 # Plot solution
-                if plot_solution: _plot_solution(u_F1, p_F1, U_S1, U_M1)
+                if plot_solution: _plot_solution(u_F1, p_F1, U_S0, U_M1)
 
                 info("")
                 info_green("Increment = %g (tolerance = %g), converged after %d iterations" % (increment, itertol, iter + 1))
@@ -233,9 +252,8 @@ def solve_primal(problem, parameters):
 def _plot_solution(u_F, p_F, U_S, U_M):
     "Plot solution"
     plot(u_F, title="Fluid velocity")
-    plot(p_F, title="Fluid pressure")
-    interactive()
-    #plot(U_S, title="Structure displacement", mode="displacement")
+    #plot(p_F, title="Fluid pressure")
+    plot(U_S, title="Structure displacement")
     #plot(U_M, title="Mesh displacement", mode="displacement")
 
 def _save_solution(U, files):

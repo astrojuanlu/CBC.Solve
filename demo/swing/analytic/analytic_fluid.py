@@ -11,6 +11,7 @@ from right_hand_sides import *
 # Read parameters
 application_parameters = read_parameters()
 
+ref = 1
 # Used for testing
 test = True
 if test:
@@ -22,7 +23,7 @@ if test:
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
     #application_parameters["fixedpoint_tolerance"] = 1e-10
-    application_parameters["initial_timestep"] = 0.0125*2
+    application_parameters["initial_timestep"] = 0.025/(2**ref)
     application_parameters["output_directory"] = "results_analytic_fluid_test"
     application_parameters["max_num_refinements"] = 0
 
@@ -48,7 +49,7 @@ class Analytic(FSI):
     def __init__(self):
 
         # Create mesh
-        n = 8
+        n = 8*(2**ref)
         mesh = UnitSquare(n, n)
 
         # Create analytic expressions
@@ -68,6 +69,8 @@ class Analytic(FSI):
         self.U_S.C = C
         self.u_F = Expression(cpp_u_F)
         self.u_F.C = C
+        self.U_M = Expression(cpp_U_M)
+        self.U_M.C = C
 
         # Initialize base class
         FSI.__init__(self, mesh)
@@ -82,13 +85,19 @@ class Analytic(FSI):
 
     def update(self, t0, t1, dt):
         t = 0.5*(t0 + t1)
-        self.f_F.t = t
-        self.F_S.t = t
+        self.f_F.t = t  # Used as body force for IPCS; checked.
+        self.F_S.t = t  # Body force for the structure; looks ok from paper.
         self.F_M.t = t
-        self.p_F.t = t1 # Used as bc for pressure if given
-        self.G_0.t = t
-        self.U_S.t = t1 # Used as bc for structure if given
-        self.u_F.t = t1 # Used as bc for fluid velocity
+        self.p_F.t = t1 # Used as bc for pressure if given, checked.
+
+        self.G_0.t = t  # Used for extra stress exerted by fluid. Not
+                        # checked. Intuition says t1, but t seems to
+                        # give better results ... Formulas in paper
+                        # say t. Ok!
+
+        self.U_M.t = t1 # Used as bc for structure if given.
+        self.U_S.t = t1 # Used as bc for structure if given.
+        self.u_F.t = t1 # Used as bc for fluid velocity, checked.
 
     def exact_solution(self):
         u_F = Expression(cpp_u_F)
@@ -116,9 +125,11 @@ class Analytic(FSI):
 
     def fluid_velocity_dirichlet_values(self):
         return [(0.0, 0.0), self.u_F]
+        #return [self.u_F]
 
     def fluid_velocity_dirichlet_boundaries(self):
         return [noslip, top]
+        #return ["x[0] < 2.0"]
 
     def fluid_pressure_dirichlet_values(self):
         return [self.p_F]
@@ -158,7 +169,8 @@ class Analytic(FSI):
         return [self.U_S]
 
     def structure_dirichlet_boundaries(self):
-        return ["x[1] < 0.5 + DOLFIN_EPS"]
+        return [fixed]
+        #return ["x[0] < 2.0"]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"
