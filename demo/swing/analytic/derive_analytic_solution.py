@@ -4,7 +4,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-10
+# Last changed: 2012-04-26
 
 from sympy import *
 
@@ -50,12 +50,59 @@ f_S = Matrix([C*sin(pi*t)**2*(3*pi*cos(pi*Y)*(2*X - 1) \
               + C**2*pi**2*(3*X**2 - 2*X**3 - X)*sin(pi*t)**4*(cos(pi*Y)**2 - sin(pi*Y)**2)
 ])
 
-# Right-hand side for structure problem
+# Revised right-hand-side for structure_problem
+mer_f_S = Matrix([-3*pi*C*sin(pi*t)**2*cos(pi*Y) \
+                       + 6*pi*C*X*sin(pi*t)**2*cos(pi*Y) \
+                       + 8*C**2*sin(pi*Y)**2*sin(pi*t)**4 \
+                       - 16*X*C**2*sin(pi*Y)**2*sin(pi*t)**4 \
+                       + X*pi**2*C**2*sin(pi*Y)**2*sin(pi*t)**4 \
+                       - 6*pi**2*C**2*X**3*cos(pi*Y)**2*sin(pi*t)**4 \
+                       - 3*X*pi**2*C**2*cos(pi*Y)**2*sin(pi*t)**4 \
+                       - 3*pi**2*C**2*X**2*sin(pi*Y)**2*sin(pi*t)**4 \
+                       + 2*pi**2*C**2*X**3*sin(pi*Y)**2*sin(pi*t)**4 \
+                       + 9*pi**2*C**2*X**2*cos(pi*Y)**2*sin(pi*t)**4,
+                   2*C*sin(pi*t)**2*sin(pi*Y) \
+                       - 200*C*pi**2*X**2*cos(pi*t)**2*sin(pi*Y) \
+                       - 196*C*X*pi**2*sin(pi*t)**2*sin(pi*Y) \
+                       - 8*pi*C**2*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
+                       + 196*C*pi**2*X**2*sin(pi*t)**2*sin(pi*Y) \
+                       + 200*C*X*pi**2*cos(pi*t)**2*sin(pi*Y) \
+                       - 72*pi**2*C**3*X**3*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
+                       - 40*pi*C**2*X**2*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
+                       - 24*pi**3*C**2*X**3*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
+                       - 18*pi**4*C**3*X**4*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
+                       - 8*X*pi**2*C**3*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
+                       - 6*pi**4*C**3*X**6*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
+                       + 6*pi**4*C**3*X**3*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
+                       + 12*pi**3*C**2*X**2*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
+                       + 12*pi**3*C**2*X**4*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
+                       + 18*pi**4*C**3*X**5*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
+                       + 36*pi**2*C**3*X**4*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
+                       + 40*pi*X*C**2*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
+                       + 44*pi**2*C**3*X**2*cos(pi*Y)**2*sin(pi*t)**6*sin(pi*Y) \
+                       + 12*C**3*sin(pi*Y)**3*sin(pi*t)**6 \
+                       - 48*X*C**3*sin(pi*Y)**3*sin(pi*t)**6 \
+                       + 48*C**3*X**2*sin(pi*Y)**3*sin(pi*t)**6 \
+                       - 10*pi**2*C**3*X**2*sin(pi*Y)**3*sin(pi*t)**6 \
+                       - 8*pi**2*C**3*X**4*sin(pi*Y)**3*sin(pi*t)**6 \
+                       + 2*X*pi**2*C**3*sin(pi*Y)**3*sin(pi*t)**6 \
+                       + 16*pi**2*C**3*X**3*sin(pi*Y)**3*sin(pi*t)**6])
+
+# Right-hand side for mesh problem
 f_M = Matrix([3*C*pi*cos(pi*Y)*sin(pi*t)**2*(2*X - 1),
               C*sin(pi*t)*( \
               2*sin(pi*Y)*sin(pi*t) \
               + pi*cos(pi*Y)*sin(pi*t)*(2*X - 1) \
               - 2*X*pi*sin(pi*Y)*cos(pi*t)*(X - 1))])
+
+# Revised right-hand side for the mesh problem
+mer_f_M = Matrix([-3*pi*C*sin(pi*t)**2*cos(pi*Y)  \
+                       + 6*pi*C*X*sin(pi*t)**2*cos(pi*Y),
+                   2*C*sin(pi*t)**2*sin(pi*Y) \
+                       - 4*C*pi**2*X**2*sin(pi*t)**2*sin(pi*Y) \
+                       + 4*C*X*pi**2*sin(pi*t)**2*sin(pi*Y) \
+                       - 2*pi*C*X**2*cos(pi*t)*sin(pi*Y)*sin(pi*t) \
+                       + 2*pi*C*X*cos(pi*t)*sin(pi*Y)*sin(pi*t)])
 
 # Additional boundary traction for structure
 g_0 = Matrix([C*(1 - 2*x)*sin(pi*t)*((1 - p_F)*sin(pi*t) - 2*pi*cos(pi*t)) \
@@ -229,7 +276,7 @@ print
 # Check that the Navier-Stokes equations are satisfied
 underline("Checking that the Navier-Stokes equations are satisfied")
 div_sigma_F = Matrix([diff(sigma_F[0], x) + diff(sigma_F[1], y),
-                      diff(sigma_F[1], x) + diff(sigma_F[1], y)])
+                      diff(sigma_F[2], x) + diff(sigma_F[3], y)])
 dot_u_F = Matrix([diff(u_F[0], t), diff(u_F[1], t)])
 grad_u_F_u = grad_u_F*u_F
 r = dot_u_F + grad_u_F_u - div_sigma_F - f_F
@@ -242,9 +289,9 @@ print
 # Check that the hyperelastic equation is satisfied
 underline("Checking that hyperelastic equation is satisfied")
 Div_Sigma_S = Matrix([diff(Sigma_S[0], X) + diff(Sigma_S[1], Y),
-                      diff(Sigma_S[1], X) + diff(Sigma_S[1], Y)])
+                      diff(Sigma_S[2], X) + diff(Sigma_S[3], Y)])
 ddot_U_S = Matrix([diff(diff(U_S[0], t), t), diff(diff(U_S[1], t), t)])
-r = rho_S*ddot_U_S - Div_Sigma_S - f_S
+r = rho_S*ddot_U_S - Div_Sigma_S - mer_f_S
 r = Matrix([simplify(r[0]), simplify(r[1])])
 print r
 print
@@ -253,9 +300,9 @@ print
 underline("Checking that mesh equation is satisfied")
 Sigma_M = mu*(Grad_U_M + Grad_U_M.T) + lmbda*Grad_U_M.trace()*I
 Div_Sigma_M = Matrix([diff(Sigma_M[0], X) + diff(Sigma_M[1], Y),
-                      diff(Sigma_M[1], X) + diff(Sigma_M[1], Y)])
+                      diff(Sigma_M[2], X) + diff(Sigma_M[3], Y)])
 dot_U_M = Matrix([diff(U_M[0], t), diff(U_M[1], t)])
-r = dot_U_M - Div_Sigma_M - f_M
+r = dot_U_M - Div_Sigma_M - mer_f_M
 r = Matrix([simplify(r[0]), simplify(r[1])])
 print r
 print
