@@ -11,14 +11,14 @@ from right_hand_sides import *
 # Read parameters
 application_parameters = read_parameters()
 
-ref = 0
+ref = 2
 # Used for testing
 test = True
 if test:
     application_parameters["solve_primal"] = True
     application_parameters["solve_dual"] = False
     application_parameters["estimate_error"] = False
-    application_parameters["plot_solution"] = True
+    application_parameters["plot_solution"] = False
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
@@ -26,10 +26,7 @@ if test:
     application_parameters["initial_timestep"] = 0.025/(2**ref)
     application_parameters["output_directory"] = "results_analytic_fluid_test"
     application_parameters["max_num_refinements"] = 0
-
     application_parameters["use_exact_solution"] = True
-
-info(application_parameters, True)
 
 # Define boundaries
 top = "near(x[1], 1.0)"
@@ -37,7 +34,7 @@ noslip  = "near(x[0], 0.0) || near(x[0], 1.0)"
 fixed   = "near(x[0], 0.0) || near(x[0], 1.0) || near(x[1], 0.0)"
 
 # Constant used in definition of analytic solutions
-C = 0.1
+C = 1.0
 
 # Define structure subdomain
 class Structure(SubDomain):

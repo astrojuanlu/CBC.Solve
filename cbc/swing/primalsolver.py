@@ -160,9 +160,9 @@ def solve_primal(problem, parameters):
                 U_S_ex.t = t1
                 U_M_ex.t = t1
                 print "||u_F_ex - u_F || = ", errornorm(u_F_ex, u_F1)
-                print "||u_F_ex|| = ", norm(u_F_ex, mesh=problem.fluid_mesh())
+                print "||u_F_ex|| = ", norm(u_F_ex, mesh=F.mesh())
                 print "||p_F_ex - p_F || = ", errornorm(p_F_ex, p_F1)
-                print "||p_F_ex|| = ", norm(p_F_ex, mesh=problem.fluid_mesh())
+                print "||p_F_ex|| = ", norm(p_F_ex, mesh=F.mesh())
                 print "||U_S_ex - U_S || = ", errornorm(U_S_ex, U_S1)
                 print "||U_S_ex|| = ", norm(U_S_ex,
                                             mesh=problem.structure_mesh())
@@ -252,9 +252,9 @@ def solve_primal(problem, parameters):
 def _plot_solution(u_F, p_F, U_S, U_M):
     "Plot solution"
     plot(u_F, title="Fluid velocity")
-    #plot(p_F, title="Fluid pressure")
+    plot(p_F, title="Fluid pressure")
     plot(U_S, title="Structure displacement")
-    #plot(U_M, title="Mesh displacement", mode="displacement")
+    plot(U_M, title="Approx U_M")
 
 def _save_solution(U, files):
     "Save solution to VTK"

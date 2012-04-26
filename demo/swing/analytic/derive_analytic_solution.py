@@ -99,6 +99,7 @@ f_M = Matrix([3*C*pi*cos(pi*Y)*sin(pi*t)**2*(2*X - 1),
               + pi*cos(pi*Y)*sin(pi*t)*(2*X - 1) \
               - 2*X*pi*sin(pi*Y)*cos(pi*t)*(X - 1))])
 
+
 # Revised right-hand side for the mesh problem
 mer_f_M = Matrix([-3*pi*C*sin(pi*t)**2*cos(pi*Y)  \
                        + 6*pi*C*X*sin(pi*t)**2*cos(pi*Y),
