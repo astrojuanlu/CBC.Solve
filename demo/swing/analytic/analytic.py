@@ -17,7 +17,7 @@ if test:
     application_parameters["solve_primal"] = True
     application_parameters["solve_dual"] = False
     application_parameters["estimate_error"] = False
-    application_parameters["plot_solution"] = False
+    application_parameters["plot_solution"] = True
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
@@ -45,7 +45,7 @@ class Analytic(FSI):
     def __init__(self):
 
         # Create mesh
-        n = 4
+        n = 16
         mesh = UnitSquare(n, n)
 
         # Create analytic expressions

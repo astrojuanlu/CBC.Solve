@@ -148,11 +148,12 @@ def solve_primal(problem, parameters):
             increment = norm(U_S0.vector())
             U_S0.vector()[:] = U_S1.vector()[:]
 
-            # Plot solution
-            if plot_solution: _plot_solution(u_F1, p_F1, U_S1, U_M1)
-
             # Check convergence
             if increment < itertol:
+
+                # Plot solution
+                if plot_solution: _plot_solution(u_F1, p_F1, U_S1, U_M1)
+
                 info("")
                 info_green("Increment = %g (tolerance = %g), converged after %d iterations" % (increment, itertol, iter + 1))
                 info("")
@@ -233,6 +234,7 @@ def _plot_solution(u_F, p_F, U_S, U_M):
     "Plot solution"
     plot(u_F, title="Fluid velocity")
     plot(p_F, title="Fluid pressure")
+    interactive()
     #plot(U_S, title="Structure displacement", mode="displacement")
     #plot(U_M, title="Mesh displacement", mode="displacement")
 
