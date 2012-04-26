@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-26
+# Last changed: 2012-04-27
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
@@ -251,7 +251,7 @@ class StructureProblem(Hyperelasticity):
         if new:
             d_FSI = ds(2)
             a_F = dot(self.test_F, self.trial_F)*d_FSI
-            L_F = - dot(self.test_F, dot(Sigma_F, self.N_F) -  self.G_0)*d_FSI
+            L_F = - dot(self.test_F, dot(Sigma_F, self.N_F) - self.G_0)*d_FSI
             A_F = assemble(a_F, exterior_facet_domains=self.problem.fsi_boundary_F)
             B_F = assemble(L_F, exterior_facet_domains=self.problem.fsi_boundary_F)
         else:
@@ -365,6 +365,8 @@ class MeshProblem():
         # Assemble linear system and apply boundary conditions
         A = assemble(self.a)
         b = assemble(self.L)
+
+        #plot(self.displacement, title="BC for mesh")
         self.bc.apply(A, b)
 
         # Compute solution

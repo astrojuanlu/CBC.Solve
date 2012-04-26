@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-04-26
+# Last changed: 2012-04-27
 
 from cbc.swing import *
 from right_hand_sides import *
@@ -11,7 +11,7 @@ from right_hand_sides import *
 # Read parameters
 application_parameters = read_parameters()
 
-ref = 2
+ref = 4
 # Used for testing
 test = True
 if test:
@@ -23,7 +23,7 @@ if test:
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
     #application_parameters["fixedpoint_tolerance"] = 1e-10
-    application_parameters["initial_timestep"] = 0.025/(2**ref)
+    application_parameters["initial_timestep"] = 0.025/(2**(ref))
     application_parameters["output_directory"] = "results_analytic_fluid_test"
     application_parameters["max_num_refinements"] = 0
     application_parameters["use_exact_solution"] = True
@@ -46,14 +46,15 @@ class Analytic(FSI):
     def __init__(self):
 
         # Create mesh
-        n = 8*(2**ref)
+        n = 4*(2**ref)
         mesh = UnitSquare(n, n)
+        print mesh.hmin()
 
         # Create analytic expressions
-        self.f_F = Expression(cpp_f_F)
-        self.F_S = Expression(mer_cpp_F_S)
-        self.F_M = Expression(mer_cpp_F_M)
-        self.G_0 = Expression(cpp_G_0)
+        self.f_F = Expression(cpp_f_F, degree=3)
+        self.F_S = Expression(mer_cpp_F_S, degree=3)
+        self.F_M = Expression(mer_cpp_F_M, degree=3)
+        self.G_0 = Expression(cpp_G_0, degree=3)
         self.f_F.C = C
         self.F_S.C = C
         self.F_M.C = C
@@ -84,15 +85,17 @@ class Analytic(FSI):
         t = 0.5*(t0 + t1)
         self.f_F.t = t  # Used as body force for IPCS; checked.
         self.F_S.t = t  # Body force for the structure; looks ok from paper.
-        self.F_M.t = t
-        self.p_F.t = t1 # Used as bc for pressure if given, checked.
-
+        self.F_M.t = t  # Body force for the mesh; looks ok from paper.
         self.G_0.t = t  # Used for extra stress exerted by fluid. Not
                         # checked. Intuition says t1, but t seems to
                         # give better results ... Formulas in paper
                         # say t. Ok!
 
+        self.p_F.t = t1 # Used as bc for pressure if given, checked.
         self.U_M.t = t1 # Used as bc for mesh if given.
+
+        #plot(self.U_M, title="Exact U_M", mesh=self.Omega_F)
+
         self.U_S.t = t1 # Used as bc for structure if given.
         self.u_F.t = t1 # Used as bc for fluid velocity, checked.
 
@@ -167,7 +170,6 @@ class Analytic(FSI):
 
     def structure_dirichlet_boundaries(self):
         return [fixed]
-        #return ["x[0] < 2.0"]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"

@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-04-26
+# Last changed: 2012-04-27
 
 from dolfin import *
 from time import sleep
@@ -255,14 +255,15 @@ public:
     const double sinpt2 = pow(sin(pi*t), 2);
     const double pi2 = pow(pi, 2);
     const double X2 = pow(X, 2);
+    const double A = sin(pi*Y);
+    const double B = sin(pi*t);
+    const double D = cos(pi*t);
+    const double E = cos(pi*Y);
 
-    const double fx = -3*pi*C*sinpt2*cos(pi*Y) + 6*pi*C*X*sinpt2*cos(pi*Y);
-    const double fy = 2*C*sinpt2*sin(pi*Y) \
-                       - 4*C*pi2*X2*sinpt2*sin(pi*Y) \
-                       + 4*C*X*pi2*sinpt2*sin(pi*Y) \
-                       - 2*pi*C*X2*cos(pi*t)*sin(pi*Y)*sin(pi*t) \
-                       + 2*pi*C*X*cos(pi*t)*sin(pi*Y)*sin(pi*t);
-
+    const double fx = C*pi*sinpt2*E*(6.0*X - 3.0);
+    const double fy = 2.*C*sinpt2*A - 4.*C*pi2*X2*sinpt2*A \
+                       + 4.*C*X*pi2*sinpt2*A - 2.*pi*C*X2*D*A*B \
+                       + 2.*pi*C*X*D*A*B;
     values[0] = fx;
     values[1] = fy;
   }

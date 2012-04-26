@@ -315,8 +315,8 @@ print
 # Check that C++ style right-hand sides evaluate correctly
 underline("Checking evaluation of C++ style right-hand sides")
 print eval_f_F() - f_F
-print eval_f_S() - f_S
-print eval_f_M() - f_M
+print eval_f_S() - f_S # FIXME
+print eval_f_M() - f_M # FIXME
 print eval_g_0() - g_0
 print eval_G_0() - G_0
 print

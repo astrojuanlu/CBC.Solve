@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-26
+# Last changed: 2012-04-27
 
 import math
 import pylab
@@ -152,13 +152,13 @@ def solve_primal(problem, parameters):
 
             # Check convergence
             if increment < itertol:
-
                 (u_F_ex, p_F_ex, U_S_ex, P_S_ex, U_M_ex) \
                     = problem.exact_solution()
                 u_F_ex.t = t1
                 p_F_ex.t = t1
                 U_S_ex.t = t1
                 U_M_ex.t = t1
+
                 print "||u_F_ex - u_F || = ", errornorm(u_F_ex, u_F1)
                 print "||u_F_ex|| = ", norm(u_F_ex, mesh=F.mesh())
                 print "||p_F_ex - p_F || = ", errornorm(p_F_ex, p_F1)
@@ -169,6 +169,14 @@ def solve_primal(problem, parameters):
                 print "||U_M_ex - U_M || = ", errornorm(U_M_ex, U_M1)
                 print "||U_M_ex|| = ", norm(U_M_ex,
                                             mesh=problem.fluid_mesh())
+
+
+
+                info_red("hmin = %g" % U_M1.function_space().mesh().hmin())
+                info_red("max disp= %g" % max(U_M1.vector().array()))
+                #plot(U_M1, title="U_M1")
+                #plot(U_M_ex, title="U_M1_ex", mesh=problem.fluid_mesh(),
+                #     interactive=True)
 
                 # Plot solution
                 if plot_solution: _plot_solution(u_F1, p_F1, U_S0, U_M1)
@@ -254,7 +262,8 @@ def _plot_solution(u_F, p_F, U_S, U_M):
     plot(u_F, title="Fluid velocity")
     plot(p_F, title="Fluid pressure")
     plot(U_S, title="Structure displacement")
-    plot(U_M, title="Approx U_M")
+    plot(U_M, title="Approx U_M", interactive=True)
+
 
 def _save_solution(U, files):
     "Save solution to VTK"
