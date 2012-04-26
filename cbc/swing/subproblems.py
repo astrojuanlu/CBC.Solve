@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-03-10
+# Last changed: 2012-04-26
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
@@ -84,7 +84,9 @@ class FluidProblem(NavierStokes):
         values = self.problem.fluid_velocity_dirichlet_values()
 
         # Add no-slip boundary value at fluid-structure interface (u = w)
-        values.append(self.w)
+        # MER: Prepend this value so that user-specified bcs have
+        # higher priority
+        values.insert(0, self.w)
 
         return values
 
@@ -94,7 +96,9 @@ class FluidProblem(NavierStokes):
         boundaries = self.problem.fluid_velocity_dirichlet_boundaries()
 
         # Add no-slip boundary at fluid-structure interface
-        boundaries.append((self.fsi_boundary_F1, 2))
+        # MER: Prepend this domain so that user-specified bcs have
+        # higher priority
+        boundaries.insert(0, (self.fsi_boundary_F1, 2))
 
         return boundaries
 
