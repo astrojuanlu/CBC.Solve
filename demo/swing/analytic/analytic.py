@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-04-20
+# Last changed: 2012-04-26
 
 from cbc.swing import *
 from right_hand_sides import *
@@ -14,9 +14,9 @@ application_parameters = read_parameters()
 # Used for testing
 test = True
 if test:
-    application_parameters["solve_primal"] = False
+    application_parameters["solve_primal"] = True
     application_parameters["solve_dual"] = False
-    application_parameters["estimate_error"] = True
+    application_parameters["estimate_error"] = False
     application_parameters["plot_solution"] = False
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True
@@ -29,8 +29,8 @@ if test:
     application_parameters["use_exact_solution"] = True
 
 # Define boundaries
-noslip  = "x[0] < DOLFIN_EPS || x[0] > 1.0 - DOLFIN_EPS"
-fixed   = "x[0] < DOLFIN_EPS || x[0] > 1.0 - DOLFIN_EPS || x[1] < DOLFIN_EPS"
+noslip  = "near(x[0], 0.0) || near(x[0], 1.0)"
+fixed   = "near(x[0], 0.0) || near(x[0], 1.0) || near(x[1], 0.0)"
 
 # Constant used in definition of analytic solutions
 C = 0.1
@@ -110,10 +110,10 @@ class Analytic(FSI):
         return [noslip]
 
     def fluid_pressure_dirichlet_values(self):
-        return [self.p_F]
+        return []
 
     def fluid_pressure_dirichlet_boundaries(self):
-        return [noslip]
+        return []
 
     def fluid_velocity_initial_condition(self):
         return (0.0, 0.0)
