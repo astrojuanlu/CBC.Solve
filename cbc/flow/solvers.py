@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Harish Narayanan, 2012
-# Last changed: 2012-02-20
+# Last changed: 2012-04-26
 
 __all__ = ["NavierStokesSolver"]
 
@@ -42,11 +42,16 @@ class NavierStokesSolver(CBCSolver):
         n = FacetNormal(mesh)
         k = Constant(dt)
         f = problem.body_force(V1)
+        g = problem.boundary_traction(V1)
         w = problem.mesh_velocity(V1)
 
         # If no body forces are specified, assume it is 0
         if f == []:
             f = Constant((0,)*V1.mesh().geometry().dim())
+
+        # If no boundary forces are specified, assume it is 0
+        if g is None:
+            g = Constant((0,)*V1.mesh().geometry().dim())
 
         # Create boundary conditions
         bcu = create_dirichlet_conditions(problem.velocity_dirichlet_values(),
@@ -80,10 +85,14 @@ class NavierStokesSolver(CBCSolver):
 
         # Tentative velocity step (sigma formulation)
         U = 0.5*(u0 + u)
-        F1 = rho*(1/k)*inner(v, u - u0)*dx + rho*inner(v, grad(u0)*(u0 - w))*dx \
+        F1 = rho*(1/k)*inner(v, u - u0)*dx \
+            + rho*inner(v, grad(u0)*(u0 - w))*dx \
             + inner(epsilon(v), sigma(U, p0))*dx \
-            + inner(v, p0*n)*ds - mu*inner(grad(U).T*n, v)*ds \
-            - inner(v, f)*dx
+            - inner(v, g)*ds \
+            - inner(v, f)*dx \
+            # MER: I don't like these. Yes, I know about the swirl.
+            #+ inner(v, p0*n)*ds \
+            #- mu*inner(grad(U).T*n, v)*ds \
         a1 = lhs(F1)
         L1 = rhs(F1)
 
