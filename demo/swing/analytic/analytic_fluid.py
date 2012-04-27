@@ -11,7 +11,7 @@ from right_hand_sides_revised import *
 # Read parameters
 application_parameters = read_parameters()
 
-ref = 4
+ref = 2
 # Used for testing
 test = True
 if test:
@@ -47,7 +47,7 @@ class Analytic(FSI):
 
         # Create mesh
         n = 4*(2**ref)
-        mesh = UnitSquare(n, n)
+        mesh = UnitSquare(n, n, "crossed")
         print mesh.hmin()
 
         # Create analytic expressions for various forces
