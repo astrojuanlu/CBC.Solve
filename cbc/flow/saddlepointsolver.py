@@ -137,7 +137,7 @@ class TaylorHoodSolver(CBCSolver):
     def step(self, dt):
         "Compute solution for new time step"
 
-        plot(self.mesh_velocity, interactive=True, title="mesh_velocity")
+        #plot(self.mesh_velocity, interactive=True, title="mesh_velocity")
 
         # Check if we need to reassemble
         if not dt == self.dt:
@@ -157,6 +157,7 @@ class TaylorHoodSolver(CBCSolver):
 
     def update(self, t):
 
+        # This is hardly robust
         # Update the time on the body force
         self.f.t = t
 
