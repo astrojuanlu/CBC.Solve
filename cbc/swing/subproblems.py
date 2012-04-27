@@ -61,6 +61,7 @@ class FluidProblem(NavierStokes):
         # Don't plot and save solution in subsolvers
         self.parameters["solver_parameters"]["plot_solution"] = False
         self.parameters["solver_parameters"]["save_solution"] = False
+        self.parameters["solver_parameters"]["zero_average_pressure"] = True
 
     def mesh(self):
         return self.omega_F1

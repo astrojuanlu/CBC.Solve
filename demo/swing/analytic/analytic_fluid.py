@@ -11,7 +11,7 @@ from right_hand_sides_revised import *
 # Read parameters
 application_parameters = read_parameters()
 
-ref = 2
+ref = 4
 # Used for testing
 test = True
 if test:
@@ -30,8 +30,8 @@ if test:
 
 # Define boundaries
 top = "near(x[1], 1.0)"
-noslip  = "near(x[0], 0.0) || near(x[0], 1.0)"
-fixed   = "near(x[0], 0.0) || near(x[0], 1.0) || near(x[1], 0.0)"
+noslip = "near(x[0], 0.0) || near(x[0], 1.0)"
+fixed  = "near(x[0], 0.0) || near(x[0], 1.0) || near(x[1], 0.0)"
 
 # Constant used in definition of analytic solutions
 C = 1.0
@@ -51,15 +51,15 @@ class Analytic(FSI):
         print mesh.hmin()
 
         # Create analytic expressions for various forces
-        self.f_F = Expression(cpp_f_F, degree=3)
+        self.f_F = Expression(cpp_f_F, degree=2)
         self.f_F.C = C
         # self.g_F = Expression(cpp_g_F, degree=3)
         #self.g_F.C = C
-        self.F_S = Expression(cpp_F_S, degree=3)
+        self.F_S = Expression(cpp_F_S, degree=6)
         self.F_S.C = C
-        self.F_M = Expression(cpp_F_M, degree=3)
+        self.F_M = Expression(cpp_F_M, degree=2)
         self.F_M.C = C
-        self.G_0 = Expression(cpp_G_S0, degree=3)
+        self.G_0 = Expression(cpp_G_S0, degree=2)
         self.G_0.C = C
 
         # Helpers
@@ -69,7 +69,7 @@ class Analytic(FSI):
         self.U_S.C = C
         self.u_F = Expression(cpp_u_F, degree=2)
         self.u_F.C = C
-        self.U_M = Expression(cpp_U_M, degree=2)
+        self.U_M = Expression(cpp_U_M, degree=1)
         self.U_M.C = C
 
         # Initialize base class
@@ -128,12 +128,12 @@ class Analytic(FSI):
         #return ["x[0] < 2.0"]
 
     def fluid_pressure_dirichlet_values(self):
-        return [self.p_F]
-        #return []
+        #return [self.p_F]
+        return []
 
     def fluid_pressure_dirichlet_boundaries(self):
-        return ["x[0] < 2.0"]
-        #return []
+        #return ["x[0] < 2.0"]
+        return []
 
     def fluid_velocity_initial_condition(self):
         return (0.0, 0.0)
@@ -175,7 +175,7 @@ class Analytic(FSI):
         return self.F_S
 
     def structure_boundary_traction_extra(self):
-        return - self.G_0
+        return self.G_0
 
     #--- Parameters for mesh problem ---
 

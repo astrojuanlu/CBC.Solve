@@ -150,8 +150,14 @@ def solve_primal(problem, parameters):
             increment = norm(U_S0.vector())
             U_S0.vector()[:] = U_S1.vector()[:]
 
+
+
             # Check convergence
             if increment < itertol:
+
+                # Plot solution
+                if plot_solution: _plot_solution(u_F1, p_F1, U_S0, U_M1)
+
                 (u_F_ex, p_F_ex, U_S_ex, P_S_ex, U_M_ex) \
                     = problem.exact_solution()
                 u_F_ex.t = t1
@@ -177,9 +183,6 @@ def solve_primal(problem, parameters):
                 #plot(U_M1, title="U_M1")
                 #plot(U_M_ex, title="U_M1_ex", mesh=problem.fluid_mesh(),
                 #     interactive=True)
-
-                # Plot solution
-                if plot_solution: _plot_solution(u_F1, p_F1, U_S0, U_M1)
 
                 info("")
                 info_green("Increment = %g (tolerance = %g), converged after %d iterations" % (increment, itertol, iter + 1))
@@ -261,8 +264,8 @@ def _plot_solution(u_F, p_F, U_S, U_M):
     "Plot solution"
     plot(u_F, title="Fluid velocity")
     plot(p_F, title="Fluid pressure")
-    plot(U_S, title="Structure displacement")
-    plot(U_M, title="Approx U_M", interactive=True)
+    #plot(U_S, title="Structure displacement")
+    #plot(U_M, title="Approx U_M", interactive=True)
 
 
 def _save_solution(U, files):
