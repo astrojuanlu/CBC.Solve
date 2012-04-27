@@ -6,19 +6,19 @@ __license__  = "GNU GPL Version 3 or any later version"
 # Last changed: 2012-04-27
 
 from cbc.swing import *
-from right_hand_sides import *
+from right_hand_sides_revised import *
 
 # Read parameters
 application_parameters = read_parameters()
 
-ref = 4
+ref = 2
 # Used for testing
 test = True
 if test:
     application_parameters["solve_primal"] = True
     application_parameters["solve_dual"] = False
     application_parameters["estimate_error"] = False
-    application_parameters["plot_solution"] = False
+    application_parameters["plot_solution"] = True
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
@@ -50,24 +50,26 @@ class Analytic(FSI):
         mesh = UnitSquare(n, n)
         print mesh.hmin()
 
-        # Create analytic expressions
+        # Create analytic expressions for various forces
         self.f_F = Expression(cpp_f_F, degree=3)
-        self.F_S = Expression(mer_cpp_F_S, degree=3)
-        self.F_M = Expression(mer_cpp_F_M, degree=3)
-        self.G_0 = Expression(cpp_G_0, degree=3)
         self.f_F.C = C
+        # self.g_F = Expression(cpp_g_F, degree=3)
+        #self.g_F.C = C
+        self.F_S = Expression(cpp_F_S, degree=3)
         self.F_S.C = C
+        self.F_M = Expression(cpp_F_M, degree=3)
         self.F_M.C = C
+        self.G_0 = Expression(cpp_G_S0, degree=3)
         self.G_0.C = C
 
         # Helpers
-        self.p_F = Expression(cpp_p_F)
+        self.p_F = Expression(cpp_p_F, degree=1)
         self.p_F.C = C
-        self.U_S = Expression(cpp_U_S)
+        self.U_S = Expression(cpp_U_S, degree=2)
         self.U_S.C = C
-        self.u_F = Expression(cpp_u_F)
+        self.u_F = Expression(cpp_u_F, degree=2)
         self.u_F.C = C
-        self.U_M = Expression(cpp_U_M)
+        self.U_M = Expression(cpp_U_M, degree=2)
         self.U_M.C = C
 
         # Initialize base class
@@ -83,19 +85,14 @@ class Analytic(FSI):
 
     def update(self, t0, t1, dt):
         t = 0.5*(t0 + t1)
+        #self.g_F.t = t  # To be used as top boundary force for IPCS if desired
         self.f_F.t = t  # Used as body force for IPCS; checked.
         self.F_S.t = t  # Body force for the structure; looks ok from paper.
         self.F_M.t = t  # Body force for the mesh; looks ok from paper.
-        self.G_0.t = t  # Used for extra stress exerted by fluid. Not
-                        # checked. Intuition says t1, but t seems to
-                        # give better results ... Formulas in paper
-                        # say t. Ok!
+        self.G_0.t = t  # Used for extra stress exerted by fluid; ok.
 
         self.p_F.t = t1 # Used as bc for pressure if given, checked.
         self.U_M.t = t1 # Used as bc for mesh if given.
-
-        #plot(self.U_M, title="Exact U_M", mesh=self.Omega_F)
-
         self.U_S.t = t1 # Used as bc for structure if given.
         self.u_F.t = t1 # Used as bc for fluid velocity, checked.
 
@@ -103,12 +100,11 @@ class Analytic(FSI):
         u_F = Expression(cpp_u_F)
         p_F = Expression(cpp_p_F)
         U_S = Expression(cpp_U_S)
-        P_S = Expression(cpp_P_S)
+        P_S = None
         U_M = Expression(cpp_U_M)
         u_F.C = C
         p_F.C = C
         U_S.C = C
-        P_S.C = C
         U_M.C = C
         return u_F, p_F, U_S, P_S, U_M
 
@@ -149,7 +145,7 @@ class Analytic(FSI):
         return self.f_F
 
     def fluid_traction_values(self):
-        return (0.0, 0.0)
+        return self.g_F
 
     #--- Structure problem ---
     # Use known solution on entire mesh
@@ -169,7 +165,8 @@ class Analytic(FSI):
         return [self.U_S]
 
     def structure_dirichlet_boundaries(self):
-        return [fixed]
+        #return [fixed]
+        return ["x[0] < 2.0"]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"
@@ -178,7 +175,7 @@ class Analytic(FSI):
         return self.F_S
 
     def structure_boundary_traction_extra(self):
-        return self.G_0
+        return - self.G_0
 
     #--- Parameters for mesh problem ---
 

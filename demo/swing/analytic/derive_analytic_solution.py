@@ -4,7 +4,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-26
+# Last changed: 2012-04-27
 
 from sympy import *
 
@@ -201,8 +201,8 @@ print
 # Print right-hand sides
 underline("Right-hand sides")
 print "f_F =\n", f_F, "\n"
-print "f_S =\n", f_S, "\n"
-print "f_M =\n", f_M, "\n"
+print "f_S =\n", mer_f_S, "\n"
+print "f_M =\n", mer_f_M, "\n"
 print "g_0 =\n", g_0, "\n"
 print "G_0 =\n", g_0, "\n"
 print
@@ -272,6 +272,12 @@ print
 
 # Check continuity of boundary traction
 underline("Checking continuity of boundary traction: g_S - g_F - g_0")
+r = g_S - g_F
+r = r.subs(Y, Y_).subs(y, y_).subs(X, x)
+r = Matrix([simplify(r[0]), simplify(r[1])])
+print "g_0[0] = ", r[0]
+exit()
+
 r = g_S - g_F - g_0
 r = r.subs(Y, Y_).subs(y, y_).subs(X, x)
 r = Matrix([simplify(r[0]), simplify(r[1])])
@@ -312,17 +318,17 @@ r = Matrix([simplify(r[0]), simplify(r[1])])
 print r
 print
 
-# Check that C++ style right-hand sides evaluate correctly
-underline("Checking evaluation of C++ style right-hand sides")
-print eval_f_F() - f_F
-print eval_f_S() - f_S # FIXME
-print eval_f_M() - f_M # FIXME
-print eval_g_0() - g_0
-print eval_G_0() - G_0
-print
+# # Check that C++ style right-hand sides evaluate correctly
+# underline("Checking evaluation of C++ style right-hand sides")
+# print eval_f_F() - f_F
+# print eval_f_S() - f_S # FIXME
+# print eval_f_M() - f_M # FIXME
+# print eval_g_0() - g_0
+# print eval_G_0() - G_0
+# print
 
 # Compute reference value of functional: integrated Y-displacement
-T = Rational(1, 2)
+T = Rational(1, 10)
 M = integrate(integrate(integrate(U_S[1], (X, 0, 1)), (Y, 0, Y_)), (t, 0, T))
 underline("Value of reference functional")
 print "M =", M

@@ -114,10 +114,9 @@ public:
     const double X = xx[0];
     const double Y = xx[1];
 
-    const double rho_S = 100.0;
+    values[0] = -3*pi*C*pow(sin(pi*t), 2)*cos(pi*Y) + 6*pi*C*X*pow(sin(pi*t), 2)*cos(pi*Y) + 8*pow(C, 2)*pow(sin(pi*Y), 2)*pow(sin(pi*t), 4) - 16*X*pow(C, 2)*pow(sin(pi*Y), 2)*pow(sin(pi*t), 4) + X*pow(pi, 2)*pow(C, 2)*pow(sin(pi*Y), 2)*pow(sin(pi*t), 4) - 6*pow(pi, 2)*pow(C, 2)*pow(X, 3)*pow(cos(pi*Y), 2)*pow(sin(pi*t), 4) - 3*X*pow(pi, 2)*pow(C, 2)*pow(cos(pi*Y), 2)*pow(sin(pi*t), 4) - 3*pow(pi, 2)*pow(C, 2)*pow(X, 2)*pow(sin(pi*Y), 2)*pow(sin(pi*t), 4) + 2*pow(pi, 2)*pow(C, 2)*pow(X, 3)*pow(sin(pi*Y), 2)*pow(sin(pi*t), 4) + 9*pow(pi, 2)*pow(C, 2)*pow(X, 2)*pow(cos(pi*Y), 2)*pow(sin(pi*t), 4);
+    values[1] = 2*C*pow(sin(pi*t), 2)*sin(pi*Y) - 200*C*pow(pi, 2)*pow(X, 2)*pow(cos(pi*t), 2)*sin(pi*Y) - 196*C*X*pow(pi, 2)*pow(sin(pi*t), 2)*sin(pi*Y) - 8*pi*pow(C, 2)*pow(sin(pi*t), 4)*cos(pi*Y)*sin(pi*Y) + 196*C*pow(pi, 2)*pow(X, 2)*pow(sin(pi*t), 2)*sin(pi*Y) + 200*C*X*pow(pi, 2)*pow(cos(pi*t), 2)*sin(pi*Y) - 72*pow(pi, 2)*pow(C, 3)*pow(X, 3)*pow(cos(pi*Y), 2)*pow(sin(pi*t), 6)*sin(pi*Y) - 40*pi*pow(C, 2)*pow(X, 2)*pow(sin(pi*t), 4)*cos(pi*Y)*sin(pi*Y) - 24*pow(pi, 3)*pow(C, 2)*pow(X, 3)*pow(sin(pi*t), 4)*cos(pi*Y)*sin(pi*Y) - 18*pow(pi, 4)*pow(C, 3)*pow(X, 4)*pow(cos(pi*Y), 2)*pow(sin(pi*t), 6)*sin(pi*Y) - 8*X*pow(pi, 2)*pow(C, 3)*pow(cos(pi*Y), 2)*pow(sin(pi*t), 6)*sin(pi*Y) - 6*pow(pi, 4)*pow(C, 3)*pow(X, 6)*pow(cos(pi*Y), 2)*pow(sin(pi*t), 6)*sin(pi*Y) + 6*pow(pi, 4)*pow(C, 3)*pow(X, 3)*pow(cos(pi*Y), 2)*pow(sin(pi*t), 6)*sin(pi*Y) + 12*pow(pi, 3)*pow(C, 2)*pow(X, 2)*pow(sin(pi*t), 4)*cos(pi*Y)*sin(pi*Y) + 12*pow(pi, 3)*pow(C, 2)*pow(X, 4)*pow(sin(pi*t), 4)*cos(pi*Y)*sin(pi*Y) + 18*pow(pi, 4)*pow(C, 3)*pow(X, 5)*pow(cos(pi*Y), 2)*pow(sin(pi*t), 6)*sin(pi*Y) + 36*pow(pi, 2)*pow(C, 3)*pow(X, 4)*pow(cos(pi*Y), 2)*pow(sin(pi*t), 6)*sin(pi*Y) + 40*pi*X*pow(C, 2)*pow(sin(pi*t), 4)*cos(pi*Y)*sin(pi*Y) + 44*pow(pi, 2)*pow(C, 3)*pow(X, 2)*pow(cos(pi*Y), 2)*pow(sin(pi*t), 6)*sin(pi*Y) + 12*pow(C, 3)*pow(sin(pi*Y), 3)*pow(sin(pi*t), 6) - 48*X*pow(C, 3)*pow(sin(pi*Y), 3)*pow(sin(pi*t), 6) + 48*pow(C, 3)*pow(X, 2)*pow(sin(pi*Y), 3)*pow(sin(pi*t), 6) - 10*pow(pi, 2)*pow(C, 3)*pow(X, 2)*pow(sin(pi*Y), 3)*pow(sin(pi*t), 6) - 8*pow(pi, 2)*pow(C, 3)*pow(X, 4)*pow(sin(pi*Y), 3)*pow(sin(pi*t), 6) + 2*X*pow(pi, 2)*pow(C, 3)*pow(sin(pi*Y), 3)*pow(sin(pi*t), 6) + 16*pow(pi, 2)*pow(C, 3)*pow(X, 3)*pow(sin(pi*Y), 3)*pow(sin(pi*t), 6);
 
-    values[0] = rho_S*X;
-    values[1] = rho_S*Y;
   }
 
   double C;
@@ -273,12 +272,12 @@ if __name__ == "__main__":
         _g_F.interpolate(g_F)
         _G_S0.interpolate(G_S0)
 
-        plot(_u_F, title="u_F", autoposition=False)
-        plot(_p_F, title="p_F", autoposition=False)
-        plot(_U_S, title="U_S", autoposition=False)
-        plot(_U_M, title="U_M", autoposition=False)
+        #plot(_u_F, title="u_F", autoposition=False)
+        #plot(_p_F, title="p_F", autoposition=False)
+        #plot(_U_S, title="U_S", autoposition=False)
+        #plot(_U_M, title="U_M", autoposition=False)
         # plot(_f_F, title="f_F", autoposition=False)
-        # plot(_F_S, title="F_S", autoposition=False)
+        plot(_F_S, title="F_S", autoposition=False)
         # plot(_F_M, title="F_M", autoposition=False)
         # plot(_g_F, title="g_F", autoposition=False)
         # plot(_G_S0, title="G_S0", autoposition=False)
