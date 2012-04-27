@@ -50,11 +50,11 @@ P_M.C = C
 U_M = Expression(cpp_U_M, degree=1)
 U_M.C = C
 
-ref = 1
-n = 4*2**2
-dt = 0.01/2**(ref + 3)
+ref = 0
+n = 8*2**ref
+dt = 0.01/2**ref
 T = 0.1
-mesh = Rectangle(0.0, 0.5, 1.0, 1.0, n, n)
+mesh = Rectangle(0.0, 0.5, 1.0, 1.0, 2*n, n)
 
 def sigma(u, p):
     I = Identity(mesh.geometry().dim())
@@ -81,18 +81,23 @@ v_to_plot = Function(V)
 p_to_plot = Function(Q)
 while (t < T):
 
-    info_blue("t = %g" % t)
-    # Update sources
-    f_F.t = t
-    U_M.t = t
-    P_M.t = t
-    u_F.t = t
-    p_F.t = t
-
     alpha = Constant(1.0)
-    F = (1.0/k*inner(u - u_, v)*dx + inner(grad(u)*(u - alpha*P_M), v)*dx
-         + inner(sigma(u, p), sym(grad(v)))*dx
-         + div(u)*q*dx
+
+    t0 = t - dt
+    tmid = 0.5*(t0 + t)
+
+    info_blue("t = %g" % t)
+
+    # Update sources in forms and bcs
+    f_F.t = tmid # This makes real difference for the pressure.
+    P_M.t = t    # tmid or t same same
+    u_F.t = t    # This makes real difference for the pressure.
+
+    u_mid = 0.5*(u + u_)
+    F = (1.0/k*inner(u - u_, v)*dx
+         + inner(grad(u_mid)*(u_mid - alpha*P_M), v)*dx
+         + inner(sigma(u_mid, p), sym(grad(v)))*dx
+         + div(u_mid)*q*dx
          - inner(f_F, v)*dx
          + p*s*dx + q*r*dx)
 
@@ -103,24 +108,26 @@ while (t < T):
     w0.assign(w)
 
     # Incrementally move mesh
+    U_M.t = t
     d = project(U_M, V)
     U_M.t = t - dt
     d_ = project(U_M, V)
     d.vector().axpy(-1, d_.vector())
     mesh.move(d)
 
+    # Compute errors
+    p_F.t = t
     print "||u - u_h|| = ", math.sqrt(assemble(inner(u - u_F, u - u_F)*dx))
     print "||p - p_h|| = ", math.sqrt(assemble(inner(p - p_F, p - p_F)*dx))
 
     # Step forward in time
     t += dt
 
-v_to_plot.assign(w.split()[0])
-p_to_plot.assign(w.split()[1])
-plot(v_to_plot, title="Velocity")
-plot(p_to_plot, title="Pressure")
-plot(p_F, title="Exact pressure", mesh=mesh)
-plot(u_F, title="Exact velocity", mesh=mesh)
-
-
+    v_to_plot.assign(w.split()[0])
+    p_to_plot.assign(w.split()[1])
+    plot(v_to_plot, title="Velocity")
+    plot(p_to_plot, title="Pressure")
+    plot(p_F, title="Exact pressure", mesh=mesh)
+    plot(u_F, title="Exact velocity", mesh=mesh)
 interactive()
+
