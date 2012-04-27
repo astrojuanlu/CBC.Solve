@@ -56,12 +56,16 @@ class FluidProblem(NavierStokes):
         self.num_dofs = self.V.dim() + self.Q.dim()
 
         # Initialize base class
-        NavierStokes.__init__(self)
+        #solver_type = "taylor-hood"
+        solver_type = "taylor-hood"
+        NavierStokes.__init__(self, solver=solver_type)
+        if solver_type == "ipcs":
+            self.parameters["solver_parameters"]["zero_average_pressure"] = False
 
         # Don't plot and save solution in subsolvers
         self.parameters["solver_parameters"]["plot_solution"] = False
         self.parameters["solver_parameters"]["save_solution"] = False
-        self.parameters["solver_parameters"]["zero_average_pressure"] = True
+
 
     def mesh(self):
         return self.omega_F1

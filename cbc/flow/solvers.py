@@ -191,9 +191,7 @@ class NavierStokesSolver(CBCSolver):
         begin("Computing pressure correction")
         if self.parameters["zero_average_pressure"]:
             info("Using L2 average constraint")
-            print "size = ", self.A2_r.size(0), self.A2_r.size(1)
             b = assemble(self.L2_r)
-            print "size = ", b.size()
             qr = Function(self.QR)
             solve(self.A2_r, qr.vector(), b)
             self.p1.assign(qr.split()[0])
@@ -211,9 +209,6 @@ class NavierStokesSolver(CBCSolver):
             if len(self.bcp) == 0 or is_periodic(self.bcp):
                 normalize(self.p1.vector())
         end()
-
-        print "avg(p0) = ", assemble(self.p0*dx)
-        print "avg(p1) = ", assemble(self.p1*dx)
 
         # Velocity correction
         begin("Computing velocity correction")

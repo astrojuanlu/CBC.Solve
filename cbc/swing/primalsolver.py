@@ -77,8 +77,9 @@ def solve_primal(problem, parameters):
 
     # Save initial solution to file and series
     U = extract_solution(F, S, M)
-    if save_solution: _save_solution(U, files)
-    write_primal_data(U, 0, primal_series)
+    if save_solution:
+        _save_solution(U, files)
+        write_primal_data(U, 0, primal_series)
 
     # Initialize adaptive data
     init_adaptive_data(problem, parameters)
@@ -121,7 +122,6 @@ def solve_primal(problem, parameters):
             # Transfer fluid stresses to structure
             begin("* Transferring fluid stresses to structure (F --> S)")
             Sigma_F = F.compute_fluid_stress(u_F0, u_F1, p_F0, p_F1, U_M0, U_M1)
-
             S.update_fluid_stress(Sigma_F)
             end()
 
@@ -149,7 +149,6 @@ def solve_primal(problem, parameters):
             U_S0.vector().axpy(-1, U_S1.vector())
             increment = norm(U_S0.vector())
             U_S0.vector()[:] = U_S1.vector()[:]
-
 
 
             # Check convergence
@@ -214,8 +213,9 @@ def solve_primal(problem, parameters):
 
         # Save solution and time series to file
         U = extract_solution(F, S, M)
-        if save_solution: _save_solution(U, files)
-        write_primal_data(U, t1, primal_series)
+        if save_solution:
+            _save_solution(U, files)
+            write_primal_data(U, t1, primal_series)
 
         # Move to next time step
         F.update(t1)
@@ -264,8 +264,8 @@ def _plot_solution(u_F, p_F, U_S, U_M):
     "Plot solution"
     plot(u_F, title="Fluid velocity")
     plot(p_F, title="Fluid pressure")
-    #plot(U_S, title="Structure displacement")
-    #plot(U_M, title="Approx U_M", interactive=True)
+    plot(U_S, title="Structure displacement")
+    plot(U_M, title="Approx U_M", interactive=True)
 
 
 def _save_solution(U, files):

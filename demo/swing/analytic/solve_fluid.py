@@ -91,11 +91,15 @@ while (t < T):
     # Update sources in forms and bcs
     f_F.t = tmid # This makes real difference for the pressure.
     P_M.t = t    # tmid or t same same
+    mesh_velocity = project(P_M, V)
+
+    plot(P_M, title="mesh_velocity", mesh=mesh, interactive=True)
+
     u_F.t = t    # This makes real difference for the pressure.
 
     u_mid = 0.5*(u + u_)
     F = (1.0/k*inner(u - u_, v)*dx
-         + inner(grad(u_mid)*(u_mid - alpha*P_M), v)*dx
+         + inner(grad(u_mid)*(u_mid - alpha*mesh_velocity), v)*dx
          + inner(sigma(u_mid, p), sym(grad(v)))*dx
          + div(u_mid)*q*dx
          - inner(f_F, v)*dx
