@@ -119,9 +119,6 @@ def solve_primal(problem, parameters):
             F.step(dt)
             end()
 
-            (u_F_ex, p_F_ex, U_S_ex, P_S_ex, U_M_ex) \
-                = problem.exact_solution()
-
             # Transfer fluid stresses to structure
             begin("* Transferring fluid stresses to structure (F --> S)")
             Sigma_F = F.compute_fluid_stress(u_F0, u_F1, p_F0, p_F1, U_M0, U_M1)
@@ -137,14 +134,6 @@ def solve_primal(problem, parameters):
             begin("* Transferring structure displacement to mesh (S --> M)")
             M.update_structure_displacement(U_S1)
             end()
-
-            #U_M_ex.t = t1
-            #Foo = VectorFunctionSpace(F.mesh(), "CG", 2)
-            #d = project(U_M_ex, Foo)
-            #U_M_ex.t = t0
-            #d_ = project(U_M_ex, Foo)
-            #d.vector().axpy(-1, d_.vector())
-            #F.mesh().move(d)
 
             # Solve mesh equation
             begin("* Solving mesh subproblem (M)")
@@ -162,7 +151,7 @@ def solve_primal(problem, parameters):
             U_S0.vector()[:] = U_S1.vector()[:]
 
             # Check convergence
-            if increment < itertol:
+            if increment < itertol and iter > 8:
 
                 info_green("Increment is %g. Plotting" % increment)
                 # Plot solution
@@ -185,14 +174,6 @@ def solve_primal(problem, parameters):
                 print "||U_M_ex - U_M || = ", errornorm(U_M_ex, U_M1)
                 print "||U_M_ex|| = ", norm(U_M_ex,
                                             mesh=problem.fluid_mesh())
-
-
-
-                info_red("hmin = %g" % U_M1.function_space().mesh().hmin())
-                info_red("max disp= %g" % max(U_M1.vector().array()))
-                #plot(U_M1, title="U_M1")
-                #plot(U_M_ex, title="U_M1_ex", mesh=problem.fluid_mesh(),
-                #     interactive=True)
 
                 info("")
                 info_green("Increment = %g (tolerance = %g), converged after %d iterations" % (increment, itertol, iter + 1))

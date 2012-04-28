@@ -100,10 +100,7 @@ class Analytic(FSI):
         self.p_F.t = t1 # Used as bc for pressure if given, checked.
         self.U_M.t = t1 # Used as bc for mesh if given.
         self.P_M.t = t1 # Used as mesh velocity if specified
-        #plot(self.P_M, title="P_M in update", mesh=self.Omega_F)
-
         self.U_S.t = t1 # Used as bc for structure if given.
-        #plot(self.U_S, title="U_S in update", mesh=self.Omega_S)
         self.u_F.t = t1 # Used as bc for fluid velocity, checked.
 
     def exact_solution(self):
@@ -121,11 +118,12 @@ class Analytic(FSI):
         return 1.0
 
     def fluid_velocity_dirichlet_values(self):
-        return [(0.0, 0.0), self.u_F]
+        #return [(0.0, 0.0), self.u_F]
+        return [self.u_F]
 
     def fluid_velocity_dirichlet_boundaries(self):
-        return [noslip, top]
-        #return ["on_boundary"]
+        #return [noslip, top]
+        return ["on_boundary"]
 
     def fluid_pressure_dirichlet_values(self):
         #return [self.p_F]
@@ -169,8 +167,8 @@ class Analytic(FSI):
         return [self.U_S]
 
     def structure_dirichlet_boundaries(self):
-        #return [fixed]
-        return ["x[0] < 2.0"]
+        return [fixed]
+        #return ["x[0] < 2.0"]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"

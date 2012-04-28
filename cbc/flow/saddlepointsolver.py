@@ -137,9 +137,6 @@ class TaylorHoodSolver(CBCSolver):
     def step(self, dt):
         "Compute solution for new time step"
 
-        #plot(self.mesh_velocity, mesh=self.W.mesh(),
-        #     title="mesh_velocity in step")
-
         # Always do this
         self.dt = dt
         self.k.assign(dt)

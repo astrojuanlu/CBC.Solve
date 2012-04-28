@@ -162,13 +162,9 @@ class FluidProblem(NavierStokes):
         for i in range(N):
             for j in range(dim):
                 x1[i][j] = X[i][j] + dofs[j*N + i]
-        #plot(self.omega_F1, title="omega_F1 in update_mesh_disp")
 
         # Smooth the mesh
-        #self.omega_F1.smooth(num_smoothings)
-
-        #plot(self.omega_F1, title="self.omega_F1")
-        #plot(self.omega_F0, title="self.omega_F0")
+        self.omega_F1.smooth(num_smoothings)
 
         # Update mesh velocity
         wx = self.w.vector().array()
@@ -178,8 +174,6 @@ class FluidProblem(NavierStokes):
 
         # Update vector values (necessary since wx is a copy)
         self.w.vector()[:] = wx
-
-        #plot(self.w, interactive=True, title="w in update_mesh_disp")
 
         # Reassemble matrices
         self.solver.reassemble()

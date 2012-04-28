@@ -28,8 +28,8 @@ U_M = Expression(cpp_U_M, degree=2)
 U_M.C = C
 
 ref = 0
-n = 8
-dt = 0.01
+n = 16
+dt = 0.005
 T = 0.1
 mesh = Rectangle(0.0, 0.5, 1.0, 1.0, 2*n, n)
 mesh0 = Rectangle(0.0, 0.5, 1.0, 1.0, 2*n, n)
@@ -73,9 +73,9 @@ while (t < T):
     mesh_velocity = Function(V)
     mesh_velocity.vector()[:] = mesh_velocity_on_mesh_0.vector()
 
-    plot(U_M, title="mesh_displacement", mesh=mesh0)
-    plot(mesh_velocity_on_mesh_0, title="mesh_velocity on mesh0", mesh=mesh0)
-    plot(mesh_velocity, title="mesh_velocity", mesh=mesh0)
+    #plot(U_M, title="mesh_displacement", mesh=mesh0)
+    #plot(mesh_velocity_on_mesh_0, title="mesh_velocity on mesh0", mesh=mesh0)
+    #plot(mesh_velocity, title="mesh_velocity", mesh=mesh0)
 
     u_F.t = t    # This makes real difference for the pressure.
 
