@@ -23,7 +23,7 @@ if test:
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
     #application_parameters["fixedpoint_tolerance"] = 1e-10
-    application_parameters["initial_timestep"] = 0.001
+    application_parameters["initial_timestep"] = 0.01
     application_parameters["output_directory"] = "results_analytic_fluid_test"
     application_parameters["max_num_refinements"] = 0
     application_parameters["use_exact_solution"] = True
@@ -67,7 +67,7 @@ class Analytic(FSI):
 
         # Helpers
         # Exact mesh velocity
-        self.P_M = Expression(cpp_P_M, degree=1)
+        self.P_M = Expression(cpp_P_M, degree=2)
         self.P_M.C = C
         self.p_F = Expression(cpp_p_F, degree=1)
         self.p_F.C = C
@@ -75,7 +75,7 @@ class Analytic(FSI):
         self.U_S.C = C
         self.u_F = Expression(cpp_u_F, degree=2)
         self.u_F.C = C
-        self.U_M = Expression(cpp_U_M, degree=1)
+        self.U_M = Expression(cpp_U_M, degree=2)
         self.U_M.C = C
 
         # Initialize base class
@@ -107,16 +107,7 @@ class Analytic(FSI):
         self.u_F.t = t1 # Used as bc for fluid velocity, checked.
 
     def exact_solution(self):
-        u_F = Expression(cpp_u_F)
-        p_F = Expression(cpp_p_F)
-        U_S = Expression(cpp_U_S)
-        P_S = None
-        U_M = Expression(cpp_U_M)
-        u_F.C = C
-        p_F.C = C
-        U_S.C = C
-        U_M.C = C
-        return u_F, p_F, U_S, P_S, U_M
+        return self.u_F, self.p_F, self.U_S, None, self.U_M
 
     def __str__(self):
         return "Channel flow with an immersed elastic flap"
@@ -131,11 +122,10 @@ class Analytic(FSI):
 
     def fluid_velocity_dirichlet_values(self):
         return [(0.0, 0.0), self.u_F]
-        #return [self.u_F]
 
     def fluid_velocity_dirichlet_boundaries(self):
         return [noslip, top]
-        #return ["x[0] < 2.0"]
+        #return ["on_boundary"]
 
     def fluid_pressure_dirichlet_values(self):
         #return [self.p_F]
@@ -158,7 +148,8 @@ class Analytic(FSI):
         return self.g_F
 
     def mesh_velocity(self, V):
-        return self.P_M
+        w = Function(V)
+        return w
 
     #--- Structure problem ---
     # Use known solution on entire mesh
@@ -178,8 +169,8 @@ class Analytic(FSI):
         return [self.U_S]
 
     def structure_dirichlet_boundaries(self):
-        return [fixed]
-        #return ["x[0] < 2.0"]
+        #return [fixed]
+        return ["x[0] < 2.0"]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"

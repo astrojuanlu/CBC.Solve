@@ -119,6 +119,9 @@ def solve_primal(problem, parameters):
             F.step(dt)
             end()
 
+            (u_F_ex, p_F_ex, U_S_ex, P_S_ex, U_M_ex) \
+                = problem.exact_solution()
+
             # Transfer fluid stresses to structure
             begin("* Transferring fluid stresses to structure (F --> S)")
             Sigma_F = F.compute_fluid_stress(u_F0, u_F1, p_F0, p_F1, U_M0, U_M1)
@@ -131,9 +134,17 @@ def solve_primal(problem, parameters):
             end()
 
             # Transfer structure displacement to fluid mesh
-            begin("* Transferring structure displacement to fluid mesh (S --> M)")
+            begin("* Transferring structure displacement to mesh (S --> M)")
             M.update_structure_displacement(U_S1)
             end()
+
+            #U_M_ex.t = t1
+            #Foo = VectorFunctionSpace(F.mesh(), "CG", 2)
+            #d = project(U_M_ex, Foo)
+            #U_M_ex.t = t0
+            #d_ = project(U_M_ex, Foo)
+            #d.vector().axpy(-1, d_.vector())
+            #F.mesh().move(d)
 
             # Solve mesh equation
             begin("* Solving mesh subproblem (M)")
@@ -141,7 +152,7 @@ def solve_primal(problem, parameters):
             end()
 
             # Transfer mesh displacement to fluid
-            begin("* Transferring mesh displacement to fluid (M --> S)")
+            begin("* Transferring mesh displacement to fluid (M --> F)")
             F.update_mesh_displacement(U_M1, dt, num_smoothings)
             end()
 
