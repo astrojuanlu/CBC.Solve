@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-04-27
-# Last changed: 2012-04-27
+# Last changed: 2012-04-28
 
 from dolfin import *
 from time import sleep
@@ -93,6 +93,29 @@ public:
                 - 2*C*pow(pi, 2)*pow(x, 2)*pow(cos(pi*t), 2) \
                 + 2*C*x*pow(pi, 2)*pow(cos(pi*t), 2) \
                 + 2*C*pow(pi, 2)*pow(x, 2)*pow(sin(pi*t), 2);
+  }
+
+  double C;
+  double t;
+
+};
+"""
+
+cpp_P_M = """
+class P_M : public Expression
+{
+public:
+
+  P_M() : Expression(2), C(0), t(0) {}
+
+  void eval(Array<double>& values, const Array<double>& xx,
+            const ufc::cell& cell) const
+  {
+    const double x = xx[0];
+    const double y = xx[1];
+
+    values[0] = 0.0;
+    values[1] = C*x*2*sin(pi*t)*cos(pi*t)*pi*(1 - x)*sin(pi*y);
   }
 
   double C;

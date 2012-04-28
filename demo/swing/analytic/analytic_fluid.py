@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-04-27
+# Last changed: 2012-04-28
 
 from cbc.swing import *
 from right_hand_sides_revised import *
@@ -23,7 +23,7 @@ if test:
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
     #application_parameters["fixedpoint_tolerance"] = 1e-10
-    application_parameters["initial_timestep"] = 0.00125
+    application_parameters["initial_timestep"] = 0.001
     application_parameters["output_directory"] = "results_analytic_fluid_test"
     application_parameters["max_num_refinements"] = 0
     application_parameters["use_exact_solution"] = True
@@ -66,6 +66,9 @@ class Analytic(FSI):
         self.G_0.C = C
 
         # Helpers
+        # Exact mesh velocity
+        self.P_M = Expression(cpp_P_M, degree=1)
+        self.P_M.C = C
         self.p_F = Expression(cpp_p_F, degree=1)
         self.p_F.C = C
         self.U_S = Expression(cpp_U_S, degree=2)
@@ -96,7 +99,11 @@ class Analytic(FSI):
 
         self.p_F.t = t1 # Used as bc for pressure if given, checked.
         self.U_M.t = t1 # Used as bc for mesh if given.
+        self.P_M.t = t1 # Used as mesh velocity if specified
+        #plot(self.P_M, title="P_M in update", mesh=self.Omega_F)
+
         self.U_S.t = t1 # Used as bc for structure if given.
+        #plot(self.U_S, title="U_S in update", mesh=self.Omega_S)
         self.u_F.t = t1 # Used as bc for fluid velocity, checked.
 
     def exact_solution(self):
@@ -149,6 +156,9 @@ class Analytic(FSI):
 
     def fluid_traction_values(self):
         return self.g_F
+
+    def mesh_velocity(self, V):
+        return self.P_M
 
     #--- Structure problem ---
     # Use known solution on entire mesh

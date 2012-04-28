@@ -1,29 +1,6 @@
 import math
 from dolfin import *
 from right_hand_sides_revised import *
-
-cpp_P_M = """
-class P_M : public Expression
-{
-public:
-
-  P_M() : Expression(2), C(0), t(0) {}
-
-  void eval(Array<double>& values, const Array<double>& xx,
-            const ufc::cell& cell) const
-  {
-    const double x = xx[0];
-    const double y = xx[1];
-
-    values[0] = 0.0;
-    values[1] = C*x*2*sin(pi*t)*cos(pi*t)*pi*(1 - x)*sin(pi*y);
-  }
-
-  double C;
-  double t;
-
-};
-"""
 set_log_level(WARNING)
 
 # Parameters
@@ -91,9 +68,11 @@ while (t < T):
     # Update sources in forms and bcs
     f_F.t = tmid # This makes real difference for the pressure.
     P_M.t = t    # tmid or t same same
+    U_M.t = t
     mesh_velocity = project(P_M, V)
 
-    plot(P_M, title="mesh_velocity", mesh=mesh, interactive=True)
+    plot(U_M, title="mesh_displacement", mesh=mesh)
+    plot(P_M, title="mesh_velocity", mesh=mesh)
 
     u_F.t = t    # This makes real difference for the pressure.
 
@@ -131,7 +110,9 @@ while (t < T):
     p_to_plot.assign(w.split()[1])
     plot(v_to_plot, title="Velocity")
     plot(p_to_plot, title="Pressure")
-    plot(p_F, title="Exact pressure", mesh=mesh)
-    plot(u_F, title="Exact velocity", mesh=mesh)
-interactive()
+    #plot(p_F, title="Exact pressure", mesh=mesh)
+    #plot(u_F, title="Exact velocity", mesh=mesh)
+    interactive()
+    exit()
+
 

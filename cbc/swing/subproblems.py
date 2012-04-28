@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-27
+# Last changed: 2012-04-28
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
@@ -56,8 +56,8 @@ class FluidProblem(NavierStokes):
         self.num_dofs = self.V.dim() + self.Q.dim()
 
         # Initialize base class
+        solver_type = "ipcs"
         #solver_type = "taylor-hood"
-        solver_type = "taylor-hood"
         NavierStokes.__init__(self, solver=solver_type)
         if solver_type == "ipcs":
             self.parameters["solver_parameters"]["zero_average_pressure"] = False
@@ -80,7 +80,8 @@ class FluidProblem(NavierStokes):
         return self.problem.fluid_body_force()
 
     def mesh_velocity(self, V):
-        self.w = Function(V)
+        w = self.problem.mesh_velocity(V)
+        self.w = w
         return self.w
 
     def velocity_dirichlet_values(self):
@@ -152,7 +153,7 @@ class FluidProblem(NavierStokes):
         x0 = self.omega_F0.coordinates()
         x1 = self.omega_F1.coordinates()
         dofs = U_M.vector().array()
-        #plot(U_M, interactive=True, title="U_M in update_mesh")
+        #plot(U_M, title="U_M in update_mesh_disp")
 
         dim = self.omega_F1.geometry().dim()
         N = self.omega_F1.num_vertices()
@@ -169,15 +170,15 @@ class FluidProblem(NavierStokes):
         #plot(self.omega_F0, title="self.omega_F0")
 
         # Update mesh velocity
-        wx = self.w.vector().array()
-        for i in range(N):
-            for j in range(dim):
-                wx[j*N + i] = (x1[i][j] - x0[i][j]) / dt
+        #wx = self.w.vector().array()
+        #for i in range(N):
+        #    for j in range(dim):
+        #        wx[j*N + i] =  (x1[i][j] - x0[i][j]) / dt
 
         # Update vector values (necessary since wx is a copy)
-        self.w.vector()[:] = wx
+        #self.w.vector()[:] = wx
 
-        #plot(self.w, interactive=True, title="w in update_mesh")
+        #plot(self.w, interactive=True, title="w in update_mesh_disp")
 
         # Reassemble matrices
         self.solver.reassemble()

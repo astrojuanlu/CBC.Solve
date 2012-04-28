@@ -2,7 +2,7 @@ __author__ = "Marie E. Rognes"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-27
+# Last changed: 2012-04-28
 
 __all__ = ["TaylorHoodSolver"]
 
@@ -137,14 +137,13 @@ class TaylorHoodSolver(CBCSolver):
     def step(self, dt):
         "Compute solution for new time step"
 
-        #plot(self.mesh_velocity, interactive=True, title="mesh_velocity")
+        #plot(self.mesh_velocity, mesh=self.W.mesh(),
+        #     title="mesh_velocity in step")
 
-        # Check if we need to reassemble
-        if not dt == self.dt:
-            info("Using actual timestep: %g" % dt)
-            self.dt = dt
-            self.k.assign(dt)
-            self.reassemble()
+        # Always do this
+        self.dt = dt
+        self.k.assign(dt)
+        self.reassemble()
 
         # Compute solution
         begin("Computing velocity and pressure and multiplier")
