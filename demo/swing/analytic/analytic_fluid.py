@@ -13,13 +13,12 @@ application_parameters = read_parameters()
 
 # Used for testing
 test = True
-ref = 2
+ref = 0
 if test:
     application_parameters["save_solution"] = True
     application_parameters["solve_primal"] = True
-    application_parameters["solve_dual"] = False
-    application_parameters["fluid_solver"] = "taylor-hood"
-    application_parameters["estimate_error"] = False
+    application_parameters["solve_dual"] = True
+    application_parameters["estimate_error"] = True
     application_parameters["plot_solution"] = False
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True
@@ -29,6 +28,8 @@ if test:
     application_parameters["output_directory"] = "results_analytic_fluid_test"
     application_parameters["max_num_refinements"] = 0
     application_parameters["use_exact_solution"] = False
+
+    application_parameters["fluid_solver"] = "ipcs"
 
 # Define boundaries
 top = "near(x[1], 1.0)"
@@ -197,7 +198,12 @@ class Analytic(FSI):
 
 # Define and solve problem
 problem = Analytic()
-(M_h_T, M_h) = problem.solve(application_parameters)
+goal = problem.solve(application_parameters)
+if goal is None:
+    print "Hm. why is goal None?"
+    exit()
+
+(M_h_T, M_h) = goal
 
 #M = C / (24.0*pi)
 # Print reference value of functional at t = 0.1:
@@ -207,4 +213,4 @@ print "Exact value of goal functional:", M
 print "Approximate value of goal functional:", M_h
 print "Exact error:", (M - M_h)
 
-interactive()
+#interactive()
