@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-04-28
+# Last changed: 2012-04-29
 
 from cbc.swing import *
 from right_hand_sides_revised import *
@@ -13,20 +13,22 @@ application_parameters = read_parameters()
 
 # Used for testing
 test = True
+ref = 2
 if test:
-    application_parameters["save_solution"] = False
+    application_parameters["save_solution"] = True
     application_parameters["solve_primal"] = True
     application_parameters["solve_dual"] = False
+    application_parameters["fluid_solver"] = "taylor-hood"
     application_parameters["estimate_error"] = False
-    application_parameters["plot_solution"] = True
+    application_parameters["plot_solution"] = False
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
     #application_parameters["fixedpoint_tolerance"] = 1e-10
-    application_parameters["initial_timestep"] = 0.01
+    application_parameters["initial_timestep"] = 0.025/(2**ref)
     application_parameters["output_directory"] = "results_analytic_fluid_test"
     application_parameters["max_num_refinements"] = 0
-    application_parameters["use_exact_solution"] = True
+    application_parameters["use_exact_solution"] = False
 
 # Define boundaries
 top = "near(x[1], 1.0)"
@@ -46,7 +48,7 @@ class Analytic(FSI):
     def __init__(self):
 
         # Create mesh
-        n = 16
+        n = 8*2**ref
         mesh = UnitSquare(n, n)
         print mesh.hmin()
 
@@ -195,10 +197,14 @@ class Analytic(FSI):
 
 # Define and solve problem
 problem = Analytic()
-problem.solve(application_parameters)
+(M_h_T, M_h) = problem.solve(application_parameters)
 
-# Print reference value of functional
-M = C / (24.0*pi)
-print "Reference value of goal functional:", M
+#M = C / (24.0*pi)
+# Print reference value of functional at t = 0.1:
+M =  (12*pi*C - 120*C*cos(pi/10)*sin(pi/10))/(1440*pi**2)
+
+print "Exact value of goal functional:", M
+print "Approximate value of goal functional:", M_h
+print "Exact error:", (M - M_h)
 
 interactive()

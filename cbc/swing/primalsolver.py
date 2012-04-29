@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-28
+# Last changed: 2012-04-29
 
 import math
 import pylab
@@ -57,7 +57,7 @@ def solve_primal(problem, parameters):
     timestep_counter = 0
 
     # Define the three subproblems
-    F = FluidProblem(problem)
+    F = FluidProblem(problem, solver_type=parameters["fluid_solver"])
     S = StructureProblem(problem, parameters)
     M = MeshProblem(problem, parameters)
 
@@ -151,7 +151,7 @@ def solve_primal(problem, parameters):
             U_S0.vector()[:] = U_S1.vector()[:]
 
             # Check convergence
-            if increment < itertol and iter > 8:
+            if increment < itertol:
 
                 info_green("Increment is %g. Plotting" % increment)
                 # Plot solution
@@ -250,7 +250,7 @@ def solve_primal(problem, parameters):
     info("")
 
     # Return solution
-    return goal_functional
+    return (goal_functional, integrated_goal_functional)
 
 def _plot_solution(u_F, p_F, U_S, U_M):
     "Plot solution"

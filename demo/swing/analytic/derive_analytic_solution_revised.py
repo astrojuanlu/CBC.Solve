@@ -5,7 +5,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Marie E. Rognes
-# Last changed: 2012-04-27
+# Last changed: 2012-04-29
 
 from sympy import *
 
@@ -175,7 +175,7 @@ print f_M
 print
 
 # Compute reference value of functional: integrated Y-displacement
-T = Rational(1, 2)
+T = Rational(1, 10)
 M = integrate(integrate(integrate(U_S[1], (X, 0, 1)), (Y, 0, Y_)), (t, 0, T))
 underline("Value of reference functional")
 print "M = ", simplify(M)

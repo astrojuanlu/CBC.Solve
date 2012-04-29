@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-28
+# Last changed: 2012-04-29
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
@@ -26,7 +26,7 @@ from operators import Sigma_M as _Sigma_M
 # Define fluid problem
 class FluidProblem(NavierStokes):
 
-    def __init__(self, problem):
+    def __init__(self, problem, solver_type=None):
 
         # Store problem
         self.problem = problem
@@ -56,11 +56,11 @@ class FluidProblem(NavierStokes):
         self.num_dofs = self.V.dim() + self.Q.dim()
 
         # Initialize base class
-        #solver_type = "ipcs"
-        solver_type = "taylor-hood"
+        if solver_type is None:
+            solver_type = "ipcs"
         NavierStokes.__init__(self, solver=solver_type)
         if solver_type == "ipcs":
-            self.parameters["solver_parameters"]["zero_average_pressure"] = False
+            self.parameters["solver_parameters"]["zero_average_pressure"] = True
 
         # Don't plot and save solution in subsolvers
         self.parameters["solver_parameters"]["plot_solution"] = False

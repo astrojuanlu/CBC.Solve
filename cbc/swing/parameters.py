@@ -41,6 +41,9 @@ def default_parameters():
     p.add("output_directory", "unspecified")
     p.add("description", "unspecified")
 
+    # Hacks
+    p.add("fluid_solver", "ipcs")
+
     return p
 
 def set_output_directory(parameters, problem, case):
