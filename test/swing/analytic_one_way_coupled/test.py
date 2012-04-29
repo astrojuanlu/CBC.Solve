@@ -177,7 +177,7 @@ value = problem.solve(application_parameters)
 # Check that value matches
 regression_value = 0.00506396922092
 diff = abs(value - regression_value)
-assert diff < 1.e-10, "Test failed: difference =  %g" % diff
-info_green("Test passed")
+assert diff < 1.e-8, "Test failed: difference =  %g" % diff
+info_green("Test passed with diff = %g (tol = 1.e-8)" % diff )
 
 
