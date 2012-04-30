@@ -26,7 +26,7 @@ class TaylorHoodSolver(CBCSolver):
         self.parameters.add("plot_solution", False)
         self.parameters.add("save_solution", False)
         self.parameters.add("store_solution_data", False)
-        zero_average_pressure = True
+        zero_average_pressure = False
 
         # Get mesh and time step range
         mesh = problem.mesh()

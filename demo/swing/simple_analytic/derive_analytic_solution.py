@@ -31,12 +31,12 @@ rho_S = Integer(100)
 # frame
 X_ = Integer(1)
 
-# Step 1: Choose U_M = U_S such that is satisfies some nice boundary
+# Step 1: Choose U_M, U_S such that is satisfies some nice boundary
 # and initial conditions
 U_S = Matrix([C*Y*(1 - Y)*func_of_time, 0])
-U_M = U_S
+U_M = Matrix([C*X*Y*(1 - Y)*func_of_time, 0])
 P_S = Matrix([diff(U_S[0], t), diff(U_S[1], t)])
-P_M = P_S
+P_M = Matrix([diff(U_M[0], t), diff(U_M[1], t)])
 
 # One can then derive the movement of the fsi boundary from the
 # structure displacement:
@@ -108,27 +108,25 @@ E_S = Rational(1, 2)*(F_S.T*F_S - I)
 Sigma_S = F_S*(2*mu*E_S + lmbda*E_S.trace()*I)
 
 # Compute reference stress tensor for fluid.
-# Note that F_M = F_S by construction of U_M = U_S
 F_M = I + Grad_U_M
 F_M_inv = F_M.inv()
-U_F = u_F.subs(y, Y) # Ok!
+U_F = u_F.subs(y, Y)
 Grad_U_F = Matrix([[simplify(diff(U_F[0], X)), simplify(diff(U_F[0], Y))],
                    [simplify(diff(U_F[1], X)), simplify(diff(U_F[1], Y))]])
 P_F = p_F.subs(y, Y)
 Sigma_F = nu*(Grad_U_F * F_M_inv + F_M_inv.T * Grad_U_F.T) - P_F*I
+Sigma_F = Sigma_F
 
 # Compute boundary tractions on fsi boundary in reference frame:
 G_F = J_S*Sigma_F*F_M_inv*N
-G_F = G_F.subs(X, X_)
 G_F = Matrix([simplify(G_F[0]), simplify(G_F[1])])
 G_S = Sigma_S*N
-G_S = G_S.subs(X, X_)
 G_S = Matrix([simplify(G_S[0]), simplify(G_S[1])])
 
 # Compute top boundary stress for fluid
 underline("Deriving left traction for fluid")
 N_left = Matrix([-1, 0])
-traction_left = sigma_F*N_left.subs(X, Integer(0))
+traction_left = sigma_F*N_left
 print traction_left
 print
 
