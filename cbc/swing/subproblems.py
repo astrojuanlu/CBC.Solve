@@ -246,6 +246,9 @@ class StructureProblem(Hyperelasticity):
     def boundary_traction(self, V):
         return self.problem.structure_boundary_traction(V)
 
+    def initial_conditions(self):
+        return self.problem.structure_initial_conditions()
+
     def material_model(self):
         mu    = self.problem.structure_mu()
         lmbda = self.problem.structure_lmbda()

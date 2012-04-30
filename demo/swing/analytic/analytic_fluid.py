@@ -6,14 +6,14 @@ __license__  = "GNU GPL Version 3 or any later version"
 # Last changed: 2012-04-30
 
 from cbc.swing import *
-from right_hand_sides_revised import *
+from right_hand_sides_simpler import *
 
 # Read parameters
 application_parameters = read_parameters()
 
 # Used for testing
 test = True
-ref = 2
+ref = 1
 if test:
     application_parameters["save_solution"] = True
     application_parameters["solve_primal"] = True
@@ -52,7 +52,6 @@ class Analytic(FSI):
         # Create mesh
         n = 8*2**ref
         mesh = UnitSquare(n, n)
-        print mesh.hmin()
 
         # Create analytic expressions for various forces
         self.f_F = Expression(cpp_f_F, degree=2)
@@ -70,14 +69,18 @@ class Analytic(FSI):
         # Exact mesh velocity
         self.P_M = Expression(cpp_P_M, degree=2)
         self.P_M.C = C
+        self.P_M.t = 0
         self.p_F = Expression(cpp_p_F, degree=1)
         self.p_F.C = C
+        self.p_F.t = 0
         self.U_S = Expression(cpp_U_S, degree=2)
         self.U_S.C = C
         self.u_F = Expression(cpp_u_F, degree=2)
         self.u_F.C = C
+        self.p_F.t = 0
         self.U_M = Expression(cpp_U_M, degree=2)
         self.U_M.C = C
+        self.U_M.t = 0
 
         # Initialize base class
         FSI.__init__(self, mesh)
@@ -121,12 +124,14 @@ class Analytic(FSI):
     def fluid_velocity_dirichlet_values(self):
         #return [(0.0, 0.0), self.u_F]
         #return [(0.0, 0.0)]
-        return [self.u_F]#, self.u_F]
+        #return [self.u_F, self.u_F]
+        return [self.u_F]
 
     def fluid_velocity_dirichlet_boundaries(self):
         #return [noslip, top]
-        #return [noslip]
-        return [noslip]#, "on_boundary && !near(x[1], 1.0)"]
+        return [noslip]
+        #return [noslip], "on_boundary && !near(x[1], 1.0)"]
+        #return ["on_boundary"]
 
     def fluid_pressure_dirichlet_values(self):
         #return [self.p_F]
@@ -137,10 +142,12 @@ class Analytic(FSI):
         return []
 
     def fluid_velocity_initial_condition(self):
-        return (0.0, 0.0)
+        self.u_F.t = 0.0
+        return self.u_F
 
     def fluid_pressure_initial_condition(self):
-        return 0.0
+        self.p_F.t = 0.0
+        return self.p_F
 
     def fluid_body_force(self):
         return self.f_F
@@ -181,6 +188,11 @@ class Analytic(FSI):
 
     def structure_boundary_traction_extra(self):
         return self.G_0
+
+    def structure_initial_conditions(self):
+        self.U_S.t = 0
+        self.P_M.t = 0
+        return self.U_S, self.P_M
 
     #--- Parameters for mesh problem ---
 

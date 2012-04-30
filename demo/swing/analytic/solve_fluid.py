@@ -1,6 +1,6 @@
 import math
 from dolfin import *
-from right_hand_sides_revised import *
+from right_hand_sides_simpler import *
 #set_log_level(WARNING)
 
 # Parameters
@@ -48,7 +48,7 @@ V = VectorFunctionSpace(mesh, "CG", 2)
 Q = FunctionSpace(mesh, "CG", 1)
 R = FunctionSpace(mesh, "R", 0)
 
-with_R = False
+with_R = True
 if with_R:
     W = MixedFunctionSpace([V, Q, R])
 else:
@@ -113,8 +113,7 @@ while (t < T):
 
     #bcs = [DirichletBC(W.sub(0), u_F, sides),
     #       DirichletBC(W.sub(0), u_F, "on_boundary && (x[1] < 1.0)")]
-    bcs = [DirichletBC(W.sub(0), u_F, "on_boundary && (x[1] < 0.99)"),
-           DirichletBC(W.sub(0), u_F, sides),]
+    bcs = [DirichletBC(W.sub(0), u_F, "on_boundary")]
 
     # Solve problem
     solve(F == 0, w, bcs)

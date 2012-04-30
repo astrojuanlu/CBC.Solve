@@ -5,7 +5,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Marie E. Rognes
-# Last changed: 2012-04-29
+# Last changed: 2012-04-30
 
 from sympy import *
 
@@ -30,9 +30,9 @@ Y_ = Rational(1, 2)
 # Methodology:
 
 # Step 1: Choose U_M = U_S and such that U_S = U_M = 0 on the
-# structure boundary, and non-zero on the fsi boundary and 0, and with
-# zero time-derivative at t = 0.
-U_S = Matrix([0, C*X*(1 - X)*sin(pi*Y)*sin(pi*t)**2])
+# structure boundary, and non-zero on the fsi boundary and 0, (and with
+# zero time-derivative) at t = 0.
+U_S = Matrix([0, C*X*(1 - X)*sin(pi*Y)*t])
 U_M = U_S
 
 # One can then derive the movement of the fsi boundary from the
@@ -48,7 +48,7 @@ u_F = P_S.subs(Y, Y_).subs(X, x)
 # Step 3: Define your favorite pressure, preferably 0 at t = 0 and
 # such that its average value is zero.
 #p_F = - 2*C**2*(1 - 2*x)**2*sin(pi*t)**3*(sin(pi*t) + pi*cos(pi*t))
-p_F = - C**2*(1 - 2*x)*sin(pi*t)**2
+p_F = - C**2*(1 - 2*x)*t
 P_F = p_F.subs(x, X).subs(y, Y)
 
 # Normal direction at FSI boundary follows from the definitions
@@ -65,6 +65,7 @@ print "u_F =\n", u_F, "\n"
 print "p_F =\n", p_F, "\n"
 print "U_S =\n", U_S, "\n"
 print "U_M =\n", U_M, "\n"
+print "P_S = P_M =\n", P_S, "\n"
 print
 
 # Compute gradients
