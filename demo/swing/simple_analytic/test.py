@@ -15,7 +15,7 @@ N = 5
 
 application_parameters = read_parameters()
 application_parameters["mesh_element_degree"] = 1
-application_parameters["structure_element_degree"] = 1
+application_parameters["structure_element_degree"] = 2
 application_parameters["save_solution"] = True
 application_parameters["solve_primal"] = True
 application_parameters["solve_dual"] = False
@@ -170,7 +170,7 @@ class SimpleAnalytic(FSI):
 
     def structure_dirichlet_boundaries(self):
         return [noslip, right]
-        #return ["x[0] > 0.0"]
+        #return ["x[0] < 3.0"]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"
