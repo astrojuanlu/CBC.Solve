@@ -145,7 +145,6 @@ div_sigma_F = Matrix([diff(sigma_F[0, 0], x) + diff(sigma_F[0, 1], y),
                       diff(sigma_F[1, 0], x) + diff(sigma_F[1, 1], y)])
 dot_u_F = Matrix([diff(u_F[0], t), diff(u_F[1], t)])
 grad_u_F_u = grad_u_F*u_F
-
 f_F = dot_u_F + grad_u_F_u - div_sigma_F
 f_F = Matrix([simplify(f_F[0]), simplify(f_F[1])])
 print f_F

@@ -11,7 +11,8 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2012-04-30
 
-__all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
+__all__ = ["FluidProblem", "StructureProblem", "MeshProblem",
+           "extract_solution",
            "extract_num_dofs"]
 
 from copy import copy
@@ -271,9 +272,11 @@ class StructureProblem(Hyperelasticity):
         if new:
             d_FSI = ds(2)
             a_F = dot(self.test_F, self.trial_F)*d_FSI
-            L_F = - dot(self.test_F, dot(Sigma_F, self.N_F) - self.G_0)*d_FSI
-            A_F = assemble(a_F, exterior_facet_domains=self.problem.fsi_boundary_F)
-            B_F = assemble(L_F, exterior_facet_domains=self.problem.fsi_boundary_F)
+            L_F = - dot(self.test_F, dot(Sigma_F, self.N_F) + self.G_0)*d_FSI
+            A_F = assemble(a_F,
+                           exterior_facet_domains=self.problem.fsi_boundary_F)
+            B_F = assemble(L_F,
+                           exterior_facet_domains=self.problem.fsi_boundary_F)
         else:
             a_F = dot(self.test_F, self.trial_F)*ds
             L_F = - dot(self.test_F, dot(Sigma_F, self.N_F) + self.G_0)*ds
@@ -286,6 +289,7 @@ class StructureProblem(Hyperelasticity):
         info("Transferring values to structure domain")
         self.G_S.vector().zero()
         self.problem.add_f2s(self.G_S.vector(), self.G_F.vector())
+        #plot(self.G_S, title="G_S in stress transfer", interactive=True)
 
         # Uncomment to debug transfer of stress
         #self.debug_stress_transfer(Sigma_F)
@@ -306,7 +310,7 @@ class StructureProblem(Hyperelasticity):
         d_FSI = ds(2)
 
         # Compute direct integral of normal traction
-        form = dot(dot(Sigma_F, self.N_F), self.N_F)*d_FSI
+        form = dot(dot(Sigma_F, self.N_F) - self.G_0, self.N_F)*d_FSI
         integral_0 = assemble(form, exterior_facet_domains=self.problem.fsi_boundary_F)
 
         # Compute integral of projected (and negated) normal traction

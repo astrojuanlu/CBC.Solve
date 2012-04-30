@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Anders Logg, 2010
-# Last changed: 2012-01-19
+# Last changed: 2012-04-30
 
 from dolfin import *
 from cbc.common import *
@@ -258,7 +258,7 @@ class MomentumBalanceSolver(CBCSolver):
 
         # The variational form corresponding to hyperelasticity
         L = int(problem.is_dynamic())*rho0*inner(a1, v)*dx \
-        + inner(P, Grad(v))*dx - inner(B, v)*dx
+            + inner(P, Grad(v))*dx - inner(B, v)*dx
 
         # Add contributions to the form from the Neumann boundary
         # conditions
@@ -448,7 +448,7 @@ class CG1MomentumBalanceSolver(CBCSolver):
         dirichlet_values = problem.dirichlet_values()
         bcu = create_dirichlet_conditions(dirichlet_values,
                                           problem.dirichlet_boundaries(),
-                                          vector)
+                                          mixed_element.sub(0))
 
         # Functions
         xi, eta = split(V)

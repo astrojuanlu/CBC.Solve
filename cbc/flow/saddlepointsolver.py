@@ -26,7 +26,7 @@ class TaylorHoodSolver(CBCSolver):
         self.parameters.add("plot_solution", False)
         self.parameters.add("save_solution", False)
         self.parameters.add("store_solution_data", False)
-        zero_average_pressure = False
+        zero_average_pressure = True
 
         # Get mesh and time step range
         mesh = problem.mesh()
@@ -43,7 +43,6 @@ class TaylorHoodSolver(CBCSolver):
             W = MixedFunctionSpace([V, Q, R])
         else:
             W = V*Q
-
 
         # Coefficients
         mu = Constant(problem.viscosity())  # Dynamic viscosity [Ps x s]
@@ -63,7 +62,12 @@ class TaylorHoodSolver(CBCSolver):
         # Create boundary conditions
         bcu = create_dirichlet_conditions(problem.velocity_dirichlet_values(),
                                           problem.velocity_dirichlet_boundaries(),
-                                          V)
+                                          W.sub(0))
+
+        # Allow this just to be able to set all values directly
+        bcp = create_dirichlet_conditions(problem.pressure_dirichlet_values(),
+                                          problem.pressure_dirichlet_boundaries(),
+                                          W.sub(1))
 
         # Create initial conditions
         u0 = create_initial_condition(problem.velocity_initial_condition(), V)
@@ -73,9 +77,6 @@ class TaylorHoodSolver(CBCSolver):
         upr0 = Function(W)
         upr0.vector()[:V.dim()] = u0.vector()
 
-        W0 = W.sub(0).collapse()
-        W1 = W.sub(1).collapse()
-
         # Create function for solution at previous time
         upr_ = Function(W)
         upr_.assign(upr0)
@@ -83,8 +84,8 @@ class TaylorHoodSolver(CBCSolver):
             (u_, p_, r_) = split(upr_)
         else:
             (u_, p_) = split(upr_)
-        u0 = Function(W0)
-        p0 = Function(W1)
+        u0 = Function(V)
+        p0 = Function(Q)
 
         # Test and trial functions
         upr = Function(W)
@@ -94,8 +95,8 @@ class TaylorHoodSolver(CBCSolver):
         else:
             (u, p) = split(upr)
             (v, q) = TestFunctions(W)
-        u1 = Function(W0)
-        p1 = Function(W1)
+        u1 = Function(V)
+        p1 = Function(Q)
 
         # Define Cauchy stress tensor
         def sigma(v, p):
@@ -120,6 +121,7 @@ class TaylorHoodSolver(CBCSolver):
         self.k = k
         self.t_range = t_range
         self.bcu = bcu
+        self.bcp = bcp
         self.f = f
         self.g = g
         self.upr_ = upr_
