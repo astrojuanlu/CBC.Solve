@@ -10,7 +10,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from cbc.swing import *
 from right_hand_sides import *
 
-ref = 0
+ref = 2
 N = 5
 
 application_parameters = read_parameters()
@@ -20,7 +20,7 @@ application_parameters["save_solution"] = True
 application_parameters["solve_primal"] = True
 application_parameters["solve_dual"] = False
 application_parameters["estimate_error"] = False
-application_parameters["plot_solution"] = True
+application_parameters["plot_solution"] = False
 application_parameters["uniform_timestep"] = True
 application_parameters["uniform_mesh"] = True
 application_parameters["tolerance"] = 1e-16
@@ -30,8 +30,8 @@ application_parameters["output_directory"] = "results_analytic_fluid_test"
 application_parameters["max_num_refinements"] = 0
 application_parameters["use_exact_solution"] = False
 
-application_parameters["fluid_solver"] = "taylor-hood"
-#application_parameters["fluid_solver"] = "ipcs"
+#application_parameters["fluid_solver"] = "taylor-hood"
+application_parameters["fluid_solver"] = "ipcs"
 
 # Define relevant boundaries
 right = "near(x[0], 2.0)"
@@ -59,7 +59,7 @@ class SimpleAnalytic(FSI):
         self.g_F = Expression(cpp_g_F, degree=1)
         self.F_S = Expression(cpp_F_S, degree=2)
         self.F_M = Expression(cpp_F_M, degree=2)
-        self.G_0 = Expression(cpp_G_S0, degree=6)
+        self.G_0 = Expression(cpp_G_S0, degree=8)
 
         # Initialize
         forces = [self.f_F, self.g_F, self.F_S, self.F_M, self.G_0]
@@ -72,7 +72,7 @@ class SimpleAnalytic(FSI):
         self.p_F = Expression(cpp_p_F, degree=1)
         self.U_S = Expression(cpp_U_S, degree=2)
         self.P_S = Expression(cpp_P_S, degree=2)
-        self.U_M = Expression(cpp_U_M, degree=2)
+        self.U_M = Expression(cpp_U_M, degree=3)
         self.P_M = Expression(cpp_P_M, degree=2)
         solutions = [self.u_F, self.p_F, self.U_S, self.P_S, self.U_M]
 
@@ -129,10 +129,10 @@ class SimpleAnalytic(FSI):
         return [noslip]
 
     def fluid_pressure_dirichlet_values(self):
-        return []
+        return [self.p_F]
 
     def fluid_pressure_dirichlet_boundaries(self):
-        return []
+        return ["x[0] < 3.0"]
 
     def fluid_velocity_initial_condition(self):
         return self.u_F
@@ -148,7 +148,6 @@ class SimpleAnalytic(FSI):
 
     def mesh_velocity(self, V):
         w = Function(V)
-        self.w = w
         return w
 
     #--- Structure problem ---

@@ -61,7 +61,7 @@ class FluidProblem(NavierStokes):
             solver_type = "ipcs"
         NavierStokes.__init__(self, solver=solver_type)
         if solver_type == "ipcs":
-            self.parameters["solver_parameters"]["zero_average_pressure"] = True
+            self.parameters["solver_parameters"]["zero_average_pressure"] = False
 
         # Don't plot and save solution in subsolvers
         self.parameters["solver_parameters"]["plot_solution"] = False
@@ -96,7 +96,7 @@ class FluidProblem(NavierStokes):
         # Add no-slip boundary value at fluid-structure interface (u = w)
         # MER: Prepend this value so that user-specified bcs have
         # higher priority
-        values.insert(-1, self.w)
+        values.insert(0, self.w)
 
         return values
 
@@ -108,7 +108,7 @@ class FluidProblem(NavierStokes):
         # Add no-slip boundary at fluid-structure interface
         # MER: Prepend this domain so that user-specified bcs have
         # higher priority
-        boundaries.insert(-1, (self.fsi_boundary_F1, 2))
+        boundaries.insert(0, (self.fsi_boundary_F1, 2))
 
         return boundaries
 
