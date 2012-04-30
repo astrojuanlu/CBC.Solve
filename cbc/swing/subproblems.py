@@ -95,7 +95,7 @@ class FluidProblem(NavierStokes):
         # Add no-slip boundary value at fluid-structure interface (u = w)
         # MER: Prepend this value so that user-specified bcs have
         # higher priority
-        values.insert(0, self.w)
+        values.insert(-1, self.w)
 
         return values
 
@@ -107,7 +107,7 @@ class FluidProblem(NavierStokes):
         # Add no-slip boundary at fluid-structure interface
         # MER: Prepend this domain so that user-specified bcs have
         # higher priority
-        boundaries.insert(0, (self.fsi_boundary_F1, 2))
+        boundaries.insert(-1, (self.fsi_boundary_F1, 2))
 
         return boundaries
 
@@ -155,7 +155,10 @@ class FluidProblem(NavierStokes):
         X  = self.Omega_F.coordinates()
         x0 = self.omega_F0.coordinates()
         x1 = self.omega_F1.coordinates()
-        dofs = U_M.vector().array()
+
+        CG1 = VectorFunctionSpace(self.Omega_F, "CG", 1)
+        U_M_interpolated = interpolate(U_M, CG1)
+        dofs = U_M_interpolated.vector().array()
         #plot(U_M, title="U_M in update_mesh_disp")
 
         dim = self.omega_F1.geometry().dim()
@@ -340,7 +343,8 @@ class MeshProblem():
         Omega_F = problem.fluid_mesh()
 
         # Define function spaces and functions
-        V = VectorFunctionSpace(Omega_F, "CG", 1)
+        degree = parameters["mesh_element_degree"]
+        V = VectorFunctionSpace(Omega_F, "CG", degree)
         v = TestFunction(V)
         u = TrialFunction(V)
         u0 = Function(V)

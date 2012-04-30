@@ -258,6 +258,7 @@ def _plot_solution(u_F, p_F, U_S, U_M):
     plot(p_F, title="Fluid pressure")
     plot(U_S, title="Structure displacement")
     plot(U_M, title="Approx U_M")
+    #interactive()
 
 
 def _save_solution(U, files):

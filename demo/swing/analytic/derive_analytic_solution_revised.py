@@ -48,7 +48,7 @@ u_F = P_S.subs(Y, Y_).subs(X, x)
 # Step 3: Define your favorite pressure, preferably 0 at t = 0 and
 # such that its average value is zero.
 #p_F = - 2*C**2*(1 - 2*x)**2*sin(pi*t)**3*(sin(pi*t) + pi*cos(pi*t))
-p_F = - C**2*(1 - 2*x)*t
+p_F = - C**2*(1 - 2*x)
 P_F = p_F.subs(x, X).subs(y, Y)
 
 # Normal direction at FSI boundary follows from the definitions
