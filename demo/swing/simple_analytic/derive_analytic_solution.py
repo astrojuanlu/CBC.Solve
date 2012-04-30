@@ -127,7 +127,8 @@ G_S = Matrix([simplify(G_S[0]), simplify(G_S[1])])
 
 # Compute top boundary stress for fluid
 underline("Deriving left traction for fluid")
-traction_left = sigma_F*N.subs(X, Integer(0))
+N_left = Matrix([-1, 0])
+traction_left = sigma_F*N_left.subs(X, Integer(0))
 print traction_left
 print
 

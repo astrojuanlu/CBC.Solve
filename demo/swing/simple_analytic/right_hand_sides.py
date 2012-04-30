@@ -178,8 +178,8 @@ public:
   {
     const double y = xx[1];
 
-    values[0] = -C*(1 - 2*y);
-    values[1] = C - 2*C*y;
+    values[0] = C*(1 - 2*y);
+    values[1] = - C + 2*C*y;
   }
 
   double C;
