@@ -265,7 +265,7 @@ class StructureProblem(Hyperelasticity):
         # the integral of G_F since G_F and G_S are set equal on the
         # common boundary, dof by dof. Furthermore, the integral of
         # G_F against a test function is by the below projection equal
-        # to the integral of the tracion Sigma_F N_F so this transfer
+        # to the integral of the traction Sigma_F N_F so this transfer
         # in fact does not involve an approximation.
         info("Assembling traction on fluid domain")
         new = True
