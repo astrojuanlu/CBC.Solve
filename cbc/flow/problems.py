@@ -2,7 +2,7 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-27
+# Last changed: 2012-04-30
 
 __all__ = ["NavierStokes"]
 
@@ -85,7 +85,7 @@ class NavierStokes(CBCProblem):
 
     def boundary_traction(self, V):
         "Return boundary traction g = sigma(u, p) * n"
-        return None
+        return []
 
     def mesh_velocity(self, V):
          "Return mesh velocity (for ALE formulations)"

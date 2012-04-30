@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-29
+# Last changed: 2012-04-30
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
            "extract_num_dofs"]
@@ -78,6 +78,9 @@ class FluidProblem(NavierStokes):
 
     def body_force(self, V):
         return self.problem.fluid_body_force()
+
+    def boundary_traction(self, V):
+        return self.problem.fluid_boundary_traction(V)
 
     def mesh_velocity(self, V):
         w = self.problem.mesh_velocity(V)
@@ -239,6 +242,9 @@ class StructureProblem(Hyperelasticity):
 
     def body_force(self):
         return self.problem.structure_body_force()
+
+    def boundary_traction(self, V):
+        return self.problem.structure_boundary_traction(V)
 
     def material_model(self):
         mu    = self.problem.structure_mu()

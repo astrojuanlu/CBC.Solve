@@ -2,7 +2,7 @@ __author__ = "Marie E. Rognes"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-28
+# Last changed: 2012-04-30
 
 __all__ = ["TaylorHoodSolver"]
 
@@ -26,6 +26,7 @@ class TaylorHoodSolver(CBCSolver):
         self.parameters.add("plot_solution", False)
         self.parameters.add("save_solution", False)
         self.parameters.add("store_solution_data", False)
+        zero_average_pressure = False
 
         # Get mesh and time step range
         mesh = problem.mesh()
@@ -36,8 +37,13 @@ class TaylorHoodSolver(CBCSolver):
         V1 = VectorFunctionSpace(mesh, "CG", 1)
         V = VectorFunctionSpace(mesh, "CG", 2)
         Q = FunctionSpace(mesh, "CG", 1)
-        R = FunctionSpace(mesh, "R", 0)
-        W = MixedFunctionSpace([V, Q, R])
+
+        if zero_average_pressure:
+            R = FunctionSpace(mesh, "R", 0)
+            W = MixedFunctionSpace([V, Q, R])
+        else:
+            W = V*Q
+
 
         # Coefficients
         mu = Constant(problem.viscosity())  # Dynamic viscosity [Ps x s]
@@ -45,11 +51,14 @@ class TaylorHoodSolver(CBCSolver):
         n = FacetNormal(mesh)
         k = Constant(dt)
         f = problem.body_force(V1)
+        g = problem.boundary_traction(V1)
         w = problem.mesh_velocity(V1)
 
         # If no body forces are specified, assume it is 0
         if f == []:
             f = Constant((0,)*V1.mesh().geometry().dim())
+        if g == []:
+            g = Constant((0,)*V1.mesh().geometry().dim())
 
         # Create boundary conditions
         bcu = create_dirichlet_conditions(problem.velocity_dirichlet_values(),
@@ -70,14 +79,21 @@ class TaylorHoodSolver(CBCSolver):
         # Create function for solution at previous time
         upr_ = Function(W)
         upr_.assign(upr0)
-        (u_, p_, r_) = split(upr_)
+        if zero_average_pressure:
+            (u_, p_, r_) = split(upr_)
+        else:
+            (u_, p_) = split(upr_)
         u0 = Function(W0)
         p0 = Function(W1)
 
         # Test and trial functions
         upr = Function(W)
-        (u, p, r) = split(upr)
-        (v, q, s) = TestFunctions(W)
+        if zero_average_pressure:
+            (u, p, r) = split(upr)
+            (v, q, s) = TestFunctions(W)
+        else:
+            (u, p) = split(upr)
+            (v, q) = TestFunctions(W)
         u1 = Function(W0)
         p1 = Function(W1)
 
@@ -92,7 +108,10 @@ class TaylorHoodSolver(CBCSolver):
              + inner(sigma(U, p), sym(grad(v)))*dx
              + div(U)*q*dx
              - inner(f, v)*dx
-             + p*s*dx + q*r*dx)
+             - inner(g, v)*ds)
+
+        if zero_average_pressure:
+            F += p*s*dx + q*r*dx
 
         # Store variables needed for time-stepping
         self.mesh_velocity = w
@@ -102,6 +121,7 @@ class TaylorHoodSolver(CBCSolver):
         self.t_range = t_range
         self.bcu = bcu
         self.f = f
+        self.g = g
         self.upr_ = upr_
         self.upr = upr
         self.u0 = u0
@@ -156,6 +176,7 @@ class TaylorHoodSolver(CBCSolver):
         # This is hardly robust
         # Update the time on the body force
         self.f.t = t
+        self.g.t = t
 
         # Propagate values
         self.upr_.assign(self.upr)

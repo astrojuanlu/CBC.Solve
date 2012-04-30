@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-04-29
+# Last changed: 2012-04-30
 
 from cbc.swing import *
 from right_hand_sides_revised import *
@@ -13,23 +13,24 @@ application_parameters = read_parameters()
 
 # Used for testing
 test = True
-ref = 0
+ref = 2
 if test:
     application_parameters["save_solution"] = True
     application_parameters["solve_primal"] = True
-    application_parameters["solve_dual"] = True
-    application_parameters["estimate_error"] = True
-    application_parameters["plot_solution"] = False
+    application_parameters["solve_dual"] = False
+    application_parameters["estimate_error"] = False
+    application_parameters["plot_solution"] = True
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
     #application_parameters["fixedpoint_tolerance"] = 1e-10
-    application_parameters["initial_timestep"] = 0.025/(2**ref)
+    application_parameters["initial_timestep"] = 0.01/2**(ref)
     application_parameters["output_directory"] = "results_analytic_fluid_test"
     application_parameters["max_num_refinements"] = 0
     application_parameters["use_exact_solution"] = False
 
-    application_parameters["fluid_solver"] = "ipcs"
+    application_parameters["fluid_solver"] = "taylor-hood"
+    #application_parameters["fluid_solver"] = "ipcs"
 
 # Define boundaries
 top = "near(x[1], 1.0)"
@@ -56,16 +57,13 @@ class Analytic(FSI):
         # Create analytic expressions for various forces
         self.f_F = Expression(cpp_f_F, degree=2)
         self.f_F.C = C
-        # self.g_F = Expression(cpp_g_F, degree=3)
-        #self.g_F.C = C
+        self.g_F = Expression(cpp_g_F, degree=1)
+        self.g_F.C = C
         self.F_S = Expression(cpp_F_S, degree=6)
-        #self.F_S = Expression(mer_cpp_F_S, degree=6)
         self.F_S.C = C
         self.F_M = Expression(cpp_F_M, degree=2)
-        #self.F_M = Expression(mer_cpp_F_M, degree=6)
         self.F_M.C = C
         self.G_0 = Expression(cpp_G_S0, degree=2)
-        #self.G_0 = Expression(cpp_G_0, degree=2)
         self.G_0.C = C
 
         # Helpers
@@ -94,7 +92,7 @@ class Analytic(FSI):
 
     def update(self, t0, t1, dt):
         t = 0.5*(t0 + t1)
-        #self.g_F.t = t  # To be used as top boundary force for IPCS if desired
+        self.g_F.t = t   # To be used as top boundary force for IPCS if desired
         self.f_F.t = t   # Used as body force for IPCS; checked.
         self.F_S.t = t   # Body force for the structure; looks ok from paper.
         self.F_M.t = t   # Body force for the mesh; looks ok from paper.
@@ -107,7 +105,7 @@ class Analytic(FSI):
         self.u_F.t = t1 # Used as bc for fluid velocity, checked.
 
     def exact_solution(self):
-        return self.u_F, self.p_F, self.U_S, None, self.U_M
+        return self.u_F, self.p_F, self.U_S, self.P_M, self.U_M
 
     def __str__(self):
         return "Channel flow with an immersed elastic flap"
@@ -122,18 +120,20 @@ class Analytic(FSI):
 
     def fluid_velocity_dirichlet_values(self):
         #return [(0.0, 0.0), self.u_F]
-        return [self.u_F]
+        #return [(0.0, 0.0)]
+        return [self.u_F]#, self.u_F]
 
     def fluid_velocity_dirichlet_boundaries(self):
         #return [noslip, top]
-        return ["on_boundary"]
+        #return [noslip]
+        return [noslip]#, "on_boundary && !near(x[1], 1.0)"]
 
     def fluid_pressure_dirichlet_values(self):
         #return [self.p_F]
         return []
 
     def fluid_pressure_dirichlet_boundaries(self):
-        #return ["x[0] < 2.0"]
+        #return ["near(x[0], 1.0)"]
         return []
 
     def fluid_velocity_initial_condition(self):
@@ -145,7 +145,7 @@ class Analytic(FSI):
     def fluid_body_force(self):
         return self.f_F
 
-    def fluid_traction_values(self):
+    def fluid_boundary_traction(self, V):
         return self.g_F
 
     def mesh_velocity(self, V):
@@ -200,7 +200,7 @@ class Analytic(FSI):
 problem = Analytic()
 goal = problem.solve(application_parameters)
 if goal is None:
-    print "Hm. why is goal None?"
+    print "Hm. Goal is None -- why?"
     exit()
 
 (M_h_T, M_h) = goal
@@ -213,4 +213,4 @@ print "Exact value of goal functional:", M
 print "Approximate value of goal functional:", M_h
 print "Exact error:", (M - M_h)
 
-#interactive()
+interactive()

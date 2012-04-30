@@ -7,6 +7,10 @@ from right_hand_sides_revised import *
 C = 1.0
 nu = 1
 
+# Boundary traction force
+g_F = Expression(cpp_g_F, degree=1)
+g_F.C = C
+
 # Body force
 f_F = Expression(cpp_f_F, degree=2)
 f_F.C = C
@@ -29,7 +33,7 @@ U_M.C = C
 
 ref = 0
 n = 16
-dt = 0.005
+dt = 0.01
 T = 0.1
 mesh = Rectangle(0.0, 0.5, 1.0, 1.0, 2*n, n)
 mesh0 = Rectangle(0.0, 0.5, 1.0, 1.0, 2*n, n)
@@ -43,13 +47,23 @@ V_0 = VectorFunctionSpace(mesh0, "CG", 2)
 V = VectorFunctionSpace(mesh, "CG", 2)
 Q = FunctionSpace(mesh, "CG", 1)
 R = FunctionSpace(mesh, "R", 0)
-W = MixedFunctionSpace([V, Q, R])
+
+with_R = False
+if with_R:
+    W = MixedFunctionSpace([V, Q, R])
+else:
+    W = V*Q
 
 w0 = Function(W)
 w = Function(W)
-(u_, p_, r_) = split(w0)
-(u, p, r) = split(w)
-(v, q, s) = TestFunctions(W)
+if with_R:
+    (u_, p_, r_) = split(w0)
+    (u, p, r) = split(w)
+    (v, q, s) = TestFunctions(W)
+else:
+    (u_, p_) = split(w0)
+    (u, p) = split(w)
+    (v, q) = TestFunctions(W)
 
 # Nonlinear forms
 k = Constant(dt)
@@ -66,6 +80,8 @@ while (t < T):
 
     # Update sources in forms and bcs
     f_F.t = tmid # This makes real difference for the pressure.
+    g_F.t = tmid #tmid
+
     P_M.t = t    # tmid or t same same
     U_M.t = t
 
@@ -85,15 +101,20 @@ while (t < T):
          + inner(sigma(u_mid, p), sym(grad(v)))*dx
          + div(u_mid)*q*dx
          - inner(f_F, v)*dx
-         + p*s*dx + q*r*dx)
+         - inner(g_F, v)*ds)
 
-    foo = "(near(x[1], 1.0) || near(x[0], 0.0) || near(x[0], 1.0))"
+    if with_R:
+        F += p*s*dx + q*r*dx
 
+    sides = "(near(x[0], 0.0) || near(x[0], 1.0))"
     #bcs = [DirichletBC(W.sub(0), mesh_velocity, "on_boundary && !%s" % foo),
     #       DirichletBC(W.sub(0), u_F, "foo"),
     #       ]
 
-    bcs = [DirichletBC(W.sub(0), u_F, "on_boundary")]
+    #bcs = [DirichletBC(W.sub(0), u_F, sides),
+    #       DirichletBC(W.sub(0), u_F, "on_boundary && (x[1] < 1.0)")]
+    bcs = [DirichletBC(W.sub(0), u_F, "on_boundary && (x[1] < 0.99)"),
+           DirichletBC(W.sub(0), u_F, sides),]
 
     # Solve problem
     solve(F == 0, w, bcs)
@@ -123,13 +144,16 @@ while (t < T):
     # Step forward in time
     t += dt
 
-v_to_plot.assign(w.split()[0])
-p_to_plot.assign(w.split()[1])
-plot(v_to_plot, title="Velocity")
-plot(p_to_plot, title="Pressure")
-plot(mesh, title="Updated mesh", interactive=True)
+    v_to_plot.assign(w.split()[0])
+    p_to_plot.assign(w.split()[1])
+    plot(v_to_plot, title="Velocity")
+    plot(p_to_plot, title="Pressure")
+    plot(mesh, title="Updated mesh")
+    if with_R:
+        print "r = ", w.vector()[-1]
 
 #plot(p_F, title="Exact pressure", mesh=mesh)
 #plot(u_F, title="Exact velocity", mesh=mesh)
+interactive()
 
 

@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-29
+# Last changed: 2012-04-30
 
 import math
 import pylab
@@ -257,7 +257,7 @@ def _plot_solution(u_F, p_F, U_S, U_M):
     plot(u_F, title="Fluid velocity")
     plot(p_F, title="Fluid pressure")
     plot(U_S, title="Structure displacement")
-    plot(U_M, title="Approx U_M", interactive=True)
+    plot(U_M, title="Approx U_M")
 
 
 def _save_solution(U, files):
