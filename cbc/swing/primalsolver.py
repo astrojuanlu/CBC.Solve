@@ -153,9 +153,10 @@ def solve_primal(problem, parameters):
             # Check convergence
             if increment < itertol:
 
-                info_green("Increment is %g. Plotting" % increment)
+                info_green("Increment is %g. Maybe plotting" % increment)
                 # Plot solution
-                if plot_solution: _plot_solution(u_F1, p_F1, U_S0, U_M1)
+                if plot_solution:
+                    _plot_solution(u_F1, p_F1, U_S0, U_M1)
 
                 (u_F_ex, p_F_ex, U_S_ex, P_S_ex, U_M_ex) \
                     = problem.exact_solution()
@@ -258,7 +259,7 @@ def _plot_solution(u_F, p_F, U_S, U_M):
     plot(p_F, title="Fluid pressure")
     plot(U_S, title="Structure displacement")
     plot(U_M, title="Approx U_M")
-    interactive()
+    #interactive()
 
 
 def _save_solution(U, files):

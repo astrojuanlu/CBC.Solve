@@ -30,8 +30,6 @@ public:
 };
 """
 
-cpp_U_M = cpp_U_S
-
 cpp_P_S = """
 class P_S : public Expression
 {
@@ -54,7 +52,53 @@ public:
 };
 """
 
-cpp_P_M = cpp_P_S
+
+cpp_U_M = """
+class U_M : public Expression
+{
+public:
+
+  U_M() : Expression(2), C(0), t(0) {}
+
+  void eval(Array<double>& values, const Array<double>& xx,
+            const ufc::cell& cell) const
+  {
+    const double X = xx[0];
+    const double Y = xx[1];
+
+    values[0] = C*X*Y*t*(1 - Y);
+    values[1] = 0.0;
+  }
+
+  double C;
+  double t;
+
+};
+"""
+
+cpp_P_M = """
+class P_M : public Expression
+{
+public:
+
+  P_M() : Expression(2), C(0), t(0) {}
+
+  void eval(Array<double>& values, const Array<double>& xx,
+            const ufc::cell& cell) const
+  {
+    const double X = xx[0];
+    const double Y = xx[1];
+
+    values[0] = C*X*Y*(1 - Y);
+    values[1] = 0.0;
+  }
+
+  double C;
+  double t;
+
+};
+"""
+
 
 cpp_u_F = """
 class u_F : public Expression
@@ -154,10 +198,11 @@ public:
   void eval(Array<double>& values, const Array<double>& xx,
             const ufc::cell& cell) const
   {
+    const double X = xx[0];
     const double Y = xx[1];
 
-    values[0] = C*Y + 2*C*t - C*pow(Y, 2);
-    values[1] = 0.0;
+    values[0] = C*X*Y + 2*C*X*t - C*X*pow(Y,2);
+    values[1] = -3*C*t + 6*C*Y*t;
   }
 
   double C;
@@ -198,12 +243,10 @@ public:
   void eval(Array<double>& values, const Array<double>& xx,
             const ufc::cell& cell) const
   {
-
     const double Y = xx[1];
 
-    values[0] = C - 2*C*Y + 2*pow(C,2)*pow(t,2)
-                  - 8*Y*pow(C,2)*pow(t,2) + 8*pow(C,2)*pow(Y,2)*pow(t,2);
-    values[1] = -C + C*t + 2*C*Y - 2*C*Y*t;
+    values[0] = (C - 2*C*Y + 2*pow(C, 2)*pow(t, 2) - 8*Y*pow(C, 2)*pow(t, 2) + 8*pow(C, 2)*pow(Y, 2)*pow(t, 2) - 10*pow(C, 3)*pow(Y, 2)*pow(t, 3) - 8*pow(C, 3)*pow(Y, 4)*pow(t, 3) + 2*Y*pow(C, 3)*pow(t, 3) + 16*pow(C, 3)*pow(Y, 3)*pow(t, 3))/(1 + C*Y*t - C*t*pow(Y, 2));
+    values[1] = (-C + C*t + 2*C*Y - 2*C*Y*t + Y*pow(C, 2)*pow(t, 2) - 3*pow(C, 2)*pow(Y, 2)*pow(t, 2) + 2*pow(C, 2)*pow(Y, 3)*pow(t, 2))/(1 + C*Y*t - C*t*pow(Y, 2));
   }
 
   double C;

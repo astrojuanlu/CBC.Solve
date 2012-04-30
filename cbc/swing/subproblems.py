@@ -160,7 +160,7 @@ class FluidProblem(NavierStokes):
         #CG1 = VectorFunctionSpace(self.Omega_F, "CG", 1)
         #U_M_interpolated = interpolate(U_M, CG1)
         #dofs = U_M_interpolated.vector().array()
-        plot(U_M, title="U_M in update_mesh_disp")
+        #plot(U_M, title="U_M in update_mesh_disp")
         dofs = U_M.vector().array()
 
         dim = self.omega_F1.geometry().dim()
@@ -407,9 +407,6 @@ class MeshProblem():
     def update_structure_displacement(self, U_S):
         self.displacement.vector().zero()
         self.problem.add_s2f(self.displacement.vector(), U_S.vector())
-        plot(U_S, title="U_S")
-        plot(self.displacement, title="U_S")
-        interactive()
 
     def solution(self):
         "Return current solution values"
