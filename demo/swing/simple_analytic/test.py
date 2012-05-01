@@ -10,7 +10,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from cbc.swing import *
 from right_hand_sides import *
 
-ref = 0
+ref = 1
 N = 5
 dt = 0.1/N/2**(ref)
 
@@ -21,7 +21,7 @@ application_parameters["save_solution"] = True
 application_parameters["solve_primal"] = True
 application_parameters["solve_dual"] = False
 application_parameters["estimate_error"] = False
-application_parameters["plot_solution"] = True
+application_parameters["plot_solution"] = False
 application_parameters["uniform_timestep"] = True
 application_parameters["uniform_mesh"] = True
 application_parameters["tolerance"] = 1e-16
@@ -31,8 +31,8 @@ application_parameters["output_directory"] = "results_analytic_fluid_test"
 application_parameters["max_num_refinements"] = 0
 application_parameters["use_exact_solution"] = False
 
-#application_parameters["fluid_solver"] = "taylor-hood"
-application_parameters["fluid_solver"] = "ipcs"
+application_parameters["fluid_solver"] = "taylor-hood"
+#application_parameters["fluid_solver"] = "ipcs"
 
 # Define relevant boundaries
 right = "near(x[0], 2.0)"

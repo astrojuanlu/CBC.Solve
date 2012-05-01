@@ -73,8 +73,8 @@ class TaylorHoodSolver(CBCSolver):
         u0 = create_initial_condition(problem.velocity_initial_condition(), V)
         u0 = interpolate(u0, V)
 
-        p0 = create_initial_condition(problem.pressure_initial_condition(), V)
-        p0 = interpolate(p0, V)
+        p0 = create_initial_condition(problem.pressure_initial_condition(), Q)
+        p0 = interpolate(p0, Q)
 
         # Create initial function
         upr0 = Function(W)
@@ -171,6 +171,7 @@ class TaylorHoodSolver(CBCSolver):
         # Allow pressure boundary conditions for debugging
         bcs = self.bcu
         if self.bcp != []:
+            info_green("Including pressure DirichletBC at your risk")
             bcs += self.bcp
 
         # Compute solution

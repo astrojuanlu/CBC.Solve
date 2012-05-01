@@ -46,8 +46,10 @@ ref = 2
 # Ok, that one still doesn't converge. But the discrepancy should be
 # tested.
 
-# Testing Taylor--Hood with pressure fix.
+# Testing Taylor--Hood with pressure fix. Ok; looking better (as in
+  identical to results from ipcs)
 
+ref = 0
 ||u_F_ex - u_F || =  1.78606624706e-16
 ||u_F_ex|| =  0.184460449609
 ||p_F_ex - p_F || =  6.07450986622e-16
@@ -56,3 +58,14 @@ ref = 2
 ||U_S_ex|| =  0.0182574185835
 ||U_M_ex - U_M || =  1.00991349471e-05
 ||U_M_ex|| =  0.0105409255339
+
+ref = 1
+||u_F_ex - u_F || =  3.2157016983e-16
+||u_F_ex|| =  0.184506504166
+||p_F_ex - p_F || =  4.92827591551e-16
+||p_F_ex|| =  0.580193568994
+||U_S_ex - U_S || =  8.63347349242e-06
+||U_S_ex|| =  0.0182574185835
+||U_M_ex - U_M || =  1.9933799741e-05
+||U_M_ex|| =  0.0105409255339
+
