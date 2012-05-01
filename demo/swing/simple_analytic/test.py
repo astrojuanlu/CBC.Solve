@@ -21,7 +21,7 @@ application_parameters["save_solution"] = True
 application_parameters["solve_primal"] = True
 application_parameters["solve_dual"] = False
 application_parameters["estimate_error"] = False
-application_parameters["plot_solution"] = False
+application_parameters["plot_solution"] = True
 application_parameters["uniform_timestep"] = True
 application_parameters["uniform_mesh"] = True
 application_parameters["tolerance"] = 1e-16
@@ -60,7 +60,7 @@ class SimpleAnalytic(FSI):
         self.g_F = Expression(cpp_g_F, degree=1)
         self.F_S = Expression(cpp_F_S, degree=2)
         self.F_M = Expression(cpp_F_M, degree=3)
-        self.G_0 = Expression(cpp_G_S0, degree=8)
+        self.G_0 = Expression(cpp_G_S0, degree=2)
 
         # Initialize
         forces = [self.f_F, self.g_F, self.F_S, self.F_M, self.G_0]

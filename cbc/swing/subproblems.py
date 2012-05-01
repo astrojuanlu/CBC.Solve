@@ -149,6 +149,14 @@ class FluidProblem(NavierStokes):
         # Compute physical stress
         Sigma_F = PiolaTransform(_Sigma_F(U_F, P_F, U_M, mu_F), U_M)
 
+        # Test this averaging instead:
+        #info_red("Debugging with converge averaging")
+        #Sigma_F0 = PiolaTransform(_Sigma_F(self.U_F0, self.P_F0, U_M0, mu_F),
+        #                          U_M0)
+        #Sigma_F1 = PiolaTransform(_Sigma_F(self.U_F1, self.P_F1, U_M1, mu_F),
+        #                          U_M1)
+        #Sigma_F = 0.5*(Sigma_F0 + Sigma_F1)
+
         return Sigma_F
 
     def update_mesh_displacement(self, U_M, dt, num_smoothings):
@@ -209,12 +217,16 @@ class StructureProblem(Hyperelasticity):
         structure_element_degree = parameters["structure_element_degree"]
         Omega_F = problem.fluid_mesh()
         Omega_S = problem.structure_mesh()
+
         self.V_F = VectorFunctionSpace(Omega_F, "CG", structure_element_degree)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", structure_element_degree)
-        self.test_F = TestFunction(self.V_F)
-        self.trial_F = TrialFunction(self.V_F)
-        self.G_F = Function(self.V_F)
-        self.G_S = Function(self.V_S)
+        self.V_F_DG = VectorFunctionSpace(Omega_F, "DG", structure_element_degree)
+        self.V_S_DG = VectorFunctionSpace(Omega_S, "DG", structure_element_degree)
+
+        self.test_F = TestFunction(self.V_F_DG)
+        self.trial_F = TrialFunction(self.V_F_DG)
+        self.G_F = Function(self.V_F_DG)
+        self.G_S = Function(self.V_S_DG)
         self.N_F = FacetNormal(Omega_F)
         self.N_S = FacetNormal(Omega_S)
         self.G_0 = problem.structure_boundary_traction_extra()
@@ -272,6 +284,7 @@ class StructureProblem(Hyperelasticity):
         # to the integral of the traction Sigma_F N_F so this transfer
         # in fact does not involve an approximation.
         info("Assembling traction on fluid domain")
+
         new = True
         if new:
             d_FSI = ds(2)

@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-04-27
-# Last changed: 2012-04-30
+# Last changed: 2012-05-01
 
 from dolfin import *
 from time import sleep
@@ -245,8 +245,8 @@ public:
   {
     const double Y = xx[1];
 
-    values[0] = (C - 2*C*Y + 2*pow(C, 2)*pow(t, 2) - 8*Y*pow(C, 2)*pow(t, 2) + 8*pow(C, 2)*pow(Y, 2)*pow(t, 2) - 10*pow(C, 3)*pow(Y, 2)*pow(t, 3) - 8*pow(C, 3)*pow(Y, 4)*pow(t, 3) + 2*Y*pow(C, 3)*pow(t, 3) + 16*pow(C, 3)*pow(Y, 3)*pow(t, 3))/(1 + C*Y*t - C*t*pow(Y, 2));
-    values[1] = (-C + C*t + 2*C*Y - 2*C*Y*t + Y*pow(C, 2)*pow(t, 2) - 3*pow(C, 2)*pow(Y, 2)*pow(t, 2) + 2*pow(C, 2)*pow(Y, 3)*pow(t, 2))/(1 + C*Y*t - C*t*pow(Y, 2));
+    values[0] = C - 2*C*Y + 2*pow(C, 2)*pow(t, 2) - 8*Y*pow(C, 2)*pow(t, 2) + 8*pow(C, 2)*pow(Y, 2)*pow(t, 2);
+    values[1] = -C + C*t + 2*C*Y - 2*C*Y*t;
   }
 
   double C;
