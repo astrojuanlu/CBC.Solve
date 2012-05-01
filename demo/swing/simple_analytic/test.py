@@ -10,7 +10,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from cbc.swing import *
 from right_hand_sides import *
 
-ref = 0
+ref = 3
 N = 5
 dt = 0.1/N/2**(ref)
 
@@ -21,7 +21,7 @@ application_parameters["save_solution"] = True
 application_parameters["solve_primal"] = True
 application_parameters["solve_dual"] = False
 application_parameters["estimate_error"] = False
-application_parameters["plot_solution"] = True
+application_parameters["plot_solution"] = False
 application_parameters["uniform_timestep"] = True
 application_parameters["uniform_mesh"] = True
 application_parameters["tolerance"] = 1e-16
@@ -127,17 +127,17 @@ class SimpleAnalytic(FSI):
         return [self.u_F]
 
     def fluid_velocity_dirichlet_boundaries(self):
-        #return [noslip]
-        return ["x[0] < 3.0"]
+        return [noslip]
+        #return ["x[0] < 3.0"]
 
     def fluid_pressure_dirichlet_values(self):
-        #return []
-        return [self.p_F]
+        return []
+        #return [self.p_F]
 
     def fluid_pressure_dirichlet_boundaries(self):
-        #return []
+        return []
         #return ["near(x[0], 0.0)"]
-        return ["x[0] < 3.0"]
+        #return ["x[0] < 3.0"]
 
     def fluid_velocity_initial_condition(self):
         return self.u_F
@@ -161,7 +161,7 @@ class SimpleAnalytic(FSI):
         return Structure()
 
     def structure_density(self):
-        return 100000.0
+        return 1000000.0
 
     def structure_mu(self):
         return 1.0
