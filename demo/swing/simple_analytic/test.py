@@ -10,7 +10,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from cbc.swing import *
 from right_hand_sides import *
 
-ref = 1
+ref = 0
 N = 5
 dt = 0.1/N/2**(ref)
 
@@ -161,7 +161,7 @@ class SimpleAnalytic(FSI):
         return Structure()
 
     def structure_density(self):
-        return 100.0
+        return 100000.0
 
     def structure_mu(self):
         return 1.0
