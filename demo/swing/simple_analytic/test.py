@@ -3,24 +3,24 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-04-30
+# Last changed: 2012-05-01
 
 # Modified by Marie E. Rognes
 
 from cbc.swing import *
 from right_hand_sides import *
 
-ref = 2
+ref = 1
 N = 5
 
 application_parameters = read_parameters()
-application_parameters["mesh_element_degree"] = 1
+application_parameters["mesh_element_degree"] = 3
 application_parameters["structure_element_degree"] = 2
 application_parameters["save_solution"] = True
 application_parameters["solve_primal"] = True
 application_parameters["solve_dual"] = False
 application_parameters["estimate_error"] = False
-application_parameters["plot_solution"] = False
+application_parameters["plot_solution"] = True
 application_parameters["uniform_timestep"] = True
 application_parameters["uniform_mesh"] = True
 application_parameters["tolerance"] = 1e-16
@@ -58,7 +58,7 @@ class SimpleAnalytic(FSI):
         self.f_F = Expression(cpp_f_F, degree=1)
         self.g_F = Expression(cpp_g_F, degree=1)
         self.F_S = Expression(cpp_F_S, degree=2)
-        self.F_M = Expression(cpp_F_M, degree=2)
+        self.F_M = Expression(cpp_F_M, degree=3)
         self.G_0 = Expression(cpp_G_S0, degree=8)
 
         # Initialize
@@ -126,7 +126,8 @@ class SimpleAnalytic(FSI):
         return [self.u_F]
 
     def fluid_velocity_dirichlet_boundaries(self):
-        return [noslip]
+        #return [noslip]
+        return ["x[0] < 3.0"]
 
     def fluid_pressure_dirichlet_values(self):
         return [self.p_F]
@@ -165,12 +166,12 @@ class SimpleAnalytic(FSI):
         return 2.0
 
     def structure_dirichlet_values(self):
-        return [self.U_S, self.U_S]
-        #return [self.U_S]
+        #return [self.U_S, self.U_S]
+        return [self.U_S]
 
     def structure_dirichlet_boundaries(self):
-        return [noslip, right]
-        #return ["x[0] < 3.0"]
+        #return [noslip, right]
+        return ["x[0] < 3.0"]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"

@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-30
+# Last changed: 2012-05-01
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem",
            "extract_solution",
@@ -157,11 +157,14 @@ class FluidProblem(NavierStokes):
         x0 = self.omega_F0.coordinates()
         x1 = self.omega_F1.coordinates()
 
-        #CG1 = VectorFunctionSpace(self.Omega_F, "CG", 1)
-        #U_M_interpolated = interpolate(U_M, CG1)
-        #dofs = U_M_interpolated.vector().array()
-        #plot(U_M, title="U_M in update_mesh_disp")
-        dofs = U_M.vector().array()
+        if U_M.element().degree() > 1:
+            info_red("Interpolating U_M onto CG1 to move mesh")
+            print U_M.element().degree()
+            CG1 = VectorFunctionSpace(self.Omega_F, "CG", 1)
+            U_M_interpolated = interpolate(U_M, CG1)
+            dofs = U_M_interpolated.vector().array()
+        else:
+            dofs = U_M.vector().array()
 
         dim = self.omega_F1.geometry().dim()
         N = self.omega_F1.num_vertices()

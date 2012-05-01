@@ -2,7 +2,7 @@ __author__ = "Marie E. Rognes"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-30
+# Last changed: 2012-05-01
 
 __all__ = ["TaylorHoodSolver"]
 
@@ -26,7 +26,7 @@ class TaylorHoodSolver(CBCSolver):
         self.parameters.add("plot_solution", False)
         self.parameters.add("save_solution", False)
         self.parameters.add("store_solution_data", False)
-        zero_average_pressure = False
+        zero_average_pressure = True
 
         # Get mesh and time step range
         mesh = problem.mesh()
