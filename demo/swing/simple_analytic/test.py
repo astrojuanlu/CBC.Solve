@@ -10,8 +10,9 @@ __license__  = "GNU GPL Version 3 or any later version"
 from cbc.swing import *
 from right_hand_sides import *
 
-ref = 1
+ref = 3
 N = 5
+dt = 0.1/N/2**(ref)
 
 application_parameters = read_parameters()
 application_parameters["mesh_element_degree"] = 3
@@ -24,14 +25,14 @@ application_parameters["plot_solution"] = True
 application_parameters["uniform_timestep"] = True
 application_parameters["uniform_mesh"] = True
 application_parameters["tolerance"] = 1e-16
-#application_parameters["fixedpoint_tolerance"] = 1e-10
-application_parameters["initial_timestep"] = 0.1/N/2**(ref)
+application_parameters["fixedpoint_tolerance"] = 1.e-14
+application_parameters["initial_timestep"] = dt
 application_parameters["output_directory"] = "results_analytic_fluid_test"
 application_parameters["max_num_refinements"] = 0
 application_parameters["use_exact_solution"] = False
 
-#application_parameters["fluid_solver"] = "taylor-hood"
-application_parameters["fluid_solver"] = "ipcs"
+application_parameters["fluid_solver"] = "taylor-hood"
+#application_parameters["fluid_solver"] = "ipcs"
 
 # Define relevant boundaries
 right = "near(x[0], 2.0)"
@@ -126,14 +127,17 @@ class SimpleAnalytic(FSI):
         return [self.u_F]
 
     def fluid_velocity_dirichlet_boundaries(self):
-        #return [noslip]
-        return ["x[0] < 3.0"]
+        return [noslip]
+        #return ["x[0] < 3.0"]
 
     def fluid_pressure_dirichlet_values(self):
-        return [self.p_F]
+        return []
+        #return [self.p_F]
 
     def fluid_pressure_dirichlet_boundaries(self):
-        return ["x[0] < 3.0"]
+        return []
+        #return ["near(x[0], 0.0)"]
+        #return ["x[0] < 3.0"]
 
     def fluid_velocity_initial_condition(self):
         return self.u_F
@@ -166,12 +170,12 @@ class SimpleAnalytic(FSI):
         return 2.0
 
     def structure_dirichlet_values(self):
-        #return [self.U_S, self.U_S]
-        return [self.U_S]
+        return [self.U_S, self.U_S]
+        #return [self.U_S]
 
     def structure_dirichlet_boundaries(self):
-        #return [noslip, right]
-        return ["x[0] < 3.0"]
+        return [noslip, right]
+        #return ["x[0] < 3.0"]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"

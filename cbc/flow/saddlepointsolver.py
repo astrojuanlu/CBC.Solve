@@ -26,7 +26,7 @@ class TaylorHoodSolver(CBCSolver):
         self.parameters.add("plot_solution", False)
         self.parameters.add("save_solution", False)
         self.parameters.add("store_solution_data", False)
-        zero_average_pressure = True
+        zero_average_pressure = False
 
         # Get mesh and time step range
         mesh = problem.mesh()
@@ -164,9 +164,14 @@ class TaylorHoodSolver(CBCSolver):
         self.k.assign(dt)
         self.reassemble()
 
+        # Allow pressure boundary conditions for debugging
+        bcs = self.bcu
+        if self.bcp != []:
+            bcs += self.bcp
+
         # Compute solution
         begin("Computing velocity and pressure and multiplier")
-        solve(self.F == 0, self.upr, self.bcu)
+        solve(self.F == 0, self.upr, bcs)
         self.u1.assign(self.upr.split()[0])
         self.p1.assign(self.upr.split()[1])
         end()

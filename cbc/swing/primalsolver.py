@@ -151,7 +151,7 @@ def solve_primal(problem, parameters):
             U_S0.vector()[:] = U_S1.vector()[:]
 
             # Check convergence
-            if increment < itertol and iter > 10:
+            if increment < itertol and iter > 2:
 
                 info_green("Increment is %g. Maybe plotting" % increment)
                 # Plot solution

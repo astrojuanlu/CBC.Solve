@@ -60,8 +60,9 @@ class FluidProblem(NavierStokes):
         if solver_type is None:
             solver_type = "ipcs"
         NavierStokes.__init__(self, solver=solver_type)
-        if solver_type == "ipcs":
-            self.parameters["solver_parameters"]["zero_average_pressure"] = False
+        if (solver_type == "ipcs"
+            and problem.fluid_pressure_dirichlet_values() == []):
+            self.parameters["solver_parameters"]["zero_average_pressure"] = True
 
         # Don't plot and save solution in subsolvers
         self.parameters["solver_parameters"]["plot_solution"] = False
@@ -159,7 +160,6 @@ class FluidProblem(NavierStokes):
 
         if U_M.element().degree() > 1:
             info_red("Interpolating U_M onto CG1 to move mesh")
-            print U_M.element().degree()
             CG1 = VectorFunctionSpace(self.Omega_F, "CG", 1)
             U_M_interpolated = interpolate(U_M, CG1)
             dofs = U_M_interpolated.vector().array()

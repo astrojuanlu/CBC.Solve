@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Harish Narayanan, 2012
-# Last changed: 2012-04-27
+# Last changed: 2012-05-01
 
 __all__ = ["NavierStokesSolver"]
 
@@ -116,6 +116,9 @@ class NavierStokesSolver(CBCSolver):
         L3 = inner(v, rho*u1)*dx + inner(v, k*grad(p0 - p1))*dx
 
         # Create solvers
+        #solver1 = LUSolver()
+        #solver2 = LUSolver()
+        #solver3 = LUSolver()
         solver1 = KrylovSolver("gmres", "ilu")
         solver2 = KrylovSolver("gmres", "amg")
         solver3 = KrylovSolver("gmres", "ilu")
@@ -190,7 +193,7 @@ class NavierStokesSolver(CBCSolver):
         # Pressure correction
         begin("Computing pressure correction")
         if self.parameters["zero_average_pressure"]:
-            info("Using L2 average constraint")
+            info_red("Using L2 average constraint")
             b = assemble(self.L2_r)
             qr = Function(self.QR)
             solve(self.A2_r, qr.vector(), b)
