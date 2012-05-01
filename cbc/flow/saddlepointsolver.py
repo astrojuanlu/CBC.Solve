@@ -73,9 +73,13 @@ class TaylorHoodSolver(CBCSolver):
         u0 = create_initial_condition(problem.velocity_initial_condition(), V)
         u0 = interpolate(u0, V)
 
+        p0 = create_initial_condition(problem.pressure_initial_condition(), V)
+        p0 = interpolate(p0, V)
+
         # Create initial function
         upr0 = Function(W)
         upr0.vector()[:V.dim()] = u0.vector()
+        upr0.vector()[V.dim():V.dim()+Q.dim()] = p0.vector()
 
         # Create function for solution at previous time
         upr_ = Function(W)
@@ -84,8 +88,8 @@ class TaylorHoodSolver(CBCSolver):
             (u_, p_, r_) = split(upr_)
         else:
             (u_, p_) = split(upr_)
-        u0 = Function(V)
-        p0 = Function(Q)
+        #u0 = Function(V)
+        #p0 = Function(Q)
 
         # Test and trial functions
         upr = Function(W)

@@ -10,7 +10,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from cbc.swing import *
 from right_hand_sides import *
 
-ref = 3
+ref = 0
 N = 5
 dt = 0.1/N/2**(ref)
 
@@ -31,8 +31,8 @@ application_parameters["output_directory"] = "results_analytic_fluid_test"
 application_parameters["max_num_refinements"] = 0
 application_parameters["use_exact_solution"] = False
 
-application_parameters["fluid_solver"] = "taylor-hood"
-#application_parameters["fluid_solver"] = "ipcs"
+#application_parameters["fluid_solver"] = "taylor-hood"
+application_parameters["fluid_solver"] = "ipcs"
 
 # Define relevant boundaries
 right = "near(x[0], 2.0)"
@@ -127,17 +127,17 @@ class SimpleAnalytic(FSI):
         return [self.u_F]
 
     def fluid_velocity_dirichlet_boundaries(self):
-        return [noslip]
-        #return ["x[0] < 3.0"]
+        #return [noslip]
+        return ["x[0] < 3.0"]
 
     def fluid_pressure_dirichlet_values(self):
-        return []
-        #return [self.p_F]
+        #return []
+        return [self.p_F]
 
     def fluid_pressure_dirichlet_boundaries(self):
-        return []
+        #return []
         #return ["near(x[0], 0.0)"]
-        #return ["x[0] < 3.0"]
+        return ["x[0] < 3.0"]
 
     def fluid_velocity_initial_condition(self):
         return self.u_F
