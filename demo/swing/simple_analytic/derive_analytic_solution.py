@@ -9,7 +9,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 from sympy import *
 
 # Turn this to True to get more diagnostics output
-debug = False
+debug = True
 
 def underline(s): print s + "\n" + "-"*len(s)
 
@@ -203,5 +203,6 @@ if debug:
     print average_p_F
     print
 
-
-
+    underline("Goal functional")
+    goal_functional = integrate(integrate(integrate(U_S[0], (X, 1, 2)), (Y, 0, 1)), (t, 0, 0.1)).subs(C, 1)
+    print "%.15g" % goal_functional

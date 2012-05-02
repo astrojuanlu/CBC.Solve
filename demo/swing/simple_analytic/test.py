@@ -83,7 +83,7 @@ class SimpleAnalytic(FSI):
             s.t = 0.0
 
         # Testing
-        self.exact_F = True
+        self.exact_F = False
         self.exact_S = False
 
         # Initialize base class
@@ -95,8 +95,7 @@ class SimpleAnalytic(FSI):
         return 0.1
 
     def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
-        # FIXME
-        return U_S[1] * dx_S
+        return U_S[0] * dx_S
 
     def update(self, t0, t1, dt):
         t = 0.5*(t0 + t1)
