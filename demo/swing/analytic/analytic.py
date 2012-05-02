@@ -11,32 +11,33 @@ from math import sin
 from cbc.swing import *
 from right_hand_sides import *
 
-ref = 2
-N = 5
-dt = 0.1/N/2**(ref)
-
+# Read parameters
 application_parameters = read_parameters()
-application_parameters["mesh_element_degree"] = 3
-application_parameters["structure_element_degree"] = 2
-application_parameters["save_solution"] = True
-application_parameters["solve_primal"] = True
-application_parameters["solve_dual"] = False
-application_parameters["estimate_error"] = False
-application_parameters["plot_solution"] = False
-application_parameters["uniform_timestep"] = True
-application_parameters["uniform_mesh"] = True
-application_parameters["tolerance"] = 1e-16
-application_parameters["fixedpoint_tolerance"] = 1.e-14
-application_parameters["initial_timestep"] = dt
-application_parameters["output_directory"] = "results_analytic"
-application_parameters["max_num_refinements"] = 0
-application_parameters["use_exact_solution"] = False
 
-application_parameters["fluid_solver"] = "taylor-hood"
-#application_parameters["fluid_solver"] = "ipcs"
+# Used for testing
+test = True
+if test:
+    application_parameters["mesh_element_degree"] = 1
+    application_parameters["structure_element_degree"] = 1
+    application_parameters["save_solution"] = True
+    application_parameters["solve_primal"] = True
+    application_parameters["solve_dual"] = False
+    application_parameters["estimate_error"] = False
+    application_parameters["plot_solution"] = True
+    application_parameters["uniform_timestep"] = True
+    application_parameters["uniform_mesh"] = True
+    application_parameters["tolerance"] = 1e-16
+    application_parameters["fixedpoint_tolerance"] = 1.e-14
+    application_parameters["initial_timestep"] = 0.02
+    application_parameters["output_directory"] = "results_analytic"
+    application_parameters["max_num_refinements"] = 0
+    application_parameters["use_exact_solution"] = False
+    #application_parameters["fluid_solver"] = "taylor-hood"
+    application_parameters["fluid_solver"] = "ipcs"
 
 # Define relevant boundaries
 right = "near(x[0], 2.0)"
+interface = "near(x[0], 1.0)"
 left = "near(x[0], 0.0)"
 noslip = "near(x[1], 0.0) || near(x[1], 1.0)"
 
@@ -48,13 +49,13 @@ class Structure(SubDomain):
     def inside(self, x, on_boundary):
         return x[0] >= 1.0 - DOLFIN_EPS
 
+# Define FSI problem
 class Analytic(FSI):
 
     def __init__(self):
 
         # Create mesh
-        n = N*(2**ref)
-        mesh = Rectangle(0.0, 0.0, 2.0, 1.0, 2*n, n)
+        mesh = Rectangle(0.0, 0.0, 2.0, 1.0, 10, 5)
 
         # Create analytic expressions for various forces
         self.f_F = Expression(cpp_f_F, degree=2)
@@ -63,28 +64,19 @@ class Analytic(FSI):
         self.F_M = Expression(cpp_F_M, degree=3)
         self.G_0 = Expression(cpp_G_S0, degree=5)
 
-        # Initialize
-        forces = [self.f_F, self.g_F, self.F_S, self.F_M, self.G_0]
-        for f in forces:
-            f.C = C
-            f.t = 0.0
-
         # Exact solutions
         self.u_F = Expression(cpp_u_F, degree=2)
         self.p_F = Expression(cpp_p_F, degree=1)
         self.U_S = Expression(cpp_U_S, degree=2)
         self.P_S = Expression(cpp_P_S, degree=2)
         self.U_M = Expression(cpp_U_M, degree=3)
+
+        # Initialize expressions
+        forces = [self.f_F, self.g_F, self.F_S, self.F_M, self.G_0]
         solutions = [self.u_F, self.p_F, self.U_S, self.P_S, self.U_M]
-
-        # Initialize these too
-        for s in solutions:
-            s.C = C
-            s.t = 0.0
-
-        # Testing
-        self.exact_F = False
-        self.exact_S = False
+        for f in forces + solutions:
+            f.C = C
+            f.t = 0.0
 
         # Initialize base class
         FSI.__init__(self, mesh)
@@ -134,20 +126,17 @@ class Analytic(FSI):
         return [self.u_F]
 
     def fluid_velocity_dirichlet_boundaries(self):
-        if self.exact_F:
-            return ["0.0 < 1.0"]
-        else:
-            return [noslip]
+        return [noslip]
 
     def fluid_pressure_dirichlet_values(self):
-        if self.exact_F:
-            return [self.p_F]
+        if application_parameters["fluid_solver"] == "ipcs":
+            return [self.p_F, self.p_F]
         else:
             return []
 
     def fluid_pressure_dirichlet_boundaries(self):
-        if self.exact_F:
-            return ["0.0 < 1.0"]
+        if application_parameters["fluid_solver"] == "ipcs":
+            return [left, interface]
         else:
             return []
 
@@ -181,10 +170,7 @@ class Analytic(FSI):
         return [self.U_S, self.U_S]
 
     def structure_dirichlet_boundaries(self):
-        if self.exact_S:
-            return ["0.0 < 1.0", "0.0 < 1.0"]
-        else:
-            return [noslip, right]
+        return [noslip, right]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"
