@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-04-27
-# Last changed: 2012-05-01
+# Last changed: 2012-05-02
 
 from dolfin import *
 from time import sleep
@@ -243,10 +243,12 @@ public:
   void eval(Array<double>& values, const Array<double>& xx,
             const ufc::cell& cell) const
   {
+    const double X = xx[0];
     const double Y = xx[1];
 
-    values[0] = C - 2*C*Y + 2*pow(C, 2)*pow(t, 2) - 8*Y*pow(C, 2)*pow(t, 2) + 8*pow(C, 2)*pow(Y, 2)*pow(t, 2);
-    values[1] = -C + C*t + 2*C*Y - 2*C*Y*t;
+    values[0] = C - 2*C*Y + 2*pow(C, 2)*pow(t, 2) + X*t*pow(C, 2) - 8*Y*pow(C, 2)*pow(t, 2) + 8*pow(C, 2)*pow(Y, 2)*pow(t, 2) - 4*X*Y*t*pow(C, 2) + 4*X*t*pow(C, 2)*pow(Y, 2);
+    values[1] = -C + C*t + 2*C*Y - 2*C*Y*t - X*t*pow(C, 2) - 4*X*t*pow(C, 2)*pow(Y, 2) + 4*X*Y*t*pow(C, 2);
+
   }
 
   double C;

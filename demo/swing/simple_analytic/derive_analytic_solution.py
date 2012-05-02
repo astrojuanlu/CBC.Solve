@@ -4,7 +4,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 #
 # Modified by Marie E. Rognes
-# Last changed: 2012-05-01
+# Last changed: 2012-05-02
 
 from sympy import *
 
@@ -119,7 +119,7 @@ Sigma_F = nu*(Grad_U_F * F_M_inv + F_M_inv.T * Grad_U_F.T) - P_F*I
 Sigma_F = Sigma_F
 
 # Compute boundary tractions on fsi boundary in reference frame:
-G_F = J_M*Sigma_F*F_M_inv*N
+G_F = J_M*Sigma_F*F_M_inv.T*N
 G_F = Matrix([simplify(G_F[0]), simplify(G_F[1])])
 G_S = Sigma_S*N
 G_S = Matrix([simplify(G_S[0]), simplify(G_S[1])])
