@@ -1,5 +1,6 @@
 """This script runs a convergence test for the analytic test case
-using uniform refinement in space and time."""
+using uniform refinement in space and time, solving only the primal
+problem."""
 
 __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
@@ -13,8 +14,8 @@ from cbc.swing import *
 # Set up parameters
 p = default_parameters()
 p["solve_primal"] = True
-p["solve_dual"] = True
-p["estimate_error"] = True
+p["solve_dual"] = False
+p["estimate_error"] = False
 p["plot_solution"] = False
 p["uniform_timestep"] = True
 p["uniform_mesh"] = True
@@ -24,4 +25,4 @@ p["fixedpoint_tolerance"] = 1e-14
 p["max_num_refinements"] = 100
 
 # Run
-run_local("analytic", p, "convergence_test")
+run_local("analytic", p, "convergence_test_primal")
