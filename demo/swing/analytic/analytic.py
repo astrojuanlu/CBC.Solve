@@ -15,15 +15,15 @@ from right_hand_sides import *
 application_parameters = read_parameters()
 
 # Used for testing
-test = True
+test = False
 if test:
     ref = 0
     application_parameters["mesh_element_degree"] = 1
     application_parameters["structure_element_degree"] = 1
     application_parameters["save_solution"] = True
-    application_parameters["solve_primal"] = True
+    application_parameters["solve_primal"] = False
     application_parameters["solve_dual"] = False
-    application_parameters["estimate_error"] = False
+    application_parameters["estimate_error"] = True
     application_parameters["plot_solution"] = True
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True

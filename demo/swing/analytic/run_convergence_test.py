@@ -21,7 +21,6 @@ p["uniform_mesh"] = True
 p["initial_timestep"] = 0.02
 p["tolerance"] = 1e-16
 p["fixedpoint_tolerance"] = 1e-14
-p["output_directory"] = "results_analytic_convergence_test"
 p["max_num_refinements"] = 100
 
 # Run
