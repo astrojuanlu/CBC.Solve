@@ -17,6 +17,7 @@ application_parameters = read_parameters()
 # Used for testing
 test = True
 if test:
+    ref = 0
     application_parameters["mesh_element_degree"] = 1
     application_parameters["structure_element_degree"] = 1
     application_parameters["save_solution"] = True
@@ -28,12 +29,13 @@ if test:
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
     application_parameters["fixedpoint_tolerance"] = 1.e-14
-    application_parameters["initial_timestep"] = 0.02
-    application_parameters["output_directory"] = "results_analytic"
+    application_parameters["initial_timestep"] = 0.02 / (2**ref)
+    application_parameters["output_directory"] = "results_analytic_test"
     application_parameters["max_num_refinements"] = 0
-    application_parameters["use_exact_solution"] = False
-    #application_parameters["fluid_solver"] = "taylor-hood"
-    application_parameters["fluid_solver"] = "ipcs"
+    application_parameters["fluid_solver"] = "taylor-hood"
+    #application_parameters["fluid_solver"] = "ipcs"
+else:
+    ref = 0
 
 # Define relevant boundaries
 right = "near(x[0], 2.0)"
@@ -55,7 +57,7 @@ class Analytic(FSI):
     def __init__(self):
 
         # Create mesh
-        mesh = Rectangle(0.0, 0.0, 2.0, 1.0, 10, 5)
+        mesh = Rectangle(0.0, 0.0, 2.0, 1.0, 10*2**ref, 5*2**ref)
 
         # Create analytic expressions for various forces
         self.f_F = Expression(cpp_f_F, degree=2)

@@ -56,6 +56,9 @@ def solve_primal(problem, parameters):
     # Record number of time steps
     timestep_counter = 0
 
+    # Update of user problem at t = 0 (important for initial conditions)
+    problem.update(0.0, 0.0, dt)
+
     # Define the three subproblems
     F = FluidProblem(problem, solver_type=parameters["fluid_solver"])
     S = StructureProblem(problem, parameters)
