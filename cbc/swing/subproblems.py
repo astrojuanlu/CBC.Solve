@@ -9,7 +9,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-05-01
+# Last changed: 2012-05-02
 
 __all__ = ["FluidProblem", "StructureProblem", "MeshProblem",
            "extract_solution",
@@ -67,7 +67,6 @@ class FluidProblem(NavierStokes):
         # Don't plot and save solution in subsolvers
         self.parameters["solver_parameters"]["plot_solution"] = False
         self.parameters["solver_parameters"]["save_solution"] = False
-
 
     def mesh(self):
         return self.omega_F1
@@ -220,13 +219,11 @@ class StructureProblem(Hyperelasticity):
 
         self.V_F = VectorFunctionSpace(Omega_F, "CG", structure_element_degree)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", structure_element_degree)
-        self.V_F_DG = VectorFunctionSpace(Omega_F, "DG", structure_element_degree)
-        self.V_S_DG = VectorFunctionSpace(Omega_S, "DG", structure_element_degree)
 
-        self.test_F = TestFunction(self.V_F_DG)
-        self.trial_F = TrialFunction(self.V_F_DG)
-        self.G_F = Function(self.V_F_DG)
-        self.G_S = Function(self.V_S_DG)
+        self.test_F = TestFunction(self.V_F)
+        self.trial_F = TrialFunction(self.V_F)
+        self.G_F = Function(self.V_F)
+        self.G_S = Function(self.V_S)
         self.N_F = FacetNormal(Omega_F)
         self.N_S = FacetNormal(Omega_S)
         self.G_0 = problem.structure_boundary_traction_extra()

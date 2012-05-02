@@ -3,14 +3,14 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-05-01
+# Last changed: 2012-05-02
 
 # Modified by Marie E. Rognes
 
 from cbc.swing import *
 from right_hand_sides import *
 
-ref = 3
+ref = 0
 N = 5
 dt = 0.1/N/2**(ref)
 
@@ -60,7 +60,7 @@ class SimpleAnalytic(FSI):
         self.g_F = Expression(cpp_g_F, degree=1)
         self.F_S = Expression(cpp_F_S, degree=2)
         self.F_M = Expression(cpp_F_M, degree=3)
-        self.G_0 = Expression(cpp_G_S0, degree=2)
+        self.G_0 = Expression(cpp_G_S0, degree=3)
 
         # Initialize
         forces = [self.f_F, self.g_F, self.F_S, self.F_M, self.G_0]
@@ -81,6 +81,10 @@ class SimpleAnalytic(FSI):
         for s in solutions:
             s.C = C
             s.t = 0.0
+
+        # Testing
+        self.exact_F = True
+        self.exact_S = False
 
         # Initialize base class
         FSI.__init__(self, mesh)
@@ -127,17 +131,23 @@ class SimpleAnalytic(FSI):
         return [self.u_F]
 
     def fluid_velocity_dirichlet_boundaries(self):
-        return [noslip]
-        #return ["x[0] < 3.0"]
+        if self.exact_F:
+            return ["0.0 < 1.0"]
+        else:
+            return [noslip]
 
     def fluid_pressure_dirichlet_values(self):
-        return []
-        #return [self.p_F]
+        if self.exact_F:
+            return [self.p_F]
+        else:
+            return []
 
     def fluid_pressure_dirichlet_boundaries(self):
-        return []
+        if self.exact_F:
+            return ["0.0 < 1.0"]
+        else:
+            return []
         #return ["near(x[0], 0.0)"]
-        #return ["x[0] < 3.0"]
 
     def fluid_velocity_initial_condition(self):
         return self.u_F
@@ -161,7 +171,8 @@ class SimpleAnalytic(FSI):
         return Structure()
 
     def structure_density(self):
-        return 1000000.0
+        #return 1000000.0
+        return 100.0
 
     def structure_mu(self):
         return 1.0
@@ -174,8 +185,10 @@ class SimpleAnalytic(FSI):
         #return [self.U_S]
 
     def structure_dirichlet_boundaries(self):
-        return [noslip, right]
-        #return ["x[0] < 3.0"]
+        if self.exact_S:
+            return ["0.0 < 1.0", "0.0 < 1.0"]
+        else:
+            return [noslip, right]
 
     def structure_neumann_boundaries(self):
         return "on_boundary"
