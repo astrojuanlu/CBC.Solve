@@ -1,59 +1,12 @@
-__author__ = "Anders Logg"
+__author__ = "Marie E. Rognes"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# First added:  2012-03-04
-# Last changed: 2012-04-27
+# First added:  2012-04-27
+# Last changed: 2012-05-02
 
 from dolfin import *
 from time import sleep
-
-cpp_u_F = """
-class u_F : public Expression
-{
-public:
-
-  u_F() : Expression(2), C(0), t(0) {}
-
-  void eval(Array<double>& values, const Array<double>& xx,
-            const ufc::cell& cell) const
-  {
-    const double x = xx[0];
-
-    values[0] = 0.0;
-    values[1] = 2.0*pi*C*x*(1.0 - x)*sin(pi*t)*cos(pi*t);
-  }
-
-  double C;
-  double t;
-
-};
-"""
-
-cpp_p_F = """
-class p_F : public Expression
-{
-public:
-
-  p_F() : Expression(), C(0), t(0) {}
-
-  void eval(Array<double>& values, const Array<double>& xx,
-            const ufc::cell& cell) const
-  {
-    const double x = xx[0];
-    const double Y = xx[1];
-
-    const double a = sin(pi*t);
-    const double b = cos(pi*t);
-
-    values[0] = -2.0*pow(C, 2)*pow(1.0 - 2.0*x, 2)*pow(a, 3)*(a + pi*b);
-  }
-
-  double C;
-  double t;
-
-};
-"""
 
 cpp_U_S = """
 class U_S : public Expression
@@ -65,11 +18,10 @@ public:
   void eval(Array<double>& values, const Array<double>& xx,
             const ufc::cell& cell) const
   {
-    const double X = xx[0];
     const double Y = xx[1];
 
-    values[0] = 0.0;
-    values[1] = C*X*(1 - X)*sin(pi*Y)*pow(sin(pi*t), 2);
+    values[0] = C*Y*(1 - Y)*(1 - cos(t));
+    values[1] = 0;
   }
 
   double C;
@@ -88,11 +40,10 @@ public:
   void eval(Array<double>& values, const Array<double>& xx,
             const ufc::cell& cell) const
   {
-    const double X = xx[0];
     const double Y = xx[1];
 
-    values[0] = 0.0;
-    values[1] = 2.0*pi*C*X*(1 - X)*sin(pi*Y)*sin(pi*t)*cos(pi*t);
+    values[0] = C*Y*(1 - Y)*sin(t);
+    values[1] = 0;
   }
 
   double C;
@@ -114,8 +65,51 @@ public:
     const double X = xx[0];
     const double Y = xx[1];
 
-    values[0] = 0.0;
-    values[1] = C*X*(1 - X)*sin(pi*Y)*pow(sin(pi*t), 2);
+    values[0] = C*X*Y*(1 - Y)*(1 - cos(t));
+    values[1] = 0;
+  }
+
+  double C;
+  double t;
+
+};
+"""
+
+cpp_u_F = """
+class u_F : public Expression
+{
+public:
+
+  u_F() : Expression(2), C(0), t(0) {}
+
+  void eval(Array<double>& values, const Array<double>& xx,
+            const ufc::cell& cell) const
+  {
+    const double y = xx[1];
+
+    values[0] = C*y*(1 - y)*sin(t);
+    values[1] = 0;
+  }
+
+  double C;
+  double t;
+
+};
+"""
+
+cpp_p_F = """
+class p_F : public Expression
+{
+public:
+
+  p_F() : Expression(), C(0), t(0) {}
+
+  void eval(Array<double>& values, const Array<double>& xx,
+            const ufc::cell& cell) const
+  {
+    const double x = xx[0];
+
+    values[0] = 2*C*(1 - x)*sin(t);
   }
 
   double C;
@@ -134,19 +128,10 @@ public:
   void eval(Array<double>& values, const Array<double>& xx,
             const ufc::cell& cell) const
   {
-    const double x = xx[0];
+    const double y = xx[1];
 
-    const double A = 1.0;
-    const double B = 2.0;
-    const double D = 4.0;
-    const double E = 8.0;
-    const double a = sin(pi*t);
-    const double b = cos(pi*t);
-    const double fx = E*pow(C, 2)*(A - B*x)*pow(a, 3)*(a + pi*b);
-    const double fy = B*pow(pi, 2)*C*x*(A - x)*(pow(b, 2) - pow(a, 2)) + D*pi*C*a*b;
-
-    values[0] = fx;
-    values[1] = fy;
+    values[0] = C*y*(1 - y)*cos(t);
+    values[1] = 0;
   }
 
   double C;
@@ -165,39 +150,11 @@ public:
   void eval(Array<double>& values, const Array<double>& xx,
             const ufc::cell& cell) const
   {
-    const double X = xx[0];
     const double Y = xx[1];
 
-    const double rho_S = 100.0;
-
-    const double A = 1.0;
-    const double B = 2.0;
-    const double D = 3.0;
-    const double E = 6.0;
-    const double F = 8.0;
-    const double G = 16.0;
-    const double H = rho_S;
-    const double a = sin(pi*t);
-    const double b = cos(pi*t);
-    const double c = sin(pi*Y);
-    const double d = cos(pi*Y);
-    const double e = pow(a, 2);
-    const double f = pow(pi, 2);
-    const double g = pow(X, 2);
-    const double h = pow(c, 2);
-    const double i = pow(d, 2);
-    const double j = pow(b, 2);
-    const double k = pow(a, 4);
-    const double l = pow(C, 2);
-    const double m = pow(X, 3);
-    const double fx = C*e*(D*pi*d*(B*X - A) + C*e*(h*(B*f*X*g - D*f*g \
-                    - (G - f)*X + F) - D*f*X*i*(B*g - D*X + A)));
-    const double fy = B*C*e*c - C*pi*e*d - l*pi*k*d*c + B*pi*C*X*e*d \
-                    - 2.0*H*C*f*(g - X)*(j - e)*c - E*l*pi*(g - X)*k*d*c \
-                    + l*f*(D*g - B*m - X)*k*(i - h);
-
-    values[0] = fx;
-    values[1] = fy;
+    values[0] = 12*pow(C, 3)*(1 - cos(t))*pow((1 - 2*Y)*(1 - cos(t)), 2)
+              + 100*C*Y*(1 - Y)*cos(t) + 2*C*(1 - cos(t));
+    values[1] = 8*pow(C, 2)*(1 - 2*Y)*(2*(1 - cos(t)) - pow(sin(t), 2));
   }
 
   double C;
@@ -219,18 +176,8 @@ public:
     const double X = xx[0];
     const double Y = xx[1];
 
-    const double A = 1.0;
-    const double B = 2.0;
-    const double D = 3.0;
-    const double a = sin(pi*t);
-    const double b = cos(pi*t);
-    const double c = sin(pi*Y);
-    const double d = cos(pi*Y);
-    const double fx = D*C*pi*d*pow(a, 2)*(B*X - A);
-    const double fy = C*a*(B*c*a + pi*d*a*(B*X - A) - B*X*pi*c*b*(X - A));
-
-    values[0] = fx;
-    values[1] = fy;
+    values[0] = C*X*(-pow(Y, 2)*sin(t) + Y*sin(t) - 2*cos(t) + 2);
+    values[1] = 3*C*(-2*Y*cos(t) + 2*Y + cos(t) - 1);
   }
 
   double C;
@@ -239,64 +186,21 @@ public:
 };
 """
 
-mer_cpp_F_M = """
-class F_M : public Expression
+cpp_g_F = """
+class g_F : public Expression
 {
 public:
 
-  F_M() : Expression(2), C(0), t(0) {}
-
-  void eval(Array<double>& values, const Array<double>& xx,
-            const ufc::cell& cell) const
-  {
-    const double X = xx[0];
-    const double Y = xx[1];
-
-    const double sinpt2 = pow(sin(pi*t), 2);
-    const double pi2 = pow(pi, 2);
-    const double X2 = pow(X, 2);
-    const double A = sin(pi*Y);
-    const double B = sin(pi*t);
-    const double D = cos(pi*t);
-    const double E = cos(pi*Y);
-
-    const double fx = C*pi*sinpt2*E*(6.0*X - 3.0);
-    const double fy = 2.*C*sinpt2*A - 4.*C*pi2*X2*sinpt2*A \
-                       + 4.*C*X*pi2*sinpt2*A - 2.*pi*C*X2*D*A*B \
-                       + 2.*pi*C*X*D*A*B;
-    values[0] = fx;
-    values[1] = fy;
-  }
-
-  double C;
-  double t;
-
-};
-"""
-
-cpp_g_0 = """
-class g_0 : public Expression
-{
-public:
-
-  g_0() : Expression(2), C(0), t(0) {}
+  g_F() : Expression(2), C(0), t(0) {}
 
   void eval(Array<double>& values, const Array<double>& xx,
             const ufc::cell& cell) const
   {
     const double x = xx[0];
+    const double y = xx[1];
 
-    const double A = 1.0;
-    const double B = 2.0;
-    const double a = sin(pi*t);
-    const double b = cos(pi*t);
-    const double p = -B*pow(C, 2)*pow(A - B*x, 2)*pow(a, 3)*(a + pi*b);
-    const double gx = C*(A - B*x)*a*((A - p)*a - B*pi*b)
-                      / sqrt(A + pow(C, 2)*pow(A - B*x, 2)*pow(a, 4));
-    const double gy = 0.0;
-
-    values[0] = gx;
-    values[1] = gy;
+    values[0] = 2*C*(1 - x)*sin(t);
+    values[1] = -C*(1 - 2*y)*sin(t);
   }
 
   double C;
@@ -305,43 +209,12 @@ public:
 };
 """
 
-cpp_G_0 = """
-class G_0 : public Expression
+cpp_G_S0 = """
+class G_S0 : public Expression
 {
 public:
 
-  G_0() : Expression(2), C(0), t(0) {}
-
-  void eval(Array<double>& values, const Array<double>& xx,
-            const ufc::cell& cell) const
-  {
-    const double X = xx[0];
-
-    const double A = 1.0;
-    const double B = 2.0;
-    const double a = sin(pi*t);
-    const double b = cos(pi*t);
-    const double p = -B*pow(C, 2)*pow(A - B*X, 2)*pow(a, 3)*(a + pi*b);
-    const double Gx = C*(A - B*X)*a*((A - p)*a - B*pi*b)
-                        / (A + pow(C, 2)*pow(A - B*X, 2)*pow(a, 4));
-    const double Gy = 0.0;
-
-    values[0] = Gx;
-    values[1] = Gy;
-  }
-
-  double C;
-  double t;
-
-};
-"""
-
-mer_cpp_F_S = """
-class F_S : public Expression
-{
-public:
-
-  F_S() : Expression(2), C(0), t(0) {}
+  G_S0() : Expression(2), C(0), t(0) {}
 
   void eval(Array<double>& values, const Array<double>& xx,
             const ufc::cell& cell) const
@@ -349,71 +222,40 @@ public:
     const double X = xx[0];
     const double Y = xx[1];
 
-    const double sinpY = sin(pi*Y);
-    const double sinpY2 = pow(sin(pi*Y), 2);
-    const double sinpY3 = pow(sin(pi*Y), 3);
+    values[0] = 2*pow(C, 2)*pow(2*Y*cos(t) - 2*Y - cos(t) + 1, 2)
+               - C*(6*C*X*pow(Y, 2)*cos(t)
+               - 6*C*X*pow(Y, 2)
+               - 6*C*X*Y*cos(t)
+               + 6*C*X*Y
+               + C*X*cos(t)
+               - C*X
+               + 2*X
+               - 2)*sin(t);
 
-    const double sinpt = sin(pi*t);
-    const double sinpt2 = pow(sinpt, 2);
-    const double sinpt4 = pow(sinpt, 4);
-    const double sinpt6 = pow(sinpt, 6);
-
-    // const double cospt = cos(pi*t);
-    const double cospt2 = pow(cos(pi*t), 2);
-    const double cospY = cos(pi*Y);
-    const double cospY2 = pow(cos(pi*Y), 2);
-
-    const double X2 = pow(X, 2);
-    const double X3 = pow(X, 3);
-    const double X4 = pow(X, 4);
-    const double X5 = pow(X, 5);
-    const double X6 = pow(X, 6);
-
-    const double C2 = pow(C, 2);
-    const double C3 = pow(C, 3);
-
-    const double pi2 = pow(pi, 2);
-    const double pi3 = pow(pi, 3);
-    const double pi4 = pow(pi, 4);
-
-    const double A = 3.0;
-    const double B = 6.0;
-    const double D = 8.0;
-    const double E = 16.0;
-    const double F = 9.0;
-    const double G = 196.0;
-    const double H = 200.0;
-    const double I = 18.0;
-    const double J = 12.0;
-    const double K = 36.0;
-    const double L = 40.0;
-    const double M = 44.0;
-    const double two = 2.0;
-    const double N = 48.0;
-    const double P = 10.0;
-
-    const double Fx = -A*pi*C*sinpt2*cospY + B*pi*C*X*sinpt2*cospY
-    + D*C2*sinpY2*sinpt4 - E*X*C2*sinpY2*sinpt4
-    + X*pi2*C2*sinpY2*sinpt4 - B*pi2*C2*X3*cospY2*sinpt4
-    - A*X*pi2*C2*cospY2*sinpt4 - A*pi2*C2*X2*sinpY2*sinpt4
-    + two*pi2*C2*X3*sinpY2*sinpt4 + F*pi2*C2*X2*cospY2*sinpt4;
-
-    const double Fy = 2*C*sinpt2*sinpY - H*C*pi2*X2*cospt2*sinpY
-    - G*C*X*pi2*sinpt2*sinpY - D*pi*C2*sinpt4*cospY*sinpY
-    + G*C*pi2*X2*sinpt2*sinpY + H*C*X*pi2*cospt2*sinpY
-    - 72*pi2*C3*X3*cospY2*sinpt6*sinpY - L*pi*C2*X2*sinpt4*cospY*sinpY
-    - 24*pi3*C2*X3*sinpt4*cospY*sinpY - I*pi4*C3*X4*cospY2*sinpt6*sinpY
-    - D*X*pi2*C3*cospY2*sinpt6*sinpY - B*pi4*C3*X6*cospY2*sinpt6*sinpY
-    + B*pi4*C3*X3*cospY2*sinpt6*sinpY + J*pi3*C2*X2*sinpt4*cospY*sinpY
-    + J*pi3*C2*X4*sinpt4*cospY*sinpY + I*pi4*C3*X5*cospY2*sinpt6*sinpY
-    + K*pi2*C3*X4*cospY2*sinpt6*sinpY + L*pi*X*C2*sinpt4*cospY*sinpY
-    + M*pi2*C3*X2*cospY2*sinpt6*sinpY + J*C3*sinpY3*sinpt6
-    - N*X*C3*sinpY3*sinpt6 + N*C3*X2*sinpY3*sinpt6
-    - P*pi2*C3*X2*sinpY3*sinpt6 - D*pi2*C3*X4*sinpY3*sinpt6
-    + two*X*pi2*C3*sinpY3*sinpt6 + E*pi2*C3*X3*sinpY3*sinpt6;
-
-    values[0] = Fx;
-    values[1] = Fy;
+    values[1] = C*(
+               - 4*pow(C, 2)*pow(X, 2)*pow(Y, 3)*pow(sin(t), 3)
+               - 8*pow(C, 2)*pow(X, 2)*pow(Y, 3)*sin(t)*cos(t)
+               + 8*pow(C, 2)*pow(X, 2)*pow(Y, 3)*sin(t)
+               + 6*pow(C, 2)*pow(X, 2)*pow(Y, 2)*pow(sin(t), 3)
+               + 12*pow(C, 2)*pow(X, 2)*pow(Y, 2)*sin(t)*cos(t)
+               - 12*pow(C, 2)*pow(X, 2)*pow(Y, 2)*sin(t)
+               - 2*pow(C, 2)*pow(X, 2)*Y*pow(sin(t), 3)
+               - 4*pow(C, 2)*pow(X, 2)*Y*sin(t)*cos(t)
+               + 4*pow(C, 2)*pow(X, 2)*Y*sin(t)
+               + 4*C*pow(X, 2)*Y*sin(t)*cos(t)
+               - 4*C*pow(X, 2)*Y*sin(t)
+               - 2*C*pow(X, 2)*sin(t)*cos(t)
+               + 2*C*pow(X, 2)*sin(t)
+               - 4*C*X*Y*sin(t)*cos(t)
+               + 4*C*X*Y*sin(t)
+               + 2*C*X*sin(t)*cos(t)
+               - 2*C*X*sin(t)
+               + 2*Y*sin(t)
+               + 2*Y*cos(t)
+               - 2*Y
+               - sin(t)
+               - cos(t)
+               + 1);
   }
 
   double C;
@@ -422,48 +264,50 @@ public:
 };
 """
 
-
 if __name__ == "__main__":
 
     # Instantiate expressions
-    C = 0.2
+    C = 1.0
     u_F = Expression(cpp_u_F)
     p_F = Expression(cpp_p_F)
     U_S = Expression(cpp_U_S)
     U_M = Expression(cpp_U_M)
+    P_S = Expression(cpp_P_S)
     f_F = Expression(cpp_f_F)
-    F_S = Expression(mer_cpp_F_S)
-    F_M = Expression(mer_cpp_F_M)
-    g_0 = Expression(cpp_g_0)
-    G_0 = Expression(cpp_G_0)
+    F_S = Expression(cpp_F_S)
+    F_M = Expression(cpp_F_M)
+    g_F = Expression(cpp_g_F)
+    G_S0 = Expression(cpp_G_S0)
     u_F.C = C
     p_F.C = C
     U_S.C = C
     U_M.C = C
+    P_S.C = C
     f_F.C = C
     F_S.C = C
     F_M.C = C
-    g_0.C = C
-    G_0.C = C
+    G_S0.C = C
+    g_F.C = C
 
     # Functions used for plotting expressions
     n = 16
-    omega_F = Rectangle(0.0, 0.5, 1.0, 1.0, n, n)
-    Omega_M = Rectangle(0.0, 0.5, 1.0, 1.0, n, n)
-    Omega_S = Rectangle(0.0, 0.0, 1.0, 0.5, n, n)
-    V_F = VectorFunctionSpace(omega_F, "Lagrange", 1)
+    omega_F = UnitSquare(n, n)
+    Omega_M = UnitSquare(n, n)
+    Omega_S = Rectangle(1.0, 0.0, 2.0, 1.0, n, n)
+    V_F = VectorFunctionSpace(omega_F, "Lagrange", 2)
     Q_F = FunctionSpace(omega_F, "Lagrange", 1)
-    V_S = VectorFunctionSpace(Omega_S, "Lagrange", 1)
-    V_M = VectorFunctionSpace(Omega_M, "Lagrange", 1)
+    V_S = VectorFunctionSpace(Omega_S, "Lagrange", 2)
+    V_M = VectorFunctionSpace(Omega_M, "Lagrange", 2)
     _u_F = Function(V_F)
     _p_F = Function(Q_F)
     _U_S = Function(V_S)
     _U_M = Function(V_M)
+    _P_S = Function(V_S)
     _f_F = Function(V_F)
     _F_S = Function(V_S)
     _F_M = Function(V_S)
-    _g_0 = Function(V_F)
-    _G_0 = Function(V_M)
+    _g_F = Function(V_F)
+    _G_S0 = Function(V_S)
 
     # Animate solutions
     T = 0.5
@@ -477,32 +321,35 @@ if __name__ == "__main__":
         u_F.t = t
         p_F.t = t
         U_S.t = t
+        P_S.t = t
         U_M.t = t
         f_F.t = t
         F_S.t = t
         F_M.t = t
-        g_0.t = t
-        G_0.t = t
+        g_F.t = t
+        G_S0.t = t
 
         _u_F.interpolate(u_F)
         _p_F.interpolate(p_F)
         _U_S.interpolate(U_S)
+        _P_S.interpolate(U_S)
         _U_M.interpolate(U_M)
         _f_F.interpolate(f_F)
         _F_S.interpolate(F_S)
         _F_M.interpolate(F_M)
-        _g_0.interpolate(g_0)
-        _G_0.interpolate(G_0)
+        _g_F.interpolate(g_F)
+        _G_S0.interpolate(G_S0)
 
-        #plot(_u_F, title="u_F", autoposition=False)
-        #plot(_p_F, title="p_F", autoposition=False)
-        #plot(_U_S, title="U_S", autoposition=False, mode="displacement")
-        #plot(_U_M, title="U_M", autoposition=False, mode="displacement")
-        #plot(_f_F, title="f_F", autoposition=False)
-        #plot(_F_S, title="F_S", autoposition=False)
+        plot(_u_F, title="u_F", autoposition=False)
+        plot(_p_F, title="p_F", autoposition=False)
+        plot(_U_S, title="U_S", autoposition=False)
+        plot(_U_M, title="U_M", autoposition=False)
+        plot(_P_S, title="P_S", autoposition=False)
+        plot(_f_F, title="f_F", autoposition=False)
+        plot(_F_S, title="F_S", autoposition=False)
         plot(_F_M, title="F_M", autoposition=False)
-        #plot(_g_0, title="g_0", autoposition=False)
-        #plot(_G_0, title="G_0", autoposition=False)
+        plot(_g_F, title="g_F", autoposition=False)
+        plot(_G_S0, title="G_S0", autoposition=False)
 
         t += dt
 

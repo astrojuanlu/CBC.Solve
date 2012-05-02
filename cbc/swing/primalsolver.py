@@ -93,6 +93,12 @@ def solve_primal(problem, parameters):
     integrated_goal_functional = 0.0
     old_goal_functional = 0.0
 
+    # Get reference value of goal functional
+    if hasattr(problem, "reference_value"):
+        reference_value = problem.reference_value()
+    else:
+        reference_value = None
+
     # Time-stepping loop
     while True:
 
@@ -249,7 +255,7 @@ def solve_primal(problem, parameters):
             t1 = t1 + dt
 
     # Save final value of goal functional
-    save_goal_functional_final(goal_functional, integrated_goal_functional, parameters)
+    save_goal_functional_final(goal_functional, integrated_goal_functional, reference_value, parameters)
 
     # Report elapsed time
     info_blue("Primal solution computed in %g seconds." % (python_time() - cpu_time))

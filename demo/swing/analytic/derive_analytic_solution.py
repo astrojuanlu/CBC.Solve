@@ -1,12 +1,15 @@
-"This script checks that the analytical solution satisfies the FSI problem"
-
 __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-27
+#
+# Modified by Marie E. Rognes
+# Last changed: 2012-05-02
 
 from sympy import *
+
+# Turn this to True to get more diagnostics output
+debug = True
 
 def underline(s): print s + "\n" + "-"*len(s)
 
@@ -14,212 +17,68 @@ def underline(s): print s + "\n" + "-"*len(s)
 x, y, X, Y, t = symbols("x y X Y t")
 C = symbols("C")
 
+func_of_time = t
+
 # Material parameters
-mu = 1
-lmbda = 2
-nu = 1
-rho_S = 100
+mu = Integer(1)
+lmbda = Integer(2)
+nu = Integer(1)
+rho_S = Integer(100)
 
-# Simplification not handled by SymPy
-sin2pit = 2*sin(pi*t)*cos(pi*t)
-cos2pit = cos(pi*t)**2 - sin(pi*t)**2
-cos2piY = cos(pi*Y)**2 - sin(pi*Y)**2
+# Follow these steps to derive your favorite analytical solution ...
 
-# Analytical solutions
-u_F = Matrix([0, C*pi*x*(1 - x)*sin2pit])
-p_F = -2*C**2*(1 - 2*x)**2*sin(pi*t)**3*(sin(pi*t) + pi*cos(pi*t))
-P_F = -2*C**2*(1 - 2*X)**2*sin(pi*t)**3*(sin(pi*t) + pi*cos(pi*t))
-U_S = Matrix([0, C*X*(1 - X)*sin(pi*Y)*sin(pi*t)**2])
-P_S = Matrix([0, 2*pi*C*X*(1 - X)*sin(pi*Y)*sin(pi*t)*cos(pi*t)])
-U_M = Matrix([0, C*X*(1 - X)*sin(pi*Y)*sin(pi*t)**2])
+# Step 0: Decide where the FSI boundary should be in the reference
+# frame
+X_ = Integer(1)
 
-# Right-hand side for fluid problem
-f_F = Matrix([8*C**2*(1 - 2*x)*sin(pi*t)**3*(sin(pi*t) + pi*cos(pi*t)),
-              2*C*pi**2*x*(1 - x)*cos2pit + 2*C*pi*sin2pit])
+# Step 1: Choose U_M, U_S such that is satisfies some nice boundary
+# and initial conditions
+U_S = Matrix([C*Y*(1 - Y)*(1 - cos(t)), 0])
+P_S = Matrix([diff(U_S[0], t), diff(U_S[1], t)])
+U_M = Matrix([C*X*Y*(1 - Y)*(1 - cos(t)), 0])
+P_M = Matrix([diff(U_M[0], t), diff(U_M[1], t)])
 
-# Right-hand side for structure problem
-f_S = Matrix([C*sin(pi*t)**2*(3*pi*cos(pi*Y)*(2*X - 1) \
-              + C*sin(pi*t)**2*( \
-              sin(pi*Y)**2*(2*pi**2*X**3 - 3*pi**2*X**2 - (16 - pi**2)*X + 8) \
-              - 3*pi**2*X*cos(pi*Y)**2*(2*X**2 - 3*X + 1))), \
-              2*C*sin(pi*t)**2*sin(pi*Y) - C*pi*sin(pi*t)**2*cos(pi*Y) \
-              - C**2*pi*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
-              + 2*pi*C*X*sin(pi*t)**2*cos(pi*Y)
-              - 2*rho_S*C*pi**2*(X**2 - X)*(cos(pi*t)**2 - sin(pi*t)**2)*sin(pi*Y) \
-              - 6*C**2*pi*(X**2 - X)*sin(pi*t)**4*cos(pi*Y)*sin(pi*Y) \
-              + C**2*pi**2*(3*X**2 - 2*X**3 - X)*sin(pi*t)**4*(cos(pi*Y)**2 - sin(pi*Y)**2)
-])
+# One can then derive the movement of the fsi boundary from the
+# structure displacement:
+x_ = X_ + U_S[0].subs(X, X_).subs(Y, y)
 
-sinpY = sin(pi*Y)
-sinpY2 = pow(sin(pi*Y), 2)
-sinpY3 = pow(sin(pi*Y), 3)
-cospY = cos(pi*Y)
-cospY2 = pow(cos(pi*Y), 2)
-sinpt = sin(pi*t)
-sinpt2 = pow(sinpt, 2)
-sinpt4 = pow(sinpt, 4)
-sinpt6 = pow(sinpt, 6)
-cospt = cos(pi*t)
-X2 = pow(X, 2)
-X3 = pow(X, 3)
-X4 = pow(X, 4)
-X6 = pow(X, 6)
-C2 = pow(C, 2)
-C3 = pow(C, 3)
-pi2 = pow(pi, 2)
-pi3 = pow(pi, 3)
-pi4 = pow(pi, 4)
+# Print location of FSI boundary
+if debug:
+    underline("Location of FSI boundary")
+    print "(X_, Y) =", (X_, Y)
+    print "(x_, y) =", (x_, y)
+    print
 
-fx = -3*pi*C*sinpt2*cospY + 6*pi*C*X*sinpt2*cospY \
-    + 8*C2*sinpY2*sinpt4 - 16*X*C2*sinpY2*sinpt4 \
-    + X*pi2*C2*sinpY2*sinpt4 - 6*pi2*C2*X3*cospY2*sinpt4 \
-    - 3*X*pi2*C2*cospY2*sinpt4 - 3*pi2*C2*X2*sinpY2*sinpt4 \
-    + 2*pi2*C2*X3*sinpY2*sinpt4 + 9*pi2*C2*X2*cospY2*sinpt4
-fy = 2*C*sinpt2*sinpY - 200*C*pi2*X2*cospt**2*sinpY \
-    - 196*C*X*pi2*sinpt2*sinpY - 8*pi*C2*sinpt4*cospY*sinpY \
-    + 196*C*pi2*X2*sinpt2*sinpY + 200*C*X*pi2*cospt**2*sinpY \
-    - 72*pi2*C3*X3*cospY2*sinpt6*sinpY - 40*pi*C2*X2*sinpt4*cospY*sinpY \
-    - 24*pi3*C2*X3*sinpt4*cospY*sinpY - 18*pi4*C3*X4*cospY2*sinpt6*sinpY \
-    - 8*X*pi2*C3*cospY2*sinpt6*sinpY - 6*pi4*C3*X6*cospY2*sinpt6*sinpY \
-    + 6*pi4*C3*X3*cospY2*sinpt6*sinpY + 12*pi3*C2*X2*sinpt4*cospY*sinpY \
-    + 12*pi3*C2*X4*sinpt4*cospY*sinpY + 18*pi4*C3*X**5*cospY2*sinpt6*sinpY \
-    + 36*pi2*C3*X4*cospY2*sinpt6*sinpY + 40*pi*X*C2*sinpt4*cospY*sinpY \
-    + 44*pi2*C3*X2*cospY2*sinpt6*sinpY + 12*C3*sinpY3*sinpt6 \
-    - 48*X*C3*sinpY3*sinpt6 + 48*C3*X2*sinpY3*sinpt6 \
-    - 10*pi2*C3*X2*sinpY3*sinpt6 - 8*pi2*C3*X4*sinpY3*sinpt6 \
-    + 2*X*pi2*C3*sinpY3*sinpt6 + 16*pi2*C3*X3*sinpY3*sinpt6
+# Step 2: Define the fluid velocity by u_F(x) = d/dt U_S(X=1, Y) =
+# P_S(X = 1, Y). The substitution here is ok because P_S does not
+# depend on X and y == Y.
+u_F = P_S.subs(Y, y)
 
-# Revised right-hand-side for structure_problem
-mer_f_S = Matrix([fx, fy])
-
-# Right-hand side for mesh problem
-f_M = Matrix([3*C*pi*cos(pi*Y)*sin(pi*t)**2*(2*X - 1),
-              C*sin(pi*t)*( \
-              2*sin(pi*Y)*sin(pi*t) \
-              + pi*cos(pi*Y)*sin(pi*t)*(2*X - 1) \
-              - 2*X*pi*sin(pi*Y)*cos(pi*t)*(X - 1))])
-
-
-# Revised right-hand side for the mesh problem
-mer_f_M = Matrix([-3*pi*C*sin(pi*t)**2*cos(pi*Y)  \
-                       + 6*pi*C*X*sin(pi*t)**2*cos(pi*Y),
-                   2*C*sin(pi*t)**2*sin(pi*Y) \
-                       - 4*C*pi**2*X**2*sin(pi*t)**2*sin(pi*Y) \
-                       + 4*C*X*pi**2*sin(pi*t)**2*sin(pi*Y) \
-                       - 2*pi*C*X**2*cos(pi*t)*sin(pi*Y)*sin(pi*t) \
-                       + 2*pi*C*X*cos(pi*t)*sin(pi*Y)*sin(pi*t)])
-
-# Additional boundary traction for structure
-g_0 = Matrix([C*(1 - 2*x)*sin(pi*t)*((1 - p_F)*sin(pi*t) - 2*pi*cos(pi*t)) \
-              / sqrt(1 + C**2*(1 - 2*x)**2*sin(pi*t)**4), 0])
-G_0 = Matrix([C*(1 - 2*X)*sin(pi*t)*((1 - P_F)*sin(pi*t) - 2*pi*cos(pi*t)) \
-              / (1 + C**2*(1 - 2*X)**2*sin(pi*t)**4), 0])
-
-# C++ friendly versions of analytical formulas
-
-def pow(expression, power):
-    return expression**power
-
-def eval_f_F():
-    A = Integer(1)
-    B = Integer(2)
-    D = Integer(4)
-    E = Integer(8)
-    a = sin(pi*t)
-    b = cos(pi*t)
-    fx = E*pow(C, 2)*(A - B*x)*pow(a, 3)*(a + pi*b)
-    fy = B*pow(pi, 2)*C*x*(A - x)*(pow(b, 2) - pow(a, 2)) + D*pi*C*a*b
-    return Matrix([fx, fy])
-
-def eval_f_S():
-    A = Integer(1)
-    B = Integer(2)
-    D = Integer(3)
-    E = Integer(6)
-    F = Integer(8)
-    G = Integer(16)
-    H = Integer(rho_S)
-    a = sin(pi*t)
-    b = cos(pi*t)
-    c = sin(pi*Y)
-    d = cos(pi*Y)
-    e = pow(a, 2)
-    f = pow(pi, 2)
-    g = pow(X, 2)
-    h = pow(c, 2)
-    i = pow(d, 2)
-    j = pow(b, 2)
-    k = pow(a, 4)
-    l = pow(C, 2)
-    m = pow(X, 3)
-    fx = C*e*(D*pi*d*(B*X - A) + C*e*(h*(B*f*X*g - D*f*g \
-         - (G - f)*X + F) - D*f*X*i*(B*g - D*X + A)))
-    fy = B*C*e*c - C*pi*e*d - l*pi*k*d*c + B*pi*C*X*e*d - 2*H*C*f*(g - X)*(j - e)*c \
-         - E*l*pi*(g - X)*k*d*c + l*f*(D*g - B*m - X)*k*(i - h)
-    return Matrix([fx, fy])
-
-def eval_f_M():
-    A = Integer(1)
-    B = Integer(2)
-    D = Integer(3)
-    a = sin(pi*t)
-    b = cos(pi*t)
-    c = sin(pi*Y)
-    d = cos(pi*Y)
-    fx = D*C*pi*d*pow(a, 2)*(B*X - A)
-    fy = C*a*(B*c*a + pi*d*a*(B*X - A) - B*X*pi*c*b*(X - A))
-    return Matrix([fx, fy])
-
-def eval_g_0():
-    A = Integer(1)
-    B = Integer(2)
-    a = sin(pi*t)
-    b = cos(pi*t)
-    p = -B*pow(C, 2)*pow(A - B*x, 2)*pow(a, 3)*(a + pi*b)
-    gx = C*(A - B*x)*a*((A - p)*a - B*pi*b) / sqrt(A + pow(C, 2)*pow(A - B*x, 2)*pow(a, 4))
-    gy = 0
-    return Matrix([gx, gy])
-
-def eval_G_0():
-    A = Integer(1)
-    B = Integer(2)
-    a = sin(pi*t)
-    b = cos(pi*t)
-    p = -B*pow(C, 2)*pow(A - B*X, 2)*pow(a, 3)*(a + pi*b)
-    Gx = C*(A - B*X)*a*((A - p)*a - B*pi*b) / (A + pow(C, 2)*pow(A - B*X, 2)*pow(a, 4))
-    Gy = 0
-    return Matrix([Gx, Gy])
+# Step 3: Define your favorite pressure
+p_F = 2*C*nu*(1 - x)*sin(t)
 
 # Print solutions
 underline("Analytical solutions")
 print "u_F =\n", u_F, "\n"
 print "p_F =\n", p_F, "\n"
 print "U_S =\n", U_S, "\n"
+print "P_S =\n", P_S, "\n"
 print "U_M =\n", U_M, "\n"
+print "P_M =\n", P_M, "\n"
 print
 
-# Print right-hand sides
-underline("Right-hand sides")
-print "f_F =\n", f_F, "\n"
-print "f_S =\n", mer_f_S, "\n"
-print "f_M =\n", mer_f_M, "\n"
-print "g_0 =\n", g_0, "\n"
-print "G_0 =\n", g_0, "\n"
-print
-
-# Location of FSI boundary
-Y_ = Rational(1, 2)
-y_ = Y_ + U_S[1].subs(Y, Y_).subs(X, x)
-
-# Print location of FSI boundary
-underline("Location of FSI boundary")
-print "Y_ =", Y_
-print "y_ =", y_
-print
-
-# Normal direction at FSI boundary
-n = Matrix([-simplify(diff(U_S[1], X)), 1]).subs(Y, Y_).subs(X, x)
+# Normal direction at FSI boundary follows from the definitions
+n = Matrix([1, -simplify(diff(U_S[0], Y))]).subs(Y, y)
 n = n / sqrt(n[0]**2 + n[1]**2)
+
+# Normal direction on reference fsi boundary
+N = Matrix([1, 0])
+
+if debug:
+    underline("Normal of FSI boundary")
+    print "n = ", n
+    print "N = ", N
+    print
 
 # Compute gradients
 grad_u_F = Matrix([[simplify(diff(u_F[0], x)), simplify(diff(u_F[0], y))],
@@ -229,106 +88,124 @@ Grad_U_S = Matrix([[simplify(diff(U_S[0], X)), simplify(diff(U_S[0], Y))],
 Grad_U_M = Matrix([[simplify(diff(U_M[0], X)), simplify(diff(U_M[0], Y))],
                    [simplify(diff(U_M[1], X)), simplify(diff(U_M[1], Y))]])
 
-# Symbolic gradients used for debugging
-#fx, gx, gy = symbols("fx gx gy")
-#grad_u_F = Matrix([[0, 0], [fx, 0]])
-#Grad_U_S = Matrix([[0, 0], [gx, gy]])
-#n = Matrix([-gx, 1]) / sqrt(1 + gx**2)
-#p_F = -gx*(fx + 2*gx)
-#g_0 = Matrix([(gx - fx + fx*gx**2 + 2*gx**3) / sqrt(1 + gx**2), 0])
-
-# Print gradients
-underline("Gradients")
-print "grad(u_F) =\n", grad_u_F, "\n"
-print "Grad(U_S) =\n", Grad_U_S, "\n"
-print "Grad(U_M) =\n", Grad_U_M, "\n"
-print
+if debug:
+    underline("Gradients")
+    print "grad(u_F) =\n", grad_u_F, "\n"
+    print "Grad(U_S) =\n", Grad_U_S, "\n"
+    print "Grad(U_M) =\n", Grad_U_M, "\n"
+    print
 
 # Compute Cauchy stress for fluid
 I = eye(2)
 sigma_F = nu*(grad_u_F + grad_u_F.T) - p_F*I
 
-# Compute Cauchy stress for structure
+# Compute reference stress for structure
 F_S = I + Grad_U_S
 J_S = F_S.det()
 E_S = Rational(1, 2)*(F_S.T*F_S - I)
 Sigma_S = F_S*(2*mu*E_S + lmbda*E_S.trace()*I)
-sigma_S = Sigma_S*F_S.T / J_S
 
-# Compute boundary traction
-g_F = sigma_F*n
-g_S = sigma_S*n
+# Compute reference stress tensor for fluid.
+F_M = I + Grad_U_M
+F_M_inv = F_M.inv()
+J_M = F_M.det()
+U_F = u_F.subs(y, Y)
+Grad_U_F = Matrix([[simplify(diff(U_F[0], X)), simplify(diff(U_F[0], Y))],
+                   [simplify(diff(U_F[1], X)), simplify(diff(U_F[1], Y))]])
+P_F = p_F.subs(y, Y).subs(x, X + U_M[0])
+Sigma_F = nu*(Grad_U_F * F_M_inv + F_M_inv.T * Grad_U_F.T) - P_F*I
 
-# Check continuity of mesh
-underline("Checking continuity of mesh: U_S - U_M")
-print U_S.subs(Y, Y_) - U_M.subs(Y, Y_)
+# Compute boundary tractions on fsi boundary in reference frame:
+G_F = J_M*Sigma_F*F_M_inv.T*N
+G_F = Matrix([simplify(G_F[0]), simplify(G_F[1])])
+G_S = Sigma_S*N
+G_S = Matrix([simplify(G_S[0]), simplify(G_S[1])])
+
+# Compute top boundary stress for fluid
+underline("Deriving left traction for fluid")
+N_left = Matrix([-1, 0])
+traction_left = sigma_F*N_left
+print traction_left
 print
 
-# Check continuity of velocity
-underline("Checking continuity of velocity: u_F - p_S")
-p_S = U_S.diff(t).subs(Y, Y_).subs(X, x)
-print u_F - p_S
+# Compute boundary traction in reference frame
+underline("Deriving additional reference boundary traction G_0")
+G_0 = G_S - G_F
+G_0 = Matrix([simplify(G_0[0]), simplify(G_0[1])])
+print G_0
 print
 
-# Check continuity of boundary traction
-underline("Checking continuity of boundary traction: g_S - g_F - g_0")
-r = g_S - g_F
-r = r.subs(Y, Y_).subs(y, y_).subs(X, x)
-r = Matrix([simplify(r[0]), simplify(r[1])])
-print "g_0[0] = ", r[0]
-exit()
-
-r = g_S - g_F - g_0
-r = r.subs(Y, Y_).subs(y, y_).subs(X, x)
-r = Matrix([simplify(r[0]), simplify(r[1])])
-print r
-print
-
-# Check that the Navier-Stokes equations are satisfied
-underline("Checking that the Navier-Stokes equations are satisfied")
-div_sigma_F = Matrix([diff(sigma_F[0], x) + diff(sigma_F[1], y),
-                      diff(sigma_F[2], x) + diff(sigma_F[3], y)])
+# Derive right-hand side f_F such that the Navier-Stokes equations are
+# satisfied
+underline("Deriving right-hand side for the Navier--Stokes equations")
+div_sigma_F = Matrix([diff(sigma_F[0, 0], x) + diff(sigma_F[0, 1], y),
+                      diff(sigma_F[1, 0], x) + diff(sigma_F[1, 1], y)])
 dot_u_F = Matrix([diff(u_F[0], t), diff(u_F[1], t)])
 grad_u_F_u = grad_u_F*u_F
-r = dot_u_F + grad_u_F_u - div_sigma_F - f_F
-r = Matrix([simplify(r[0]), simplify(r[1])])
-print r
-div_u_F = diff(u_F[0], x) + diff(u_F[1], y)
-print div_u_F
+f_F = dot_u_F + grad_u_F_u - div_sigma_F
+f_F = Matrix([simplify(f_F[0]), simplify(f_F[1])])
+print f_F
 print
 
+if debug:
+    underline("Divergence of fluid stress tensor")
+    print "div sigma_F =", div_sigma_F
+    print
+
 # Check that the hyperelastic equation is satisfied
-underline("Checking that hyperelastic equation is satisfied")
-Div_Sigma_S = Matrix([diff(Sigma_S[0], X) + diff(Sigma_S[1], Y),
-                      diff(Sigma_S[2], X) + diff(Sigma_S[3], Y)])
+underline("Deriving right-hand side for the hyperelastic equation")
+Div_Sigma_S = Matrix([diff(Sigma_S[0, 0], X) + diff(Sigma_S[0, 1], Y),
+                      diff(Sigma_S[1, 0], X) + diff(Sigma_S[1, 1], Y)])
 ddot_U_S = Matrix([diff(diff(U_S[0], t), t), diff(diff(U_S[1], t), t)])
-r = rho_S*ddot_U_S - Div_Sigma_S - mer_f_S
-r = Matrix([simplify(r[0]), simplify(r[1])])
-print r
+f_S = rho_S*ddot_U_S - Div_Sigma_S
+f_S = Matrix([simplify(f_S[0]), simplify(f_S[1])])
+print f_S
 print
 
 # Check that the mesh equation is satisfied
-underline("Checking that mesh equation is satisfied")
+underline("Deriving right-hand side for mesh equation")
 Sigma_M = mu*(Grad_U_M + Grad_U_M.T) + lmbda*Grad_U_M.trace()*I
 Div_Sigma_M = Matrix([diff(Sigma_M[0], X) + diff(Sigma_M[1], Y),
                       diff(Sigma_M[2], X) + diff(Sigma_M[3], Y)])
 dot_U_M = Matrix([diff(U_M[0], t), diff(U_M[1], t)])
-r = dot_U_M - Div_Sigma_M - mer_f_M
-r = Matrix([simplify(r[0]), simplify(r[1])])
-print r
+f_M = dot_U_M - Div_Sigma_M
+f_M = Matrix([simplify(f_M[0]), simplify(f_M[1])])
+print f_M
 print
 
-# # Check that C++ style right-hand sides evaluate correctly
-# underline("Checking evaluation of C++ style right-hand sides")
-# print eval_f_F() - f_F
-# print eval_f_S() - f_S # FIXME
-# print eval_f_M() - f_M # FIXME
-# print eval_g_0() - g_0
-# print eval_G_0() - G_0
-# print
+if debug:
 
-# Compute reference value of functional: integrated Y-displacement
-T = Rational(1, 10)
-M = integrate(integrate(integrate(U_S[1], (X, 0, 1)), (Y, 0, Y_)), (t, 0, T))
-underline("Value of reference functional")
-print "M =", M
+    # Check continuity of mesh
+    underline("Checking continuity of mesh: U_S - U_M")
+    print U_S.subs(X, X_) - U_M.subs(X, X_)
+    print
+
+    # Check continuity of velocity
+    underline("Checking continuity of velocity: u_F - p_S")
+    p_S = U_S.diff(t).subs(X, X_).subs(Y, y)
+    print u_F - p_S
+    print
+
+    # Check continuity of boundary traction
+    underline("Checking continuity of boundary traction: G_S - G_F - G_0")
+    r = G_S - G_F - G_0
+    r = Matrix([simplify(r[0]), simplify(r[1])])
+    print r
+    print
+
+    underline("Checking that u_F is divergence free")
+    div_u_F = diff(u_F[0], x) + diff(u_F[1], y)
+    print div_u_F
+    print
+
+    underline("Average values of pressures in reference and current frame")
+    average_P_F = integrate(integrate(P_F, (X, 0, 1)), (Y, 0, 1))
+    average_p_F = integrate(integrate(p_F, (x, x_, 1)), (y, 0, 1))
+    print average_P_F
+    print average_p_F
+    print
+
+    underline("Goal functional")
+    T = symbols("T")
+    goal_functional = integrate(integrate(integrate(U_S[0], (X, 1, 2)), (Y, 0, 1)), (t, 0, T))
+    print goal_functional

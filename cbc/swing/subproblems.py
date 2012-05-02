@@ -84,7 +84,7 @@ class FluidProblem(NavierStokes):
         return self.problem.fluid_boundary_traction(V)
 
     def mesh_velocity(self, V):
-        w = self.problem.mesh_velocity(V)
+        w = Function(V)
         self.w = w
         return self.w
 
