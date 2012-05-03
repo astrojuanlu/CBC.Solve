@@ -12,7 +12,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2011-09-19
+# Last changed: 2012-05-03
 
 from numpy import append
 from dolfin import *
@@ -96,7 +96,7 @@ def read_primal_data(U, t, Omega, Omega_F, Omega_S, series, parameters):
 def read_dual_data(Z, t, series):
     "Read dual solution at given time"
     info("Reading dual data at t = %g" % t)
-    series.retrieve(Z.vector(), t)
+    series.retrieve(Z.vector(), t, False)
 
 def read_timestep_range(T, series):
     "Read time step range"

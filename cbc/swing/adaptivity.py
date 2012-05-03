@@ -5,7 +5,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-05-02
+# Last changed: 2012-05-03
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg, dot
@@ -82,9 +82,16 @@ def estimate_error(problem, parameters):
     kn = Constant(0.0)
 
     # Get weak residuals for E_0
-    R0_F0, R0_S0, R0_M0 = weak_residuals(UU0, UU1, UU0, EZ0, kn, problem)
-    R0_F1, R0_S1, R0_M1 = weak_residuals(UU0, UU1, UU1, EZ1, kn, problem)
-    R0_F,  R0_S,  R0_M  = weak_residuals(UU0, UU1, UU,  EZ,  kn, problem)
+    mer_debugging = True
+    if mer_debugging:
+        info_green("Using dual approximation for error estimate")
+        R0_F0, R0_S0, R0_M0 = weak_residuals(UU0, UU1, UU0, Z0, kn, problem)
+        R0_F1, R0_S1, R0_M1 = weak_residuals(UU0, UU1, UU1, Z1, kn, problem)
+        R0_F,  R0_S,  R0_M  = weak_residuals(UU0, UU1, UU,  Z,  kn, problem)
+    else:
+        R0_F0, R0_S0, R0_M0 = weak_residuals(UU0, UU1, UU0, EZ0, kn, problem)
+        R0_F1, R0_S1, R0_M1 = weak_residuals(UU0, UU1, UU1, EZ1, kn, problem)
+        R0_F,  R0_S,  R0_M  = weak_residuals(UU0, UU1, UU,  EZ,  kn, problem)
 
     # Get strong residuals for E_h
     Rh_F, Rh_S, Rh_M = strong_residuals(UU0, UU1, UU, Z, EZ, dg, kn, problem)
@@ -118,6 +125,7 @@ def estimate_error(problem, parameters):
         # Get current time and time step
         t0 = timestep_range[i - 1]
         t1 = timestep_range[i]
+        tmid = 0.5*(t0 + t1)         # MER: Get midtime for body forces
         T  = problem.end_time()
         dt = t1 - t0
         kn.assign(dt)
@@ -141,6 +149,7 @@ def estimate_error(problem, parameters):
         read_dual_data(ZZ1, t1, dual_series)
 
         # Extrapolate dual data
+        info_green("Extrapolatin'")
         [EZ0[j].extrapolate(Z0[j]) for j in range(num_fields)]
         [EZ1[j].extrapolate(Z1[j]) for j in range(num_fields)]
 
@@ -154,31 +163,74 @@ def estimate_error(problem, parameters):
                          exterior_facet_domains=problem.fsi_boundary,
                          interior_facet_domains=problem.fsi_boundary)
                 for r0 in [R0_F0, R0_F1, R0_F]]
-        e0_S = [assemble(r0, mesh=Omega,
-                         cell_domains=problem.cell_domains,
-                         exterior_facet_domains=problem.fsi_boundary,
-                         interior_facet_domains=problem.fsi_boundary)
-                for r0 in [R0_S0, R0_S1, R0_S]]
+
+        e0_S = []
+        if mer_debugging:
+            # Update sources for structure residuals
+            B = problem.structure_body_force()
+            G_0 = problem.structure_boundary_traction_extra()
+
+            B.t = t0
+            G_0.t = t0
+            value = assemble(R0_S0, mesh=Omega,
+                             cell_domains=problem.cell_domains,
+                             exterior_facet_domains=problem.fsi_boundary,
+                             interior_facet_domains=problem.fsi_boundary)
+            e0_S += [value]
+
+            B.t = t1
+            G_0.t = t1
+            value = assemble(R0_S1, mesh=Omega,
+                             cell_domains=problem.cell_domains,
+                             exterior_facet_domains=problem.fsi_boundary,
+                             interior_facet_domains=problem.fsi_boundary)
+            e0_S += [value]
+
+            B.t = tmid
+            G_0.t = tmid
+            value = assemble(R0_S, mesh=Omega,
+                             cell_domains=problem.cell_domains,
+                             exterior_facet_domains=problem.fsi_boundary,
+                             interior_facet_domains=problem.fsi_boundary)
+            e0_S += [value]
+
+        else:
+            B = problem.structure_body_force()
+            B.t = 0.0
+            e0_S = [assemble(r0, mesh=Omega,
+                             cell_domains=problem.cell_domains,
+                             exterior_facet_domains=problem.fsi_boundary,
+                             interior_facet_domains=problem.fsi_boundary)
+                    for r0 in [R0_S0, R0_S1, R0_S]]
+
         e0_M = [assemble(r0, mesh=Omega,
                          cell_domains=problem.cell_domains,
                          exterior_facet_domains=problem.fsi_boundary,
                          interior_facet_domains=problem.fsi_boundary)
                 for r0 in [R0_M0, R0_M1, R0_M]]
 
+        print "(t0, t1) = ", (t0, t1)
+        print "e_0_F = %r" % e0_F
+        print "e_0_S = %r" % e0_S
+        print "e_0_M = %r" % e0_M
+
         # Assemble strong residuals for space discretization error
         info("Assembling error contributions")
         e_F = [assemble(Rh_Fi,
                         cell_domains=problem.cell_domains,
                         exterior_facet_domains=problem.fsi_boundary,
-                        interior_facet_domains=problem.fsi_boundary) for Rh_Fi in Rh_F]
+                        interior_facet_domains=problem.fsi_boundary)
+               for Rh_Fi in Rh_F]
         e_S = [assemble(Rh_Si,
                         cell_domains=problem.cell_domains,
                         exterior_facet_domains=problem.fsi_boundary,
-                        interior_facet_domains=problem.fsi_boundary) for Rh_Si in Rh_S]
+                        interior_facet_domains=problem.fsi_boundary)
+               for Rh_Si in Rh_S]
         e_M = [assemble(Rh_Mi,
                         cell_domains=problem.cell_domains,
                         exterior_facet_domains=problem.fsi_boundary,
-                        interior_facet_domains=problem.fsi_boundary) for Rh_Mi in Rh_M]
+                        interior_facet_domains=problem.fsi_boundary)
+               for Rh_Mi in Rh_M]
 
         # Assemble weak residual for time discretization error (error estimate)
         Rk0 = assemble(Rk0_F + Rk0_S + Rk0_M,
@@ -206,9 +258,12 @@ def estimate_error(problem, parameters):
                        interior_facet_domains=problem.fsi_boundary)
 
         # Reset vectors for assembly of residuals
-        if eta_F is None: eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
-        if eta_S is None: eta_S = [zeros(Omega.num_cells()) for i in range(len(e_S))]
-        if eta_M is None: eta_M = [zeros(Omega.num_cells()) for i in range(len(e_M))]
+        if eta_F is None:
+            eta_F = [zeros(Omega.num_cells()) for i in range(len(e_F))]
+        if eta_S is None:
+            eta_S = [zeros(Omega.num_cells()) for i in range(len(e_S))]
+        if eta_M is None:
+            eta_M = [zeros(Omega.num_cells()) for i in range(len(e_M))]
 
         # Add to error indicators
         for i in range(len(e_F)):
@@ -234,6 +289,9 @@ def estimate_error(problem, parameters):
         end()
 
     # Sum total error representation
+    print "E_0_F = %.15f" % E_0_F
+    print "E_0_S = %.15f" % E_0_S
+    print "E_0_M = %.15f" % E_0_M
     E_0 = E_0_F + E_0_S + E_0_M
 
     # Sum total computational error

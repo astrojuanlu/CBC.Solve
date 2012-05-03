@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-02-14
+# Last changed: 2012-05-03
 
 from dolfin import *
 
@@ -58,6 +58,10 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     mu_M    = problem.mesh_mu()
     lmbda_M = problem.mesh_lmbda()
 
+    # MER: added these
+    B       = problem.structure_body_force()
+    G_0     = problem.structure_boundary_traction_extra()
+
     # Define normals
     N = FacetNormal(Omega)
     N_F = N
@@ -92,9 +96,14 @@ def weak_residuals(U0, U1, U, w, kn, problem):
         + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx_F
 
     # Structure residual
+    # MER: What about the body force? (Added, makes a difference, good)
+    # MER And the extra stress? (Added, sign dubious, b/c evaluates to
+    # zero since it is orthogonal to test case dual solution)
     R_S = inner(v_S, Dt_P_S)*dx_S + inner(grad(v_S), Sigma_S)*dx_S \
         - inner(v_S('-'), dot(Sigma_F('+'), N_S('+')))*d_FSI \
-        + inner(q_S, Dt_U_S - P_S)*dx_S
+        + inner(q_S, Dt_U_S - P_S)*dx_S \
+        - inner(v_S, B)*dx_S \
+        + inner(v_S('-'), G_0('-'))*d_FSI \
 
     # Mesh residual contributions
     R_M = inner(v_M, Dt_U_M)*dx_F + inner(sym(grad(v_M)), Sigma_M)*dx_F \
