@@ -20,8 +20,8 @@ public:
   {
     const double Y = xx[1];
 
-    values[0] = C*Y*(1 - Y)*(1 - cos(t));
-    values[1] = 0;
+    values[0] = C*Y*t*(1 - Y);
+    values[1] = 0.0;
   }
 
   double C;
@@ -42,8 +42,8 @@ public:
   {
     const double Y = xx[1];
 
-    values[0] = C*Y*(1 - Y)*sin(t);
-    values[1] = 0;
+    values[0] = C*Y*(1 - Y);
+    values[1] = 0.0;
   }
 
   double C;
@@ -51,6 +51,7 @@ public:
 
 };
 """
+
 
 cpp_U_M = """
 class U_M : public Expression
@@ -65,8 +66,8 @@ public:
     const double X = xx[0];
     const double Y = xx[1];
 
-    values[0] = C*X*Y*(1 - Y)*(1 - cos(t));
-    values[1] = 0;
+    values[0] = C*X*Y*t*(1 - Y);
+    values[1] = 0.0;
   }
 
   double C;
@@ -74,6 +75,30 @@ public:
 
 };
 """
+
+cpp_P_M = """
+class P_M : public Expression
+{
+public:
+
+  P_M() : Expression(2), C(0), t(0) {}
+
+  void eval(Array<double>& values, const Array<double>& xx,
+            const ufc::cell& cell) const
+  {
+    const double X = xx[0];
+    const double Y = xx[1];
+
+    values[0] = C*X*Y*(1 - Y);
+    values[1] = 0.0;
+  }
+
+  double C;
+  double t;
+
+};
+"""
+
 
 cpp_u_F = """
 class u_F : public Expression
@@ -87,8 +112,8 @@ public:
   {
     const double y = xx[1];
 
-    values[0] = C*y*(1 - y)*sin(t);
-    values[1] = 0;
+    values[0] = C*y*(1 - y);
+    values[1] = 0.0;
   }
 
   double C;
@@ -107,9 +132,9 @@ public:
   void eval(Array<double>& values, const Array<double>& xx,
             const ufc::cell& cell) const
   {
-    const double x = xx[0];
+    const double y = xx[1];
 
-    values[0] = 2*C*(1 - x)*sin(t);
+    values[0] = C*(1 - 2*y);
   }
 
   double C;
@@ -117,6 +142,7 @@ public:
 
 };
 """
+
 
 cpp_f_F = """
 class f_F : public Expression
@@ -128,10 +154,8 @@ public:
   void eval(Array<double>& values, const Array<double>& xx,
             const ufc::cell& cell) const
   {
-    const double y = xx[1];
-
-    values[0] = C*y*(1 - y)*cos(t);
-    values[1] = 0;
+    values[0] = 2*C;
+    values[1] = -2*C;
   }
 
   double C;
@@ -139,6 +163,7 @@ public:
 
 };
 """
+
 
 cpp_F_S = """
 class F_S : public Expression
@@ -152,9 +177,9 @@ public:
   {
     const double Y = xx[1];
 
-    values[0] = 12*pow(C, 3)*(1 - cos(t))*pow((1 - 2*Y)*(1 - cos(t)), 2)
-              + 100*C*Y*(1 - Y)*cos(t) + 2*C*(1 - cos(t));
-    values[1] = 8*pow(C, 2)*(1 - 2*Y)*(2*(1 - cos(t)) - pow(sin(t), 2));
+    values[0] = 2*C*t + 12*pow(C, 3)*pow(t,3)
+               - 48*Y*pow(C, 3)*pow(t, 3) + 48*pow(C, 3)*pow(Y, 2)*pow(t,3);
+    values[1] = 8*pow(C, 2)*pow(t, 2) - 16*Y*pow(C, 2)*pow(t, 2);
   }
 
   double C;
@@ -176,8 +201,8 @@ public:
     const double X = xx[0];
     const double Y = xx[1];
 
-    values[0] = C*X*(-pow(Y, 2)*sin(t) + Y*sin(t) - 2*cos(t) + 2);
-    values[1] = 3*C*(-2*Y*cos(t) + 2*Y + cos(t) - 1);
+    values[0] = C*X*Y + 2*C*X*t - C*X*pow(Y,2);
+    values[1] = -3*C*t + 6*C*Y*t;
   }
 
   double C;
@@ -196,11 +221,10 @@ public:
   void eval(Array<double>& values, const Array<double>& xx,
             const ufc::cell& cell) const
   {
-    const double x = xx[0];
     const double y = xx[1];
 
-    values[0] = 2*C*(1 - x)*sin(t);
-    values[1] = -C*(1 - 2*y)*sin(t);
+    values[0] = C*(1 - 2*y);
+    values[1] = - C + 2*C*y;
   }
 
   double C;
@@ -222,40 +246,9 @@ public:
     const double X = xx[0];
     const double Y = xx[1];
 
-    values[0] = 2*pow(C, 2)*pow(2*Y*cos(t) - 2*Y - cos(t) + 1, 2)
-               - C*(6*C*X*pow(Y, 2)*cos(t)
-               - 6*C*X*pow(Y, 2)
-               - 6*C*X*Y*cos(t)
-               + 6*C*X*Y
-               + C*X*cos(t)
-               - C*X
-               + 2*X
-               - 2)*sin(t);
+    values[0] = C - 2*C*Y + 2*pow(C, 2)*pow(t, 2) + X*t*pow(C, 2) - 8*Y*pow(C, 2)*pow(t, 2) + 8*pow(C, 2)*pow(Y, 2)*pow(t, 2) - 4*X*Y*t*pow(C, 2) + 4*X*t*pow(C, 2)*pow(Y, 2);
+    values[1] = -C + C*t + 2*C*Y - 2*C*Y*t - X*t*pow(C, 2) - 4*X*t*pow(C, 2)*pow(Y, 2) + 4*X*Y*t*pow(C, 2);
 
-    values[1] = C*(
-               - 4*pow(C, 2)*pow(X, 2)*pow(Y, 3)*pow(sin(t), 3)
-               - 8*pow(C, 2)*pow(X, 2)*pow(Y, 3)*sin(t)*cos(t)
-               + 8*pow(C, 2)*pow(X, 2)*pow(Y, 3)*sin(t)
-               + 6*pow(C, 2)*pow(X, 2)*pow(Y, 2)*pow(sin(t), 3)
-               + 12*pow(C, 2)*pow(X, 2)*pow(Y, 2)*sin(t)*cos(t)
-               - 12*pow(C, 2)*pow(X, 2)*pow(Y, 2)*sin(t)
-               - 2*pow(C, 2)*pow(X, 2)*Y*pow(sin(t), 3)
-               - 4*pow(C, 2)*pow(X, 2)*Y*sin(t)*cos(t)
-               + 4*pow(C, 2)*pow(X, 2)*Y*sin(t)
-               + 4*C*pow(X, 2)*Y*sin(t)*cos(t)
-               - 4*C*pow(X, 2)*Y*sin(t)
-               - 2*C*pow(X, 2)*sin(t)*cos(t)
-               + 2*C*pow(X, 2)*sin(t)
-               - 4*C*X*Y*sin(t)*cos(t)
-               + 4*C*X*Y*sin(t)
-               + 2*C*X*sin(t)*cos(t)
-               - 2*C*X*sin(t)
-               + 2*Y*sin(t)
-               + 2*Y*cos(t)
-               - 2*Y
-               - sin(t)
-               - cos(t)
-               + 1);
   }
 
   double C;
@@ -263,6 +256,7 @@ public:
 
 };
 """
+
 
 if __name__ == "__main__":
 
@@ -273,6 +267,7 @@ if __name__ == "__main__":
     U_S = Expression(cpp_U_S)
     U_M = Expression(cpp_U_M)
     P_S = Expression(cpp_P_S)
+    P_M = Expression(cpp_P_M)
     f_F = Expression(cpp_f_F)
     F_S = Expression(cpp_F_S)
     F_M = Expression(cpp_F_M)
@@ -283,6 +278,7 @@ if __name__ == "__main__":
     U_S.C = C
     U_M.C = C
     P_S.C = C
+    P_M.C = C
     f_F.C = C
     F_S.C = C
     F_M.C = C
@@ -303,6 +299,7 @@ if __name__ == "__main__":
     _U_S = Function(V_S)
     _U_M = Function(V_M)
     _P_S = Function(V_S)
+    _P_M = Function(V_M)
     _f_F = Function(V_F)
     _F_S = Function(V_S)
     _F_M = Function(V_S)
@@ -321,7 +318,6 @@ if __name__ == "__main__":
         u_F.t = t
         p_F.t = t
         U_S.t = t
-        P_S.t = t
         U_M.t = t
         f_F.t = t
         F_S.t = t
@@ -332,7 +328,6 @@ if __name__ == "__main__":
         _u_F.interpolate(u_F)
         _p_F.interpolate(p_F)
         _U_S.interpolate(U_S)
-        _P_S.interpolate(U_S)
         _U_M.interpolate(U_M)
         _f_F.interpolate(f_F)
         _F_S.interpolate(F_S)
@@ -345,6 +340,7 @@ if __name__ == "__main__":
         plot(_U_S, title="U_S", autoposition=False)
         plot(_U_M, title="U_M", autoposition=False)
         plot(_P_S, title="P_S", autoposition=False)
+        plot(_P_M, title="P_M", autoposition=False)
         plot(_f_F, title="f_F", autoposition=False)
         plot(_F_S, title="F_S", autoposition=False)
         plot(_F_M, title="F_M", autoposition=False)

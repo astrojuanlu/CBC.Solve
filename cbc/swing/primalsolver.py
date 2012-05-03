@@ -6,6 +6,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2012-05-02
 
+import math
 import pylab
 from time import time as python_time
 from dolfin import *
@@ -55,8 +56,11 @@ def solve_primal(problem, parameters):
     # Record number of time steps
     timestep_counter = 0
 
+    # Update of user problem at t = 0 (important for initial conditions)
+    problem.update(0.0, 0.0, dt)
+
     # Define the three subproblems
-    F = FluidProblem(problem)
+    F = FluidProblem(problem, solver_type=parameters["fluid_solver"])
     S = StructureProblem(problem, parameters)
     M = MeshProblem(problem, parameters)
 
@@ -76,8 +80,9 @@ def solve_primal(problem, parameters):
 
     # Save initial solution to file and series
     U = extract_solution(F, S, M)
-    if save_solution: _save_solution(U, files)
-    write_primal_data(U, 0, primal_series)
+    if save_solution:
+        _save_solution(U, files)
+        write_primal_data(U, 0, primal_series)
 
     # Initialize adaptive data
     init_adaptive_data(problem, parameters)
@@ -90,6 +95,12 @@ def solve_primal(problem, parameters):
     # Initialize integration of goal functional (assuming M(u) = 0 at t = 0)
     integrated_goal_functional = 0.0
     old_goal_functional = 0.0
+
+    # Get reference value of goal functional
+    if hasattr(problem, "reference_value"):
+        reference_value = problem.reference_value()
+    else:
+        reference_value = None
 
     # Time-stepping loop
     while True:
@@ -129,7 +140,7 @@ def solve_primal(problem, parameters):
             end()
 
             # Transfer structure displacement to fluid mesh
-            begin("* Transferring structure displacement to fluid mesh (S --> M)")
+            begin("* Transferring structure displacement to mesh (S --> M)")
             M.update_structure_displacement(U_S1)
             end()
 
@@ -139,7 +150,7 @@ def solve_primal(problem, parameters):
             end()
 
             # Transfer mesh displacement to fluid
-            begin("* Transferring mesh displacement to fluid (M --> S)")
+            begin("* Transferring mesh displacement to fluid (M --> F)")
             F.update_mesh_displacement(U_M1, dt, num_smoothings)
             end()
 
@@ -148,11 +159,37 @@ def solve_primal(problem, parameters):
             increment = norm(U_S0.vector())
             U_S0.vector()[:] = U_S1.vector()[:]
 
-            # Plot solution
-            if plot_solution: _plot_solution(u_F1, p_F1, U_S1, U_M1)
-
             # Check convergence
-            if increment < itertol:
+            if increment < itertol and iter > 2:
+
+                info_green("Increment is %g. Maybe plotting" % increment)
+                # Plot solution
+                if plot_solution:
+                    _plot_solution(u_F1, p_F1, U_S0, U_M1)
+
+                (u_F_ex, p_F_ex, U_S_ex, P_S_ex, U_M_ex) \
+                    = problem.exact_solution()
+                u_F_ex.t = t1
+                p_F_ex.t = t1
+                U_S_ex.t = t1
+                U_M_ex.t = t1
+
+                print "||u_F_ex - u_F || = %.15g" % errornorm(u_F_ex, u_F1),
+                print "||u_F_ex|| = %.15g"        % norm(u_F_ex, mesh=F.mesh()),
+                print "||u_F|| = %.15g"           % norm(u_F1, mesh=F.mesh())
+
+                print "||p_F_ex - p_F || = %.15g" % errornorm(p_F_ex, p_F1),
+                print "||p_F_ex|| = %.15g"        % norm(p_F_ex, mesh=F.mesh()),
+                print "||p_F|| = %.15g"           % norm(p_F1, mesh=F.mesh())
+
+                print "||U_S_ex - U_S || = %.15g" % errornorm(U_S_ex, U_S1),
+                print "||U_S_ex|| = %.15g"        % norm(U_S_ex, mesh=problem.structure_mesh()),
+                print "||U_S|| = %.15g"           % norm(U_S1, mesh=problem.structure_mesh())
+
+                print "||U_M_ex - U_M || = %.15g" % errornorm(U_M_ex, U_M1),
+                print "||U_M_ex|| = %.15g"        % norm(U_M_ex, mesh=problem.fluid_mesh()),
+                print "||U_M|| = %.15g"           % norm(U_M1, mesh=problem.fluid_mesh())
+
                 info("")
                 info_green("Increment = %g (tolerance = %g), converged after %d iterations" % (increment, itertol, iter + 1))
                 info("")
@@ -183,8 +220,9 @@ def solve_primal(problem, parameters):
 
         # Save solution and time series to file
         U = extract_solution(F, S, M)
-        if save_solution: _save_solution(U, files)
-        write_primal_data(U, t1, primal_series)
+        if save_solution:
+            _save_solution(U, files)
+            write_primal_data(U, t1, primal_series)
 
         # Move to next time step
         F.update(t1)
@@ -220,21 +258,23 @@ def solve_primal(problem, parameters):
             t1 = t1 + dt
 
     # Save final value of goal functional
-    save_goal_functional_final(goal_functional, integrated_goal_functional, parameters)
+    save_goal_functional_final(goal_functional, integrated_goal_functional, reference_value, parameters)
 
     # Report elapsed time
     info_blue("Primal solution computed in %g seconds." % (python_time() - cpu_time))
     info("")
 
     # Return solution
-    return goal_functional
+    return (goal_functional, integrated_goal_functional)
 
 def _plot_solution(u_F, p_F, U_S, U_M):
     "Plot solution"
     plot(u_F, title="Fluid velocity")
     plot(p_F, title="Fluid pressure")
-    #plot(U_S, title="Structure displacement", mode="displacement")
-    #plot(U_M, title="Mesh displacement", mode="displacement")
+    plot(U_S, title="Structure displacement")
+    plot(U_M, title="Approx U_M")
+    #interactive()
+
 
 def _save_solution(U, files):
     "Save solution to VTK"

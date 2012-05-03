@@ -2,26 +2,35 @@ __author__ = "Anders Logg"
 __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-03-05
+# Last changed: 2012-04-30
 
 __all__ = ["NavierStokes"]
 
-from dolfin import error, Constant, Parameters
+from dolfin import error, Constant, Parameters, info
 from cbc.common import CBCProblem
 from cbc.flow.solvers import NavierStokesSolver
+from cbc.flow.saddlepointsolver import TaylorHoodSolver
 from ufl import grad, Identity
 
 class NavierStokes(CBCProblem):
     "Base class for all Navier-Stokes problems"
 
-    def __init__(self, parameters=None):
+    def __init__(self, parameters=None, solver="ipcs"):
         "Create Navier-Stokes problem"
 
+        self.parameters = Parameters("problem_parameters")
+
         # Create solver
-        self.solver = NavierStokesSolver(self)
+        if solver == "taylor-hood":
+            info("Using Taylor-Hood based Navier-Stokes solver")
+            self.solver = TaylorHoodSolver(self)
+        elif solver == "ipcs":
+            info("Using IPCS based Navier-Stokes solver")
+            self.solver = NavierStokesSolver(self)
+        else:
+            error("Unknown Navier--Stokes solver: %s" % solver)
 
         # Set up parameters
-        self.parameters = Parameters("problem_parameters")
         self.parameters.add(self.solver.parameters)
 
     def solve(self):
@@ -72,6 +81,10 @@ class NavierStokes(CBCProblem):
 
     def body_force(self, V):
         "Return body force f"
+        return []
+
+    def boundary_traction(self, V):
+        "Return boundary traction g = sigma(u, p) * n"
         return []
 
     def mesh_velocity(self, V):

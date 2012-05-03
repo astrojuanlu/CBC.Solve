@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2009 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # Modified by Harish Narayanan, 2012
-# Last changed: 2012-02-20
+# Last changed: 2012-05-01
 
 __all__ = ["NavierStokesSolver"]
 
@@ -23,6 +23,7 @@ class NavierStokesSolver(CBCSolver):
         # Set up parameters
         self.parameters = Parameters("solver_parameters")
         self.parameters.add("plot_solution", True)
+        self.parameters.add("zero_average_pressure", False)
         self.parameters.add("save_solution", True)
         self.parameters.add("store_solution_data", False)
 
@@ -35,6 +36,7 @@ class NavierStokesSolver(CBCSolver):
         V1 = VectorFunctionSpace(mesh, "CG", 1)
         V = VectorFunctionSpace(mesh, "CG", 2)
         Q = FunctionSpace(mesh, "CG", 1)
+        R = FunctionSpace(mesh, "R", 0)
 
         # Coefficients
         mu = Constant(problem.viscosity())  # Dynamic viscosity [Ps x s]
@@ -42,11 +44,16 @@ class NavierStokesSolver(CBCSolver):
         n = FacetNormal(mesh)
         k = Constant(dt)
         f = problem.body_force(V1)
+        g = problem.boundary_traction(V1)
         w = problem.mesh_velocity(V1)
 
         # If no body forces are specified, assume it is 0
         if f == []:
             f = Constant((0,)*V1.mesh().geometry().dim())
+
+        # If no boundary forces are specified, assume it is 0
+        if g is None:
+            g = Constant((0,)*V1.mesh().geometry().dim())
 
         # Create boundary conditions
         bcu = create_dirichlet_conditions(problem.velocity_dirichlet_values(),
@@ -80,10 +87,14 @@ class NavierStokesSolver(CBCSolver):
 
         # Tentative velocity step (sigma formulation)
         U = 0.5*(u0 + u)
-        F1 = rho*(1/k)*inner(v, u - u0)*dx + rho*inner(v, grad(u0)*(u0 - w))*dx \
+        F1 = rho*(1/k)*inner(v, u - u0)*dx \
+            + rho*inner(v, grad(u0)*(u0 - w))*dx \
             + inner(epsilon(v), sigma(U, p0))*dx \
-            + inner(v, p0*n)*ds - mu*inner(grad(U).T*n, v)*ds \
-            - inner(v, f)*dx
+            - inner(v, g)*ds \
+            - inner(v, f)*dx \
+            # MER: I don't like these. Yes, I know about the swirl.
+            #+ inner(v, p0*n)*ds \
+            #- mu*inner(grad(U).T*n, v)*ds \
         a1 = lhs(F1)
         L1 = rhs(F1)
 
@@ -91,11 +102,23 @@ class NavierStokesSolver(CBCSolver):
         a2 = inner(grad(q), k*grad(p))*dx
         L2 = inner(grad(q), k*grad(p0))*dx - q*rho*div(u1)*dx
 
+        # Add alternative using proper constraint
+        QR = Q*R
+        q_r, s_r = TestFunctions(QR)
+        p_r, r_r = TrialFunctions(QR)
+        self.QR = QR
+
+        a2_r = inner(grad(q_r), k*grad(p_r))*dx + r_r*q_r*dx + p_r*s_r*dx
+        L2_r = inner(grad(q_r), k*grad(p0))*dx - q_r*rho*div(u1)*dx
+
         # Velocity correction
         a3 = inner(v, rho*u)*dx
         L3 = inner(v, rho*u1)*dx + inner(v, k*grad(p0 - p1))*dx
 
         # Create solvers
+        #solver1 = LUSolver()
+        #solver2 = LUSolver()
+        #solver3 = LUSolver()
         solver1 = KrylovSolver("gmres", "ilu")
         solver2 = KrylovSolver("gmres", "amg")
         solver3 = KrylovSolver("gmres", "ilu")
@@ -116,9 +139,11 @@ class NavierStokesSolver(CBCSolver):
         self.p1 = p1
         self.L1 = L1
         self.L2 = L2
+        self.L2_r = L2_r
         self.L3 = L3
         self.a1 = a1
         self.a2 = a2
+        self.a2_r = a2_r
         self.a3 = a3
         self.solver1 = solver1
         self.solver2 = solver2
@@ -153,6 +178,7 @@ class NavierStokesSolver(CBCSolver):
 
         # Check if we need to reassemble
         if not dt == self.dt:
+            info("Using actual timestep: %g" % dt)
             self.dt = dt
             self.k.assign(dt)
             self.reassemble()
@@ -166,14 +192,25 @@ class NavierStokesSolver(CBCSolver):
 
         # Pressure correction
         begin("Computing pressure correction")
-        b = assemble(self.L2)
-        if len(self.bcp) == 0 or is_periodic(self.bcp): normalize(b)
-        [bc.apply(self.A2, b) for bc in self.bcp]
-        if is_periodic(self.bcp):
-            solve(self.A2, self.p1.vector(), b)
+        if self.parameters["zero_average_pressure"]:
+            info_red("Using L2 average constraint")
+            b = assemble(self.L2_r)
+            qr = Function(self.QR)
+            solve(self.A2_r, qr.vector(), b)
+            self.p1.assign(qr.split()[0])
         else:
-            self.solver2.solve(self.A2, self.p1.vector(), b)
-        if len(self.bcp) == 0 or is_periodic(self.bcp): normalize(self.p1.vector())
+            b = assemble(self.L2)
+
+            if len(self.bcp) == 0 or is_periodic(self.bcp):
+                normalize(b)
+
+            [bc.apply(self.A2, b) for bc in self.bcp]
+            if is_periodic(self.bcp):
+                solve(self.A2, self.p1.vector(), b)
+            else:
+                self.solver2.solve(self.A2, self.p1.vector(), b)
+            if len(self.bcp) == 0 or is_periodic(self.bcp):
+                normalize(self.p1.vector())
         end()
 
         # Velocity correction
@@ -222,9 +259,11 @@ class NavierStokesSolver(CBCSolver):
         info("(Re)assembling matrices")
         self.A1 = assemble(self.a1)
         self.A2 = assemble(self.a2)
+        self.A2_r = assemble(self.a2_r)
         self.A3 = assemble(self.a3)
         self.b1 = assemble(self.L1)
         self.b2 = assemble(self.L2)
+        self.b2_r = assemble(self.L2_r)
         self.b3 = assemble(self.L3)
 
     def solution(self):

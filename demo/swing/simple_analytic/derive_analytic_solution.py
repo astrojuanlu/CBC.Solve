@@ -33,9 +33,9 @@ X_ = Integer(1)
 
 # Step 1: Choose U_M, U_S such that is satisfies some nice boundary
 # and initial conditions
-U_S = Matrix([C*Y*(1 - Y)*(1 - cos(t)), 0])
+U_S = Matrix([C*Y*(1 - Y)*func_of_time, 0])
+U_M = Matrix([C*X*Y*(1 - Y)*func_of_time, 0])
 P_S = Matrix([diff(U_S[0], t), diff(U_S[1], t)])
-U_M = Matrix([C*X*Y*(1 - Y)*(1 - cos(t)), 0])
 P_M = Matrix([diff(U_M[0], t), diff(U_M[1], t)])
 
 # One can then derive the movement of the fsi boundary from the
@@ -52,19 +52,21 @@ if debug:
 # Step 2: Define the fluid velocity by u_F(x) = d/dt U_S(X=1, Y) =
 # P_S(X = 1, Y). The substitution here is ok because P_S does not
 # depend on X and y == Y.
-u_F = P_S.subs(Y, y)
+u_F = P_S.subs(X, X_).subs(Y, y)
 
-# Step 3: Define your favorite pressure
-p_F = 2*C*nu*(1 - x)*sin(t)
-
+# Step 3: Define your favorite pressure such that its average value is
+# zero.
+p_F = C*nu*(1 - 2*y)
 # Print solutions
 underline("Analytical solutions")
+
+#print "p_F =\n", p_F, "\n"
+print "U_S =\n", U_S, "\n"
+print "U_M =\n", U_M, "\n"
+print "P_S =\n", P_S, "\n"
+print "P_M =\n", P_M, "\n"
 print "u_F =\n", u_F, "\n"
 print "p_F =\n", p_F, "\n"
-print "U_S =\n", U_S, "\n"
-print "P_S =\n", P_S, "\n"
-print "U_M =\n", U_M, "\n"
-print "P_M =\n", P_M, "\n"
 print
 
 # Normal direction at FSI boundary follows from the definitions
@@ -112,8 +114,9 @@ J_M = F_M.det()
 U_F = u_F.subs(y, Y)
 Grad_U_F = Matrix([[simplify(diff(U_F[0], X)), simplify(diff(U_F[0], Y))],
                    [simplify(diff(U_F[1], X)), simplify(diff(U_F[1], Y))]])
-P_F = p_F.subs(y, Y).subs(x, X + U_M[0])
+P_F = p_F.subs(y, Y)
 Sigma_F = nu*(Grad_U_F * F_M_inv + F_M_inv.T * Grad_U_F.T) - P_F*I
+Sigma_F = Sigma_F
 
 # Compute boundary tractions on fsi boundary in reference frame:
 G_F = J_M*Sigma_F*F_M_inv.T*N
@@ -146,11 +149,6 @@ f_F = dot_u_F + grad_u_F_u - div_sigma_F
 f_F = Matrix([simplify(f_F[0]), simplify(f_F[1])])
 print f_F
 print
-
-if debug:
-    underline("Divergence of fluid stress tensor")
-    print "div sigma_F =", div_sigma_F
-    print
 
 # Check that the hyperelastic equation is satisfied
 underline("Deriving right-hand side for the hyperelastic equation")
@@ -206,6 +204,5 @@ if debug:
     print
 
     underline("Goal functional")
-    T = symbols("T")
-    goal_functional = integrate(integrate(integrate(U_S[0], (X, 1, 2)), (Y, 0, 1)), (t, 0, T))
-    print goal_functional
+    goal_functional = integrate(integrate(integrate(U_S[0], (X, 1, 2)), (Y, 0, 1)), (t, 0, 0.1)).subs(C, 1)
+    print "%.15g" % goal_functional

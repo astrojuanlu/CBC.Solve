@@ -5,7 +5,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-10
+# Last changed: 2012-05-02
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg, dot
@@ -540,17 +540,22 @@ def save_goal_functional(t1, goal_functional, integrated_goal_functional, parame
 
     info("Value of goal functional   at t = %.16g: %.16g" % (t1, goal_functional))
     info("Integrated goal functional at t = %.16g: %.16g" % (t1, integrated_goal_functional))
+
     f = open("%s/goal_functional.txt" % parameters["output_directory"], "a")
     f.write("%d %.16g %.16g %.16g\n" % (_refinement_level, t1, goal_functional, integrated_goal_functional))
     f.close()
 
-def save_goal_functional_final(goal_functional, integrated_goal_functional, parameters):
+def save_goal_functional_final(goal_functional, integrated_goal_functional, reference_value, parameters):
     "Saving goal functional at final time"
 
     global _refinement_level
 
-    info("Value of goal functional at T:   %g" % goal_functional)
-    info("Integrated goal functional at T: %g" % integrated_goal_functional)
+    info("Value of goal functional at end time:           %.16g" % goal_functional)
+    info("Integrated goal functional final time           %.16g" % integrated_goal_functional)
+    if reference_value is not None:
+        info("Reference value for integrated goal functional: %.16g" % reference_value)
+        info("Error in integrated goal functional:            %.16g" % (reference_value - integrated_goal_functional))
+
     f = open("%s/goal_functional_final.txt" % parameters["output_directory"], "a")
     f.write("%d %.16g %.16g\n" % (_refinement_level, goal_functional, integrated_goal_functional))
     f.close()

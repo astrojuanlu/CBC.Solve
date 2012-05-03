@@ -23,6 +23,7 @@ def default_parameters():
     p.add("global_storage", False)
 
     p.add("structure_element_degree", 1)
+    p.add("mesh_element_degree", 1)
     p.add("max_num_refinements", 100)
     p.add("tolerance", 0.001)
     p.add("fixedpoint_tolerance", 1e-12)
@@ -40,6 +41,9 @@ def default_parameters():
 
     p.add("output_directory", "unspecified")
     p.add("description", "unspecified")
+
+    # Hacks
+    p.add("fluid_solver", "ipcs")
 
     return p
 

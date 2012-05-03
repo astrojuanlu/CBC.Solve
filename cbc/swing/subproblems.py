@@ -9,9 +9,10 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-03-10
+# Last changed: 2012-05-02
 
-__all__ = ["FluidProblem", "StructureProblem", "MeshProblem", "extract_solution",
+__all__ = ["FluidProblem", "StructureProblem", "MeshProblem",
+           "extract_solution",
            "extract_num_dofs"]
 
 from copy import copy
@@ -26,7 +27,7 @@ from operators import Sigma_M as _Sigma_M
 # Define fluid problem
 class FluidProblem(NavierStokes):
 
-    def __init__(self, problem):
+    def __init__(self, problem, solver_type=None):
 
         # Store problem
         self.problem = problem
@@ -56,7 +57,12 @@ class FluidProblem(NavierStokes):
         self.num_dofs = self.V.dim() + self.Q.dim()
 
         # Initialize base class
-        NavierStokes.__init__(self)
+        if solver_type is None:
+            solver_type = "ipcs"
+        NavierStokes.__init__(self, solver=solver_type)
+        if (solver_type == "ipcs"
+            and problem.fluid_pressure_dirichlet_values() == []):
+            self.parameters["solver_parameters"]["zero_average_pressure"] = True
 
         # Don't plot and save solution in subsolvers
         self.parameters["solver_parameters"]["plot_solution"] = False
@@ -74,8 +80,12 @@ class FluidProblem(NavierStokes):
     def body_force(self, V):
         return self.problem.fluid_body_force()
 
+    def boundary_traction(self, V):
+        return self.problem.fluid_boundary_traction(V)
+
     def mesh_velocity(self, V):
-        self.w = Function(V)
+        w = Function(V)
+        self.w = w
         return self.w
 
     def velocity_dirichlet_values(self):
@@ -84,7 +94,9 @@ class FluidProblem(NavierStokes):
         values = self.problem.fluid_velocity_dirichlet_values()
 
         # Add no-slip boundary value at fluid-structure interface (u = w)
-        values.append(self.w)
+        # MER: Prepend this value so that user-specified bcs have
+        # higher priority
+        values.insert(0, self.w)
 
         return values
 
@@ -94,7 +106,9 @@ class FluidProblem(NavierStokes):
         boundaries = self.problem.fluid_velocity_dirichlet_boundaries()
 
         # Add no-slip boundary at fluid-structure interface
-        boundaries.append((self.fsi_boundary_F1, 2))
+        # MER: Prepend this domain so that user-specified bcs have
+        # higher priority
+        boundaries.insert(0, (self.fsi_boundary_F1, 2))
 
         return boundaries
 
@@ -134,6 +148,14 @@ class FluidProblem(NavierStokes):
         # Compute physical stress
         Sigma_F = PiolaTransform(_Sigma_F(U_F, P_F, U_M, mu_F), U_M)
 
+        # Test this averaging instead:
+        #info_red("Debugging with converge averaging")
+        #Sigma_F0 = PiolaTransform(_Sigma_F(self.U_F0, self.P_F0, U_M0, mu_F),
+        #                          U_M0)
+        #Sigma_F1 = PiolaTransform(_Sigma_F(self.U_F1, self.P_F1, U_M1, mu_F),
+        #                          U_M1)
+        #Sigma_F = 0.5*(Sigma_F0 + Sigma_F1)
+
         return Sigma_F
 
     def update_mesh_displacement(self, U_M, dt, num_smoothings):
@@ -142,7 +164,15 @@ class FluidProblem(NavierStokes):
         X  = self.Omega_F.coordinates()
         x0 = self.omega_F0.coordinates()
         x1 = self.omega_F1.coordinates()
-        dofs = U_M.vector().array()
+
+        if U_M.element().degree() > 1:
+            info_red("Interpolating U_M onto CG1 to move mesh")
+            CG1 = VectorFunctionSpace(self.Omega_F, "CG", 1)
+            U_M_interpolated = interpolate(U_M, CG1)
+            dofs = U_M_interpolated.vector().array()
+        else:
+            dofs = U_M.vector().array()
+
         dim = self.omega_F1.geometry().dim()
         N = self.omega_F1.num_vertices()
 
@@ -158,7 +188,7 @@ class FluidProblem(NavierStokes):
         wx = self.w.vector().array()
         for i in range(N):
             for j in range(dim):
-                wx[j*N + i] = (x1[i][j] - x0[i][j]) / dt
+                wx[j*N + i] =  (x1[i][j] - x0[i][j]) / dt
 
         # Update vector values (necessary since wx is a copy)
         self.w.vector()[:] = wx
@@ -186,8 +216,10 @@ class StructureProblem(Hyperelasticity):
         structure_element_degree = parameters["structure_element_degree"]
         Omega_F = problem.fluid_mesh()
         Omega_S = problem.structure_mesh()
+
         self.V_F = VectorFunctionSpace(Omega_F, "CG", structure_element_degree)
         self.V_S = VectorFunctionSpace(Omega_S, "CG", structure_element_degree)
+
         self.test_F = TestFunction(self.V_F)
         self.trial_F = TrialFunction(self.V_F)
         self.G_F = Function(self.V_F)
@@ -228,6 +260,12 @@ class StructureProblem(Hyperelasticity):
     def body_force(self):
         return self.problem.structure_body_force()
 
+    def boundary_traction(self, V):
+        return self.problem.structure_boundary_traction(V)
+
+    def initial_conditions(self):
+        return self.problem.structure_initial_conditions()
+
     def material_model(self):
         mu    = self.problem.structure_mu()
         lmbda = self.problem.structure_lmbda()
@@ -240,19 +278,22 @@ class StructureProblem(Hyperelasticity):
         # the integral of G_F since G_F and G_S are set equal on the
         # common boundary, dof by dof. Furthermore, the integral of
         # G_F against a test function is by the below projection equal
-        # to the integral of the tracion Sigma_F N_F so this transfer
+        # to the integral of the traction Sigma_F N_F so this transfer
         # in fact does not involve an approximation.
         info("Assembling traction on fluid domain")
+
         new = True
         if new:
             d_FSI = ds(2)
             a_F = dot(self.test_F, self.trial_F)*d_FSI
-            L_F = -dot(self.test_F, dot(Sigma_F, self.N_F) + self.G_0)*d_FSI
-            A_F = assemble(a_F, exterior_facet_domains=self.problem.fsi_boundary_F)
-            B_F = assemble(L_F, exterior_facet_domains=self.problem.fsi_boundary_F)
+            L_F = - dot(self.test_F, dot(Sigma_F, self.N_F) + self.G_0)*d_FSI
+            A_F = assemble(a_F,
+                           exterior_facet_domains=self.problem.fsi_boundary_F)
+            B_F = assemble(L_F,
+                           exterior_facet_domains=self.problem.fsi_boundary_F)
         else:
             a_F = dot(self.test_F, self.trial_F)*ds
-            L_F = -dot(self.test_F, dot(Sigma_F, self.N_F) + self.G_0)*ds
+            L_F = - dot(self.test_F, dot(Sigma_F, self.N_F) + self.G_0)*ds
             A_F = assemble(a_F)
             B_F = assemble(L_F)
         A_F.ident_zeros()
@@ -262,6 +303,7 @@ class StructureProblem(Hyperelasticity):
         info("Transferring values to structure domain")
         self.G_S.vector().zero()
         self.problem.add_f2s(self.G_S.vector(), self.G_F.vector())
+        #plot(self.G_S, title="G_S in stress transfer", interactive=True)
 
         # Uncomment to debug transfer of stress
         #self.debug_stress_transfer(Sigma_F)
@@ -282,7 +324,7 @@ class StructureProblem(Hyperelasticity):
         d_FSI = ds(2)
 
         # Compute direct integral of normal traction
-        form = dot(dot(Sigma_F, self.N_F), self.N_F)*d_FSI
+        form = dot(dot(Sigma_F, self.N_F) + self.G_0, self.N_F)*d_FSI
         integral_0 = assemble(form, exterior_facet_domains=self.problem.fsi_boundary_F)
 
         # Compute integral of projected (and negated) normal traction
@@ -319,7 +361,8 @@ class MeshProblem():
         Omega_F = problem.fluid_mesh()
 
         # Define function spaces and functions
-        V = VectorFunctionSpace(Omega_F, "CG", 1)
+        degree = parameters["mesh_element_degree"]
+        V = VectorFunctionSpace(Omega_F, "CG", degree)
         v = TestFunction(V)
         u = TrialFunction(V)
         u0 = Function(V)
@@ -332,7 +375,8 @@ class MeshProblem():
         structure_element_degree = parameters["structure_element_degree"]
         W = VectorFunctionSpace(Omega_F, "CG", structure_element_degree)
         displacement = Function(W)
-        bc = DirichletBC(V, displacement, DomainBoundary())
+        #bc = DirichletBC(V, displacement, DomainBoundary())
+        bc = DirichletBC(V, displacement, "on_boundary")
 
         # Define cG(1) scheme for time-stepping
         k = Constant(0)
@@ -361,6 +405,7 @@ class MeshProblem():
         # Assemble linear system and apply boundary conditions
         A = assemble(self.a)
         b = assemble(self.L)
+
         self.bc.apply(A, b)
 
         # Compute solution

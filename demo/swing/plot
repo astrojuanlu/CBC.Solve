@@ -7,7 +7,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-04-08
-# Last changed: 2012-04-10
+# Last changed: 2012-05-02
 
 import sys
 import pylab as pl
@@ -80,46 +80,60 @@ E_0, E_0_F, E_0_S, E_0_M, E, E_h, E_k, E_c, E_c_F, E_c_S, E_c_M = extract_errors
 N = extract_num_dofs(dirname)
 t, k, Rk = extract_timesteps(dirname)
 
+# Compute error
+e = [abs(M_I[i] - M_0) for i in range(len(M_I))]
+
 # Plot goal functionals
 pl.figure()
-pl.subplot(2, 1, 1); pl.plot(M_T, '-o')
-pl.grid(True)
-pl.title("Goal functional at final time")
-pl.subplot(2, 1, 2); pl.plot(M_I, '-o')
+
+pl.subplot(2, 1, 1); pl.plot(M_I, '-o')
 pl.plot(range(len(M_I)), [M_0]*len(M_I), '--')
 pl.grid(True)
-pl.title("Integrated goal functional")
+pl.title("Goal functional")
+
+pl.subplot(2, 1, 2); pl.semilogy(e, '-o')
+pl.grid(True)
+pl.title("Error")
 pl.xlabel("Refinement level")
 
 # Plot errors
 if E_0 is not None:
 
-    # Compute error
-    e = [abs(M_I[i] - M_0) for i in range(len(M_I))]
-
     # Plot
     #eplot = pl.loglog
     eplot = pl.plot
     pl.figure()
-    pl.subplot(3, 1, 1)
+
+    pl.subplot(4, 1, 1)
     eplot(N[:len(E)], E, '-o')
     eplot(N[:len(E_0)], E_0, '-^')
     eplot(N[:len(e)], e, '-s')
     pl.legend(["$E$", "$E_0$", "$e$"])
     pl.title("Errors and error estimates")
     pl.grid(True)
-    pl.subplot(3, 1, 2)
+
+    pl.subplot(4, 1, 2)
     eplot(N[:len(E_h)], E_h, 'b-o')
     eplot(N[:len(E_k)], E_k, 'b-^')
     eplot(N[:len(E_c)], E_c, 'b-s')
     pl.legend(["$E_h$", "$E_k$", "$E_c$"])
     pl.grid(True)
-    pl.subplot(3, 1, 3)
+
+    pl.subplot(4, 1, 3)
+    eplot(N[:len(E_c)], E_c, 'b-o')
+    eplot(N[:len(E_c_F)], E_c_F, 'b-^')
+    eplot(N[:len(E_c_S)], E_c_S, 'b-s')
+    eplot(N[:len(E_c_M)], E_c_M, 'b-*')
+    pl.legend(["$E_0$", "$E_0^F$", "$E_0^S$", "$E_0^M$"])
+    pl.grid(True)
+    pl.xlabel("Number of degrees of freedom")
+
+    pl.subplot(4, 1, 4)
     eplot(N[:len(E_0)], E_0, 'g-o')
     eplot(N[:len(E_0_F)], E_0_F, 'g-^')
     eplot(N[:len(E_0_S)], E_0_S, 'g-s')
     eplot(N[:len(E_0_M)], E_0_M, 'g-*')
-    pl.legend(["$E_0$", "$E_0^F$", "$E_0^S$", "$E_0^M$"])
+    pl.legend(["$E_c$", "$E_c^F$", "$E_c^S$", "$E_c^M$"])
     pl.grid(True)
     pl.xlabel("Number of degrees of freedom")
 
