@@ -5,7 +5,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-05-03
+# Last changed: 2012-05-04
 
 from dolfin import info
 from numpy import zeros, ones, argsort, linalg, dot
@@ -203,6 +203,12 @@ def estimate_error(problem, parameters):
                              interior_facet_domains=problem.fsi_boundary)
                     for r0 in [R0_S0, R0_S1, R0_S]]
 
+        if mer_debugging:
+            F_M = problem.mesh_right_hand_side()
+            F_M.t = tmid
+        else:
+            F_M = problem.mesh_right_hand_side()
+            F_M.t = 0
         e0_M = [assemble(r0, mesh=Omega,
                          cell_domains=problem.cell_domains,
                          exterior_facet_domains=problem.fsi_boundary,
@@ -275,7 +281,11 @@ def estimate_error(problem, parameters):
 
         # Add to E_0 (3-point Lobatto quadrature)
         E_0_F += dt * numpy.dot(e0_F, [1.0/6.0, 1.0/6.0, 2.0/3.0])
-        E_0_S += dt * numpy.dot(e0_S, [1.0/6.0, 1.0/6.0, 2.0/3.0])
+        if mer_debugging:
+            E_0_S += dt*e0_S[-1]
+        else:
+            E_0_S += dt * numpy.dot(e0_S, [1.0/6.0, 1.0/6.0, 2.0/3.0])
+
         E_0_M += dt * numpy.dot(e0_M, [1.0/6.0, 1.0/6.0, 2.0/3.0])
 
         # Add to E_k

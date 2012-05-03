@@ -4,7 +4,7 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-05-03
+# Last changed: 2012-05-04
 
 from dolfin import *
 
@@ -61,6 +61,7 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     # MER: added these
     B       = problem.structure_body_force()
     G_0     = problem.structure_boundary_traction_extra()
+    F_M     = problem.mesh_right_hand_side()
 
     # Define normals
     N = FacetNormal(Omega)
@@ -107,7 +108,8 @@ def weak_residuals(U0, U1, U, w, kn, problem):
 
     # Mesh residual contributions
     R_M = inner(v_M, Dt_U_M)*dx_F + inner(sym(grad(v_M)), Sigma_M)*dx_F \
-        + inner(q_M, U_M - U_S)('+')*d_FSI
+        + inner(q_M, U_M - U_S)('+')*d_FSI \
+        - inner(v_M, F_M)*dx_F
 
     return R_F, R_S, R_M
 
