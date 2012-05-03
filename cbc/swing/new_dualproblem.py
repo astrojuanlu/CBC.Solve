@@ -22,43 +22,35 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     """
 
     # Choose method here
-    method = "BE"
+    method = "FE"
 
     info_blue("Creating dual forms")
 
     # Repackage the parameters and functions
-    # Doing the correct time discretization and adjoint.
     Iulist    = [v_F,  q_F,  s_F,  v_S,  q_S,  v_M,  q_M]
 
+    #Primal function discretization is the same for all methods
+    U1list    = [U_F1, P_F1, None,U_S1, P_S1, U_M1,None]
+    Umidlist  = U1list
+    Udotlist  = U1list
+    #Here I assume Z0 is the last computed time step.
+    #and U1 is the primal solution at the time at which we are trying to compute the dual
+    #solution, ie the reverse of what it denoted in the primal problem.
+
+    Zlist = [Z_F,Y_F,X_F,Z_S,Y_S,Z_M,Y_M]
+    Z0list = [Z_F0, Y_F0, X_F0, Z_S0, Y_S0, Z_M0, Y_M0]
+    #There is a minus here due to IBP
+    dotVlist  = [(z0 - z)/k for z0,z in zip(Z0list,Zlist)]
+
     if method == "BE":
-        #Here I assume Z0 is the last computed time step.
-        #and U1 is the primal solution at the time at which we are trying to compute the dual
-        #solution, ie the reverse of what it denoted in the primal problem.
-
-        U1list    = [U_F1, P_F1, None,U_S1, P_S1, U_M1,None]
-        Umidlist  = U1list
-        Udotlist  = U1list
-
+        Vlist     = Zlist
     elif method == "FE":
-        U1list    = [U_F0, P_F0, None,U_S0, P_S0, U_M0,None]
-        Umidlist  = U1list
-        Udotlist  = U1list
-
+        Vlist     =  Z0list
     elif method == "CG1":
-        U1list    = [U_F1, P_F1, None,U_S1, P_S1, U_M1,None]
-        U0list    = [U_F0, P_F0, None,U_S0, P_S0, U_M0,None]
-        Umidlist  = [(U_F1 + U_F0)*0.5,(P_F1 + P_F0)*0.5,None,
-                     (U_S1 + U_S0)*0.5,(P_F1 + P_F0)*0.5,
-                     (U_M1 + U_M0)*0.5,None]
-        Udotlist  = Umidlist
+        Vlist = [(z0 + z)*0.5 for z0,z in zip(Z0list,Zlist)]
     else:
         raise Exception("Only FE,BE,and CG1 methods are possible")
 
-    #Trial function discretization is the same for all methods
-    Vlist     = [Z_F,Y_F,X_F,Z_S,Y_S,Z_M,Y_M]
-    V0list    = [Z_F0, Y_F0, X_F0, Z_S0, Y_S0, Z_M0, Y_M0]
-    #There is a minus here due to IBP
-    dotVlist  = [(z0 - z)/k for z0,z in zip(V0list,Vlist)]
 
     #Material Parameters Dictionary
     matparams = {"mu_F":Constant(problem.fluid_viscosity()),
@@ -144,6 +136,12 @@ def create_dual_bcs(problem, W):
         bcs += [DirichletBC(W.sub(4), (0, 0), boundary)]
 
     # Boundary conditions for dual mesh displacement
-    bcs += [DirichletBC(W.sub(5), (0, 0), DomainBoundary())]
-
+    try:
+        for bound in problem.mesh_dirichlet_boundaries():
+            print bound
+            bcs += [DirichletBC(W.sub(5), (0, 0),bound)]
+            print "GB New Boundary found"
+            adoih()
+    except:
+        bcs += [DirichletBC(W.sub(5), (0, 0), DomainBoundary())]
     return bcs
