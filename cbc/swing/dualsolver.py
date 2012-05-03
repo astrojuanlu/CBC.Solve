@@ -4,14 +4,19 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-04-08
+# Last changed: 2012-05-03
 
 from time import time as python_time
 from dolfin import *
 from spaces import *
 from storage import *
-from dualproblem import *
 from adaptivity import *
+
+# Original implementation
+from dualproblem import *
+
+# New implementation by Gabriel
+#from new_dualproblem import *
 
 def solve_dual(problem, parameters):
     "Solve dual FSI problem"

@@ -3,7 +3,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 # First added:  2012-03-04
-# Last changed: 2012-05-02
+# Last changed: 2012-05-03
 
 # Modified by Marie E. Rognes
 
@@ -21,16 +21,16 @@ if test:
     application_parameters["mesh_element_degree"] = 1
     application_parameters["structure_element_degree"] = 1
     application_parameters["save_solution"] = True
-    application_parameters["solve_primal"] = False
+    application_parameters["solve_primal"] = True
     application_parameters["solve_dual"] = False
-    application_parameters["estimate_error"] = True
+    application_parameters["estimate_error"] = False
     application_parameters["plot_solution"] = True
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
     application_parameters["fixedpoint_tolerance"] = 1.e-14
     application_parameters["initial_timestep"] = 0.02 / (2**ref)
-    application_parameters["output_directory"] = "results_analytic_test"
+    application_parameters["output_directory"] = "results-analytic-test"
     application_parameters["max_num_refinements"] = 0
     application_parameters["fluid_solver"] = "taylor-hood"
     #application_parameters["fluid_solver"] = "ipcs"
