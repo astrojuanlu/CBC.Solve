@@ -15,14 +15,14 @@ from right_hand_sides import *
 application_parameters = read_parameters()
 
 # Used for testing
-test = False
+test = True
 if test:
     ref = 0
     application_parameters["mesh_element_degree"] = 1
     application_parameters["structure_element_degree"] = 1
     application_parameters["save_solution"] = True
-    application_parameters["solve_primal"] = True
-    application_parameters["solve_dual"] = False
+    application_parameters["solve_primal"] = False
+    application_parameters["solve_dual"] = True
     application_parameters["estimate_error"] = False
     application_parameters["plot_solution"] = True
     application_parameters["uniform_timestep"] = True
@@ -42,6 +42,10 @@ right = "near(x[0], 2.0)"
 interface = "near(x[0], 1.0)"
 left = "near(x[0], 0.0)"
 noslip = "near(x[1], 0.0) || near(x[1], 1.0)"
+
+#Exclude FSI Nodes
+influid = "x[0] < 1.0 - DOLFIN_EPS"
+meshbc = "on_boundary &&" + influid
 
 # Constant used in definition of analytic solutions
 C = 1.0
@@ -199,6 +203,10 @@ class Analytic(FSI):
 
     def mesh_right_hand_side(self):
         return self.F_M
+
+    #GB this helps the newton solver and could help with the dual
+    def mesh_dirichlet_boundaries(self):
+        return [meshbc]
 
 # Define and solve problem
 problem = Analytic()
