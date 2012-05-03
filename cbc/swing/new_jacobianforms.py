@@ -23,7 +23,7 @@ from operators import *
 ##Test functions are related to their trial functions by the following letter substitution.
 ## u-> v , p-> q, l-> m
 
-def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVlist,matparams,measures,forces,normals):
+def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVlist,matparams,measures,forces,normals,testmode = False):
     """"
     Build the residual forms for the full FSI problem
     including the fluid, structure and mesh equations
@@ -155,8 +155,10 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     blocks = {"j_FF":j_FF,"j_FS":j_FS,"j_FM":j_FM,
               "j_SF":j_SF,"j_SS":j_SS,"j_SM":j_SM,
                           "j_MS":j_MS,"j_MM":j_MM}
-    return j, blocks,rows
-
+    if testmode == True:
+        return j, blocks,rows
+    else:
+        return j
 def dU_MSigmaF(U_M,dU_M,U_F,P_F,mu_F):
     """Derivative of Sigma_F with respect to Mesh variables"""
     ret =   J(U_M)*tr(dot(grad(dU_M), inv(F(U_M))))*dot(Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T)
