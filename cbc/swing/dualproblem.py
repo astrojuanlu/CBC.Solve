@@ -138,6 +138,10 @@ def create_dual_bcs(problem, W):
         bcs += [DirichletBC(W.sub(4), (0, 0), boundary)]
 
     # Boundary conditions for dual mesh displacement
+##    try:
+##        for bound in problem.mesh_dirichlet_boundaries()
+##            bcs += [DirichletBC(W.sub(5), (0, 0), bound)]
+##    except:
     bcs += [DirichletBC(W.sub(5), (0, 0), DomainBoundary())]
 
     return bcs

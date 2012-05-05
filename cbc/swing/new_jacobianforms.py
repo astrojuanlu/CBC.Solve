@@ -147,7 +147,8 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     j_M =         j_MS + j_MM
 
     #Define Full FSI Jacobian
-    j = j_F + j_S + j_M
+    j = j_SS + j_FF + j_FS + j_FM + j_SM + j_M#+ #j_SF# + j_M
+    #Block j_SF is the culprit
 
     #blocks and rows of the jacobian can be used for testing
     rows = {"j_F":j_F,"j_S":j_S,"j_M":j_M}
@@ -236,7 +237,6 @@ def J_BlockFM(U, dotU, P, U_M, dU_M, v_F,dotv, q, rho, mu,N_F, dxF,ds_F,g_F = No
     return A_FM
 
 def J_BlockSS(dotdU_S, dotdP_S, dU_S, dP_S, U_S, P_S, v_S,dotv_S, q_S, dotq_S, mu_S, lmbda_S, rho_S, dxS):
-
     "Structure diagonal block"
     F_S = grad(U_S) + I                 #I + grad U_s
     E_S = 0.5*(F_S.T*F_S - I)           #Es in the book

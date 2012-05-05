@@ -15,9 +15,9 @@ from right_hand_sides import *
 application_parameters = read_parameters()
 
 # Used for testing
-test = True
+test = False
 if test:
-    ref = 0
+    ref = 1
     application_parameters["mesh_element_degree"] = 1
     application_parameters["structure_element_degree"] = 1
     application_parameters["save_solution"] = True
@@ -29,7 +29,7 @@ if test:
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
     application_parameters["fixedpoint_tolerance"] = 1.e-14
-    application_parameters["initial_timestep"] = 0.02 / (2**ref)
+    application_parameters["initial_timestep"] = 0.02/ (2**ref)
     application_parameters["output_directory"] = "results-analytic-test"
     application_parameters["max_num_refinements"] = 0
     application_parameters["fluid_solver"] = "taylor-hood"

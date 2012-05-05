@@ -60,7 +60,10 @@ def solve_dual(problem, parameters):
     (Z_F, Y_F, X_F, Z_S, Y_S, Z_M, Y_M) = TrialFunctions(W)
 
     # Create dual functions
+    #These will effect the forms
     Z0, (Z_F0, Y_F0, X_F0, Z_S0, Y_S0, Z_M0, Y_M0) = create_dual_functions(Omega, parameters)
+
+    #These are used for data storage
     Z1, (Z_F1, Y_F1, X_F1, Z_S1, Y_S1, Z_M1, Y_M1) = create_dual_functions(Omega, parameters)
 
     # Create primal functions
@@ -139,7 +142,6 @@ def solve_dual(problem, parameters):
 
         # Copy solution to previous interval (going backwards in time)
         Z1.assign(Z0)
-
         end()
 
     # Report elapsed time
@@ -167,7 +169,7 @@ def _plot_solution(Z_F, Y_F, X_F, Z_S, Y_S, Z_M, Y_M):
     plot(Z_F, title="Dual fluid velocity")
     plot(Y_F, title="Dual fluid pressure")
     plot(X_F, title="Dual fluid Lagrange multiplier")
-    plot(Z_S, title="Dual displacement")
+    plot(Z_S, title="Dual displacement", mode = "displacement")
     plot(Y_S, title="Dual displacement velocity")
     plot(Z_M, title="Dual mesh displacement")
     plot(Y_M, title="Dual mesh Lagrange multiplier")
