@@ -12,6 +12,7 @@ def default_parameters():
     p = Parameters("solver_parameters");
 
     p.add("solve_primal", True)
+    p.add("primal_solver", "fixpoint") #Alternative here is Newto
     p.add("solve_dual", True)
     p.add("estimate_error", True)
     p.add("plot_solution", False)
@@ -38,7 +39,7 @@ def default_parameters():
     p.add("refinement_algorithm", "regular_cut")
     p.add("crossed_mesh", False)
     p.add("use_exact_solution", False)
-
+    
     p.add("output_directory", "unspecified")
     p.add("description", "unspecified")
 

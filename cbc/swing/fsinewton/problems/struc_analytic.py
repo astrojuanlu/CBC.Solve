@@ -8,7 +8,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
-from fsinewton.problems.base import FsiNewtonTest
+from fsinewton.problems.base import NewtonFSI
 import numpy as np
 import cbc.twist as twi
 
@@ -53,12 +53,12 @@ public:
 };
 """
 
-class StrucAnalytic(FsiNewtonTest):
+class StrucAnalytic(NewtonFSI):
     """Analytic Structure Problem"""
     def __init__(self):
         mesh = Rectangle(0.0,0.0,meshlength,meshheight,nx,ny)
         self.cpp_f_S = cpp_f_S
-        FsiNewtonTest.__init__(self,mesh,Structure())
+        NewtonFSI.__init__(self,mesh,Structure())
 
     def __str__(self):
         return """Analytic Structure Problem"""

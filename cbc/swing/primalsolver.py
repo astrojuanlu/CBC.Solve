@@ -4,7 +4,8 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-# Last changed: 2012-05-02
+# Last changed: 2012-08-01
+#Gabriel Balaban - Added Newton primal solver option.
 
 import math
 import pylab
@@ -16,6 +17,7 @@ from subproblems import *
 from adaptivity import *
 from storage import *
 import sys
+from cbc.swing.fsinewton.solver.solver_fsinewton import FSINewtonSolver
 
 def solve_primal(problem, parameters):
     "Solve primal FSI problem"
@@ -26,11 +28,10 @@ def solve_primal(problem, parameters):
     TOL = parameters["tolerance"]
     w_k = parameters["w_k"]
     w_c = parameters["w_c"]
-    save_solution = parameters["save_solution"]
-    plot_solution = parameters["plot_solution"]
+    save_solution = parameters["save_solution"] 
     uniform_timestep = parameters["uniform_timestep"]
-    maxiter = parameters["maximum_iterations"]
-    num_smoothings = parameters["num_smoothings"]
+    plot_solution = parameters["plot_solution"]
+
 
     # Create files for saving to VTK
     level = refinement_level()
@@ -117,106 +118,63 @@ def solve_primal(problem, parameters):
         # Compute tolerance for FSI iterations
         itertol = compute_itertol(problem, w_c, TOL, dt, t1, parameters)
 
-        # Fixed point iteration on FSI problem
-        for iter in range(maxiter):
+        if parameters["primal_solver"] == "Newton":
+            U_S0,U_S1,P_S1,increment,numiter = newton_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem)
+        elif parameters["primal_solver"] == "fixpoint":
+            U_S0,U_S1,P_S1,increment,numiter = fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem)
+        else:
+            raise Exception("Only 'fixpoint' and 'Newton' are possible values \
+                            for the parameter 'primal_solver'")
+        
+    #####################################################
+    #The primal solve worked so now go to post processing
+    #####################################################
 
-            info("")
-            begin("* Starting nonlinear iteration")
+        # Plot solution
+        if plot_solution:
+            _plot_solution(u_F1, p_F1, U_S0, U_M1)
+        #Update the exact solutions
+        (u_F_ex, p_F_ex, U_S_ex, P_S_ex, U_M_ex) \
+            = problem.exact_solution()
+        u_F_ex.t = t1
+        p_F_ex.t = t1
+        U_S_ex.t = t1
+        U_M_ex.t = t1
 
-            # Solve fluid subproblem
-            begin("* Solving fluid subproblem (F)")
-            F.step(dt)
-            end()
+        print "||u_F_ex - u_F || = %.15g" % errornorm(u_F_ex, u_F1),
+        print "||u_F_ex|| = %.15g"        % norm(u_F_ex, mesh=F.mesh()),
+        print "||u_F|| = %.15g"           % norm(u_F1, mesh=F.mesh())
 
-            # Transfer fluid stresses to structure
-            begin("* Transferring fluid stresses to structure (F --> S)")
-            Sigma_F = F.compute_fluid_stress(u_F0, u_F1, p_F0, p_F1, U_M0, U_M1)
-            S.update_fluid_stress(Sigma_F)
-            end()
+        print "||p_F_ex - p_F || = %.15g" % errornorm(p_F_ex, p_F1),
+        print "||p_F_ex|| = %.15g"        % norm(p_F_ex, mesh=F.mesh()),
+        print "||p_F|| = %.15g"           % norm(p_F1, mesh=F.mesh())
 
-            # Solve structure subproblem
-            begin("* Solving structure subproblem (S)")
-            U_S1, P_S1 = S.step(dt)
-            end()
+        print "||U_S_ex - U_S || = %.15g" % errornorm(U_S_ex, U_S1),
+        print "||U_S_ex|| = %.15g"        % norm(U_S_ex, mesh=problem.structure_mesh()),
+        print "||U_S|| = %.15g"           % norm(U_S1, mesh=problem.structure_mesh())
 
-            # Transfer structure displacement to fluid mesh
-            begin("* Transferring structure displacement to mesh (S --> M)")
-            M.update_structure_displacement(U_S1)
-            end()
+        print "||U_M_ex - U_M || = %.15g" % errornorm(U_M_ex, U_M1),
+        print "||U_M_ex|| = %.15g"        % norm(U_M_ex, mesh=problem.fluid_mesh()),
+        print "||U_M|| = %.15g"           % norm(U_M1, mesh=problem.fluid_mesh())
 
-            # Solve mesh equation
-            begin("* Solving mesh subproblem (M)")
-            M.step(dt)
-            end()
+        info("")
+        info_green("Increment = %g (tolerance = %g), converged after %d iterations" % (increment, itertol, numiter + 1))
+        info("")
+        end()
 
-            # Transfer mesh displacement to fluid
-            begin("* Transferring mesh displacement to fluid (M --> F)")
-            F.update_mesh_displacement(U_M1, dt, num_smoothings)
-            end()
+        # Saving number of FSI iterations
+        save_no_FSI_iter(t1, numiter + 1, parameters)
 
-            # Compute increment of displacement vector
-            U_S0.vector().axpy(-1, U_S1.vector())
-            increment = norm(U_S0.vector())
-            U_S0.vector()[:] = U_S1.vector()[:]
+        # Evaluate user goal functional
+        goal_functional = assemble(problem.evaluate_functional(u_F1, p_F1, U_S1, P_S1, U_M1, dx, dx, dx))
 
-            # Check convergence
-            if increment < itertol and iter > 2:
+        # Integrate goal functional
+        integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)
+        old_goal_functional = goal_functional
 
-                info_green("Increment is %g. Maybe plotting" % increment)
-                # Plot solution
-                if plot_solution:
-                    _plot_solution(u_F1, p_F1, U_S0, U_M1)
+        # Save goal functional
+        save_goal_functional(t1, goal_functional, integrated_goal_functional, parameters)
 
-                (u_F_ex, p_F_ex, U_S_ex, P_S_ex, U_M_ex) \
-                    = problem.exact_solution()
-                u_F_ex.t = t1
-                p_F_ex.t = t1
-                U_S_ex.t = t1
-                U_M_ex.t = t1
-
-                print "||u_F_ex - u_F || = %.15g" % errornorm(u_F_ex, u_F1),
-                print "||u_F_ex|| = %.15g"        % norm(u_F_ex, mesh=F.mesh()),
-                print "||u_F|| = %.15g"           % norm(u_F1, mesh=F.mesh())
-
-                print "||p_F_ex - p_F || = %.15g" % errornorm(p_F_ex, p_F1),
-                print "||p_F_ex|| = %.15g"        % norm(p_F_ex, mesh=F.mesh()),
-                print "||p_F|| = %.15g"           % norm(p_F1, mesh=F.mesh())
-
-                print "||U_S_ex - U_S || = %.15g" % errornorm(U_S_ex, U_S1),
-                print "||U_S_ex|| = %.15g"        % norm(U_S_ex, mesh=problem.structure_mesh()),
-                print "||U_S|| = %.15g"           % norm(U_S1, mesh=problem.structure_mesh())
-
-                print "||U_M_ex - U_M || = %.15g" % errornorm(U_M_ex, U_M1),
-                print "||U_M_ex|| = %.15g"        % norm(U_M_ex, mesh=problem.fluid_mesh()),
-                print "||U_M|| = %.15g"           % norm(U_M1, mesh=problem.fluid_mesh())
-
-                info("")
-                info_green("Increment = %g (tolerance = %g), converged after %d iterations" % (increment, itertol, iter + 1))
-                info("")
-                end()
-
-                # Saving number of FSI iterations
-                save_no_FSI_iter(t1, iter + 1, parameters)
-
-                # Evaluate user goal functional
-                goal_functional = assemble(problem.evaluate_functional(u_F1, p_F1, U_S1, P_S1, U_M1, dx, dx, dx))
-
-                # Integrate goal functional
-                integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)
-                old_goal_functional = goal_functional
-
-                # Save goal functional
-                save_goal_functional(t1, goal_functional, integrated_goal_functional, parameters)
-                break
-
-            # Check if we have reached the maximum number of iterations
-            elif iter == maxiter - 1:
-                raise RuntimeError, "FSI iteration failed to converge after %d iterations." % maxiter
-
-            # Print size of increment
-            info("")
-            info_red("Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, iter + 1))
-            end()
 
         # Save solution and time series to file
         U = extract_solution(F, S, M)
@@ -279,3 +237,73 @@ def _plot_solution(u_F, p_F, U_S, U_M):
 def _save_solution(U, files):
     "Save solution to VTK"
     [files[i] << U[i] for i in range(5)]
+
+def fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem):
+    """Return the value at the next time step using fixpoint iteration"""
+    # Get Parameters
+    maxiter = parameters["maximum_iterations"]
+    num_smoothings = parameters["num_smoothings"]
+    
+    # Get solution values
+    u_F0, u_F1, p_F0, p_F1 = F.solution_values()
+    U_M0, U_M1 = M.solution_values()
+    
+    # Fixed point iteration on FSI problem
+    for numiter in range(maxiter):
+        
+        info("")
+        begin("* Starting nonlinear iteration")
+
+        # Solve fluid subproblem
+        begin("* Solving fluid subproblem (F)")
+        F.step(dt)
+        end()
+
+        # Transfer fluid stresses to structure
+        begin("* Transferring fluid stresses to structure (F --> S)")
+        Sigma_F = F.compute_fluid_stress(u_F0, u_F1, p_F0, p_F1, U_M0, U_M1)
+        S.update_fluid_stress(Sigma_F)
+        end()
+
+        # Solve structure subproblem
+        begin("* Solving structure subproblem (S)")
+        U_S1, P_S1 = S.step(dt)
+        end()
+
+        # Transfer structure displacement to fluid mesh
+        begin("* Transferring structure displacement to mesh (S --> M)")
+        M.update_structure_displacement(U_S1)
+        end()
+
+        # Solve mesh equation
+        begin("* Solving mesh subproblem (M)")
+        M.step(dt)
+        end()
+
+        # Transfer mesh displacement to fluid
+        begin("* Transferring mesh displacement to fluid (M --> F)")
+        F.update_mesh_displacement(U_M1, dt, num_smoothings)
+        end()
+
+        # Compute increment of displacement vector
+        U_S0.vector().axpy(-1, U_S1.vector())
+        increment = norm(U_S0.vector())
+        U_S0.vector()[:] = U_S1.vector()[:]
+
+        # Check convergence
+        if increment < itertol and iter > 2:            
+            info_green("Increment is %g. Maybe plotting" % increment)
+            return (U_S0, U_S1, P_S1, increment,numiter)
+
+        # Check if we have reached the maximum number of iterations
+        elif numiter == maxiter - 1:
+            raise RuntimeError, "FSI iteration failed to converge after %d iterations." % maxiter
+
+        # Print size of increment
+        info("")
+        info_red("Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, numiter + 1))
+        end()
+        
+def newton_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem):
+    """Solve for the time step using Newton's method"""
+    pass

@@ -10,9 +10,10 @@ from cbc.common import CBCProblem
 
 from fsisolver import FSISolver
 from parameters import default_parameters, read_parameters, store_parameters
+from fsinewton.problems.base import NewtonFSI
 
-class FSI(CBCProblem):
-    "Base class for all FSI problems"
+class FixedPointFSI(CBCProblem):
+    """Basic problem class for fixedpoint FSI """
 
     def __init__(self, mesh):
         "Create FSI problem"
@@ -292,3 +293,14 @@ def _map_to_facet(facet_index, Omega, Omega_X, vertex_map):
         error("Unable to find facet in fluid mesh.")
 
     return int(list(common_facets)[0])
+
+class FSI(FixedPointFSI,NewtonFSI):
+    "Base class for all FSI problems"
+    def __init__(self,mesh,parameters):
+        if parameters["primal_solver"] == "Newton":
+            NewtonFSI.__init__(self,mesh)
+        elif parameters["primal_solver"] == "fixpoint":
+            FixedPointFSI.__init__(self,mesh)     
+        else:
+            raise Exception("Only 'fixpoint' and 'Newton' are possible values \
+                            for the parameter 'primal_solver'")

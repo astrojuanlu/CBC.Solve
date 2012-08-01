@@ -8,7 +8,7 @@ import io
 from math import sin
 from cbc.swing import *
 import right_hand_sides as rhs
-import analytic as ana
+import demo.swing.analytic as ana
 import fsinewton.problems.base as base
 import fsinewton.solver.solver_fsinewton as sfsi
 import fsinewton.utils.misc_func as mf
@@ -36,7 +36,7 @@ class FluidNeumann(SubDomain):
     def inside(self, x, on_boundary):
         return on_boundary and near(x[0],0.0) 
 
-class NewtonAnalytic(ana.Analytic,base.FsiNewtonTest):
+class NewtonAnalytic(ana.Analytic,base.NewtonFSI):
     """
     FSI Analytic problem wrapped for Newtons method
         parameters
@@ -77,7 +77,7 @@ class NewtonAnalytic(ana.Analytic,base.FsiNewtonTest):
             self.refine()
             
         #Then give the mesh to the FSINewtonTest class
-        base.FsiNewtonTest.__init__(self,self.mesh,ana.Structure())
+        base.NewtonFSI.__init__(self,self.mesh,ana.Structure())
 
     def refine(self):
         """Refine mesh and time step"""

@@ -5,8 +5,6 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 import fsinewton.utils.interiorboundary as intb
-from cbc.swing.fsiproblem import FSI
-from cbc.swing.parameters import default_parameters
 
 #Interior Boundary
 FSI_BOUND = 2
@@ -14,34 +12,12 @@ FSI_BOUND = 2
 STRUCBOUND = 1
 DONOTHINGBOUND = 2
 FLUIDNEUMANNBOUND = 3
-
-class FsiNewton(FSI):
-    """The FSI_Newton problem used when integrated with CBC"""
-    def __init__(self,mesh, parameters=default_parameters()):
-        self.parameters = parameters
-        super(FsiNewton,self).__init__(mesh)
-        
-    def solve(self):
-        # Solve and return computed solution (U_F, P_F, U_S, P_S, U_M, P_M)
-        # Create submeshes and mappings (only first time)
-        if self.Omega is None:
-            # Refine original mesh
-            mesh = self._original_mesh
-            for i in range(self.parameters["num_initial_refinements"]):
-                mesh = refine(mesh)
-            # Initialize meshes
-            self.init_meshes(mesh, self.parameters)
-        # Create solver
-        fsisolver = FSINewtonSolver(self)
-        return fsisolver.solve()
-    
-class FsiNewtonTest(FSI):
-    """This base class is a test class used to get the FSI newtons method
-       To work before integration with CBC solve"""
-    def __init__(self,mesh,strucdomain):
-        FSI.__init__(self,mesh)
+  
+class NewtonFSI():
+    """Basic problem class for Newton's method FSI"""
+    def __init__(self,mesh):
         self.mesh = mesh
-        self.strucdomain = strucdomain
+        self.strucdomain = self.structure()
 
         #Mesh Function
         self.cellfunc = MeshFunction("uint", mesh, mesh.topology().dim())
@@ -83,8 +59,7 @@ class FsiNewtonTest(FSI):
 ##        plot(mesh,title = "Whole mesh")
 ##        plot(self.strucmesh,title = "Structure mesh")
 ##        plot(self.fluidmesh,title = "Fluid mesh")
-##        interactive()
-        
+##        interactive()        
         
         #Generate interior boundary
         self.fsibound = intb.InteriorBoundary(mesh)
@@ -96,7 +71,6 @@ class FsiNewtonTest(FSI):
         self.dxF = dx(0)          #Fluid
         self.dFSI = dS(FSI_BOUND) #FSI Boundary
         self.dsS = ds(0)          #Structure outer boundary
-        #List attaching the measures to a space#
         self.dxlist = [self.dxF,self.dxF,self.dFSI,self.dxS,self.dxS,self.dxF,self.dFSI]
 
     #Defualt parameters

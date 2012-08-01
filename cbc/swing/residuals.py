@@ -81,9 +81,7 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     dt_U_F = (1/kn) * (U_F1 - U_F0)
     dt_U_M = (1/kn) * (U_M1 - U_M0)
     
-    #GB Get rid of the ALE term since no mesh movement is taking place. 
-    ##Dt_U_F = rho_F * J(U_M) * (dt_U_F + dot(grad(U_F), dot(inv(F(U_M)), U_F - dt_U_M)))
-    Dt_U_F = rho_F * J(U_M) * (dt_U_F + dot(grad(U_F), dot(inv(F(U_M)), U_F)))
+    Dt_U_F = rho_F * J(U_M) * (dt_U_F + dot(grad(U_F), dot(inv(F(U_M)), U_F - dt_U_M)))
     Dt_U_S = (1/kn) * (U_S1 - U_S0)
     Dt_P_S = rho_S * (1/kn) * (P_S1 - P_S0)
     Dt_U_M = alpha_M * (1/kn) * (U_M1 - U_M0)

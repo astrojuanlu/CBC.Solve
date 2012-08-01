@@ -9,7 +9,6 @@ from dolfin import *
 import numpy as np
 import cbc.common as ccom
 import fsinewton.solver.residualforms as rf
-import fsinewton.problems.base as pfsi
 import fsinewton.solver.jacobianforms_step as jfor_step
 import fsinewton.solver.jacobianforms_buffered as jfor_buff
 import fsinewton.solver.jacobianforms as jfor
@@ -102,8 +101,7 @@ class FSINewtonSolver(ccom.CBCSolver):
                                                     runtimedata = self.params["runtimedata"]["newtonsolver"],
                                                     tol = self.params["newtonsoltol"])
         else:
-            raise Exception("only PETSc and np are possible linear_solver paramters values")
-
+            raise Exception("only PETSc and np are possible linear_solver parameters values")
         
         info_blue("Newton Solver Tolerance is %s"%self.newtonsolver.tol)
 
@@ -296,8 +294,6 @@ class FSINewtonSolver(ccom.CBCSolver):
                 j,self.blockjacobians,self.rowjacobians =  jfor.fsi_jacobian(self.IU,self.IUdot,self.IUmid,self.U1list,
                                                                         self.Umid,self.Udot,self.V,self.V,
                                                                         matparams,measures,forces,normals)
-##                j = j_buff + j_step
-##                j_buff = None
             else:
                 raise Exception("only auto, buff, and manual are possible jacobian parameters")
         return r,j,j_buff

@@ -15,14 +15,14 @@ from right_hand_sides import *
 application_parameters = read_parameters()
 
 # Used for testing
-test = False
+test = True
 if test:
     ref = 1
     application_parameters["mesh_element_degree"] = 1
     application_parameters["structure_element_degree"] = 1
     application_parameters["save_solution"] = True
-    application_parameters["solve_primal"] = False
-    application_parameters["solve_dual"] = True
+    application_parameters["solve_primal"] = True
+    application_parameters["solve_dual"] = False
     application_parameters["estimate_error"] = False
     application_parameters["plot_solution"] = True
     application_parameters["uniform_timestep"] = True
@@ -33,6 +33,7 @@ if test:
     application_parameters["output_directory"] = "results-analytic-test"
     application_parameters["max_num_refinements"] = 0
     application_parameters["fluid_solver"] = "taylor-hood"
+    application_parameters["primal_solver"] = "fixpoint"
     #application_parameters["fluid_solver"] = "ipcs"
 else:
     ref = 0
@@ -85,7 +86,7 @@ class Analytic(FSI):
             f.t = 0.0
 
         # Initialize base class
-        FSI.__init__(self, mesh)
+        FSI.__init__(self, mesh, application_parameters)
 
     #--- Common ---
 

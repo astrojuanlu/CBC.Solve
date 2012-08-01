@@ -9,7 +9,7 @@ __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s"% __author
 __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
-from fsinewton.problems.base import FsiNewtonTest
+from fsinewton.problems.base import NewtonFSI
 
 #Mesh Parameters
 meshlength = 1.0 
@@ -47,11 +47,11 @@ class Structure(SubDomain):
     def inside(self, x, on_boundary):
         return x[1] > fluidheight - DOLFIN_EPS
 
-class FSIMini(FsiNewtonTest):
+class FSIMini(NewtonFSI):
     """FSI Miniproblem"""
     def __init__(self):
         mesh = Rectangle(0.0,0.0,meshlength,meshheight,nx,ny)
-        FsiNewtonTest.__init__(self,mesh,Structure())
+        NewtonFSI.__init__(self,mesh,Structure())
                                      
     def end_time(self):
         return 0.2

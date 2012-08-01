@@ -67,7 +67,7 @@ class ChannelWithFlap(FSI):
         self.nu = 0.3
 
         # Initialize base class
-        FSI.__init__(self, mesh)
+        FSI.__init__(self, mesh, application_parameters)
 
     #--- Common ---
 

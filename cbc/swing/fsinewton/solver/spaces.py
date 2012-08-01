@@ -6,7 +6,6 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 import fsinewton.utils.misc_func as mf
-import fsinewton.problems.base as pfsi
 
 NUM_SPACES = 7  #The number of spaces in the FSI mixed formulation
 
@@ -144,7 +143,8 @@ class FSISpaces(object):
             zero = Function(fspace.collapse())
 ##            import numpy as np
 ##            zero.vector()[:] = np.ones(len(zero.vector().array()))
-        BC = DirichletBC(fspace,zero,self.problem.fsiboundfunc,pfsi.FSI_BOUND)
+        from fsinewton.problems.base import FSI_BOUND
+        BC = DirichletBC(fspace,zero,self.problem.fsiboundfunc,FSI_BOUND)
 
 ##        #Plot the BC
 ##        newfunc = Function(fspace.collapse())

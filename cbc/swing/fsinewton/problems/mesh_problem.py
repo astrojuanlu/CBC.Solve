@@ -4,7 +4,7 @@ __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
-from fsinewton.problems.base import FsiNewtonTest
+from fsinewton.problems.base import NewtonFSI
 
 class Structure(SubDomain):
     def inside(self, x, on_boundary):
@@ -44,13 +44,13 @@ strucright = xright
 strucup =  yup + "&&" + xinstruc
 strucdown =  ydown + "&&" + xinstruc
 
-class MeshProblem(FsiNewtonTest):
+class MeshProblem(NewtonFSI):
     """A initial structure displacement is given which should
         result in mesh movement"""
     
     def __init__(self):
         mesh = Rectangle(0.0,0.0,meshlength,meshheight,nx,ny)
-        FsiNewtonTest.__init__(self,mesh,Structure())
+        NewtonFSI.__init__(self,mesh,Structure())
 
     def end_time(self):
         return 1.0

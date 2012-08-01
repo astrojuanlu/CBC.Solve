@@ -4,7 +4,6 @@ __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
-import fsinewton.problems.base as pfsi
 
 class FSIBC(object):
     """
