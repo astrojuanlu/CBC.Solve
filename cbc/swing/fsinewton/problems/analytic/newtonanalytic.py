@@ -8,7 +8,7 @@ import io
 from math import sin
 from cbc.swing import *
 import right_hand_sides as rhs
-import demo.swing.analytic as ana
+import demo.swing.analytic.analytic as ana
 import fsinewton.problems.base as base
 import fsinewton.solver.solver_fsinewton as sfsi
 import fsinewton.utils.misc_func as mf
@@ -49,7 +49,7 @@ class NewtonAnalytic(ana.Analytic,base.NewtonFSI):
         
         #Initialize the analytic problem first
         ana.Analytic.__init__(self)
-        self.mesh = self._original_mesh
+        self.singlemesh = self._original_mesh
         self.bctype = bctype
 
         #Initialize the reference fluid forces
@@ -77,13 +77,13 @@ class NewtonAnalytic(ana.Analytic,base.NewtonFSI):
             self.refine()
             
         #Then give the mesh to the FSINewtonTest class
-        base.NewtonFSI.__init__(self,self.mesh,ana.Structure())
+        base.NewtonFSI.__init__(self,self.singlemesh)
 
     def refine(self):
         """Refine mesh and time step"""
         info_blue("Refining mesh and time step")
         #Space refinement
-        self.mesh = refine(self.mesh)
+        self.singlemesh = refine(self.singlemesh)
         #Time refinement
         self.inistep *= 0.5
 
@@ -277,5 +277,4 @@ if __name__ == "__main__":
     test_point = (2.0,0.8)
     U_S_E = interpolate(problem.U_S,solver.spaces.V_SC)
     print U_S(test_point) - U_S_E((test_point))
-    
     interactive()

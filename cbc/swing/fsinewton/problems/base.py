@@ -16,8 +16,9 @@ FLUIDNEUMANNBOUND = 3
 class NewtonFSI():
     """Basic problem class for Newton's method FSI"""
     def __init__(self,mesh):
-        self.mesh = mesh
-        self.strucdomain = self.structure()
+        #singlemesh choosen since mesh is used by class FixedPointFSI
+        self.singlemesh = mesh
+        strucdomain = self.structure()
 
         #Mesh Function
         self.cellfunc = MeshFunction("uint", mesh, mesh.topology().dim())

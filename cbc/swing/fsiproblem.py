@@ -299,6 +299,7 @@ class FSI(FixedPointFSI,NewtonFSI):
     def __init__(self,mesh,parameters):
         if parameters["primal_solver"] == "Newton":
             NewtonFSI.__init__(self,mesh)
+            FixedPointFSI.__init__(self,mesh)
         elif parameters["primal_solver"] == "fixpoint":
             FixedPointFSI.__init__(self,mesh)     
         else:

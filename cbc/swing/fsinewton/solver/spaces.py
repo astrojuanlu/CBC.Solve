@@ -20,7 +20,7 @@ class FSISpaces(object):
         #Fluid and structure domains, it is assumed that the structure includes fsidofs,
         #while the fluid does not
         self.fluid = problem.fluiddomain
-        self.structure = problem.strucdomain
+        self.structure = problem.structure()
         
         self.fsispace,(self.V_F,self.Q_F,self.L_F,self.V_S,self.Q_S,self.V_M,self.L_M), \
         (self.V_FC,self.Q_FC,self.L_FC,self.V_SC,self.Q_SC,self.V_MC,self.L_MC) = self.__create_fsi_functionspace()
@@ -106,7 +106,7 @@ class FSISpaces(object):
         
     def __create_fsi_functionspace(self):
         """Return the mixed function space of all variables"""
-        mesh = self.problem.mesh
+        mesh = self.problem.singlemesh
             
         V_F = VectorFunctionSpace(mesh, self.params["V_F"]["elem"], self.params["V_F"]["deg"]) #Ana ord 2
         Q_F = FunctionSpace(mesh, self.params["Q_F"]["elem"], self.params["Q_F"]["deg"])       #Ana ord 3

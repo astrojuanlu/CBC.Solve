@@ -6,13 +6,17 @@ from dolfin import Parameters, File, info
 from utils import date
 import os
 
+
 def default_parameters():
     "Return default values for solver parameters."
 
     p = Parameters("solver_parameters");
 
     p.add("solve_primal", True)
-    p.add("primal_solver", "fixpoint") #Alternative here is Newto
+    p.add("primal_solver", "fixpoint") #Alternative here is Newton
+    #In order to change the Newton Solver parameters edit the variable
+    #solver_params in module fsinewton.solver.default_params
+
     p.add("solve_dual", True)
     p.add("estimate_error", True)
     p.add("plot_solution", False)
@@ -22,7 +26,6 @@ def default_parameters():
     p.add("uniform_mesh", False)
     p.add("dorfler_marking", True)
     p.add("global_storage", False)
-
     p.add("structure_element_degree", 1)
     p.add("mesh_element_degree", 1)
     p.add("max_num_refinements", 100)
@@ -39,13 +42,11 @@ def default_parameters():
     p.add("refinement_algorithm", "regular_cut")
     p.add("crossed_mesh", False)
     p.add("use_exact_solution", False)
-    
     p.add("output_directory", "unspecified")
     p.add("description", "unspecified")
 
     # Hacks
     p.add("fluid_solver", "ipcs")
-
     return p
 
 def set_output_directory(parameters, problem, case):

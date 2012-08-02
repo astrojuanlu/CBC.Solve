@@ -181,7 +181,7 @@ class FSINewtonSolver(ccom.CBCSolver):
                 
                 self.runtimedata.times.append(self.t)
                 self.runtimedata.newtonitr.append(len(self.last_itr))
-                self.runtimedata.store_fluid_lm(self.U1_F,self.P1_S,self.spaces.fsimeshcoord)
+                self.runtimedata.store_fluid_lm(self.U1_F,self.P1_S,self.spaces.fsicoord)
                 self.runtimedata.store_mesh_lm(self.U1_M,self.U1_S,self.spaces.fsimeshcoord)
 
             #store newtonsolverruntimedata
@@ -314,7 +314,7 @@ class FSINewtonSolver(ccom.CBCSolver):
 
         info_blue("Creating initial conditions")
         #Generate a zerovector with same dim as mesh
-        d = self.problem.mesh.topology().dim()
+        d = self.problem.singlemesh.topology().dim()
         zerovec = ["0.0" for i in range(d)]
 
         #Take the initial data in a dictionary in whatever form it may be
@@ -374,9 +374,9 @@ class FSINewtonSolver(ccom.CBCSolver):
         fsi_dofs = self.spaces.fsidofs["fsispace"]
         
         #Zero out fluid variables outside of their domain.
-        mf.assign_to_region(U0,zerovec,self.problem.strucdomain,V = self.spaces.V_F,exclude = fsi_dofs)
-        mf.assign_to_region(U0,"0.0",self.problem.strucdomain,V = self.spaces.Q_F,exclude = fsi_dofs)
-        mf.assign_to_region(U0,zerovec,self.problem.strucdomain,V = self.spaces.V_M,exclude = fsi_dofs)
+        mf.assign_to_region(U0,zerovec,self.problem.structure(),V = self.spaces.V_F,exclude = fsi_dofs)
+        mf.assign_to_region(U0,"0.0",self.problem.structure(),V = self.spaces.Q_F,exclude = fsi_dofs)
+        mf.assign_to_region(U0,zerovec,self.problem.structure(),V = self.spaces.V_M,exclude = fsi_dofs)
 
         #Zero out structure variables outside of their domain
         mf.assign_to_region(U0,zerovec,self.problem.fluiddomain,V = self.spaces.V_S,exclude = fsi_dofs)

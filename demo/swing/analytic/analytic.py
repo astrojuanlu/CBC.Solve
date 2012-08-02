@@ -209,8 +209,9 @@ class Analytic(FSI):
     def mesh_dirichlet_boundaries(self):
         return [meshbc]
 
-# Define and solve problem
-problem = Analytic()
-goal = problem.solve(application_parameters)
+if __name__ == "__main__":
+    # Define and solve problem
+    problem = Analytic()
+    goal = problem.solve(application_parameters)
 
-interactive()
+    interactive()

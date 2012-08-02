@@ -19,9 +19,11 @@ from storage import *
 import sys
 from cbc.swing.fsinewton.solver.solver_fsinewton import FSINewtonSolver
 
+
+#class primalsolver
 def solve_primal(problem, parameters):
     "Solve primal FSI problem"
-
+    #def __init__()
     # Get parameters
     T = problem.end_time()
     dt = initial_timestep(problem, parameters)
@@ -103,7 +105,15 @@ def solve_primal(problem, parameters):
     else:
         reference_value = None
 
-    # Time-stepping loop
+
+    if parameters["primal_solver"] == "Newton":
+        # Initialize an FSINewtonsolver Object
+
+        #In order to change the Newton Solver parameters edit the variable
+        #solver_params in module fsinewton.solver.default_params
+        fsinewtonsolver = FSINewtonSolver(problem)
+        exit()
+    #def solve_primal()
     while True:
 
         # Display progress
@@ -119,6 +129,7 @@ def solve_primal(problem, parameters):
         itertol = compute_itertol(problem, w_c, TOL, dt, t1, parameters)
 
         if parameters["primal_solver"] == "Newton":
+            #Function calls like these makes one want to rewrite all of this code in OO.
             U_S0,U_S1,P_S1,increment,numiter = newton_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem)
         elif parameters["primal_solver"] == "fixpoint":
             U_S0,U_S1,P_S1,increment,numiter = fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem)
@@ -129,7 +140,7 @@ def solve_primal(problem, parameters):
     #####################################################
     #The primal solve worked so now go to post processing
     #####################################################
-
+    #def postprocessing():
         # Plot solution
         if plot_solution:
             _plot_solution(u_F1, p_F1, U_S0, U_M1)
@@ -304,6 +315,7 @@ def fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem):
         info_red("Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, numiter + 1))
         end()
         
-def newton_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem):
+def newton_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem,fsinewtonsolver):
     """Solve for the time step using Newton's method"""
     pass
+    #GB Use an existing fsinewtonsolver object to calcuate the time step
