@@ -13,10 +13,10 @@ from storage import *
 from adaptivity import *
 
 # Original implementation
-#from dualproblem import *
+from dualproblem import *
 
 # New implementation by Gabriel
-from new_dualproblem import *
+#from new_dualproblem import *
 
 def solve_dual(problem, parameters):
     "Solve dual FSI problem"

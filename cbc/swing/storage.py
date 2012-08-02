@@ -43,6 +43,30 @@ def create_dual_series(parameters):
     else:
         return TimeSeries("%s/bin/Z" % parameters["output_directory"])
 
+def get_globaldof_mappings(Omega,Omega_F,Omega_S, parameters):
+    """Get submesh to globalmesh mappings"""
+    # Get mappings from local meshes to global mesh
+    v_F = Omega_F.data().mesh_function("parent_vertex_indices").array()
+    v_S = Omega_S.data().mesh_function("parent_vertex_indices").array()
+    e_F = Omega_F.data().mesh_function("parent_edge_indices").array()
+    e_S = Omega_S.data().mesh_function("parent_edge_indices").array()
+
+    # Get the number of vertices and edges
+    Nv = Omega.num_vertices()
+    Ne = Omega.num_edges()
+
+    # Compute mapping to global dofs
+    global_dofs_U_F = append(append(v_F, Nv + e_F), append((Nv + Ne) + v_F, (Nv + Ne + Nv) + e_F))
+    global_dofs_P_F = v_F
+    if parameters["structure_element_degree"] == 1:
+        global_dofs_U_S = append(v_S, Nv + v_S)
+        global_dofs_P_S = global_dofs_U_S
+    else:
+        global_dofs_U_S = append(append(v_S, Nv + e_S), append((Nv + Ne) + v_S, (Nv + Ne + Nv) + e_S))
+        global_dofs_P_S = global_dofs_U_S
+    global_dofs_U_M = append(v_F, Nv + v_F)
+    return (global_dofs_U_F, global_dofs_P_F,global_dofs_U_S,global_dofs_P_S,global_dofs_U_M)    
+
 def read_primal_data(U, t, Omega, Omega_F, Omega_S, series, parameters):
     "Read primal variables at given time"
 
@@ -64,28 +88,10 @@ def read_primal_data(U, t, Omega, Omega_F, Omega_S, series, parameters):
     series[2].retrieve(local_vals_U_S, t)
     series[3].retrieve(local_vals_P_S, t)
     series[4].retrieve(local_vals_U_M, t)
-
-    # Get mappings from local meshes to global mesh
-    v_F = Omega_F.data().mesh_function("parent_vertex_indices").array()
-    v_S = Omega_S.data().mesh_function("parent_vertex_indices").array()
-    e_F = Omega_F.data().mesh_function("parent_edge_indices").array()
-    e_S = Omega_S.data().mesh_function("parent_edge_indices").array()
-
-    # Get the number of vertices and edges
-    Nv = Omega.num_vertices()
-    Ne = Omega.num_edges()
-
-    # Compute mapping to global dofs
-    global_dofs_U_F = append(append(v_F, Nv + e_F), append((Nv + Ne) + v_F, (Nv + Ne + Nv) + e_F))
-    global_dofs_P_F = v_F
-    if parameters["structure_element_degree"] == 1:
-        global_dofs_U_S = append(v_S, Nv + v_S)
-        global_dofs_P_S = global_dofs_U_S
-    else:
-        global_dofs_U_S = append(append(v_S, Nv + e_S), append((Nv + Ne) + v_S, (Nv + Ne + Nv) + e_S))
-        global_dofs_P_S = global_dofs_U_S
-    global_dofs_U_M = append(v_F, Nv + v_F)
-
+    # Get mappings
+    (global_dofs_U_F, global_dofs_P_F,global_dofs_U_S,global_dofs_P_S,global_dofs_U_M) = \
+                      get_globaldof_mappings(Omega,Omega_F,Omega_S, parameters)
+    
     # Set degrees of freedom for primal functions
     U_F.vector()[global_dofs_U_F] = local_vals_u_F
     P_F.vector()[global_dofs_P_F] = local_vals_p_F

@@ -300,6 +300,8 @@ class FSI(FixedPointFSI,NewtonFSI):
         if parameters["primal_solver"] == "Newton":
             NewtonFSI.__init__(self,mesh)
             FixedPointFSI.__init__(self,mesh)
+            #Create an initial step function for the Newtonsolver
+            self.initial_step = lambda : parameters["initial_timestep"] 
         elif parameters["primal_solver"] == "fixpoint":
             FixedPointFSI.__init__(self,mesh)     
         else:

@@ -113,15 +113,15 @@ class FSINewtonSolver(ccom.CBCSolver):
         
         #Time Loop
         info(" ".join(["\n Solving FSI problem",self.problem.__str__() ,"with Newton's method \n"]))
+        self.prebuild_jacobians()
         if self.params["solve"] != False:
-            self.prebuild_jacobians()
             
             #Store the initial value if necessary
             if self.params["store"] != False:
                 self.storage.store_solution(self.U0,self.t)
                 
             while self.t < end_time - DOLFIN_EPS:
-                ret = self.__time_step__()
+                ret = self.time_step()
                 if self.params["store"] != False:
                     self.storage.store_solution(self.U1,self.t)
             info(timings.report_str())
@@ -148,7 +148,7 @@ class FSINewtonSolver(ccom.CBCSolver):
         if self.params["store"] != False:
             self.storage = FSIStorer(self.params["store"])
 
-    def __time_step__(self,testmode = False):
+    def time_step(self,testmode = False):
         """Newton solve for the values of the FSI system at the next time level"""
         
         #update the body forces
@@ -311,7 +311,6 @@ class FSINewtonSolver(ccom.CBCSolver):
 
     def __initial_state(self):
         "Get the initial state of the fsi system by inserting values from subspace functions"
-
         info_blue("Creating initial conditions")
         #Generate a zerovector with same dim as mesh
         d = self.problem.singlemesh.topology().dim()
@@ -347,7 +346,6 @@ class FSINewtonSolver(ccom.CBCSolver):
                         #If this doesn't work interpolate as constant
                         ini_data[funcname] = interpolate(Constant(ini_data[funcname]),spaces[funcname])
                         info(success)
-                        
     
                 #If already an expression interpolate it.
                 elif isinstance(ini_data[funcname],Expression):

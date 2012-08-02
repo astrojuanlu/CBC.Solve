@@ -18,7 +18,7 @@ from adaptivity import *
 from storage import *
 import sys
 from cbc.swing.fsinewton.solver.solver_fsinewton import FSINewtonSolver
-
+import fsinewton.utils.misc_func as mf
 
 #class primalsolver
 def solve_primal(problem, parameters):
@@ -112,7 +112,11 @@ def solve_primal(problem, parameters):
         #In order to change the Newton Solver parameters edit the variable
         #solver_params in module fsinewton.solver.default_params
         fsinewtonsolver = FSINewtonSolver(problem)
-        exit()
+
+        #initialize the solve settings
+        fsinewtonsolver.params["solve"] = False
+        fsinewtonsolver.solve()
+        
     #def solve_primal()
     while True:
 
@@ -129,8 +133,9 @@ def solve_primal(problem, parameters):
         itertol = compute_itertol(problem, w_c, TOL, dt, t1, parameters)
 
         if parameters["primal_solver"] == "Newton":
-            #Function calls like these makes one want to rewrite all of this code in OO.
-            U_S0,U_S1,P_S1,increment,numiter = newton_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem)
+            assert save_solution,"Parameter save_solution must be true to use the Newton Solver"
+          ##  U_S0,U_S1,P_S1,increment,numiter = newton_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem,fsinewtonsolver)
+            U_S1,P_S1 = newton_solve(F,S,M,primal_series,dt,t1,parameters,problem,fsinewtonsolver)
         elif parameters["primal_solver"] == "fixpoint":
             U_S0,U_S1,P_S1,increment,numiter = fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem)
         else:
@@ -315,7 +320,42 @@ def fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem):
         info_red("Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, numiter + 1))
         end()
         
-def newton_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem,fsinewtonsolver):
+##def newton_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem,fsinewtonsolver):
+def newton_solve(F,S,M,primal_series,dt,t1,parameters,problem,fsinewtonsolver):
     """Solve for the time step using Newton's method"""
-    pass
-    #GB Use an existing fsinewtonsolver object to calcuate the time step
+    # Get solution values
+
+    #Input time data
+    fsinewtonsolver.t = t1
+    fsinewtonsolver.dt = dt
+
+    #Read data from previous time step
+    Uglob = create_primal_functions(problem.Omega, parameters)
+    read_primal_data(Uglob, t1, problem.Omega, problem.Omega_F, problem.Omega_S, primal_series, parameters)
+
+    newtonfunc_to_primefunc = {"U_F":Uglob[0],"P_F":Uglob[1],"U_S":Uglob[2],"P_S":Uglob[3],"U_M":Uglob[4]}
+    subloc = fsinewtonsolver.spaces.subloc
+    for funcname in newtonfunc_to_primefunc:
+        #Make sure the function spaces match
+        newtondim = subloc.spaceends[funcname] - subloc.spacebegins[funcname]
+        funcdim = newtonfunc_to_primefunc[funcname].function_space().dim() 
+        assert newtondim == funcdim,"Error in inserting data into FSINewtonSolver, \
+                                      Mismatch in dimension of function %s"%function
+                
+        #input the previous solution values into the solver
+        fsinewtonsolver.U0.vector()[subloc.spacebegins[funcname]:subloc.spaceends[funcname]] = \
+        newtonfunc_to_primefunc[funcname].vector()[:]
+    
+    #solve the time step
+    fsinewtonsolver.time_step()
+
+    #map the data back into the local functions
+##    (global_dofs_U_F, global_dofs_P_F,global_dofs_U_S,global_dofs_P_S,global_dofs_U_M)
+    dofmaps =  get_globaldof_mappings(problem.Omega,problem.Omega_F,problem.Omega_S, parameters)
+    globalfuncs = [fsinewtonsolver.U1_F,fsinewtonsolver.P1_F,fsinewtonsolver.U1_S,fsinewtonsolver.U1_M]
+    Uloc = extract_solution(F, S, M)
+    
+    for globfunc,locfunc,dofmap in zip(globalfuncs,Uloc,dofmaps):
+        locfunc = mf.extract_subfunction(globfunc).vector()[dofmap]
+           #U1_S,P1_S   
+    return Uloc[2],Uloc[3]

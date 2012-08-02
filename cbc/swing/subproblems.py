@@ -23,6 +23,7 @@ from cbc.flow import NavierStokes
 from cbc.twist import Hyperelasticity, StVenantKirchhoff, PiolaTransform
 from operators import Sigma_F as _Sigma_F
 from operators import Sigma_M as _Sigma_M
+import fsinewton.utils.misc_func as mf
 
 # Define fluid problem
 class FluidProblem(NavierStokes):
