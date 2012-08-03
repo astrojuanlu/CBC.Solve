@@ -33,7 +33,7 @@ if test:
     application_parameters["output_directory"] = "results-analytic-test"
     application_parameters["max_num_refinements"] = 0
     application_parameters["fluid_solver"] = "taylor-hood"
-    application_parameters["primal_solver"] = "Newton"
+    application_parameters["primal_solver"] ="Newton"
     #application_parameters["fluid_solver"] = "ipcs"
 else:
     ref = 0

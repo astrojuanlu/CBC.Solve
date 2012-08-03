@@ -19,6 +19,7 @@ from storage import *
 import sys
 from cbc.swing.fsinewton.solver.solver_fsinewton import FSINewtonSolver
 import fsinewton.utils.misc_func as mf
+import copy
 
 #class primalsolver
 def solve_primal(problem, parameters):
@@ -134,8 +135,7 @@ def solve_primal(problem, parameters):
 
         if parameters["primal_solver"] == "Newton":
             assert save_solution,"Parameter save_solution must be true to use the Newton Solver"
-          ##  U_S0,U_S1,P_S1,increment,numiter = newton_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem,fsinewtonsolver)
-            U_S1,P_S1 = newton_solve(F,S,M,primal_series,dt,t1,parameters,problem,fsinewtonsolver)
+            U_S1,U_S0,P_S1,increment,numiter = newton_solve(F,S,M,U_S0,dt,t1,parameters,problem,fsinewtonsolver)
         elif parameters["primal_solver"] == "fixpoint":
             U_S0,U_S1,P_S1,increment,numiter = fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem)
         else:
@@ -307,55 +307,68 @@ def fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem):
         U_S0.vector()[:] = U_S1.vector()[:]
 
         # Check convergence
-        if increment < itertol and iter > 2:            
+        if increment < itertol and numiter > 2:            
             info_green("Increment is %g. Maybe plotting" % increment)
             return (U_S0, U_S1, P_S1, increment,numiter)
 
         # Check if we have reached the maximum number of iterations
         elif numiter == maxiter - 1:
-            raise RuntimeError, "FSI iteration failed to converge after %d iterations." % maxiter
+            raise RuntimeError, "FSI fixed point iteration failed to converge after %d iterations." % maxiter
 
         # Print size of increment
         info("")
         info_red("Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, numiter + 1))
         end()
         
-##def newton_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem,fsinewtonsolver):
-def newton_solve(F,S,M,primal_series,dt,t1,parameters,problem,fsinewtonsolver):
+def newton_solve(F,S,M,U0_S,dt,t1,parameters,problem,fsinewtonsolver):
     """Solve for the time step using Newton's method"""
-    # Get solution values
+    # Get mappings from local to global mesh
+    dofmaps =  get_globaldof_mappings(problem.Omega,problem.Omega_F,problem.Omega_S, parameters)
 
     #Input time data
     fsinewtonsolver.t = t1
     fsinewtonsolver.dt = dt
 
-    #Read data from previous time step
-    Uglob = create_primal_functions(problem.Omega, parameters)
-    read_primal_data(Uglob, t1, problem.Omega, problem.Omega_F, problem.Omega_S, primal_series, parameters)
+    #Map the data from previous time step into global functions
+    U0glob = create_primal_functions(problem.Omega, parameters)
+    Uloc = extract_solution(F, S, M)
+    for globfunc,locfunc,dofmap in zip(U0glob,Uloc,dofmaps):
+        globfunc.vector()[dofmap] = locfunc.vector()[:]
 
-    newtonfunc_to_primefunc = {"U_F":Uglob[0],"P_F":Uglob[1],"U_S":Uglob[2],"P_S":Uglob[3],"U_M":Uglob[4]}
+    #Put the global data into the fsinewtonsolver
+    U0globdict = {"U_F":U0glob[0],"P_F":U0glob[1],"U_S":U0glob[2],"P_S":U0glob[3],"U_M":U0glob[4]}
     subloc = fsinewtonsolver.spaces.subloc
-    for funcname in newtonfunc_to_primefunc:
+    for funcname in U0globdict:
         #Make sure the function spaces match
         newtondim = subloc.spaceends[funcname] - subloc.spacebegins[funcname]
-        funcdim = newtonfunc_to_primefunc[funcname].function_space().dim() 
+        funcdim = U0globdict[funcname].function_space().dim() 
         assert newtondim == funcdim,"Error in inserting data into FSINewtonSolver, \
                                       Mismatch in dimension of function %s"%function
                 
         #input the previous solution values into the solver
         fsinewtonsolver.U0.vector()[subloc.spacebegins[funcname]:subloc.spaceends[funcname]] = \
-        newtonfunc_to_primefunc[funcname].vector()[:]
+        U0globdict[funcname].vector()[:]
     
     #solve the time step
     fsinewtonsolver.time_step()
 
+    #Save U0_S
+    U0_S.vector()[:] = Uloc[2].vector()
+
     #map the data back into the local functions
-##    (global_dofs_U_F, global_dofs_P_F,global_dofs_U_S,global_dofs_P_S,global_dofs_U_M)
-    dofmaps =  get_globaldof_mappings(problem.Omega,problem.Omega_F,problem.Omega_S, parameters)
-    globalfuncs = [fsinewtonsolver.U1_F,fsinewtonsolver.P1_F,fsinewtonsolver.U1_S,fsinewtonsolver.U1_M]
-    Uloc = extract_solution(F, S, M)
+    U1glob = [fsinewtonsolver.U1_F,fsinewtonsolver.P1_F,fsinewtonsolver.U1_S,fsinewtonsolver.U1_M]
     
-    for globfunc,locfunc,dofmap in zip(globalfuncs,Uloc,dofmaps):
-        locfunc = mf.extract_subfunction(globfunc).vector()[dofmap]
-           #U1_S,P1_S   
-    return Uloc[2],Uloc[3]
+    for globfunc,locfunc,dofmap in zip(U1glob,Uloc,dofmaps):
+        locfunc.vector()[:] = mf.extract_subfunction(globfunc).vector()[dofmap]
+
+    #Gather together the information to be returned
+    U1_S = Uloc[2]
+    P1_S = Uloc[3]
+    numiter = len(fsinewtonsolver.last_itr)
+    
+    # Compute increment of displacement vector
+    U0_S.vector().axpy(-1, U1_S.vector())
+    increment = norm(U0_S.vector())
+    U0_S.vector()[:] = U1_S.vector()[:]
+    
+    return (U1_S,U0_S,P1_S,increment,numiter)
