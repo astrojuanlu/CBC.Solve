@@ -106,7 +106,6 @@ def solve_primal(problem, parameters):
     else:
         reference_value = None
 
-
     if parameters["primal_solver"] == "Newton":
         # Initialize an FSINewtonsolver Object
 
@@ -135,7 +134,7 @@ def solve_primal(problem, parameters):
 
         if parameters["primal_solver"] == "Newton":
             assert save_solution,"Parameter save_solution must be true to use the Newton Solver"
-            U_S1,U_S0,P_S1,increment,numiter = newton_solve(F,S,M,U_S0,dt,t1,parameters,problem,fsinewtonsolver)
+            U_S1,U_S0,P_S1,increment,numiter = newton_solve(F,S,M,U_S0,dt,parameters,itertol,problem,fsinewtonsolver)
         elif parameters["primal_solver"] == "fixpoint":
             U_S0,U_S1,P_S1,increment,numiter = fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem)
         else:
@@ -320,55 +319,41 @@ def fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem):
         info_red("Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, numiter + 1))
         end()
         
-def newton_solve(F,S,M,U0_S,dt,t1,parameters,problem,fsinewtonsolver):
+def newton_solve(F,S,M,U0_S,dt,parameters,itertol,problem,fsinewtonsolver):
     """Solve for the time step using Newton's method"""
     # Get mappings from local to global mesh
     dofmaps =  get_globaldof_mappings(problem.Omega,problem.Omega_F,problem.Omega_S, parameters)
+    dofmaps = {"U_F":dofmaps[0],"P_F":dofmaps[1],"U_S":dofmaps[2],"P_S":dofmaps[3],"U_M":dofmaps[4]}
 
-    #Input time data
-    fsinewtonsolver.t = t1
+    #Input data
     fsinewtonsolver.dt = dt
-
-    #Map the data from previous time step into global functions
-    U0glob = create_primal_functions(problem.Omega, parameters)
-    Uloc = extract_solution(F, S, M)
-    for globfunc,locfunc,dofmap in zip(U0glob,Uloc,dofmaps):
-        globfunc.vector()[dofmap] = locfunc.vector()[:]
-
-    #Put the global data into the fsinewtonsolver
-    U0globdict = {"U_F":U0glob[0],"P_F":U0glob[1],"U_S":U0glob[2],"P_S":U0glob[3],"U_M":U0glob[4]}
-    subloc = fsinewtonsolver.spaces.subloc
-    for funcname in U0globdict:
-        #Make sure the function spaces match
-        newtondim = subloc.spaceends[funcname] - subloc.spacebegins[funcname]
-        funcdim = U0globdict[funcname].function_space().dim() 
-        assert newtondim == funcdim,"Error in inserting data into FSINewtonSolver, \
-                                      Mismatch in dimension of function %s"%function
-                
-        #input the previous solution values into the solver
-        fsinewtonsolver.U0.vector()[subloc.spacebegins[funcname]:subloc.spaceends[funcname]] = \
-        U0globdict[funcname].vector()[:]
+    fsinewtonsolver.newtonsolver.tol = itertol
     
+    #Save U0_S
+    U0_S.vector()[:] = mf.extract_subfunction(fsinewtonsolver.U0_S).vector()[dofmaps["U_S"]]
+
     #solve the time step
     fsinewtonsolver.time_step()
 
-    #Save U0_S
-    U0_S.vector()[:] = Uloc[2].vector()
-
     #map the data back into the local functions
-    U1glob = [fsinewtonsolver.U1_F,fsinewtonsolver.P1_F,fsinewtonsolver.U1_S,fsinewtonsolver.U1_M]
+    Uloc = extract_solution(F, S, M)
+    Uloc = {"U_F":Uloc[0],"P_F":Uloc[1],"U_S":Uloc[2],"P_S":Uloc[3],"U_M":Uloc[4]}
+    U1glob = {"U_F":fsinewtonsolver.U1_F,"P_F":fsinewtonsolver.P1_F, \
+              "U_S":fsinewtonsolver.U1_S,"P_S":fsinewtonsolver.P1_S, \
+              "U_M":fsinewtonsolver.U1_M}
     
-    for globfunc,locfunc,dofmap in zip(U1glob,Uloc,dofmaps):
-        locfunc.vector()[:] = mf.extract_subfunction(globfunc).vector()[dofmap]
+    subloc = fsinewtonsolver.spaces.subloc
+    for funcname in Uloc:
+        #Copy the dofs from global to local
+        Uloc[funcname].vector()[:] = mf.extract_subfunction(U1glob[funcname]).vector()[dofmaps[funcname]]
 
     #Gather together the information to be returned
-    U1_S = Uloc[2]
-    P1_S = Uloc[3]
+    U1_S = Uloc["U_S"]
+    P1_S = Uloc["P_S"]
     numiter = len(fsinewtonsolver.last_itr)
     
     # Compute increment of displacement vector
     U0_S.vector().axpy(-1, U1_S.vector())
     increment = norm(U0_S.vector())
     U0_S.vector()[:] = U1_S.vector()[:]
-    
     return (U1_S,U0_S,P1_S,increment,numiter)

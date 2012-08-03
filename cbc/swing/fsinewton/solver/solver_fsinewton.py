@@ -28,7 +28,7 @@ class FSINewtonSolver(ccom.CBCSolver):
     def __init__(self,problem,params = solver_params):
         
         timings.startnext("Fsi Newton Solver init")
-        info("Initializing FSI Newton Solver")
+        info_blue("Initializing FSI Newton Solver")
         info("Using params \n" + str(params) )
         #Initialize base class
         ccom.CBCSolver.__init__(self)

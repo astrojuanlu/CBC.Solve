@@ -518,7 +518,9 @@ def compute_itertol(problem, w_c, TOL, dt, t1, parameters):
     if parameters["uniform_timestep"]:
         tol = parameters["fixedpoint_tolerance"]
         info("")
-        info_blue("  * Tolerance for (f)-(S)-(M) iteration is fixed to %g" % tol)
+        if parameters["primal_solver"] == "fixpoint":itertype = "(f)-(S)-(M)"
+        else:itertype = "Newton"
+        info_blue("  * Tolerance for %s iteration is fixed to %g" %(itertype,tol))
         end()
 
     else:
