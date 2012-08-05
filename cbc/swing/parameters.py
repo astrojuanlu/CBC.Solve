@@ -4,6 +4,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import Parameters, File, info
 from utils import date
+from fsinewton.solver.default_params import default_fsinewtonsolver_parameters
 import os
 
 
@@ -44,6 +45,7 @@ def default_parameters():
     p.add("use_exact_solution", False)
     p.add("output_directory", "unspecified")
     p.add("description", "unspecified")
+    p.add(default_fsinewtonsolver_parameters())
 
     # Hacks
     p.add("fluid_solver", "ipcs")

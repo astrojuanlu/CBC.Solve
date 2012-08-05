@@ -15,6 +15,13 @@ import fsinewton.problems.base as base
 import fsinewton.solver.solver_fsinewton as sfsi
 import fsinewton.utils.misc_func as mf
 
+ana.application_parameters["primal_solver"] = "Newton"
+ana.application_parameters["save_solution"] = True
+ana.application_parameters["solve_primal"] = True
+ana.application_parameters["solve_dual"] = True
+ana.application_parameters["estimate_error"] = True
+ana.application_parameters["plot_solution"] = True
+
 #Exclude FSI Nodes
 influid = "x[0] < 1.0 - DOLFIN_EPS"
 
@@ -231,7 +238,6 @@ class NewtonAnalyticMeshFluid(SetStruc,NewtonAnalytic):
         NewtonAnalytic.__init__(self,num_refine,bctype = bctype,endtime = endtime)
     
 if __name__ == "__main__":
-    ana.application_parameters["primal_solver"] = "Newton"
     problem = NewtonAnalytic()
     goal = problem.solve(ana.application_parameters)
     interactive()

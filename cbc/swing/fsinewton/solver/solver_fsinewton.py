@@ -19,13 +19,13 @@ from fsinewton.solver.mynewtonsolver import MyNonlinearProblem,MyNewtonSolver, \
                                             NewtonConverganceError,NanError, \
                                             MyNewtonSolverNumpy
 from fsinewton.utils.output import FSIPlotter, FSIStorer
-from fsinewton.solver.default_params import solver_params
+from fsinewton.solver.default_params import default_fsinewtonsolver_parameters
 from fsinewton.utils.runtimedata import FsiRunTimeData
 from fsinewton.utils.timings import timings
 
 class FSINewtonSolver(ccom.CBCSolver):
     """A Monolithic Newton Solver for FSI problems"""
-    def __init__(self,problem,params = solver_params):
+    def __init__(self,problem,params = default_fsinewtonsolver_parameters().to_dict()):
         
         timings.startnext("Fsi Newton Solver init")
         info_blue("Initializing FSI Newton Solver")
@@ -215,7 +215,8 @@ class FSINewtonSolver(ccom.CBCSolver):
         self.F_M = self.problem.mesh_right_hand_side()
         self.G_F = self.problem.fluid_velocity_neumann_values()
         self.G_F_FSI = self.problem.fluid_fsi_stress()
-        self.forces = [f for f in [self.G_S,self.F_F,self.F_S,self.F_M, self.G_F,self.G_F_FSI] if f is not None]
+        self.forces = [f for f in [self.G_S,self.F_F,self.F_S,self.F_M, self.G_F,self.G_F_FSI]\
+                       if f is not None and f != []]
 
     def __update_forces(self,t):
         for f in self.forces:

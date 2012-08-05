@@ -79,8 +79,7 @@ class MyNewtonSolver:
         
         #Build Residual 
         self.build_residual()            
-        [bc.apply(self.F) for bc in self.problem.bc]
-
+        
         #Check for convergence, F(u) should be close to 0.
         #Get the discrete 2 norm of the increment
 ##        self.E = np.max(self.F.array())
@@ -186,6 +185,7 @@ class MyNewtonSolver:
              cell_domains = self.problem.cell_domains,
              interior_facet_domains = self.problem.interior_facet_domains,
              exterior_facet_domains = self.problem.exterior_facet_domains)
+        [bc.apply(self.F) for bc in self.problem.bc]
         timings.stop("Residual assembly")
         
 ##        dofs = self.problem.spaces.restricteddofs["U_S"] + self.problem.spaces.restricteddofs["P_S"]

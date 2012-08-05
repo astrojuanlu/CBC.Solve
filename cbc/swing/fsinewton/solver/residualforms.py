@@ -157,12 +157,12 @@ def fluid_residual(Udot,U,U1_F,P,v,q,mu,rho,U_M,N,dx_F,ds_DN,ds_F,F_F,Udot_M, G_
         R_F += -inner(v, J(U_M)*dot((mu*inv(F(U_M)).T*grad(U).T - P*I)*inv(F(U_M)).T, N))*ds_DN
         
     #Add boundary traction (sigma dot n) to fluid boundary if specified.
-    if ds_F is not None:
+    if ds_F is not None and ds_F != []:
         info("Using Fluid boundary Traction (Neumann) BC")
         R_F += - inner(G_F, v)*ds_F
         
     #Right hand side Fluid (body force)
-    if F_F is not None:
+    if F_F is not None and F_F != []:
         info("Using Fluid body force")
         R_F += -inner(v,J(U_M)*F_F)*dx_F
     return R_F
@@ -207,7 +207,7 @@ def struc_residual(Udot_S,Pdot_S,U_S, P_S,v_S,q_S,mu_S,lmbda_S,rho_S,dx_S,ds_S,F
     #Hyperelasticity equations St. Venant Kirchoff
     R_S = inner(v_S, rho_S*Pdot_S)*dx_S + inner(grad(v_S), Sigma_S)*dx_S + inner(q_S, Udot_S - P_S)*dx_S
     #Right hand side Structure (Body force)
-    if F_S is not None:
+    if F_S is not None and F_S != []:
         info("Using structure body force")
         R_S += -inner(v_S,J(U_S)*F_S)*dx_S
     return R_S
@@ -232,7 +232,7 @@ def struc_fsibound(U_F,P_F,U_M,mu_F,v_S,N_F,G_S,dFSI, innerbound, Exact_SigmaF =
             C_S = (inner(Exact_SigmaF('+'),v_S('-')))*dFSI
             
         #Optional boundary traction term
-        if G_S is not None:
+        if G_S is not None and G_S != []:
             info("Using additional fsi boundary traction term")
             C_S += inner(G_S('-'),v_S('-'))*dFSI
     return C_S
@@ -257,7 +257,7 @@ def mesh_residual(Udot_M,U_M,v_M,mu_M,lmbda_M,dx_F,F_M):
     #Mesh equation
     R_M = inner(v_M, Udot_M)*dx_F + inner(sym(grad(v_M)), Sigma_M)*dx_F
     #Right hand side mesh (Body Force)
-    if F_M is not None:
+    if F_M is not None and F_M != []:
         info("Using mesh body force")
         R_M += -inner(v_M,F_M)*dx_F
     return R_M

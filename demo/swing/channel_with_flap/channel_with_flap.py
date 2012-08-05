@@ -13,14 +13,14 @@ application_parameters = read_parameters()
 test = True
 if test:
     application_parameters["output_directory"] = "results_channel_with_flap_test"
-    application_parameters["solve_primal"] = False
+    application_parameters["solve_primal"] = True
     application_parameters["solve_dual"] = True
-    application_parameters["estimate_error"] = False
+    application_parameters["estimate_error"] = True
     application_parameters["uniform_timestep"] = True
     application_parameters["plot_solution"] = True
     application_parameters["max_num_refinements"] = 0
-
     application_parameters["initial_timestep"] = 0.05 / 8.0
+    application_parameters["primal_solver"] = "Newton"
 
 # Constants related to the geometry of the problem
 channel_length  = 4.0
@@ -144,5 +144,4 @@ class ChannelWithFlap(FSI):
 # Define and solve problem
 problem = ChannelWithFlap()
 problem.solve(application_parameters)
-
 interactive()

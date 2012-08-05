@@ -17,13 +17,13 @@ application_parameters = read_parameters()
 # Used for testing
 test = True
 if test:
-    ref = 1
+    ref = 2
     application_parameters["mesh_element_degree"] = 1
     application_parameters["structure_element_degree"] = 1
     application_parameters["save_solution"] = True
     application_parameters["solve_primal"] = True
-    application_parameters["solve_dual"] = False
-    application_parameters["estimate_error"] = False
+    application_parameters["solve_dual"] = True
+    application_parameters["estimate_error"] = True
     application_parameters["plot_solution"] = True
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True
@@ -33,7 +33,7 @@ if test:
     application_parameters["output_directory"] = "results-analytic-test"
     application_parameters["max_num_refinements"] = 0
     application_parameters["fluid_solver"] = "taylor-hood"
-    application_parameters["primal_solver"] ="fixpoint"
+    application_parameters["primal_solver"] ="fixpoint" #for newtonsolve use Newtonanalytic.py
     #application_parameters["fluid_solver"] = "ipcs"
 else:
     ref = 0
@@ -156,7 +156,7 @@ class Analytic(FSI):
     def fluid_body_force(self):
         return self.f_F
 
-    def fluid_boundary_traction(self, V):
+    def fluid_boundary_traction(self):
         return self.g_F
 
     #--- Structure problem ---
@@ -188,8 +188,11 @@ class Analytic(FSI):
     def structure_boundary_traction_extra(self):
         return self.G_0
 
-    def structure_initial_conditions(self):
-        return (self.U_S, self.P_S)
+    def struc_displacement_initial_condition(self):
+        return (self.U_S)
+
+    def struc_velocity_initial_condition(self):
+        return (self.P_S)    
 
     #--- Parameters for mesh problem ---
 

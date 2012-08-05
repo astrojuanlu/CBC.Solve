@@ -81,8 +81,8 @@ class FluidProblem(NavierStokes):
     def body_force(self, V):
         return self.problem.fluid_body_force()
 
-    def boundary_traction(self, V):
-        return self.problem.fluid_boundary_traction(V)
+    def boundary_traction(self,V):
+        return self.problem.fluid_boundary_traction()
 
     def mesh_velocity(self, V):
         w = Function(V)
@@ -265,7 +265,11 @@ class StructureProblem(Hyperelasticity):
         return self.problem.structure_boundary_traction(V)
 
     def initial_conditions(self):
-        return self.problem.structure_initial_conditions()
+        D0 = self.problem.struc_displacement_initial_condition()
+        V0 = self.problem.struc_velocity_initial_condition()
+        if (D0,V0) == (None,None):return [],[]
+        else: return D0,V0
+               
 
     def material_model(self):
         mu    = self.problem.structure_mu()

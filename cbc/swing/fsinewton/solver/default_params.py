@@ -25,31 +25,66 @@ __author__ = "Gabriel Balaban"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-from dolfin import parameters
+from dolfin import Parameters,parameters
 # Set DOLFIN parameters
 parameters["form_compiler"]["cpp_optimize"] = True
 #parameters["form_compiler"]["log_level"] = DEBUG
 parameters["form_compiler"]["representation"] = "quadrature"
 ##parameters["form_compiler"]["optimize"] = True
 
-solver_params = { "V_F":{"deg":2,"elem":"CG"},
-                  "Q_F":{"deg":1,"elem":"CG"},
-                  "L_F":{"deg":0,"elem":"DG"},
-                  "V_S":{"deg":1,"elem":"CG"},
-                  "Q_S":{"deg":1,"elem":"CG"},
-                  "V_M":{"deg":1,"elem":"CG"},
-                  "L_M":{"deg":0,"elem":"DG"},
-                  "stress_coupling":"forward",
-                  "solve":True,
-                  "store":False,
-                  "plot":False,
-                  "linear_solve":"PETSc",
-                  "runtimedata":{"fsisolver":False,
-                                 "newtonsolver":False},
-                  "jacobian":"auto",
-                  "reuse_jacobian":True,
-                  "max_reuse_jacobian":20,
-                  "newtonitrmax":100,
-                  "newtonsoltol":1.0e-13,
-                  "bigblue":False
-                  }
+def default_fsinewtonsolver_parameters():
+    p = Parameters("FSINewtonSolver_parameters")
+    
+    vf = Parameters("V_F")
+    vf.add("deg",2)
+    vf.add("elem","CG")
+    p.add(vf)
+    
+    qf = Parameters("Q_F")
+    qf.add("deg",1)
+    qf.add("elem","CG")
+    p.add(qf)
+    
+    lf = Parameters("L_F")
+    lf.add("deg",0)
+    lf.add("elem","DG")
+    p.add(lf)
+    
+    vs = Parameters("V_S")
+    vs.add("deg",1)
+    vs.add("elem","CG")
+    p.add(vs)
+    
+    qs = Parameters("Q_S")
+    qs.add("deg",1)
+    qs.add("elem","CG")
+    p.add(qs)
+    
+    vm = Parameters("V_M")
+    vm.add("deg",1)
+    vm.add("elem","CG")
+    p.add(vm)
+    
+    lm = Parameters("L_M")
+    lm.add("deg",0)
+    lm.add("elem","DG")
+    p.add(lm)
+    
+    p.add("stress_coupling","forward")
+    p.add("solve",True)
+    p.add("store",False)
+    p.add("plot",False)
+    p.add("linear_solve","PETSc")
+    
+    rndata = Parameters("runtimedata")
+    rndata.add("fsisolver",False)
+    rndata.add("newtonsolver",False)
+    p.add(rndata)
+    
+    p.add("jacobian","auto")
+    p.add("reuse_jacobian",True)
+    p.add("max_reuse_jacobian",20)
+    p.add("newtonitrmax",100)
+    p.add("newtonsoltol",1.0e-13)
+    p.add("bigblue",False)
+    return p

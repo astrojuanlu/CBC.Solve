@@ -108,10 +108,8 @@ def solve_primal(problem, parameters):
 
     if parameters["primal_solver"] == "Newton":
         # Initialize an FSINewtonsolver Object
-
-        #In order to change the Newton Solver parameters edit the variable
-        #solver_params in module fsinewton.solver.default_params
-        fsinewtonsolver = FSINewtonSolver(problem)
+        fsinewtonsolver = FSINewtonSolver(problem,\
+                            params = parameters["FSINewtonSolver_parameters"])
 
         #initialize the solve settings
         fsinewtonsolver.params["solve"] = False
@@ -148,29 +146,8 @@ def solve_primal(problem, parameters):
         # Plot solution
         if plot_solution:
             _plot_solution(u_F1, p_F1, U_S0, U_M1)
-        #Update the exact solutions
-        (u_F_ex, p_F_ex, U_S_ex, P_S_ex, U_M_ex) \
-            = problem.exact_solution()
-        u_F_ex.t = t1
-        p_F_ex.t = t1
-        U_S_ex.t = t1
-        U_M_ex.t = t1
-
-        print "||u_F_ex - u_F || = %.15g" % errornorm(u_F_ex, u_F1),
-        print "||u_F_ex|| = %.15g"        % norm(u_F_ex, mesh=F.mesh()),
-        print "||u_F|| = %.15g"           % norm(u_F1, mesh=F.mesh())
-
-        print "||p_F_ex - p_F || = %.15g" % errornorm(p_F_ex, p_F1),
-        print "||p_F_ex|| = %.15g"        % norm(p_F_ex, mesh=F.mesh()),
-        print "||p_F|| = %.15g"           % norm(p_F1, mesh=F.mesh())
-
-        print "||U_S_ex - U_S || = %.15g" % errornorm(U_S_ex, U_S1),
-        print "||U_S_ex|| = %.15g"        % norm(U_S_ex, mesh=problem.structure_mesh()),
-        print "||U_S|| = %.15g"           % norm(U_S1, mesh=problem.structure_mesh())
-
-        print "||U_M_ex - U_M || = %.15g" % errornorm(U_M_ex, U_M1),
-        print "||U_M_ex|| = %.15g"        % norm(U_M_ex, mesh=problem.fluid_mesh()),
-        print "||U_M|| = %.15g"           % norm(U_M1, mesh=problem.fluid_mesh())
+        if problem.exact_solution() is not None:
+            update_exactsol(u_F1,p_F1,U_S1,U_M1,F,problem,t1)      
 
         info("")
         info_green("Increment = %g (tolerance = %g), converged after %d iterations" % (increment, itertol, numiter + 1))
@@ -357,3 +334,29 @@ def newton_solve(F,S,M,U0_S,dt,parameters,itertol,problem,fsinewtonsolver):
     increment = norm(U0_S.vector())
     U0_S.vector()[:] = U1_S.vector()[:]
     return (U1_S,U0_S,P1_S,increment,numiter)
+
+def update_exactsol(u_F1,p_F1,U_S1,U_M1,F,problem,t1):
+    """Print errors and update exact solutions"""
+    #Update the exact solutions
+    (u_F_ex, p_F_ex, U_S_ex, P_S_ex, U_M_ex) \
+        = problem.exact_solution()
+    u_F_ex.t = t1
+    p_F_ex.t = t1
+    U_S_ex.t = t1
+    U_M_ex.t = t1
+
+    print "||u_F_ex - u_F || = %.15g" % errornorm(u_F_ex, u_F1),
+    print "||u_F_ex|| = %.15g"        % norm(u_F_ex, mesh=F.mesh()),
+    print "||u_F|| = %.15g"           % norm(u_F1, mesh=F.mesh())
+
+    print "||p_F_ex - p_F || = %.15g" % errornorm(p_F_ex, p_F1),
+    print "||p_F_ex|| = %.15g"        % norm(p_F_ex, mesh=F.mesh()),
+    print "||p_F|| = %.15g"           % norm(p_F1, mesh=F.mesh())
+
+    print "||U_S_ex - U_S || = %.15g" % errornorm(U_S_ex, U_S1),
+    print "||U_S_ex|| = %.15g"        % norm(U_S_ex, mesh=problem.structure_mesh()),
+    print "||U_S|| = %.15g"           % norm(U_S1, mesh=problem.structure_mesh())
+
+    print "||U_M_ex - U_M || = %.15g" % errornorm(U_M_ex, U_M1),
+    print "||U_M_ex|| = %.15g"        % norm(U_M_ex, mesh=problem.fluid_mesh()),
+    print "||U_M|| = %.15g"           % norm(U_M1, mesh=problem.fluid_mesh())

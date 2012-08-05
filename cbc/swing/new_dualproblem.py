@@ -8,7 +8,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 from operators import *
-import new_jacobianforms as jfor
+import fsinewton.solver.jacobianforms as jfor
 
 def create_dual_forms(Omega_F, Omega_S, k, problem,
                       v_F,  q_F,  s_F,  v_S,  q_S,  v_M,  q_M,
