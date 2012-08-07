@@ -98,7 +98,6 @@ class FSISpaces(object):
         offset = self.subloc.spacebegins[spacename]
         remove = [r + offset for r in remove]
 
-
         for d in remove:
             dofs.remove(d)
 

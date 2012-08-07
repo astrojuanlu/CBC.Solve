@@ -54,13 +54,21 @@ if debug:
 # depend on X and y == Y.
 u_F = P_S.subs(Y, y)
 
+# Step 2a: Define the reference fluid velocity U_F(X) = U_F(x) = u_F(x),
+# this works since the fluid velocity only depends on y, but the fsi boundary
+#is only being displaced in the x direction.
+U_F = u_F
+
 # Step 3: Define your favorite pressure
 p_F = 2*C*nu*(1 - x)*sin(t)
+P_F = p_F.subs(y, Y).subs(x, X + U_M[0])
 
 # Print solutions
 underline("Analytical solutions")
+print "U_F =\n", U_F, "\n"
 print "u_F =\n", u_F, "\n"
 print "p_F =\n", p_F, "\n"
+print "P_F =\n", P_F, "\n"
 print "U_S =\n", U_S, "\n"
 print "P_S =\n", P_S, "\n"
 print "U_M =\n", U_M, "\n"
@@ -83,6 +91,8 @@ if debug:
 # Compute gradients
 grad_u_F = Matrix([[simplify(diff(u_F[0], x)), simplify(diff(u_F[0], y))],
                    [simplify(diff(u_F[1], x)), simplify(diff(u_F[1], y))]])
+grad_U_F = Matrix([[simplify(diff(U_F[0], x)), simplify(diff(U_F[0], y))],
+                   [simplify(diff(U_F[1], x)), simplify(diff(U_F[1], y))]])
 Grad_U_S = Matrix([[simplify(diff(U_S[0], X)), simplify(diff(U_S[0], Y))],
                    [simplify(diff(U_S[1], X)), simplify(diff(U_S[1], Y))]])
 Grad_U_M = Matrix([[simplify(diff(U_M[0], X)), simplify(diff(U_M[0], Y))],
@@ -91,6 +101,7 @@ Grad_U_M = Matrix([[simplify(diff(U_M[0], X)), simplify(diff(U_M[0], Y))],
 if debug:
     underline("Gradients")
     print "grad(u_F) =\n", grad_u_F, "\n"
+    print "grad(U_F) =\n", grad_U_F, "\n"
     print "Grad(U_S) =\n", Grad_U_S, "\n"
     print "Grad(U_M) =\n", Grad_U_M, "\n"
     print
@@ -114,9 +125,10 @@ Grad_U_F = Matrix([[simplify(diff(U_F[0], X)), simplify(diff(U_F[0], Y))],
                    [simplify(diff(U_F[1], X)), simplify(diff(U_F[1], Y))]])
 P_F = p_F.subs(y, Y).subs(x, X + U_M[0])
 Sigma_F = nu*(Grad_U_F * F_M_inv + F_M_inv.T * Grad_U_F.T) - P_F*I
+PSigma_F = J_M*Sigma_F*F_M_inv.T
 
 # Compute boundary tractions on fsi boundary in reference frame:
-G_F = J_M*Sigma_F*F_M_inv.T*N
+G_F = J_M*Sigma_F*F_M_inv.T*N 
 G_F = Matrix([simplify(G_F[0]), simplify(G_F[1])])
 G_S = Sigma_S*N
 G_S = Matrix([simplify(G_S[0]), simplify(G_S[1])])
@@ -128,11 +140,22 @@ traction_left = sigma_F*N_left
 print traction_left
 print
 
+underline("Deriving left reference traction for fluid")
+TRACTION_LEFT = Sigma_F*N_left
+print TRACTION_LEFT
+print
+
 # Compute boundary traction in reference frame
 underline("Deriving additional reference boundary traction G_0")
 G_0 = G_S - G_F
 G_0 = Matrix([simplify(G_0[0]), simplify(G_0[1])])
 print G_0
+print
+
+# Print the Fluid Boundary traction in the reference frame
+underline("Fluid Boundary traction in the reference frame")
+print
+print G_F
 print
 
 # Derive right-hand side f_F such that the Navier-Stokes equations are
@@ -146,6 +169,18 @@ f_F = dot_u_F + grad_u_F_u - div_sigma_F
 f_F = Matrix([simplify(f_F[0]), simplify(f_F[1])])
 print f_F
 print
+
+#Derive right-hand side F_F such that the Navier Stokes equations are satisfied.
+underline("Deriving right-hand side for the Navier--Stokes equations in reference domain")
+div_Sigma_F = Matrix([diff(PSigma_F[0, 0], x) + diff(PSigma_F[0, 1], y),
+                      diff(PSigma_F[1, 0], x) + diff(PSigma_F[1, 1], y)])
+dot_U_F = Matrix([diff(U_F[0], t), diff(U_F[1], t)])
+grad_U_F_U = grad_U_F*U_F
+F_F = dot_U_F + grad_U_F_U - div_Sigma_F
+F_F = Matrix([simplify(F_F[0]), simplify(F_F[1])])
+print F_F
+print
+
 
 if debug:
     underline("Divergence of fluid stress tensor")
@@ -197,6 +232,12 @@ if debug:
     div_u_F = diff(u_F[0], x) + diff(u_F[1], y)
     print div_u_F
     print
+    
+    underline("Checking that U_F is divergence free")
+    div_U_F = diff(U_F[0], x) + diff(U_F[1], y)
+    print div_U_F
+    print
+    
 
     underline("Average values of pressures in reference and current frame")
     average_P_F = integrate(integrate(P_F, (X, 0, 1)), (Y, 0, 1))

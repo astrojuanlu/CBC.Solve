@@ -17,7 +17,7 @@ application_parameters = read_parameters()
 # Used for testing
 test = True
 if test:
-    ref = 2
+    ref = 0
     application_parameters["mesh_element_degree"] = 1
     application_parameters["structure_element_degree"] = 1
     application_parameters["save_solution"] = True

@@ -88,3 +88,4 @@ def default_fsinewtonsolver_parameters():
     p.add("newtonsoltol",1.0e-13)
     p.add("bigblue",False)
     return p
+solver_params = default_fsinewtonsolver_parameters().to_dict()

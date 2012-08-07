@@ -19,13 +19,13 @@ from fsinewton.solver.mynewtonsolver import MyNonlinearProblem,MyNewtonSolver, \
                                             NewtonConverganceError,NanError, \
                                             MyNewtonSolverNumpy
 from fsinewton.utils.output import FSIPlotter, FSIStorer
-from fsinewton.solver.default_params import default_fsinewtonsolver_parameters
+from fsinewton.solver.default_params import solver_params
 from fsinewton.utils.runtimedata import FsiRunTimeData
 from fsinewton.utils.timings import timings
 
 class FSINewtonSolver(ccom.CBCSolver):
     """A Monolithic Newton Solver for FSI problems"""
-    def __init__(self,problem,params = default_fsinewtonsolver_parameters().to_dict()):
+    def __init__(self,problem,params = solver_params):
         
         timings.startnext("Fsi Newton Solver init")
         info_blue("Initializing FSI Newton Solver")
@@ -177,11 +177,11 @@ class FSINewtonSolver(ccom.CBCSolver):
             #store fsisolver runtimedata
             if self.params["runtimedata"]["fsisolver"] != False:
                 #Save the number of iterations and lagrange multiplier
-                #precision for later plottting
+                #precision for later ploting
                 
                 self.runtimedata.times.append(self.t)
                 self.runtimedata.newtonitr.append(len(self.last_itr))
-                self.runtimedata.store_fluid_lm(self.U1_F,self.P1_S,self.spaces.fsicoord)
+                self.runtimedata.store_fluid_lm(self.U1_F,self.P1_S,self.spaces.fsimeshcoord)
                 self.runtimedata.store_mesh_lm(self.U1_M,self.U1_S,self.spaces.fsimeshcoord)
 
             #store newtonsolverruntimedata

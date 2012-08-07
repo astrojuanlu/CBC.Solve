@@ -9,7 +9,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 import io
 from math import sin
 from cbc.swing import *
-import fsinewton.problems.analytic.right_hand_sides as rhs
+import right_hand_sides as rhs
 import analytic as ana
 import fsinewton.problems.base as base
 import fsinewton.solver.solver_fsinewton as sfsi
@@ -55,9 +55,20 @@ class NewtonAnalytic(ana.Analytic):
     """
 
     def __init__(self, num_refine = 0, bctype = "normal", endtime = 0.1):
-        
+
+        #Default space and time refinement levels
+        ana.ref = 0
+        self.inistep = ana.application_parameters["initial_timestep"]
+
+        #Additional refinement
+        for i in range(num_refine):
+            self.refine()
+            
         #Initialize the analytic problem first
         ana.Analytic.__init__(self)
+
+        #Save Data
+        self.endtime = endtime
         self.singlemesh = self._original_mesh
         self.bctype = bctype
 
@@ -71,9 +82,6 @@ class NewtonAnalytic(ana.Analytic):
         # Exact reference domain fluid solutions
         self.U_F = Expression(rhs.cpp_U_F, degree=2)
         self.P_F = Expression(rhs.cpp_P_F, degree=3)
-        self.inistep = ana.application_parameters["initial_timestep"]
-
-        self.endtime = endtime
         
         # Initialize expressions
         forces = [self.F_F, self.G_F, self.G_F_FSI]
@@ -81,15 +89,12 @@ class NewtonAnalytic(ana.Analytic):
         for f in forces + solutions:
             f.C = ana.C
             f.t = 0.0
-
-        for i in range(num_refine):
-            self.refine()
-
+            
     def refine(self):
         """Refine mesh and time step"""
         info_blue("Refining mesh and time step")
         #Space refinement
-        self.singlemesh = refine(self.singlemesh)
+        ana.ref += 1
         #Time refinement
         self.inistep *= 0.5
 

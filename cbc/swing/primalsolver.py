@@ -109,7 +109,7 @@ def solve_primal(problem, parameters):
     if parameters["primal_solver"] == "Newton":
         # Initialize an FSINewtonsolver Object
         fsinewtonsolver = FSINewtonSolver(problem,\
-                            params = parameters["FSINewtonSolver_parameters"])
+                            params = parameters["FSINewtonSolver_parameters"].to_dict())
 
         #initialize the solve settings
         fsinewtonsolver.params["solve"] = False

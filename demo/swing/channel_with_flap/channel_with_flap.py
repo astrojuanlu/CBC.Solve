@@ -30,14 +30,16 @@ structure_right = 1.8
 structure_top   = 0.6
 
 # Define boundaries
+influid = ""
+
 inflow  = "x[0] < DOLFIN_EPS && \
            x[1] > DOLFIN_EPS && \
            x[1] < %g - DOLFIN_EPS" % channel_height
 outflow = "x[0] > %g - DOLFIN_EPS && \
            x[1] > DOLFIN_EPS && \
            x[1] < %g - DOLFIN_EPS" % (channel_length, channel_height)
-noslip  = "on_boundary && !(%s) && !(%s)" % (inflow, outflow)
-fixed   = "x[1] < DOLFIN_EPS && x[0] > %g - DOLFIN_EPS && x[0] < %g + DOLFIN_EPS" % (structure_left, structure_right)
+fixed = "x[1] < DOLFIN_EPS && x[0] > %g - DOLFIN_EPS && x[0] < %g + DOLFIN_EPS" % (structure_left, structure_right)
+noslip = "on_boundary && !(%s) && !(%s) && !(%s)" % (inflow, outflow,fixed)
 
 # Define structure subdomain
 class Structure(SubDomain):
