@@ -94,44 +94,25 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
     N_F = normals["N_F"]
     N_S = normals["N_S"]
 
-    #FSI Interface Mesh conditions, lagrange multipliers should only apply to current time step
-    r_M2 = mesh_fsibound(u1_S,u1_M,l1_M,v_M,m_M,dFSI,innerbound = True)
 
     #Unpack the time approximations
     u_Fmid,p_Fmid,l_Fmid,u_Smid,p_Smid,u_Mmid,l_Mmid = Umidlist
     u_Fdot,p_Fdot,l_Fdot,u_Sdot,p_Sdot,u_Mdot,l_Mdot = Udotlist
 
-    ##Stress couplings
-    if solver_params["stress_coupling"] == "forward":
-        #Stress F->S
-        r_S2 = struc_fsibound(u_Fmid,p_Fmid,u_Mmid,mu_F,v_S,N_F,G_S,dFSI, innerbound = True,Exact_SigmaF = G_F_FSI)
-        r_F2 = fluid_fsibound(p1_S,u1_F,l1_F,v_F,v_S,m_F,dFSI,innerbound = True)
-
-    elif solver_params["stress_coupling"] == "backward":
-        #Stress S->F
-        r_S2 = struc_fsibound2(p1_S,u1_F,l1_F,v_F,v_S,m_F,dFSI,innerbound = True)
-        r_F2 = fluid_fsibound2(u_Smid,v_F,N_S,mu_S,lmbda_S,G_S,dFSI, innerbound = True,Exact_SigmaF = G_F_FSI)
-    else:
-        raise Exception("Only forward and backward are possible stress coupling - direction parameters")
-
-    #Decoupled equations, should contain time discretized variables
-    r_F1 = fluid_residual(u_Fdot,u_Fmid,u1_F,p1_F,v_F,q_F,mu_F,rho_F,u1_M,N_F,dxF,dsDN,dsF,F_F,u_Mdot,G_F)
-##    r_F1 = fluid_residual(u_Fdot,u_Fmid,u1_F,p1_F,v_F,q_F,mu_F,rho_F,u1_M,N_F,dxF,dsDN,dsF,F_F,u_Mdot,G_F)
-    r_S1 = struc_residual(u_Sdot,p_Sdot,u_Smid,p_Smid,v_S,q_S,mu_S,lmbda_S,rho_S,dxS,dsS,F_S)    
-    r_M1 = mesh_residual(u_Mdot,u_Mmid,v_M,mu_M,lmbda_M,dxM,F_M)
-
     #Fluid Residual
-    r_F = r_F1 + r_F2
+    r_F = fluid_residual(u_Fdot,u_Fmid,u1_F,p1_F,v_F,q_F,mu_F,rho_F,u1_M,N_F,dxF,dsDN,dsF,F_F,u_Mdot,G_F)
     #Structure Residual
-    r_S = r_S1 + r_S2
-    #Mesh Residual
-    r_M = r_M1 + r_M2
-    
+    r_S = struc_residual(u_Sdot,p_Sdot,u_Smid,p_Smid,v_S,q_S,mu_S,lmbda_S,rho_S,dxS,dsS,F_S)
+    #Fluid Domain Residual
+    r_FD = fluid_domain_residual(u_Mdot,u_Mmid,v_M,mu_M,lmbda_M,dxM,F_M)
+
+    r_FSI = interface_residual(u1_F,u_Fmid,p_Fmid,u1_S,p1_S,u1_M,u_Mmid,l1_F,l1_M,v_F,v_S,
+                                                 v_M,m_M,m_F,mu_F,N_F,dFSI,Exact_SigmaF = G_F_FSI,G_S = G_S)
     #Define full FSI residual
-    r = r_F + r_S + r_M
+    r = r_F + r_S + r_FD + r_FSI
 
     #Store the partial residuals in a dictionary
-    blockresiduals = {"r_F":r_F,"r_S":r_S,"r_M":r_M}
+    blockresiduals = {"r_F":r_F,"r_S":r_S,"r_FD":r_FD,"r_FSI":r_FSI}
 
     #return the full residual and partial residuals (for testing)
     return r,blockresiduals
@@ -250,7 +231,7 @@ def struc_fsibound2(P_S,U_F,L_F,v_F,v_S,m_F,dFSI,innerbound):
         C_F += inner(v_S,L_F)('-')*dFSI
     return C_F
 
-def mesh_residual(Udot_M,U_M,v_M,mu_M,lmbda_M,dx_F,F_M):
+def fluid_domain_residual(Udot_M,U_M,v_M,mu_M,lmbda_M,dx_F,F_M):
     #Mesh stress tensor
     Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
 
@@ -274,3 +255,30 @@ def mesh_fsibound(U_S,U_M,L_M,v_M,m_M,d_FSI,innerbound):
         #Lagrange Multiplier
         C_MS += inner(v_M, L_M)*d_FSI 
     return C_MS
+
+def interface_residual(U_F,U_Fmid,P_Fmid,U_S,P_S,U_M,U_Mmid,L_F,L_M,v_F,v_S,
+                       v_M,m_M,m_F,mu_F,N_F,dFSI,Exact_SigmaF,G_S):
+    """Residual for interface conditions on the FSI interface"""
+    #Displacement Lagrange Multiplier
+    R_FSI =  inner(m_M, U_M - U_S)('+')*dFSI
+    R_FSI += inner(v_M, L_M)('+')*dFSI
+
+    #Velocity Lagrange Multiplier
+    R_FSI += inner(m_F,U_F - P_S)('+')*dFSI
+    R_FSI += inner(v_F,L_F)('+')*dFSI
+
+    #Stress Continuity
+    if Exact_SigmaF is None:
+        #Calculated fluid traction on structure
+        Sigma_F = PiolaTransform(_Sigma_F(U_Fmid, P_Fmid, U_Mmid, mu_F), U_Mmid)
+        R_FSI += -(inner(dot(Sigma_F('+'),N_F('-')),v_S('-')))*dFSI
+    else:
+        #Prescribed fluid traction on structure
+        info("Using perscribed Fluid Stress on fsi boundary")
+        R_FSI += (inner(Exact_SigmaF('+'),v_S('-')))*dFSI
+        
+    #Optional boundary traction term
+    if G_S is not None and G_S != []:
+        info("Using additional fsi boundary traction term")
+        R_FSI += inner(G_S('-'),v_S('-'))*dFSI
+    return R_FSI
