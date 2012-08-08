@@ -120,35 +120,35 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
     #return the full residual and partial residuals (for testing)
     return r,blockresiduals
 
-def fluid_residual(Udot,U,U1_F,P,v,q,mu,rho,U_M,N,dx_F,ds_DN,ds_F,F_F,Udot_M, G_F=None):
+def fluid_residual(U_Fdot,U_F,U1_F,P_F,v_F,q_F,mu,rho,D_F,N_F,dx_F,ds_DN,ds_F,F_F,D_Fdot, G_F=None):
     #ALE term present here
-    Dt_U = rho*J(U_M)*(Udot + dot(grad(U),dot(inv(F(U_M)),U - Udot_M)))
+    Dt_U = rho*J(D_F)*(U_Fdot + dot(grad(U_F),dot(inv(F(D_F)),U_F - D_Fdot)))
         
-    Sigma_F = PiolaTransform(_Sigma_F(U, P, U_M, mu), U_M)
+    Sigma_F = PiolaTransform(_Sigma_F(U_F, P_F, D_F, mu), D_F)
 
     #DT
-    R_F  = inner(v, Dt_U)*dx_F                                                                      
+    R_F  = inner(v_F, Dt_U)*dx_F                                                                      
 
     #Div Sigma F
-    R_F += inner(grad(v), Sigma_F)*dx_F
+    R_F += inner(grad(v_F), Sigma_F)*dx_F
 
     #Incompressibility
-    R_F += inner(q, div(J(U_M)*dot(inv(F(U_M)), U)))*dx_F                                           
+    R_F += inner(q_F, div(J(D_F)*dot(inv(F(D_F)), U_F)))*dx_F                                           
 
     #Use do nothing BC if specified
     if ds_DN is not None:
         info("Using Do nothing Fluid BC")
-        R_F += -inner(v, J(U_M)*dot((mu*inv(F(U_M)).T*grad(U).T - P*I)*inv(F(U_M)).T, N))*ds_DN
+        R_F += -inner(v_F, J(D_F)*dot((mu*inv(F(D_F)).T*grad(U_F).T - P_F*I)*inv(F(D_F)).T, N_F))*ds_DN
         
     #Add boundary traction (sigma dot n) to fluid boundary if specified.
     if ds_F is not None and ds_F != []:
         info("Using Fluid boundary Traction (Neumann) BC")
-        R_F += - inner(G_F, v)*ds_F
+        R_F += - inner(G_F, v_F)*ds_F
         
     #Right hand side Fluid (body force)
     if F_F is not None and F_F != []:
         info("Using Fluid body force")
-        R_F += -inner(v,J(U_M)*F_F)*dx_F
+        R_F += -inner(v_F,J(D_F)*F_F)*dx_F
     return R_F
 
 def fluid_fsibound(P_S,U_F,L_F,v_F,v_S,m_F,dFSI,innerbound):
