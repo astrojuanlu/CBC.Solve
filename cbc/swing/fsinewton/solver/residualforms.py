@@ -233,29 +233,29 @@ def fluid_domain_residual(Ddot_F,D_F,c_F,mu_M,lmbda_M,dx_F,F_M):
         R_M += -inner(c_F,F_M)*dx_F
     return R_M
 
-def interface_residual(U_F,U_Fmid,P_Fmid,U_S,P_S,U_M,U_Mmid,L_F,L_M,v_F,v_S,
-                       v_M,m_M,m_F,mu_F,N_F,dFSI,Exact_SigmaF,G_S):
+def interface_residual(U_F,U_Fmid,P_Fmid,D_S,U_S,D_F,D_Fmid,L_U,L_D,v_F,c_S,
+                       c_F,m_D,m_U,mu_F,N_F,dFSI,Exact_SigmaF,G_S):
     """Residual for interface conditions on the FSI interface"""
     #Displacement Lagrange Multiplier
-    R_FSI =  inner(m_M, U_M - U_S)('+')*dFSI
-    R_FSI += inner(v_M, L_M)('+')*dFSI
+    R_FSI =  inner(m_D, D_F - D_S)('+')*dFSI
+    R_FSI += inner(c_F, L_D)('+')*dFSI
 
     #Velocity Lagrange Multiplier
-    R_FSI += inner(m_F,U_F - P_S)('+')*dFSI
-    R_FSI += inner(v_F,L_F)('+')*dFSI
+    R_FSI += inner(m_U,U_F - U_S)('+')*dFSI
+    R_FSI += inner(v_F,L_U)('+')*dFSI
 
     #Stress Continuity
     if Exact_SigmaF is None:
         #Calculated fluid traction on structure
-        Sigma_F = PiolaTransform(_Sigma_F(U_Fmid, P_Fmid, U_Mmid, mu_F), U_Mmid)
-        R_FSI += -(inner(dot(Sigma_F('+'),N_F('-')),v_S('-')))*dFSI
+        Sigma_F = PiolaTransform(_Sigma_F(U_Fmid, P_Fmid, D_Fmid, mu_F), D_Fmid)
+        R_FSI += -(inner(dot(Sigma_F('+'),N_F('-')),c_S('-')))*dFSI
     else:
         #Prescribed fluid traction on structure
         info("Using perscribed Fluid Stress on fsi boundary")
-        R_FSI += (inner(Exact_SigmaF('+'),v_S('-')))*dFSI
+        R_FSI += (inner(Exact_SigmaF('+'),c_S('-')))*dFSI
         
     #Optional boundary traction term
     if G_S is not None and G_S != []:
         info("Using additional fsi boundary traction term")
-        R_FSI += inner(G_S('-'),v_S('-'))*dFSI
+        R_FSI += inner(G_S('-'),c_S('-'))*dFSI
     return R_FSI
