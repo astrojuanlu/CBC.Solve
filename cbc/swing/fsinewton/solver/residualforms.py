@@ -221,43 +221,17 @@ def struc_fsibound(U_F,P_F,U_M,mu_F,v_S,N_F,G_S,dFSI, innerbound, Exact_SigmaF =
             C_S += inner(G_S('-'),v_S('-'))*dFSI
     return C_S
 
-def struc_fsibound2(P_S,U_F,L_F,v_F,v_S,m_F,dFSI,innerbound):
-    if innerbound == False:
-        #Kinematic continuity of structure and fluid on the interface
-        C_F  = inner(m_F,U_F - P_S)*dFSI
-        #Lagrange Multiplier term
-        C_F += inner(v_S,L_F)*dFSI
-    else:
-        #Kinematic continuity of structure and fluid on the interface
-        C_F  = inner(m_F,P_S - U_F)('-')*dFSI
-        #Lagrange Multiplier term
-        C_F += inner(v_S,L_F)('-')*dFSI
-    return C_F
-
-def fluid_domain_residual(Udot_M,U_M,v_M,mu_M,lmbda_M,dx_F,F_M):
+def fluid_domain_residual(Ddot_F,D_F,c_F,mu_M,lmbda_M,dx_F,F_M):
     #Mesh stress tensor
-    Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
+    Sigma_FD = _Sigma_M(D_F, mu_M, lmbda_M)
 
     #Mesh equation
-    R_M = inner(v_M, Udot_M)*dx_F + inner(sym(grad(v_M)), Sigma_M)*dx_F
+    R_M = inner(c_F, Ddot_F)*dx_F + inner(sym(grad(c_F)), Sigma_FD)*dx_F
     #Right hand side mesh (Body Force)
     if F_M is not None and F_M != []:
-        info("Using mesh body force")
-        R_M += -inner(v_M,F_M)*dx_F
+        info("Using fluid domain body force")
+        R_M += -inner(c_F,F_M)*dx_F
     return R_M
-
-def mesh_fsibound(U_S,U_M,L_M,v_M,m_M,d_FSI,innerbound):
-    if innerbound == True:
-        #Mesh should follow the structure displacement
-        C_MS =  inner(m_M, U_M - U_S)('+')*d_FSI
-        #Lagrange Multiplier
-        C_MS += inner(v_M, L_M)('+')*d_FSI
-    else:
-        #Mesh should follow the structure displacement
-        C_MS =  inner(m_M, U_M - U_S)*d_FSI
-        #Lagrange Multiplier
-        C_MS += inner(v_M, L_M)*d_FSI 
-    return C_MS
 
 def interface_residual(U_F,U_Fmid,P_Fmid,U_S,P_S,U_M,U_Mmid,L_F,L_M,v_F,v_S,
                        v_M,m_M,m_F,mu_F,N_F,dFSI,Exact_SigmaF,G_S):
