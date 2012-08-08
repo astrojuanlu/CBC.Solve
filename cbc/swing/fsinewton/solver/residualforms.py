@@ -185,15 +185,15 @@ def fluid_fsibound2(U_S,v_F,N_S,mu_S,lmbda_S,G_S,dFSI, innerbound,Exact_SigmaF =
             C_S = (inner(Exact_SigmaF('+'),v_S('-')))*dFSI
     return C_S
 
-def struc_residual(Udot_S,Pdot_S,U_S, P_S,v_S,q_S,mu_S,lmbda_S,rho_S,dx_S,ds_S,F_S):
+def struc_residual(Ddot_S,Udot_S,D_S, U_S,c_S,v_S,mu_S,lmbda_S,rho_S,dx_S,ds_S,F_S):
                     
-    Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
+    Sigma_S = _Sigma_S(D_S, mu_S, lmbda_S)
     #Hyperelasticity equations St. Venant Kirchoff
-    R_S = inner(v_S, rho_S*Pdot_S)*dx_S + inner(grad(v_S), Sigma_S)*dx_S + inner(q_S, Udot_S - P_S)*dx_S
+    R_S = inner(c_S, rho_S*Udot_S)*dx_S + inner(grad(c_S), Sigma_S)*dx_S + inner(v_S, Ddot_S -U_S)*dx_S
     #Right hand side Structure (Body force)
     if F_S is not None and F_S != []:
         info("Using structure body force")
-        R_S += -inner(v_S,J(U_S)*F_S)*dx_S
+        R_S += -inner(c_S,J(D_S)*F_S)*dx_S
     return R_S
 
 def struc_fsibound(U_F,P_F,U_M,mu_F,v_S,N_F,G_S,dFSI, innerbound, Exact_SigmaF = None):
