@@ -58,7 +58,6 @@ class Structure(SubDomain):
 
 # Define FSI problem
 class Analytic(FSI):
-
     def __init__(self):
 
         # Create mesh
@@ -208,7 +207,7 @@ class Analytic(FSI):
     def mesh_right_hand_side(self):
         return self.F_M
 
-    #GB this helps the newton solver and could help with the dual
+    #GB this helps the Newton solver and could help with the dual
     def mesh_dirichlet_boundaries(self):
         return [meshbc]
 
