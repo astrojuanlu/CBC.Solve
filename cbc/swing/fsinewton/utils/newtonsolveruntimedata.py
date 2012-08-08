@@ -12,7 +12,7 @@ import numpy as np
 import cPickle
 import os
 
-from fsinewton.convergence_tests.test_analytic_plot import PLOTSTYLES
+from test.swing.fsinewton.convergence_tests.test_analytic_plot import PLOTSTYLES
 from matplotlib.backends.backend_pdf import PdfPages
 RESIDUALSFILE = "residuals"
 class MyNewtonSolverRunTimeData(object):

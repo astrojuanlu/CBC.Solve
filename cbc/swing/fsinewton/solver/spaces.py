@@ -142,7 +142,7 @@ class FSISpaces(object):
             zero = Function(fspace.collapse())
 ##            import numpy as np
 ##            zero.vector()[:] = np.ones(len(zero.vector().array()))
-        from fsinewton.problems.base import FSI_BOUND
+        from cbc.swing.fsiproblem import FSI_BOUND
         BC = DirichletBC(fspace,zero,self.problem.fsiboundfunc,FSI_BOUND)
 
 ##        #Plot the BC

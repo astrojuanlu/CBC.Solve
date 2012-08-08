@@ -1,0 +1,2 @@
+to run the unit tests install the python module pytest.
+Then from the command line write py.test

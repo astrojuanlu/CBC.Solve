@@ -10,7 +10,6 @@ from cbc.common import CBCProblem
 
 from fsisolver import FSISolver
 from parameters import default_parameters, read_parameters, store_parameters
-from fsinewton.problems.base import NewtonFSI
 import fsinewton.utils.interiorboundary as intb
 
 class FixedPointFSI(CBCProblem):

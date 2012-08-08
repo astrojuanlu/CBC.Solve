@@ -7,11 +7,11 @@ __license__  = "GNU GPL Version 3 or any later version"
 # First added:  2012-03-04
 # Last changed: 2012-05-03
 import io
+from dolfin import *
 from math import sin
 from cbc.swing import *
 import right_hand_sides as rhs
 import analytic as ana
-import cbc.swing.fsinewton.problems.base as base
 import cbc.swing.fsinewton.solver.solver_fsinewton as sfsi
 import cbc.swing.fsinewton.utils.misc_func as mf
 

@@ -3,7 +3,7 @@ Test the solution from the FSI Newton Solver against a known analytic solution
 This file should be run from the command line as a script with the following options
 1.type of test
 2. order of struc and mesh function spaces
-3. type of boundary condition
+3. type of boundary condition (normal,dirichlet,neumann)
 4. begin convergence level
 5. end convergence level
 6. solve (True/False)
@@ -34,10 +34,10 @@ import cbc.swing.fsinewton.solver.solver_fsinewton as sfsi
 import cbc.swing.fsinewton.solver.solver_fsinewton as fnew
 import cbc.swing.fsinewton.utils.misc_func as mf
 import matplotlib.pyplot as plt
-from cbc.swing.fsinewton.solver.default_params import solver_params
+from cbc.swing.parameters import fsinewton_params
 from cbc.swing.fsinewton.utils.timings import timings
-from cbc.swing.fsinewton.convergence_tests.test_analytic_plot import create_convergenceplots, \
-     plot_L2_errors,save_loglogdata,save_convergencedata,plot_lmerror,save_lmerror
+from test_analytic_plot import create_convergenceplots,plot_L2_errors,save_loglogdata, \
+                                save_convergencedata,plot_lmerror,save_lmerror
 
 class AnalyticFSISolution(object):
     "Contains the fsi analytical solution data"
@@ -71,9 +71,9 @@ class zTestAnalytic(object):
         "Generate plots showing L2 convergence"
 
         #Set element order of struc and mesh
-        solver_params["C_S"]["deg"] = elem_order
-        solver_params["V_S"]["deg"] = elem_order
-        solver_params["C_F"]["deg"] = elem_order
+        fsinewton_params["C_S"]["deg"] = elem_order
+        fsinewton_params["V_S"]["deg"] = elem_order
+        fsinewton_params["C_F"]["deg"] = elem_order
         
         if test == "fsi":
             problemclass = nana.NewtonAnalytic
@@ -114,14 +114,14 @@ class zTestAnalytic(object):
         folderpath = "../results/%s/%sdegree%i/" %(PROBLEMFOLDER, bctype, elem_order)
         filepath =  folderpath + test
 
-        solver_params["solve"] = solve
-        solver_params["linear_solve"] = "PETSc"
-        solver_params["bigblue"]= False
-        solver_params["stress_coupling"] = "forward"
-##        solver_params["M_U"]["elem"] = "CG"
-##        solver_params["M_U"]["deg"] = 1
-##        solver_params["M_D"]["elem"] = "CG"
-##        solver_params["M_D"]["deg"] = 1         
+        fsinewton_params["solve"] = solve
+        fsinewton_params["linear_solve"] = "PETSc"
+        fsinewton_params["bigblue"]= False
+        fsinewton_params["stress_coupling"] = "forward"
+##        fsinewton_params["M_U"]["elem"] = "CG"
+##        fsinewton_params["M_U"]["deg"] = 1
+##        fsinewton_params["M_D"]["elem"] = "CG"
+##        fsinewton_params["M_D"]["deg"] = 1         
 ##        
         #initialize lists and dictionaries
         integrated_L2errors = []
@@ -135,16 +135,16 @@ class zTestAnalytic(object):
         for i in range(start_refine,end_refine + 1):
             problem = problemclass(num_refine = i, bctype = bctype)   
             store = folderpath + storefolder + "refinement" + str(i)
-            solver_params["store"] = store
-            solver_params["reuse_jacobian"] = True
+            fsinewton_params["store"] = store
+            fsinewton_params["reuse_jacobian"] = True
             
             if solve != False:
-                solver_params["runtimedata"]["fsisolver"] = store
+                fsinewton_params["runtimedata"]["fsisolver"] = store
                 if not os.path.exists(store + "/newtonsolverdata"):
                      os.makedirs(store + "/newtonsolverdata")
-                solver_params["runtimedata"]["newtonsolver"] = store + "/newtonsolverdata"
+                fsinewton_params["runtimedata"]["newtonsolver"] = store + "/newtonsolverdata"
 
-            solver = sfsi.FSINewtonSolver(problem,solver_params)
+            solver = sfsi.FSINewtonSolver(problem,fsinewton_params)
             solver.solve()
             timings.reset()
             xaxis.append(solver.problem.singlemesh.hmin())     

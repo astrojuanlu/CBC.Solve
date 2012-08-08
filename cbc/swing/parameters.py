@@ -4,7 +4,6 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import Parameters, File, info
 from utils import date
-from fsinewton.solver.default_params import default_fsinewtonsolver_parameters
 import os
 
 
@@ -50,6 +49,65 @@ def default_parameters():
     # Hacks
     p.add("fluid_solver", "ipcs")
     return p
+
+
+def default_fsinewtonsolver_parameters():
+    p = Parameters("FSINewtonSolver_parameters")
+    
+    vf = Parameters("V_F")
+    vf.add("deg",2)
+    vf.add("elem","CG")
+    p.add(vf)
+    
+    qf = Parameters("Q_F")
+    qf.add("deg",1)
+    qf.add("elem","CG")
+    p.add(qf)
+    
+    mu = Parameters("M_U")
+    mu.add("deg",0)
+    mu.add("elem","DG")
+    p.add(mu)
+    
+    cs = Parameters("C_S")
+    cs.add("deg",1)
+    cs.add("elem","CG")
+    p.add(cs)
+    
+    vs = Parameters("V_S")
+    vs.add("deg",1)
+    vs.add("elem","CG")
+    p.add(vs)
+    
+    cf = Parameters("C_F")
+    cf.add("deg",1)
+    cf.add("elem","CG")
+    p.add(cf)
+    
+    md = Parameters("M_D")
+    md.add("deg",0)
+    md.add("elem","DG")
+    p.add(md)
+    
+#    p.add("stress_coupling","forward")
+    p.add("solve",True)
+    p.add("store",False)
+    p.add("plot",False)
+#    p.add("linear_solve","PETSc")
+    
+    rndata = Parameters("runtimedata")
+    rndata.add("fsisolver",False)
+    rndata.add("newtonsolver",False)
+    p.add(rndata)
+    
+    p.add("jacobian","auto")
+    p.add("reuse_jacobian",True)
+    p.add("max_reuse_jacobian",20)
+    p.add("newtonitrmax",100)
+    p.add("newtonsoltol",1.0e-13)
+    p.add("bigblue",False)
+    return p
+fsinewton_params = default_fsinewtonsolver_parameters().to_dict()
 
 def set_output_directory(parameters, problem, case):
     "Set and create output directory"

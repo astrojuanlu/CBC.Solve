@@ -10,6 +10,8 @@ __license__  = "GNU GPL Version 3 or any later version"
 from math import sin
 from cbc.swing import *
 from right_hand_sides import *
+from cbc.swing.parameters import read_parameters
+from cbc.swing.fsiproblem import FSI
 
 # Read parameters
 application_parameters = read_parameters()

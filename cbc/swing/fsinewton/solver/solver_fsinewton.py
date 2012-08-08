@@ -8,24 +8,24 @@ __license__  = "GNU GPL Version 3 or any later version"
 from dolfin import *
 import numpy as np
 import cbc.common as ccom
-import cbc.swing.fsinewton.solver.residualforms as rf
-import cbc.swing.fsinewton.solver.jacobianforms_step as jfor_step
-import cbc.swing.fsinewton.solver.jacobianforms_buffered as jfor_buff
-import cbc.swing.fsinewton.solver.jacobianforms as jfor
+import residualforms as rf
+import jacobianforms_step as jfor_step
+import jacobianforms_buffered as jfor_buff
+import jacobianforms as jfor
 import cbc.swing.fsinewton.utils.misc_func as mf
-from cbc.swing.fsinewton.solver.boundary_conditions import FSIBC
-from cbc.swing.fsinewton.solver.spaces import FSISpaces
-from cbc.swing.fsinewton.solver.mynewtonsolver import MyNonlinearProblem,MyNewtonSolver, \
+from boundary_conditions import FSIBC
+from spaces import FSISpaces
+from mynewtonsolver import MyNonlinearProblem,MyNewtonSolver, \
                                             NewtonConverganceError,NanError, \
                                             MyNewtonSolverNumpy
 from cbc.swing.fsinewton.utils.output import FSIPlotter, FSIStorer
-from cbc.swing.fsinewton.solver.default_params import solver_params
+from cbc.swing.parameters import fsinewton_params
 from cbc.swing.fsinewton.utils.runtimedata import FsiRunTimeData
 from cbc.swing.fsinewton.utils.timings import timings
 
 class FSINewtonSolver(ccom.CBCSolver):
     """A Monolithic Newton Solver for FSI problems"""
-    def __init__(self,problem,params = solver_params):
+    def __init__(self,problem,params = fsinewton_params):
         
         timings.startnext("Fsi Newton Solver init")
         info_blue("Initializing FSI Newton Solver")
