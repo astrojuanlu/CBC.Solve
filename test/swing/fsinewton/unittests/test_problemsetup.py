@@ -9,21 +9,19 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 import numpy as np
-import fsinewton.problems.minimal_problem as pm
-import fsinewton.problems.base as pfsi
-import fsinewton.solver.solver_fsinewton as sfn
-import fsinewton.utils.misc_func as mf
-import fsinewton.problems.mesh_problem as mp
-import fsinewton.problems.struc_analytic as sana
+import demo.swing.minimal.minimalproblem as pm
+import cbc.swing.fsinewton.solver.solver_fsinewton as sfn
+import cbc.swing.fsinewton.utils.misc_func as mf
+import demo.swing.meshproblem.meshproblem as mp
 
 class TestMeshSetup(object):
     """A test class to see if the Mesh for FSI problem is set up properly"""
     def setup_class(self):
         """New problems to be quality controlled can be added here"""
-        self.problems = [pm.FSIMini(),mp.MeshProblem(),mp.FSIMeshProblem(),sana.StrucAnalytic()]
+        self.problems = [pm.FSIMini(),mp.MeshProblem(),mp.FSIMeshProblem()]
         #The actual lengths (in edges) are read from the problem modules
-        self.fsiboundfacets = [pm.nx,mp.ny,mp.ny,sana.nx]
-        self.fsiboundlengths = [pm.meshlength,mp.meshheight,mp.meshheight,sana.meshlength]
+        self.fsiboundfacets = [pm.nx,mp.ny,mp.ny]
+        self.fsiboundlengths = [pm.meshlength,mp.meshheight,mp.meshheight]
         self.fluidspaces = [FunctionSpace(problem.fluidmesh,"CG",1) for problem in self.problems]
         self.strucspaces = [FunctionSpace(problem.strucmesh,"CG",1) for problem in self.problems]
         
@@ -43,7 +41,7 @@ class TestMeshSetup(object):
             
     def fsibound_volume(self,problem):
         """Gives the volume of the FSI boundary"""
-        V = FunctionSpace(problem.mesh,"CG",1)
+        V = FunctionSpace(problem.singlemesh,"CG",1)
         one = interpolate(Constant(1),V)
         volform = one('-')*problem.dFSI
         return assemble(volform,interior_facet_domains = problem.fsiboundfunc)
@@ -79,9 +77,9 @@ class TestMeshSetup(object):
             solver = sfn.FSINewtonSolver(problem)
             #get the initial condition
             initcond = solver.U0
-            initcopy = Function(solver.fsispace)
+            initcopy = Function(solver.spaces.fsispace)
             initcopy.assign(initcond)
-            for index,bc in enumerate(solver.bcall):
+            for index,bc in enumerate(solver.fsibc.bcallU1_ini):
                 mf.apply_to(bc,initcopy)
                 #Test to see if the bc have changed anything
                 for i in range(len(initcond.vector())):
