@@ -9,10 +9,10 @@ __license__  = "GNU GPL Version 3 or any later version"
 import io
 from dolfin import *
 import numpy as np
-import fsinewton.problems.minimal_problem as pm
-import fsinewton.solver.solver_fsinewton as sfsi
-import fsinewton.utils.misc_func as mf
-import fsinewton.solver.mynewtonsolver as mns
+import demo.swing.minimal_problem as pm
+import cbc.swing.fsinewton.solver.solver_fsinewton as sfsi
+import cbc.swing.fsinewton.utils.misc_func as mf
+import cbc.swing.fsinewton.solver.mynewtonsolver as mns
 import block_solvers as bs
 import fsinewton.solver.spaces as space
 np.set_printoptions(precision = 2, edgeitems = np.inf)

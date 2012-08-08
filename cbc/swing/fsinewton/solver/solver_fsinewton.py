@@ -42,8 +42,8 @@ class FSINewtonSolver(ccom.CBCSolver):
         self.U1 = Function(self.spaces.fsispace)
 
         #Define Subfunction references to the mixed functions
-        (self.U1_F,self.P1_F,self.L1_F,self.U1_S,self.P1_S,self.U1_M,self.L1_M) = self.U1.split()
-        (self.U0_F,self.P0_F,self.L0_F,self.U0_S,self.P0_S,self.U0_M,self.L0_M) = self.U0.split()
+        (self.U1_F,self.P1_F,self.L1_U,self.D1_S,self.U1_S,self.D1_F,self.L1_D) = self.U1.split()
+        (self.U0_F,self.P0_F,self.L0_U,self.D0_S,self.U0_S,self.D0_F,self.L0_D) = self.U0.split()
 
         #Define list tensor references to the mixed funtions
         self.U1list = self.spaces.unpack_function(self.U1)
@@ -164,8 +164,8 @@ class FSINewtonSolver(ccom.CBCSolver):
                 
                 self.runtimedata.times.append(self.t)
                 self.runtimedata.newtonitr.append(len(self.last_itr))
-                self.runtimedata.store_fluid_lm(self.U1_F,self.P1_S,self.spaces.fsimeshcoord)
-                self.runtimedata.store_mesh_lm(self.U1_M,self.U1_S,self.spaces.fsimeshcoord)
+                self.runtimedata.store_fluid_lm(self.U1_F,self.U1_S,self.spaces.fsimeshcoord)
+                self.runtimedata.store_mesh_lm(self.D1_F,self.D1_S,self.spaces.fsimeshcoord)
 
             #store newtonsolverruntimedata
             if self.params["runtimedata"]["newtonsolver"]:

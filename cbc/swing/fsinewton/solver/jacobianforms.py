@@ -198,7 +198,7 @@ def J_BlockFF(dotdU,dU,dP,U,dotU_M,v,dotv,q,U_M,rho,mu,N_F,dxF,dsF,g_F=None):
 
     return A_FF
 
-def J_BlockFFbound(dU_F,dL_F,v_F,m_F,dFSI,innerbound):
+def J_BlockFFbound(dU_F,m_F,dFSI,innerbound):
     """Fluid diagonal block FSI interface"""
     if innerbound == False:
         LM_F = inner(m_F,dU_F)*dFSI       #U_F =P_S on dFSI boundary
