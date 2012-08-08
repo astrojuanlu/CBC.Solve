@@ -1,3 +1,5 @@
+"""Utility Class used to report timings """
+
 import time
 
 class Timings(object):

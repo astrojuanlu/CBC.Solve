@@ -22,7 +22,7 @@ if test:
     application_parameters["structure_element_degree"] = 1
     application_parameters["save_solution"] = True
     application_parameters["solve_primal"] = True
-    application_parameters["solve_dual"] = False
+    application_parameters["solve_dual"] = True
     application_parameters["estimate_error"] = True
     application_parameters["plot_solution"] = True
     application_parameters["uniform_timestep"] = True

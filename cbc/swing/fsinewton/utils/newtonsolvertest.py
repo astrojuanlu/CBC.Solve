@@ -8,7 +8,7 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 import numpy as np
-import fsinewton.solver.mynewtonsolver as mns
+import cbc.swing.fsinewton.solver.mynewtonsolver as mns
 
 class MyNewtonSolverSBS(mns.MyNewtonSolver):
     """Step by step Newton solver used for testing"""

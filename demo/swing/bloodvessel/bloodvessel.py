@@ -4,8 +4,8 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 import io
 from dolfin import *
-from fsinewton.problems.base import NewtonFSI
-from fsinewton.solver.solver_fsinewton import FSINewtonSolver
+from cbc.swing.fsiproblem import FSI
+from cbc.swing.fsinewton.solver.solver_fsinewton import FSINewtonSolver
 
 # Constants related to the geometry of the problem
 vessel_length  = 6.0
@@ -113,7 +113,7 @@ class BothBoundary(SubDomain):
     def inside (self,x,on_boundary):
         return FluidDN().inside(x,on_boundary) or FluidNeumann().inside(x,on_boundary)
 
-class BloodVessel(NewtonFSI):
+class BloodVesselFSI):
     def __init__(self):
         mesh = Rectangle(0.0, 0.0, vessel_length, vessel_height, nx, ny, "crossed")
         self.G_F = Expression(cpp_G_F)

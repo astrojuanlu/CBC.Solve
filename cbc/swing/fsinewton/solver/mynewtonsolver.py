@@ -6,12 +6,12 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
 import numpy as np
-import fsinewton.utils.misc_func as mf
-import fsinewton.solver.spaces as sp
-from fsinewton.utils.matrixdoctor import MatrixDoctor
-from fsinewton.solver.spaces import FSISubSpaceLocator
-from fsinewton.utils.timings import timings
-from fsinewton.utils.newtonsolveruntimedata import MyNewtonSolverRunTimeData
+import cbc.swing.fsinewton.utils.misc_func as mf
+import cbc.swing.fsinewton.solver.spaces as sp
+from cbc.swing.fsinewton.utils.matrixdoctor import MatrixDoctor
+from cbc.swing.fsinewton.solver.spaces import FSISubSpaceLocator
+from cbc.swing.fsinewton.utils.timings import timings
+from cbc.swing.fsinewton.utils.newtonsolveruntimedata import MyNewtonSolverRunTimeData
 import copy
 
 class MyNonlinearProblem:

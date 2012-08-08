@@ -4,7 +4,7 @@ __author__ = "Gabriel Balaban"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-from fsinewton.tests.run_job import arguments,bctypes,elem_orders,start,stop
+from cbc.swing.fsinewton.tests.run_job import arguments,bctypes,elem_orders,start,stop
 from dolfin import info_blue
 import os
 import sys

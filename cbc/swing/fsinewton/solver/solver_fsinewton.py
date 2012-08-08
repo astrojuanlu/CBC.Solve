@@ -8,20 +8,20 @@ __license__  = "GNU GPL Version 3 or any later version"
 from dolfin import *
 import numpy as np
 import cbc.common as ccom
-import fsinewton.solver.residualforms as rf
-import fsinewton.solver.jacobianforms_step as jfor_step
-import fsinewton.solver.jacobianforms_buffered as jfor_buff
-import fsinewton.solver.jacobianforms as jfor
-import fsinewton.utils.misc_func as mf
-from fsinewton.solver.boundary_conditions import FSIBC
-from fsinewton.solver.spaces import FSISpaces
-from fsinewton.solver.mynewtonsolver import MyNonlinearProblem,MyNewtonSolver, \
+import cbc.swing.fsinewton.solver.residualforms as rf
+import cbc.swing.fsinewton.solver.jacobianforms_step as jfor_step
+import cbc.swing.fsinewton.solver.jacobianforms_buffered as jfor_buff
+import cbc.swing.fsinewton.solver.jacobianforms as jfor
+import cbc.swing.fsinewton.utils.misc_func as mf
+from cbc.swing.fsinewton.solver.boundary_conditions import FSIBC
+from cbc.swing.fsinewton.solver.spaces import FSISpaces
+from cbc.swing.fsinewton.solver.mynewtonsolver import MyNonlinearProblem,MyNewtonSolver, \
                                             NewtonConverganceError,NanError, \
                                             MyNewtonSolverNumpy
-from fsinewton.utils.output import FSIPlotter, FSIStorer
-from fsinewton.solver.default_params import solver_params
-from fsinewton.utils.runtimedata import FsiRunTimeData
-from fsinewton.utils.timings import timings
+from cbc.swing.fsinewton.utils.output import FSIPlotter, FSIStorer
+from cbc.swing.fsinewton.solver.default_params import solver_params
+from cbc.swing.fsinewton.utils.runtimedata import FsiRunTimeData
+from cbc.swing.fsinewton.utils.timings import timings
 
 class FSINewtonSolver(ccom.CBCSolver):
     """A Monolithic Newton Solver for FSI problems"""

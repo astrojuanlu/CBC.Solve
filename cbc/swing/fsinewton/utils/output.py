@@ -4,7 +4,7 @@ __author__ = "Gabriel Balaban"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 from dolfin import *
-import fsinewton.utils.misc_func as mf
+import misc_func as mf
 
 class FSIPlotter(object):
     """Continuous plotting of fsi functions"""

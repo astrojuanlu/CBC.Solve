@@ -11,9 +11,9 @@ from math import sin
 from cbc.swing import *
 import right_hand_sides as rhs
 import analytic as ana
-import fsinewton.problems.base as base
-import fsinewton.solver.solver_fsinewton as sfsi
-import fsinewton.utils.misc_func as mf
+import cbc.swing.fsinewton.problems.base as base
+import cbc.swing.fsinewton.solver.solver_fsinewton as sfsi
+import cbc.swing.fsinewton.utils.misc_func as mf
 
 ana.application_parameters["primal_solver"] = "Newton"
 ana.application_parameters["save_solution"] = True
