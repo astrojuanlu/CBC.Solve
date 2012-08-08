@@ -29,11 +29,11 @@ class FSISpaces(object):
         #Dofs that lie on the fsi boundary
         self.fsidofs = {"U_F":self.__fsi_dofs(self.V_F),
                         "P_F":self.__fsi_dofs(self.Q_F),
-                        "L_F":self.__fsi_dofs(self.L_F),
-                        "U_S":self.__fsi_dofs(self.V_S),
-                        "P_S":self.__fsi_dofs(self.Q_S),
-                        "U_M":self.__fsi_dofs(self.V_M),
-                        "L_M":self.__fsi_dofs(self.L_M), 
+                        "L_U":self.__fsi_dofs(self.L_F),
+                        "D_S":self.__fsi_dofs(self.V_S),
+                        "U_S":self.__fsi_dofs(self.Q_S),
+                        "D_F":self.__fsi_dofs(self.V_M),
+                        "L_D":self.__fsi_dofs(self.L_M), 
                         "fsispace":self.__fsi_dofs(self.fsispace)}
 
         #Mesh Coordinates of the FSI Boundary
@@ -44,11 +44,11 @@ class FSISpaces(object):
         #Restricted dof's
         self.restricteddofs = {"U_F":self.__removedofs("U_F",self.structure),
                                "P_F":self.__removedofs("P_F",self.structure),
-                               "L_F":self.fsidofs["L_F"],
-                               "U_S":self.__restrict(self.V_S,self.structure),
-                               "P_S":self.__restrict(self.Q_S,self.structure),
-                               "U_M":self.__removedofs("U_M",self.structure),
-                               "L_M":self.fsidofs["L_M"]}
+                               "L_U":self.fsidofs["L_U"],
+                               "D_S":self.__restrict(self.V_S,self.structure),
+                               "U_S":self.__restrict(self.Q_S,self.structure),
+                               "D_F":self.__removedofs("D_F",self.structure),
+                               "L_D":self.fsidofs["L_D"]}
 
         self.usefuldofs = []
         #add the fsi dofs back to the fluid domain equations and make a list of all
@@ -58,7 +58,7 @@ class FSISpaces(object):
 ##        print
 ##        exit()
         
-        for space in ["U_F","P_F","U_M"]:
+        for space in ["U_F","P_F","D_F"]:
             self.restricteddofs[space] += self.fsidofs[space]
             
         for space in self.restricteddofs.keys():
@@ -109,27 +109,27 @@ class FSISpaces(object):
             
         V_F = VectorFunctionSpace(mesh, self.params["V_F"]["elem"], self.params["V_F"]["deg"]) #Ana ord 2
         Q_F = FunctionSpace(mesh, self.params["Q_F"]["elem"], self.params["Q_F"]["deg"])       #Ana ord 3
-        L_F = VectorFunctionSpace(mesh, self.params["L_F"]["elem"], self.params["L_F"]["deg"]) 
+        M_U = VectorFunctionSpace(mesh, self.params["M_U"]["elem"], self.params["M_U"]["deg"]) 
+        C_S = VectorFunctionSpace(mesh, self.params["C_S"]["elem"], self.params["C_S"]["deg"]) #Ana ord 2
         V_S = VectorFunctionSpace(mesh, self.params["V_S"]["elem"], self.params["V_S"]["deg"]) #Ana ord 2
-        Q_S = VectorFunctionSpace(mesh, self.params["Q_S"]["elem"], self.params["Q_S"]["deg"]) #Ana ord 2
-        V_M = VectorFunctionSpace(mesh, self.params["V_M"]["elem"], self.params["V_M"]["deg"]) #Ana ord 3ll
-        L_M = VectorFunctionSpace(mesh, self.params["L_M"]["elem"], self.params["L_M"]["deg"])
+        C_F = VectorFunctionSpace(mesh, self.params["C_F"]["elem"], self.params["C_F"]["deg"]) #Ana ord 3ll
+        M_D = VectorFunctionSpace(mesh, self.params["M_D"]["elem"], self.params["M_D"]["deg"])
         
-        fsispace = MixedFunctionSpace([V_F,Q_F,L_F,V_S,Q_S,V_M,L_M])
+        fsispace = MixedFunctionSpace([V_F,Q_F,M_U,C_S,V_S,C_F,M_D])
         
         return fsispace, tuple([fsispace.sub(i) for i in range(NUM_SPACES)]), \
-               (V_F,Q_F,L_F,V_S,Q_S,V_M,L_M)
+               (V_F,Q_F,M_U,C_S,V_S,C_F,M_D)
 
     def create_fsi_functions(self):
         """Create independant subfunctions of FSI Space"""
-        u_F = Function(self.V_FC)
-        p_F = Function(self.Q_FC)
-        l_F = Function(self.L_FC)
-        u_S = Function(self.V_SC)
-        p_S = Function(self.Q_SC)
-        u_M = Function(self.V_SC)
-        l_M = Function(self.L_MC)
-        return [u_F,p_F,l_F,u_S,p_S,u_M,l_M]
+        U_F = Function(self.V_FC)
+        P_F = Function(self.Q_FC)
+        L_U = Function(self.M_UC)
+        D_S = Function(self.C_SC)
+        U_S = Function(self.V_SC)
+        D_F = Function(self.C_FC)
+        L_D = Function(self.L_DC)
+        return [U_F,P_F,L_U,D_S,U_S,D_F,L_D]
 
     def __fsi_dofs(self, fspace = None ):
         """Generate the Dofs on the FSI Boundary"""
@@ -189,24 +189,24 @@ class FSISubSpaceLocator(SubSpaceLocator):
         
         self.spaces = {"U_F":fsispace.sub(0).collapse(),
                        "P_F":fsispace.sub(1).collapse(),
-                       "L_F":fsispace.sub(2).collapse(),
-                       "U_S":fsispace.sub(3).collapse(),
-                       "P_S":fsispace.sub(4).collapse(),
-                       "U_M":fsispace.sub(5).collapse(),
-                       "L_M":fsispace.sub(6).collapse()}
+                       "L_U":fsispace.sub(2).collapse(),
+                       "D_S":fsispace.sub(3).collapse(),
+                       "U_S":fsispace.sub(4).collapse(),
+                       "D_F":fsispace.sub(5).collapse(),
+                       "L_D":fsispace.sub(6).collapse()}
         
         self.spacebegins = {"U_F":0,
                             "P_F":self.final_dofs[0],
-                            "L_F":self.final_dofs[1],
-                            "U_S":self.final_dofs[2],
-                            "P_S":self.final_dofs[3],
-                            "U_M":self.final_dofs[4],
-                            "L_M":self.final_dofs[5]}
+                            "L_U":self.final_dofs[1],
+                            "D_S":self.final_dofs[2],
+                            "U_S":self.final_dofs[3],
+                            "D_F":self.final_dofs[4],
+                            "L_D":self.final_dofs[5]}
 
         self.spaceends = {"U_F":self.final_dofs[0],
                           "P_F":self.final_dofs[1],
-                          "L_F":self.final_dofs[2],
-                          "U_S":self.final_dofs[3],
-                          "P_S":self.final_dofs[4],
-                          "U_M":self.final_dofs[5],
-                          "L_M":self.final_dofs[6]}
+                          "L_U":self.final_dofs[2],
+                          "D_S":self.final_dofs[3],
+                          "U_S":self.final_dofs[4],
+                          "D_F":self.final_dofs[5],
+                          "L_D":self.final_dofs[6]}
