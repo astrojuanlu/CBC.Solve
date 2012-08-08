@@ -22,7 +22,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     """
 
     # Choose method here
-    method = "FE"
+    method = "CG1"
 
     info_blue("Creating dual forms")
 

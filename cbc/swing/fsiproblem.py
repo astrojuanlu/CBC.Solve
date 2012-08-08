@@ -326,12 +326,17 @@ class NewtonFSI():
         self.extboundfunc = FacetFunction("uint",mesh)
         self.extboundfunc.set_all(0)
         StructureBound().mark(self.extboundfunc,STRUCBOUND)
-        
-        if self.fluid_donothing_boundaries() is not None:
-            self.fluid_donothing_boundaries().mark(self.extboundfunc,DONOTHINGBOUND)
-            self.dsDN = ds(DONOTHINGBOUND)
-        else:
+##        print self.fluid_donothing_boundaries()
+
+        if self.fluid_donothing_boundaries() is None:
+##            print "This should not be none"
+##            print self.fluid_donothing_boundaries()
+##            exit()
             self.dsDN = None
+        else:
+            for bound in self.fluid_donothing_boundaries(): 
+                bound.mark(self.extboundfunc,DONOTHINGBOUND)
+            self.dsDN = ds(DONOTHINGBOUND)
             
         if self.fluid_velocity_neumann_boundaries() is not None:
             self.fluid_velocity_neumann_boundaries().mark(self.extboundfunc,FLUIDNEUMANNBOUND)
@@ -437,7 +442,7 @@ class NewtonFSI():
 
 class FSI(FixedPointFSI,NewtonFSI):
     "Base class for all FSI problems"
-    def __init__(self,mesh,parameters):
+    def __init__(self,mesh,parameters = default_parameters()):
         if parameters["primal_solver"] == "Newton":
             NewtonFSI.__init__(self,mesh)
             FixedPointFSI.__init__(self,mesh)

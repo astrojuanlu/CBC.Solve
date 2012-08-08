@@ -9,7 +9,7 @@ __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s"% __author
 __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
-from fsinewton.problems.base import NewtonFSI
+from cbc.swing.fsiproblem import FSI
 
 #Mesh Parameters
 meshlength = 1.0 
@@ -42,16 +42,22 @@ strucright = xright + "&&" + yinstruc
 
 strucbottom = "near(x[1],%g - %g)"%(meshheight,strucheight)
 
+class FluidDN(SubDomain):
+    def inside(self,x,on_boundary):
+        return x[1] < fluidheight - DOLFIN_EPS and \
+               near(x[0],meshlength) or \
+               near(x[0],0.0) 
+    
 #Define Structure Subdomain
 class Structure(SubDomain):
     def inside(self, x, on_boundary):
         return x[1] > fluidheight - DOLFIN_EPS
 
-class FSIMini(NewtonFSI):
+class FSIMini(FSI):
     """FSI Miniproblem"""
     def __init__(self):
         mesh = Rectangle(0.0,0.0,meshlength,meshheight,nx,ny)
-        NewtonFSI.__init__(self,mesh,Structure())
+        FSI.__init__(self,mesh)
                                      
     def end_time(self):
         return 0.2
@@ -77,6 +83,9 @@ class FSIMini(NewtonFSI):
 
     def fluid_pressure_dirichlet_boundaries(self):
         return [fluidleft, fluidright]
+    
+    def fluid_donothing_boundaries(self):
+        return [FluidDN()]
 
     #Needs to match pressure BC for the Newton solver
     def fluid_pressure_initial_condition(self):

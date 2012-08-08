@@ -11,18 +11,17 @@ __license__  = "GNU GPL Version 3 or any later version"
 import io
 from dolfin import *
 import numpy as np
-import fsinewton.problems.minimal_problem as pm
-import fsinewton.problems.analytic.newtonanalytic as nana
-from fsinewton.problems.minimal_problem import FSIMini
-import fsinewton.solver.solver_fsinewton as sfsi
-import fsinewton.utils.misc_func as mf
-import fsinewton.solver.spaces as spaces
-from fsinewton.solver.default_params import solver_params
+import demo.swing.analytic.newtonanalytic as nana
+from demo.swing.minimal.minimalproblem import FSIMini
+import cbc.swing.fsinewton.solver.solver_fsinewton as sfsi
+import cbc.swing.fsinewton.utils.misc_func as mf
+import cbc.swing.fsinewton.solver.spaces as spaces
+from cbc.swing.parameters import fsinewton_params
         
 class TestJacobians(object):
     "Test to make sure that the manual jacobian matches the analytical one",
     def setup_class(self):
-        self.problems = [pm.FSIMini(),nana.NewtonAnalytic()]
+        self.problems = [nana.NewtonAnalytic()] #FSIMini()
 
         #Tolerance for diffreports
 
@@ -34,8 +33,8 @@ class TestJacobians(object):
         "Test the manual FSI Jacobian against the analytic Jacobian"
         #Todo continue the test into a few Newton iterations        
         #Change the default solver params
-        solver_params["reuse_jacobian"] = False
-        solver_params["plot"] = False
+        fsinewton_params["reuse_jacobian"] = False
+        fsinewton_params["plot"] = False
         
         for prob in self.problems:
             print "Testing Jacobian with problem", prob.__str__()
@@ -46,15 +45,17 @@ class TestJacobians(object):
             blocks= {}
 
             #Check the jacobians and residuals pairwise
-            pairs = [  ("manual","auto"),
-                        ("auto","buff"),
-                        ("buff","manual") ]
+            pairs = [  ("manual","auto")]
+##                        ("auto","buff"),
+##                        ("buff","manual") ]
 
             blocknames = ["J_FF","J_FS","J_FM","J_SF","J_SS","J_SM","J_MF","J_MS","J_MM"]
 
             t = "buff"
-            fsisolvers[t] = sfsi.FSINewtonSolver(prob,solver_params)
-            newtonsolvers[t] = fsisolvers[t].__time_step__(testmode = "returnsolver")
+            fsinewton_params["solve"] = False
+            fsisolvers[t] = sfsi.FSINewtonSolver(prob,fsinewton_params)
+            fsisolvers[t].solve()
+            newtonsolvers[t] = fsisolvers[t].newtonsolver
             newtonsolvers[t].build_residual()
             newtonsolvers[t].build_jacobian()
             
@@ -62,10 +63,11 @@ class TestJacobians(object):
                 info_blue("Testing Jacobians of %s %s \n \n"%(t1,t2))
             
                 for t in t1,t2:
-                    solver_params["jacobian"] = t
+                    fsinewton_params["jacobian"] = t
                     #Create a fresh solver
-                    fsisolvers[t] = sfsi.FSINewtonSolver(prob,solver_params)
-                    newtonsolvers[t] = fsisolvers[t].__time_step__(testmode = "returnsolver")
+                    fsisolvers[t] = sfsi.FSINewtonSolver(prob,fsinewton_params)
+                    fsisolvers[t].solve()
+                    newtonsolvers[t] = fsisolvers[t].newtonsolver
                     newtonsolvers[t].build_residual()
                     newtonsolvers[t].build_jacobian()
 
@@ -80,7 +82,6 @@ class TestJacobians(object):
 
                         #Get the blocks of the matrix
                         blocks[t] = self.fsiblocks(jacobians[t],sublocator)
-
                     
                     #Check that the residual is the same
                     print "Checking residuals"
@@ -101,8 +102,8 @@ class TestJacobians(object):
                 
     def fsiblocks(self,J,sl):
         "Divide the jacobian matrix into blocks according to the subspace locator sl"
-        sl.fluidend = sl.spaceends["L_F"]
-        sl.strucend = sl.spaceends["P_S"]
+        sl.fluidend = sl.spaceends["L_U"]
+        sl.strucend = sl.spaceends["U_S"]
         
         J_FF = J[:sl.fluidend,:sl.fluidend]
         J_FS = J[:sl.fluidend,sl.fluidend:sl.strucend]

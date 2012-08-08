@@ -188,6 +188,11 @@ def J_BlockFF(dotdU,dU,dP,U,dotU_M,v,dotv,q,U_M,rho,mu,N_F,dxF,dsF,g_F=None):
 
     #Do nothing BC if in use.
     if g_F is None:
+##        print U_M
+##        print dU
+##        print N_F
+##        print dsF
+##        exit()
         A_FF  += -inner(v, dot(J(U_M)*mu*dot(inv(F(U_M)).T, dot(grad(dU).T, inv(F(U_M)).T)), N_F))*dsF
         A_FF  +=  inner(v, J(U_M)*dP*dot(I, dot(inv(F(U_M)).T, N_F)))*dsF
 

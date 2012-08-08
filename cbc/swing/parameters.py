@@ -13,9 +13,7 @@ def default_parameters():
     p = Parameters("solver_parameters");
 
     p.add("solve_primal", True)
-    p.add("primal_solver", "fixpoint") #Alternative here is Newton
-    #In order to change the Newton Solver parameters edit the variable
-    #solver_params in module fsinewton.solver.default_params
+    p.add("primal_solver", "Newton") #Newton or fixpoint
 
     p.add("solve_dual", True)
     p.add("estimate_error", True)

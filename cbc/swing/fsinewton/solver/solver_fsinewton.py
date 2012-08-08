@@ -9,8 +9,6 @@ from dolfin import *
 import numpy as np
 import cbc.common as ccom
 import residualforms as rf
-import jacobianforms_step as jfor_step
-import jacobianforms_buffered as jfor_buff
 import jacobianforms as jfor
 import cbc.swing.fsinewton.utils.misc_func as mf
 from boundary_conditions import FSIBC
@@ -86,23 +84,13 @@ class FSINewtonSolver(ccom.CBCSolver):
                            spaces = self.spaces)
         
         #Create a Newton Solver object
-        if self.params["linear_solve"] == "PETSc":
-            self.newtonsolver = MyNewtonSolver(self.nonlinearproblem,
-                                               itrmax = self.params["newtonitrmax"],
-                                               reuse_jacobian = self.params["reuse_jacobian"],
-                                               max_reuse_jacobian = self.params["max_reuse_jacobian"],
-                                               runtimedata = self.params["runtimedata"]["newtonsolver"],
-                                               tol = self.params["newtonsoltol"])
-        elif self.params["linear_solve"] == "np":
-            self.newtonsolver = MyNewtonSolverNumpy(self.nonlinearproblem,
-                                                    itrmax = self.params["newtonitrmax"],
-                                                    reuse_jacobian = self.params["reuse_jacobian"],
-                                                    max_reuse_jacobian = self.params["max_reuse_jacobian"],
-                                                    runtimedata = self.params["runtimedata"]["newtonsolver"],
-                                                    tol = self.params["newtonsoltol"])
-        else:
-            raise Exception("only PETSc and np are possible linear_solver parameters values")
-        
+        self.newtonsolver = MyNewtonSolver(self.nonlinearproblem,
+                                           itrmax = self.params["newtonitrmax"],
+                                           reuse_jacobian = self.params["reuse_jacobian"],
+                                           max_reuse_jacobian = self.params["max_reuse_jacobian"],
+                                           runtimedata = self.params["runtimedata"]["newtonsolver"],
+                                           tol = self.params["newtonsoltol"])
+         
         info_blue("Newton Solver Tolerance is %s"%self.newtonsolver.tol)
 
         #Set the end time
@@ -143,12 +131,11 @@ class FSINewtonSolver(ccom.CBCSolver):
         #Init the plotter if necessary
         if self.params["plot"]:
             self.plotter = FSIPlotter(self.U1)
-        
         #Init Storage
         if self.params["store"] != False:
             self.storage = FSIStorer(self.params["store"])
 
-    def time_step(self,testmode = False):
+    def time_step(self):
         """Newton solve for the values of the FSI system at the next time level"""
         
         #update the body forces
@@ -164,10 +151,6 @@ class FSINewtonSolver(ccom.CBCSolver):
         #Apply initial guess BC (not homogeneous)
         for bc in self.fsibc.bcallU1_ini:
             bc.apply(self.U1.vector())
-        
-        #This is used for jacobian testing
-        if testmode == "returnsolver":
-            return self.newtonsolver
 
         try:
             #Call newton solve and store the last iteration for testing
@@ -280,15 +263,16 @@ class FSINewtonSolver(ccom.CBCSolver):
             j = derivative(r,self.U1)
             j_buff = None
         else:
-            j_buff = jfor_buff.fsi_jacobian_buffered(self.IU,self.IUdot,self.IUmid,self.V,
-                                                     self.V,matparams,measures,forces,normals)
-
-            j_step = jfor_step.fsi_jacobian_step(self.IU,self.IUdot,self.IUmid,self.U1list,
-                                            self.Umid,self.Udot,self.V,self.V,matparams,
-                                            measures,forces,normals)
-
+##            j_buff = jfor_buff.fsi_jacobian_buffered(self.IU,self.IUdot,self.IUmid,self.V,
+##                                                     self.V,matparams,measures,forces,normals)
+##
+##            j_step = jfor_step.fsi_jacobian_step(self.IU,self.IUdot,self.IUmid,self.U1list,
+##                                            self.Umid,self.Udot,self.V,self.V,matparams,
+##                                            measures,forces,normals)
+            j_buff = None
             if self.params["jacobian"] == "buff":
                 info("Using Buffered Jacobian")
+                raise Exception("Buffering of Jacobian not yet implemented")
                 j = j_step
             elif self.params["jacobian"] == "manual":
                 info("Using Manual Jacobian")

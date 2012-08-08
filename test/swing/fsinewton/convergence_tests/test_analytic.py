@@ -111,7 +111,7 @@ class zTestAnalytic(object):
                    from refinmenet level %i to %i"%(test,bctype,start_refine,end_refine))
 
         #Path of results relative to tests folder
-        folderpath = "../results/%s/%sdegree%i/" %(PROBLEMFOLDER, bctype, elem_order)
+        folderpath = "results/%s/%sdegree%i/" %(PROBLEMFOLDER, bctype, elem_order)
         filepath =  folderpath + test
 
         fsinewton_params["solve"] = solve

@@ -167,7 +167,7 @@ class BloodVesselFSI):
         return [self.P_F,0.0]
     
     def fluid_donothing_boundaries(self):
-        return BothBoundary()
+        return [BothBoundary()]
 
 ##    def fluid_velocity_neumann_boundaries(self):
 ##        return FluidNeumann()
