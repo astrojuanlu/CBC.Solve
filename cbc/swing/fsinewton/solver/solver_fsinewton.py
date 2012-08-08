@@ -320,9 +320,9 @@ class FSINewtonSolver(ccom.CBCSolver):
         #Take the initial data in a dictionary in whatever form it may be
         ini_data    = {"U_F":self.problem.fluid_velocity_initial_condition,\
                        "P_F":self.problem.fluid_pressure_initial_condition,\
-                       "U_S":self.problem.struc_displacement_initial_condition,\
-                       "P_S":self.problem.struc_velocity_initial_condition,\
-                       "U_M":self.problem.mesh_displacement_initial_condition}
+                       "D_S":self.problem.struc_displacement_initial_condition,\
+                       "U_S":self.problem.struc_velocity_initial_condition,\
+                       "D_F":self.problem.mesh_displacement_initial_condition}
 
         spaces = self.spaces.subloc.spaces
 
@@ -375,11 +375,11 @@ class FSINewtonSolver(ccom.CBCSolver):
         #Zero out fluid variables outside of their domain.
         mf.assign_to_region(U0,zerovec,self.problem.structure(),V = self.spaces.V_F,exclude = fsi_dofs)
         mf.assign_to_region(U0,"0.0",self.problem.structure(),V = self.spaces.Q_F,exclude = fsi_dofs)
-        mf.assign_to_region(U0,zerovec,self.problem.structure(),V = self.spaces.V_M,exclude = fsi_dofs)
+        mf.assign_to_region(U0,zerovec,self.problem.structure(),V = self.spaces.C_F,exclude = fsi_dofs)
 
         #Zero out structure variables outside of their domain
+        mf.assign_to_region(U0,zerovec,self.problem.fluiddomain,V = self.spaces.C_S,exclude = fsi_dofs)
         mf.assign_to_region(U0,zerovec,self.problem.fluiddomain,V = self.spaces.V_S,exclude = fsi_dofs)
-        mf.assign_to_region(U0,zerovec,self.problem.fluiddomain,V = self.spaces.Q_S,exclude = fsi_dofs)
         return U0
         
     def time_discreteU(self,U1,U0,kn):

@@ -22,18 +22,18 @@ class FSISpaces(object):
         self.fluid = problem.fluiddomain
         self.structure = problem.structure()
         
-        self.fsispace,(self.V_F,self.Q_F,self.L_F,self.V_S,self.Q_S,self.V_M,self.L_M), \
-        (self.V_FC,self.Q_FC,self.L_FC,self.V_SC,self.Q_SC,self.V_MC,self.L_MC) = self.__create_fsi_functionspace()
+        self.fsispace,(self.V_F,self.Q_F,self.M_U,self.C_S,self.V_S,self.C_F,self.M_D), \
+        (self.V_FC,self.Q_FC,self.M_UC,self.C_SC,self.V_SC,self.C_FC,self.M_DC) = self.__create_fsi_functionspace()
         self.subloc = FSISubSpaceLocator(self.fsispace)
 
         #Dofs that lie on the fsi boundary
         self.fsidofs = {"U_F":self.__fsi_dofs(self.V_F),
                         "P_F":self.__fsi_dofs(self.Q_F),
-                        "L_U":self.__fsi_dofs(self.L_F),
-                        "D_S":self.__fsi_dofs(self.V_S),
-                        "U_S":self.__fsi_dofs(self.Q_S),
-                        "D_F":self.__fsi_dofs(self.V_M),
-                        "L_D":self.__fsi_dofs(self.L_M), 
+                        "L_U":self.__fsi_dofs(self.M_U),
+                        "D_S":self.__fsi_dofs(self.C_S),
+                        "U_S":self.__fsi_dofs(self.V_S),
+                        "D_F":self.__fsi_dofs(self.C_F),
+                        "L_D":self.__fsi_dofs(self.M_D), 
                         "fsispace":self.__fsi_dofs(self.fsispace)}
 
         #Mesh Coordinates of the FSI Boundary
@@ -45,8 +45,8 @@ class FSISpaces(object):
         self.restricteddofs = {"U_F":self.__removedofs("U_F",self.structure),
                                "P_F":self.__removedofs("P_F",self.structure),
                                "L_U":self.fsidofs["L_U"],
-                               "D_S":self.__restrict(self.V_S,self.structure),
-                               "U_S":self.__restrict(self.Q_S,self.structure),
+                               "D_S":self.__restrict(self.C_S,self.structure),
+                               "U_S":self.__restrict(self.V_S,self.structure),
                                "D_F":self.__removedofs("D_F",self.structure),
                                "L_D":self.fsidofs["L_D"]}
 
@@ -75,9 +75,9 @@ class FSISpaces(object):
         unpack a function f in FSI space into a list of subfunctions using components []
         in order to avoid the problems associated with Function.split()
         """
-        [U_F,P_F,L_F,U_S,P_S,U_M,L_M] = [as_vector((f[0],f[1])),f[2], as_vector((f[3],f[4])),as_vector((f[5],f[6])),
+        [U_F,P_F,L_U,D_S,U_S,D_F,L_D] = [as_vector((f[0],f[1])),f[2], as_vector((f[3],f[4])),as_vector((f[5],f[6])),
                                       as_vector((f[7],f[8])),as_vector((f[9],f[10])),as_vector((f[11],f[12]))]
-        return [U_F,P_F,L_F,U_S,P_S,U_M,L_M]
+        return [U_F,P_F,L_U,D_S,U_S,D_F,L_D]
     
     def __restrict(self,space,domain):
         """Returns the dofs of the function space over the domain"""
