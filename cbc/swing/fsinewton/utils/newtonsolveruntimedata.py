@@ -12,7 +12,7 @@ import numpy as np
 import cPickle
 import os
 
-from fsinewton.convergence_tests.test_analytic_plot import PLOTSTYLES,NOTATIONMAP
+from fsinewton.convergence_tests.test_analytic_plot import PLOTSTYLES
 from matplotlib.backends.backend_pdf import PdfPages
 RESIDUALSFILE = "residuals"
 class MyNewtonSolverRunTimeData(object):
@@ -22,8 +22,8 @@ class MyNewtonSolverRunTimeData(object):
         #iterations
         self.itr = []
         self.time = time
-        funcdic = {"U_F":[],"P_F":[],"L_F":[],"U_S":[],"P_S":[],"U_M":[],
-                   "L_M":[]}
+        funcdic = {"U_F":[],"P_F":[],"L_U":[],"D_S":[],"U_S":[],"D_F":[],
+                   "L_D":[]}
         import copy
         #Residuals
         self.residuals = {"l2":copy.deepcopy(funcdic),"max":copy.deepcopy(funcdic)}     
@@ -48,7 +48,7 @@ class MyNewtonSolverRunTimeData(object):
             ax.grid()
             for f in self.residuals[norm].keys():   
                     itrs = range(len(self.residuals[norm][f]))
-                    plt.plot(itrs,self.residuals[norm][f],PLOTSTYLES[f],label = NOTATIONMAP[f], linestyle = '-')
+                    plt.plot(itrs,self.residuals[norm][f],PLOTSTYLES[f],label = f, linestyle = '-')
             plt.ylabel("Residual %s error"%norm)
             plt.xlabel("Newton Iteration")
             #plt.title(title)

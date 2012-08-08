@@ -259,8 +259,8 @@ class NanError(Exception):
     
     def analysis(self):
         sl = FSISubSpaceLocator(self.inc.function_space())
-        fluidend = sl.spaceends["L_F"]
-        strucend = sl.spaceends["P_S"]
+        fluidend = sl.spaceends["M_U"]
+        strucend = sl.spaceends["V_S"]
         
         info("\n Jacobian Determinant \n" + \
               str(np.linalg.det(self.J)) + \

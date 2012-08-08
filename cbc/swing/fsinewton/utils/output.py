@@ -9,9 +9,9 @@ import fsinewton.utils.misc_func as mf
 class FSIPlotter(object):
     """Continuous plotting of fsi functions"""
     def __init__(self,U1):
-        (U1_F,P1_F,L1_F,U1_S,P1_S,U1_M,L1_M) = U1.split()
+        (U1_F,P1_F,L1_U,D1_S,U1_S,D1_F,L1_D) = U1.split()
 
-        self.plotfunctions = [U1_F,P1_F,L1_F,U1_S,P1_S,U1_M]
+        self.plotfunctions = [U1_F,P1_F,L1_U,D1_S,U1_S,D1_F]
         
         self.plottitles = ["Fluid Velocity","Fluid Pressure","Fluid LM",
                            "Structure Displacement","Structure Velocity","Mesh Displacement"]
@@ -54,30 +54,30 @@ class FSIStorer(object):
                      os.makedirs("%s/timeseries/"%store)
         self.timeseries = {"U_F":TimeSeries("%s/timeseries/U_F"%store),
                            "P_F":TimeSeries("%s/timeseries/P_F"%store),
-                           "L_F":TimeSeries("%s/timeseries/L_F"%store),
-                           "U_S":TimeSeries("%s/timeseries/U_S"%store),
-                           "P_S":TimeSeries("%s/timeseries/P_S"%store),
-                           "U_M":TimeSeries("%s/timeseries/U_M"%store),
-                           "L_M":TimeSeries("%s/timeseries/L_M"%store)}
+                           "L_U":TimeSeries("%s/timeseries/L_F"%store),
+                           "D_S":TimeSeries("%s/timeseries/U_S"%store),
+                           "U_S":TimeSeries("%s/timeseries/P_S"%store),
+                           "D_F":TimeSeries("%s/timeseries/U_M"%store),
+                           "L_D":TimeSeries("%s/timeseries/L_M"%store)}
         
         self.vtkfiles =  {"U_F":File("%s/vtk/U_F.pvd"%store),
                           "P_F":File("%s/vtk/P_F.pvd"%store),
-                          "L_F":File("%s/vtk/L_F.pvd"%store),
-                          "U_S":File("%s/vtk/U_S.pvd"%store),
-                          "P_S":File("%s/vtk/P_S.pvd"%store),
-                          "U_M":File("%s/vtk/U_M.pvd"%store),
-                          "L_M":File("%s/vtk/L_M.pvd"%store)} 
+                          "L_U":File("%s/vtk/L_F.pvd"%store),
+                          "D_S":File("%s/vtk/U_S.pvd"%store),
+                          "U_S":File("%s/vtk/P_S.pvd"%store),
+                          "D_F":File("%s/vtk/U_M.pvd"%store),
+                          "L_D":File("%s/vtk/L_M.pvd"%store)} 
     
     def store_solution(self,U,t):
         """Store the current solution in a dictionary with the time as the key"""
 
         Usave = {"U_F":mf.extract_subfunction(U.split()[0]),
                  "P_F":mf.extract_subfunction(U.split()[1]),
-                 "L_F":mf.extract_subfunction(U.split()[2]),
-                 "U_S":mf.extract_subfunction(U.split()[3]),
-                 "P_S":mf.extract_subfunction(U.split()[4]),
-                 "U_M":mf.extract_subfunction(U.split()[5]),
-                 "L_M":mf.extract_subfunction(U.split()[6])}
+                 "L_U":mf.extract_subfunction(U.split()[2]),
+                 "D_S":mf.extract_subfunction(U.split()[3]),
+                 "U_S":mf.extract_subfunction(U.split()[4]),
+                 "D_F":mf.extract_subfunction(U.split()[5]),
+                 "L_D":mf.extract_subfunction(U.split()[6])}
 
         #loop over every FSI Function and save a timeseries and VTK file
         for k in self.timeseries.keys():

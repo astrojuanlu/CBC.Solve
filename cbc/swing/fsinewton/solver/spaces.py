@@ -128,7 +128,7 @@ class FSISpaces(object):
         D_S = Function(self.C_SC)
         U_S = Function(self.V_SC)
         D_F = Function(self.C_FC)
-        L_D = Function(self.L_DC)
+        L_D = Function(self.M_DC)
         return [U_F,P_F,L_U,D_S,U_S,D_F,L_D]
 
     def __fsi_dofs(self, fspace = None ):
