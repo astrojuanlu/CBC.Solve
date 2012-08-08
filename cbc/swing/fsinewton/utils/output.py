@@ -54,19 +54,19 @@ class FSIStorer(object):
                      os.makedirs("%s/timeseries/"%store)
         self.timeseries = {"U_F":TimeSeries("%s/timeseries/U_F"%store),
                            "P_F":TimeSeries("%s/timeseries/P_F"%store),
-                           "L_U":TimeSeries("%s/timeseries/L_F"%store),
-                           "D_S":TimeSeries("%s/timeseries/U_S"%store),
-                           "U_S":TimeSeries("%s/timeseries/P_S"%store),
-                           "D_F":TimeSeries("%s/timeseries/U_M"%store),
-                           "L_D":TimeSeries("%s/timeseries/L_M"%store)}
+                           "L_U":TimeSeries("%s/timeseries/L_U"%store),
+                           "D_S":TimeSeries("%s/timeseries/S_S"%store),
+                           "U_S":TimeSeries("%s/timeseries/U_S"%store),
+                           "D_F":TimeSeries("%s/timeseries/D_F"%store),
+                           "L_D":TimeSeries("%s/timeseries/L_D"%store)}
         
         self.vtkfiles =  {"U_F":File("%s/vtk/U_F.pvd"%store),
                           "P_F":File("%s/vtk/P_F.pvd"%store),
-                          "L_U":File("%s/vtk/L_F.pvd"%store),
-                          "D_S":File("%s/vtk/U_S.pvd"%store),
-                          "U_S":File("%s/vtk/P_S.pvd"%store),
-                          "D_F":File("%s/vtk/U_M.pvd"%store),
-                          "L_D":File("%s/vtk/L_M.pvd"%store)} 
+                          "L_U":File("%s/vtk/L_U.pvd"%store),
+                          "D_S":File("%s/vtk/D_S.pvd"%store),
+                          "U_S":File("%s/vtk/U_S.pvd"%store),
+                          "D_F":File("%s/vtk/D_F.pvd"%store),
+                          "L_D":File("%s/vtk/L_D.pvd"%store)} 
     
     def store_solution(self,U,t):
         """Store the current solution in a dictionary with the time as the key"""

@@ -81,13 +81,13 @@ class FsiRunTimeData(object):
         """Plot the lagrange multiplier runtime data and write it to file"""
 
         lmdata = open(filepath + "/lmprecision.txt","w")
-        lmdata.write("Times %s\n\n Fluid LM %s \n\n Mesh LM %s \n\n"
+        lmdata.write("Times %s\n\n Velocity LM %s \n\n Displacement LM %s \n\n"
                      %(str(self.times),str(self.fluidlm),str(self.meshlm)))
         lmdata.close()
         
         plt.figure()
-        plt.plot(self.times,self.fluidlm,'bD',linestyle = '-', label = "U_F - P_S")
-        plt.plot(self.times,self.meshlm,'gp',linestyle = '-', label = "U_M - U_S")
+        plt.plot(self.times,self.fluidlm,'bD',linestyle = '-', label = "U_F - U_S")
+        plt.plot(self.times,self.meshlm,'gp',linestyle = '-', label = "D_F - D_S")
         plt.ylabel("Max relative error on fsi interface verticies")
         plt.xlabel("time")
         plt.title("Precision of the lagrange multiplier conditions")
