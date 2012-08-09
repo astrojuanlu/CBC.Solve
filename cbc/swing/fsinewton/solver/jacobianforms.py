@@ -230,15 +230,15 @@ def J_BlockFM(U, dotU, P, U_M, dD_F,dotU_M, dotdD_F, v_F,dotv, q, rho, mu,N_F, d
         A_FM += -inner(v_F,J(U_M)*tr(dot(grad(dD_F),inv(F(U_M))))*F_F)*dxF
     return A_FM
 
-def J_BlockSS(dotdD_S, dotdP_S, dD_S, dP_S, U_S, P_S, c_S,dotc_S, v_S, dotv_S, mu_S, lmbda_S, rho_S, dxS): 
+def J_BlockSS(dotdD_S, dotdU_S, dD_S, dU_S, D_S, U_S, c_S,dotc_S, v_S, dotv_S, mu_S, lmbda_S, rho_S, dxS): 
     "Structure diagonal block"
-    F_S = grad(U_S) + I                 #I + grad U_s
+    F_S = grad(D_S) + I                 #I + grad U_s
     E_S = 0.5*(F_S.T*F_S - I)           #Es in the book
     dE_S = 0.5*(grad(dD_S).T*F_S + F_S.T*grad(dD_S))#Derivative of Es wrt to US in the book
     dUsSigma_S = grad(dD_S)*(2*mu_S*E_S + lmbda_S*tr(E_S)*I) + F_S*(2*mu_S*dE_S + lmbda_S*tr(dE_S)*I)
 
-    J_SS = inner(dotc_S, rho_S*dotdP_S)*dxS + inner(grad(c_S), dUsSigma_S)*dxS \
-           + inner(dotv_S, dotdD_S - dP_S)*dxS   
+    J_SS = inner(dotc_S, rho_S*dotdU_S)*dxS + inner(grad(c_S), dUsSigma_S)*dxS \
+           + inner(dotv_S, dotdD_S - dU_S)*dxS   
     return J_SS
 
 def J_BlockSFbound(dU_F,dP_F,U_M,c_S,mu_F,N_F,dFSI):
