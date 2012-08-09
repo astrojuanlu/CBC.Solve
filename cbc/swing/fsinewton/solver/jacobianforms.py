@@ -33,16 +33,16 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     including the fluid, structure and mesh equations
 
     Iulist   - Trial(increment) function list
-             - Iu_F,Ip_F,Il_F,Iu_S,Ip_S,Iu_M,Il_M
+             - IU_F,IP_F,IL_U,ID_S,IU_S,ID_F,IL_D
 
     Iudotlist - Trial function time derivative list
-              - Iu_Fmid,Ip_Fmid,Il_Fmid,Iu_Smid,Ip_Smid,Iu_Mmid,Il_Mmid
+              - IU_Fmid,IP_Fmid,IL_Umid,ID_Smid,IU_Smid,ID_Fmid,IL_Dmid
 
     Iumidlist - Trial function time approximation list
-              - Iu_Fdot,Ip_Fdot,Il_Fdot,Iu_Sdot,Ip_Sdot,Iu_Mdot,Il_Mdot
+              - IU_Fdot,IP_Fdot,IL_Udot,ID_Sdot,IU_Sdot,ID_Fdot,IL_Ddot
     
     U1list   - List of current fsi variables
-             - u1_F,p1_F,l1_F,u1_S,p1_S,u1_M,l1_M
+             - U1_F,P1_F,L1_U,D1_S,U1_S,D1_F,L1_D
 
     Umidlist - List of time approximated fsi variables.
              - u_Fmid,p_Fmid,l_Fmid,u_Smid,p_Smid,u_Mmid,l_Mmid
@@ -66,11 +66,11 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     info_blue("Creating Jacobian Forms")
 
     #Unpack Functions
-    u1_F,p1_F,l1_F,u1_S,p1_S,u1_M,l1_M = U1list
+    U1_F,P1_F,L1_U,D1_S,U1_S,D1_F,L1_D = U1list
     u_Fdot,p_Fdot,l_Fdot,u_Sdot,p_Sdot,u_Mdot,l_Mdot = Udotlist
 
     #Unpack Trial Functions
-    Iu_F,Ip_F,Il_F,Iu_S,Ip_S,Iu_M,Il_M = Iulist
+    IU_F,IP_F,IL_U,ID_S,IU_S,ID_F,IL_D = Iulist
 
     #Unpack Test Functions
     v_F,q_F,m_F,v_S,q_S,v_M,m_M = Vlist
@@ -108,33 +108,33 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     G_F = forces["G_F"]
 
     #Unpack the time approximated functions 
-    Iu_Fmid,Ip_Fmid,Il_Fmid,Iu_Smid,Ip_Smid,Iu_Mmid,Il_Mmid = Iumidlist
-    Iu_Fdot,Ip_Fdot,Il_Fdot,Iu_Sdot,Ip_Sdot,Iu_Mdot,Il_Mdot = Iudotlist
+    IU_Fmid,IP_Fmid,IL_Umid,ID_Smid,IU_Smid,ID_Fmid,IL_Dmid = Iumidlist
+    IU_Fdot,IP_Fdot,IL_Udot,ID_Sdot,IU_Sdot,ID_Fdot,IL_Ddot = Iudotlist
     u_Fmid,p_Fmid,l_Fmid,u_Smid,p_Smid,u_Mmid,l_Mmid = Umidlist
     u_Fdot,p_Fdot,l_Fdot,u_Sdot,p_Sdot,u_Mdot,l_Mdot = Udotlist
     
     #FSI Interface conditions
     #################################################################
     #Diagonal blocks
-    j_F2 = J_BlockFFbound(Iu_F,Il_F,v_F,m_F,dFSI,innerbound = True)
-    j_M2 = J_BlockMMbound(Iu_M,Il_M,v_M,m_M,dFSI,innerbound = True)
+    j_F2 = J_BlockFFbound(IU_F,IL_U,v_F,m_F,dFSI,innerbound = True)
+    j_M2 = J_BlockMMbound(ID_F,IL_D,v_M,m_M,dFSI,innerbound = True)
 
     #Off Diagonal blocks
-    j_FS = J_BlockFSbound(Ip_S,m_F,dFSI,innerbound = True)
-    j_SF = J_BlockSFbound(Iu_Fmid,Ip_Fmid,u_Mmid,v_S,mu_F,N_F,dFSI,innerbound = True)
-    j_SM = J_blockSMbound(u1_M,Iu_M,u1_F,p1_F,mu_F,v_S,N_S,dFSI,innerbound = True)
-    j_MS = J_BlockMSbound(Iu_S,m_M,dFSI,innerbound = True)
+    j_FS = J_BlockFSbound(IU_S,m_F,dFSI,innerbound = True)
+    j_SF = J_BlockSFbound(IU_Fmid,IP_Fmid,u_Mmid,v_S,mu_F,N_F,dFSI,innerbound = True)
+    j_SM = J_blockSMbound(D1_F,ID_F,U1_F,P1_F,mu_F,v_S,N_S,dFSI,innerbound = True)
+    j_MS = J_BlockMSbound(ID_S,m_M,dFSI,innerbound = True)
     #################################################################
 
     #Main Equations
     #################################################################
-    j_F1 = J_BlockFF(Iu_Fdot,Iu_Fmid,Ip_F,u_Fmid,u_Mdot,v_F,dotv_F,q_F,u1_M,rho_F,mu_F,N_F,dxF,dsF,G_F)
-    j_S1 = J_BlockSS(Iu_Sdot,Ip_Sdot,Iu_Smid,Ip_Smid,u_Smid,p_Smid,v_S,dotv_S,q_S,dotq_S,mu_S,lmbda_S,rho_S,dxS)
-    j_M1 = J_BlockMM(Iu_Mdot,Iu_Mmid,v_M,v_M,mu_M,lmbda_M,dxM)
+    j_F1 = J_BlockFF(IU_Fdot,IU_Fmid,IP_F,u_Fmid,u_Mdot,v_F,dotv_F,q_F,D1_F,rho_F,mu_F,N_F,dxF,dsF,G_F)
+    j_S1 = J_BlockSS(ID_Sdot,IU_Sdot,ID_Smid,IU_Smid,u_Smid,p_Smid,v_S,dotv_S,q_S,dotq_S,mu_S,lmbda_S,rho_S,dxS)
+    j_M1 = J_BlockMM(ID_Fdot,ID_Fmid,v_M,v_M,mu_M,lmbda_M,dxM)
     #################################################################
 
     #Fluid-mesh block, occures across all of the fluid domain.
-    j_FM = J_BlockFM(u_Fmid, u_Fdot,p1_F, u1_M, Iu_M, u_Mdot, Iu_Mdot, v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsF,G_F,F_F)
+    j_FM = J_BlockFM(u_Fmid, u_Fdot,P1_F, D1_F, ID_F, u_Mdot, ID_Fdot, v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsF,G_F,F_F)
     
     #Fluid-Fluid block
     j_FF = j_F1 + j_F2
