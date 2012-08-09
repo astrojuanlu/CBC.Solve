@@ -111,6 +111,7 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
     #Interface residual
     r_FSI = interface_residual(U1_F,U_Fmid,P_Fmid,D1_S,U1_S,D1_F,D_Fmid,L1_U,L1_D,v_F,c_S,
                                 c_F,m_D,m_U,mu_F,N_F,dFSI,Exact_SigmaF = G_F_FSI,G_S = G_S)
+    
     #Define full FSI residual
     r = r_F + r_S + r_FD + r_FSI
 
@@ -151,40 +152,6 @@ def fluid_residual(U_Fdot,U_F,U1_F,P_F,v_F,q_F,mu,rho,D_F,N_F,dx_F,ds_DN,ds_F,F_
         R_F += -inner(v_F,J(D_F)*F_F)*dx_F
     return R_F
 
-def fluid_fsibound(P_S,U_F,L_F,v_F,v_S,m_F,dFSI,innerbound):
-    if innerbound == False:
-        #Kinematic continuity of structure and fluid on the interface
-        C_F  = inner(m_F,U_F - P_S)*dFSI
-        #Lagrange Multiplier term
-        C_F += inner(v_F,L_F)*dFSI
-    else:
-        #Kinematic continuity of structure and fluid on the interface
-        C_F  = inner(m_F,U_F - P_S)('+')*dFSI
-        #Lagrange Multiplier term
-        C_F += inner(v_F,L_F)('+')*dFSI
-    return C_F
-
-def fluid_fsibound2(U_S,v_F,N_S,mu_S,lmbda_S,G_S,dFSI, innerbound,Exact_SigmaF = None):
-    """Structure stress on fluid"""
-    #Current Structure tensor
-    Sigma_S = _Sigma_S(U_S, mu_S, lmbda_S)
-
-    if innerbound == False:
-        #Structure Traction on Fluid
-        C_S = -(inner(dot(Sigma_S,N_S),v_F))*dFSI
-    else:
-        if Exact_SigmaF is None:
-            #Structure Traction on Fluid
-            C_S = -(inner(dot(Sigma_S('-'),N_S('+')),v_F('+')))*dFSI
-            if G_S is not None:
-                info("Using additional fsi boundary traction term")
-                C_S += -inner(G_S('-'),v_F('-'))*dFSI
-        else:
-            #Prescribed fluid traction on structure
-            info("Using perscribed Structure Stress on fsi boundary")
-            C_S = (inner(Exact_SigmaF('+'),v_S('-')))*dFSI
-    return C_S
-
 def struc_residual(Ddot_S,Udot_S,D_S, U_S,c_S,v_S,mu_S,lmbda_S,rho_S,dx_S,ds_S,F_S):
                     
     Sigma_S = _Sigma_S(D_S, mu_S, lmbda_S)
@@ -193,33 +160,9 @@ def struc_residual(Ddot_S,Udot_S,D_S, U_S,c_S,v_S,mu_S,lmbda_S,rho_S,dx_S,ds_S,F
     #Right hand side Structure (Body force)
     if F_S is not None and F_S != []:
         info("Using structure body force")
-        R_S += -inner(c_S,J(D_S)*F_S)*dx_S
+##        R_S += -inner(c_S,J(D_S)*F_S)*dx_S
+        R_S += -inner(c_S,F_S)*dx_S
     return R_S
-
-def struc_fsibound(U_F,P_F,U_M,mu_F,v_S,N_F,G_S,dFSI, innerbound, Exact_SigmaF = None):
-    #Current Fluid tensor
-    Sigma_F = PiolaTransform(_Sigma_F(U_F, P_F, U_M, mu_F), U_M)
-
-    if innerbound == False:
-        #Fluid Traction on structure
-        C_S = -(inner(dot(Sigma_F,N_F),v_S))*dFSI
-        #Optional boundary traction term
-        if G_S is not None:
-            C_S += -inner(G_S,v_S)*dFSI
-    else:
-        if Exact_SigmaF is None:
-            #Calculated fluid traction on structure
-            C_S = -(inner(dot(Sigma_F('+'),N_F('-')),v_S('-')))*dFSI
-        else:
-            #Prescribed fluid traction on structure
-            info("Using perscribed Fluid Stress on fsi boundary")
-            C_S = (inner(Exact_SigmaF('+'),v_S('-')))*dFSI
-            
-        #Optional boundary traction term
-        if G_S is not None and G_S != []:
-            info("Using additional fsi boundary traction term")
-            C_S += inner(G_S('-'),v_S('-'))*dFSI
-    return C_S
 
 def fluid_domain_residual(Ddot_F,D_F,c_F,mu_M,lmbda_M,dx_F,F_M):
     #Mesh stress tensor

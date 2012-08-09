@@ -113,7 +113,7 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     u_Fmid,p_Fmid,l_Fmid,u_Smid,p_Smid,u_Mmid,l_Mmid = Umidlist
     u_Fdot,p_Fdot,l_Fdot,u_Sdot,p_Sdot,u_Mdot,l_Mdot = Udotlist
     
-    #FSI Interface conditions, should only apply to current variables.
+    #FSI Interface conditions
     #################################################################
     #Diagonal blocks
     j_F2 = J_BlockFFbound(Iu_F,Il_F,v_F,m_F,dFSI,innerbound = True)
@@ -121,15 +121,15 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
 
     #Off Diagonal blocks
     j_FS = J_BlockFSbound(Ip_S,m_F,dFSI,innerbound = True)
-    j_SF = J_BlockSFbound(Iu_F,Ip_F,u_Mmid,v_S,mu_F,N_S,dFSI,innerbound = True)
+    j_SF = J_BlockSFbound(Iu_Fmid,Ip_Fmid,u_Mmid,v_S,mu_F,N_F,dFSI,innerbound = True)
     j_SM = J_blockSMbound(u1_M,Iu_M,u1_F,p1_F,mu_F,v_S,N_S,dFSI,innerbound = True)
     j_MS = J_BlockMSbound(Iu_S,m_M,dFSI,innerbound = True)
     #################################################################
 
-    #Decoupled equations (Diagonal block), should contain time discretized variables.
+    #Main Equations
     #################################################################
     j_F1 = J_BlockFF(Iu_Fdot,Iu_Fmid,Ip_F,u_Fmid,u_Mdot,v_F,dotv_F,q_F,u1_M,rho_F,mu_F,N_F,dxF,dsF,G_F)
-    j_S1 = J_BlockSS(Iu_Sdot,Ip_Sdot,Iu_Smid,Ip_Smid,u_Smid,p_Smid,v_S,dotv_S,q_S,dotq_S,mu_S,lmbda_S,rho_S,dxS) 
+    j_S1 = J_BlockSS(Iu_Sdot,Ip_Sdot,Iu_Smid,Ip_Smid,u_Smid,p_Smid,v_S,dotv_S,q_S,dotq_S,mu_S,lmbda_S,rho_S,dxS)
     j_M1 = J_BlockMM(Iu_Mdot,Iu_Mmid,v_M,v_M,mu_M,lmbda_M,dxM)
     #################################################################
 
@@ -243,7 +243,6 @@ def J_BlockFM(U, dotU, P, U_M, dU_M,dotU_M, dotdU_M, v_F,dotv, q, rho, mu,N_F, d
     return A_FM
 
 def J_BlockSS(dotdU_S, dotdP_S, dU_S, dP_S, U_S, P_S, v_S,dotv_S, q_S, dotq_S, mu_S, lmbda_S, rho_S, dxS): 
-
     "Structure diagonal block"
     F_S = grad(U_S) + I                 #I + grad U_s
     E_S = 0.5*(F_S.T*F_S - I)           #Es in the book
@@ -251,16 +250,16 @@ def J_BlockSS(dotdU_S, dotdP_S, dU_S, dP_S, U_S, P_S, v_S,dotv_S, q_S, dotq_S, m
     dUsSigma_S = grad(dU_S)*(2*mu_S*E_S + lmbda_S*tr(E_S)*I) + F_S*(2*mu_S*dE_S + lmbda_S*tr(dE_S)*I)
 
     J_SS = inner(dotv_S, rho_S*dotdP_S)*dxS + inner(grad(v_S), dUsSigma_S)*dxS \
-           + inner(dotq_S, dotdU_S)*dxS - inner(q_S,dP_S)*dxS   
+           + inner(dotq_S, dotdU_S - dP_S)*dxS   
     return J_SS
 
-def J_BlockSFbound(dU_F,dP_F,U_M,v_S,mu_F,N_S,dFSI,innerbound):
+def J_BlockSFbound(dU_F,dP_F,U_M,v_S,mu_F,N_F,dFSI,innerbound):
     "Structure fluid coupling"
     Sigma_F = PiolaTransform(_Sigma_F(dU_F, dP_F, U_M, mu_F), U_M)
     if innerbound == False:
-         A_SF = -(inner(dot(Sigma_F,N_S),v_S))*dFSI
+        A_SF = -(inner(dot(Sigma_F,N_F),v_S))*dFSI
     else:
-        A_SF = -(inner(dot(Sigma_F('+'),N_S('-')),v_S('-')))*dFSI
+        A_SF = -(inner(dot(Sigma_F('+'),N_F('-')),v_S('-')))*dFSI
     return A_SF
 
 def J_blockSMbound(U_M,dU_M,U_F,P_F,mu_F,v_S,N_S,dFSI,innerbound):
@@ -274,7 +273,7 @@ def J_blockSMbound(U_M,dU_M,U_F,P_F,mu_F,v_S,N_S,dFSI,innerbound):
 def J_BlockMM(dUdot_M,dU_M,v_M,dotv_M,mu_M,lmbda_M,dx_F):
     """Mesh diagonal block"""
     Sigma_M = _Sigma_M(dU_M, mu_M, lmbda_M)
-    R_M = inner(dotv_M, dUdot_M)*dx_F + 0.5*inner(sym(grad(v_M)), Sigma_M)*dx_F
+    R_M = inner(dotv_M, dUdot_M)*dx_F + inner(sym(grad(v_M)), Sigma_M)*dx_F
     return R_M
 
 def J_BlockMMbound(dU_M,dL_M,v_M,m_M,d_FSI,innerbound):

@@ -41,6 +41,10 @@ class MyNewtonSolver:
                  max_reuse_jacobian = 5, runtimedata = False):
         self.tol = tol
         self.itrmax = itrmax
+        self.itr = 0
+        self.E = self.tol + 1
+        self.jacobian_itr = 0
+        self.res = [] 
         self.problem = problem
         self.fsispace = self.problem.w.function_space()
         self.inc = Function(self.fsispace)
