@@ -48,13 +48,13 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
              - U_Fmid,P_Fmid,L_Umid,D_Smid,U_Smid,D_Fmid,L_Dmid
 
     Vlist    - List of Test functions
-             - v_F,q_F,m_U,c_S,q_S,v_M,m_M
+             - v_F,q_F,m_U,c_S,v_S,c_F,m_D
 
     dotVlist - List of time integrated by parts test functions used in the
              - dual problem. For the FSI jacobian dotVlist = Vlist.
                
     matparams - Dictionary of material parameters
-              - mu_F,rho_F,mu_S,lmbda_S,rho_S
+              - mu_F,rho_F,mu_S,lmbda_S,rho_S,mu_FD,lmbbda_M
 
     measures  - Dictionary of measures
               - dxF,dxS,dxM,dsF,dsS,dFSI
@@ -73,10 +73,10 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     IU_F,IP_F,IL_U,ID_S,IU_S,ID_F,IL_D = Iulist
 
     #Unpack Test Functions
-    v_F,q_F,m_U,c_S,q_S,v_M,m_M = Vlist
+    v_F,q_F,m_U,c_S,v_S,c_F,m_D = Vlist
 
     #Unpack Test Functions
-    dotv_F,dotq_F,dotm_U,dotc_S,dotq_S,dotv_M,dotm_M = dotVlist
+    dotv_F,dotq_F,dotm_U,dotc_S,dotv_S,dotc_F,dotm_D = dotVlist
 
     #Unpack Material Parameters
     mu_F = matparams["mu_F"]
@@ -84,8 +84,9 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     mu_S = matparams["mu_S"]
     lmbda_S = matparams["lmbda_S"]
     rho_S = matparams["rho_S"]
-    mu_M = matparams["mu_M"]
-    lmbda_M = matparams["lmbda_M"]
+    #To the user "M-mesh", here "FD-Fluid Domain"
+    mu_FD = matparams["mu_M"]
+    lmbda_FD = matparams["lmbda_M"]
 
     #Unpack Measures
     dxF = measures["dxF"]
@@ -116,21 +117,21 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     #FSI Interface conditions
     #################################################################
     #Diagonal blocks
-    j_F2 = J_BlockFFbound(IU_F,IL_U,v_F,m_U,dFSI,innerbound = True)
-    j_M2 = J_BlockMMbound(ID_F,IL_D,v_M,m_M,dFSI,innerbound = True)
+    j_F2 = J_BlockFFbound(IU_F,IL_U,v_F,m_U,dFSI)
+    j_M2 = J_BlockMMbound(ID_F,IL_D,c_F,m_D,dFSI)
 
     #Off Diagonal blocks
-    j_FS = J_BlockFSbound(IU_S,m_U,dFSI,innerbound = True)
-    j_SF = J_BlockSFbound(IU_Fmid,IP_Fmid,D_Fmid,c_S,mu_F,N_F,dFSI,innerbound = True)
-    j_SM = J_blockSMbound(D1_F,ID_F,U1_F,P1_F,mu_F,c_S,N_S,dFSI,innerbound = True)
-    j_MS = J_BlockMSbound(ID_S,m_M,dFSI,innerbound = True)
+    j_FS = J_BlockFSbound(IU_S,m_U,dFSI)
+    j_SF = J_BlockSFbound(IU_Fmid,IP_Fmid,D_Fmid,c_S,mu_F,N_F,dFSI)
+    j_SM = J_blockSMbound(D1_F,ID_F,U1_F,P1_F,mu_F,c_S,N_S,dFSI)
+    j_MS = J_BlockMSbound(ID_S,m_D,dFSI)
     #################################################################
 
     #Main Equations
     #################################################################
     j_F1 = J_BlockFF(IU_Fdot,IU_Fmid,IP_F,U_Fmid,u_Mdot,v_F,dotv_F,q_F,D1_F,rho_F,mu_F,N_F,dxF,dsF,G_F)
-    j_S1 = J_BlockSS(ID_Sdot,IU_Sdot,ID_Smid,IU_Smid,D_Smid,U_Smid,c_S,dotc_S,q_S,dotq_S,mu_S,lmbda_S,rho_S,dxS)
-    j_M1 = J_BlockMM(ID_Fdot,ID_Fmid,v_M,v_M,mu_M,lmbda_M,dxM)
+    j_S1 = J_BlockSS(ID_Sdot,IU_Sdot,ID_Smid,IU_Smid,D_Smid,U_Smid,c_S,dotc_S,v_S,dotv_S,mu_S,lmbda_S,rho_S,dxS)
+    j_M1 = J_BlockMM(ID_Fdot,ID_Fmid,c_F,c_F,mu_FD,lmbda_FD,dxM)
     #################################################################
 
     #Fluid-mesh block, occures across all of the fluid domain.
@@ -154,12 +155,12 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
 
     return j
 
-def dU_MSigmaF(U_M,dU_M,U_F,P_F,mu_F):
+def dD_FSigmaF(U_M,dD_F,U_F,P_F,mu_F):
     """Derivative of Sigma_F with respect to Mesh variables"""
-    ret =   J(U_M)*tr(dot(grad(dU_M), inv(F(U_M))))*dot(Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T)
-    ret += - J(U_M)*dot(mu_F*(dot(grad(U_F), dot(inv(F(U_M)), dot(grad(dU_M), inv(F(U_M)))))), inv(F(U_M)).T)
-    ret += - J(U_M)*dot(mu_F*(dot(inv(F(U_M)).T, dot(grad(dU_M).T, dot(inv(F(U_M)).T, grad(U_F).T )))), inv(F(U_M)).T)
-    ret += - J(U_M)*dot(dot(Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T), dot(grad(dU_M).T, inv(F(U_M)).T))
+    ret =   J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dot(Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T)
+    ret += - J(U_M)*dot(mu_F*(dot(grad(U_F), dot(inv(F(U_M)), dot(grad(dD_F), inv(F(U_M)))))), inv(F(U_M)).T)
+    ret += - J(U_M)*dot(mu_F*(dot(inv(F(U_M)).T, dot(grad(dD_F).T, dot(inv(F(U_M)).T, grad(U_F).T )))), inv(F(U_M)).T)
+    ret += - J(U_M)*dot(dot(Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T), dot(grad(dD_F).T, inv(F(U_M)).T))
     return ret
 
 def J_BlockFF(dotdU,dU,dP,U,dotU_M,v,dotv,q,U_M,rho,mu,N_F,dxF,dsF,g_F=None):
@@ -179,59 +180,46 @@ def J_BlockFF(dotdU,dU,dP,U,dotU_M,v,dotv,q,U_M,rho,mu,N_F,dxF,dsF,g_F=None):
     A_FF +=  inner(q, div(J(U_M)*dot(inv(F(U_M)), dU)))*dxF
 
     #Do nothing BC if in use.
-    if g_F is None:
-##        print U_M
-##        print dU
-##        print N_F
-##        print dsF
-##        exit()
+    if g_F is None or g_F == []:
         A_FF  += -inner(v, dot(J(U_M)*mu*dot(inv(F(U_M)).T, dot(grad(dU).T, inv(F(U_M)).T)), N_F))*dsF
         A_FF  +=  inner(v, J(U_M)*dP*dot(I, dot(inv(F(U_M)).T, N_F)))*dsF
 
     return A_FF
 
-def J_BlockFFbound(dU_F,dL_F,v_F,m_U,dFSI,innerbound):
-
+def J_BlockFFbound(dU_F,dL_F,v_F,m_U,dFSI):
     """Fluid diagonal block FSI interface"""
-    if innerbound == False:
-        Lm_U = inner(m_U,dU_F)*dFSI       #U_F =P_S on dFSI boundary
-        Lm_U += inner(v_F,dL_F)*dFSI      #Lagrange Multiplier
-    else:
-        Lm_U = inner(m_U,dU_F)('+')*dFSI  #u_F =P_S on dSl boundary
-        Lm_U += inner(v_F,dL_F)('+')*dFSI #Lagrange Multiplier
+    Lm_U = inner(m_U,dU_F)('+')*dFSI  #u_F =P_S on dSl boundary
+    Lm_U += inner(v_F,dL_F)('+')*dFSI #Lagrange Multiplier
     return Lm_U
 
-def J_BlockFSbound(dP_S,m_U,dFSI,innerbound):
+def J_BlockFSbound(dP_S,m_U,dFSI):
     """Fluid structure Coupling"""
-    if innerbound == False:
-        C_MS = -inner(m_U,dP_S)*dFSI
-    else:
-        C_MS = -inner(m_U('+'),dP_S('+'))*dFSI
+    C_MS = -inner(m_U('+'),dP_S('+'))*dFSI
     return C_MS
 
-def J_BlockFM(U, dotU, P, U_M, dU_M,dotU_M, dotdU_M, v_F,dotv, q, rho, mu,N_F, dxF,ds_F,g_F = None,F_F = None):
+def J_BlockFM(U, dotU, P, U_M, dD_F,dotU_M, dotdD_F, v_F,dotv, q, rho, mu,N_F, dxF,ds_F,g_F = None,F_F = None):
     """Fluid mesh coupling"""
     
     #DT  
-    A_FM =  inner(v_F, rho*J(U_M)*tr(dot(grad(dU_M), inv(F(U_M))))*dotU)*dxF
-    A_FM +=  inner(v_F, rho*J(U_M)*tr(dot(grad(dU_M), inv(F(U_M))))*dot(grad(U), dot(inv(F(U_M)), U - dotU_M)))*dxF
+    A_FM =  inner(v_F, rho*J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dotU)*dxF
+    A_FM +=  inner(v_F, rho*J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dot(grad(U), dot(inv(F(U_M)), U - dotU_M)))*dxF
     A_FM += -inner(v_F,rho*J(U_M)*dot((dot(grad(U), dot(inv(F(U_M)), \
-             dot(grad(dU_M), inv(F(U_M)))))), U - dotU_M ))*dxF
-    A_FM += -inner(v_F, rho*J(U_M)*dot(grad(U), dot(inv(F(U_M)),dotdU_M)))*dxF
+             dot(grad(dD_F), inv(F(U_M)))))), U - dotU_M ))*dxF
+    A_FM += -inner(v_F, rho*J(U_M)*dot(grad(U), dot(inv(F(U_M)),dotdD_F)))*dxF
 
     #SigmaF
-    A_FM += inner(grad(v_F),dU_MSigmaF(U_M,dU_M,U,P,mu))*dxF
+    A_FM += inner(grad(v_F),dD_FSigmaF(U_M,dD_F,U,P,mu))*dxF
 
     #Div U_F (incompressibility)
-    A_FM +=  inner(q, div(J(U_M)*tr(dot(grad(dU_M), inv(F(U_M))))*dot(inv(F(U_M)), U)))*dxF
-    A_FM += -inner(q, div(J(U_M)*dot(dot(inv(F(U_M)), grad(dU_M)), dot(inv(F(U_M)), U))))*dxF
+    A_FM +=  inner(q, div(J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dot(inv(F(U_M)), U)))*dxF
+    A_FM += -inner(q, div(J(U_M)*dot(dot(inv(F(U_M)), grad(dD_F)), dot(inv(F(U_M)), U))))*dxF
 
     ##Add the terms for the Do nothing boundary if necessary
     if g_F is None:
          #Derivative of do nothing tensor with J factored out
-        dSigma  =  tr(grad(dU_M)*inv(F(U_M)))*(mu*inv(F(U_M)).T*grad(U).T - P*I)*inv(F(U_M)).T
-        dSigma += -mu*inv(F(U_M)).T*grad(dU_M).T*inv(F(U_M)).T*grad(U).T*inv(F(U_M)).T
-        dSigma += -(mu*inv(F(U_M)).T*grad(U).T - P*I)*inv(F(U_M)).T*grad(dU_M).T*inv(F(U_M)).T
+        dSigma  =  tr(grad(dD_F)*inv(F(U_M)))*(mu*inv(F(U_M)).T*grad(U).T - P*I)*inv(F(U_M)).T
+        dSigma += -mu*inv(F(U_M)).T*grad(dD_F).T*inv(F(U_M)).T*grad(U).T*inv(F(U_M)).T
+        dSigma += -(mu*inv(F(U_M)).T*grad(U).T - P*I)*inv(F(U_M)).T*grad(dD_F).T*inv(F(U_M)).T
 
         #Add the J                           
         dSigma = J(U_M)*dSigma        
@@ -239,57 +227,44 @@ def J_BlockFM(U, dotU, P, U_M, dU_M,dotU_M, dotdU_M, v_F,dotv, q, rho, mu,N_F, d
 
     #If a fluid body force has been specified, it will end up here. 
     if F_F is not None:
-        A_FM += -inner(v_F,J(U_M)*tr(dot(grad(dU_M),inv(F(U_M))))*F_F)*dxF
+        A_FM += -inner(v_F,J(U_M)*tr(dot(grad(dD_F),inv(F(U_M))))*F_F)*dxF
     return A_FM
 
-def J_BlockSS(dotdU_S, dotdP_S, dU_S, dP_S, U_S, P_S, c_S,dotc_S, q_S, dotq_S, mu_S, lmbda_S, rho_S, dxS): 
+def J_BlockSS(dotdD_S, dotdP_S, dD_S, dP_S, U_S, P_S, c_S,dotc_S, v_S, dotv_S, mu_S, lmbda_S, rho_S, dxS): 
     "Structure diagonal block"
     F_S = grad(U_S) + I                 #I + grad U_s
     E_S = 0.5*(F_S.T*F_S - I)           #Es in the book
-    dE_S = 0.5*(grad(dU_S).T*F_S + F_S.T*grad(dU_S))#Derivative of Es wrt to US in the book
-    dUsSigma_S = grad(dU_S)*(2*mu_S*E_S + lmbda_S*tr(E_S)*I) + F_S*(2*mu_S*dE_S + lmbda_S*tr(dE_S)*I)
+    dE_S = 0.5*(grad(dD_S).T*F_S + F_S.T*grad(dD_S))#Derivative of Es wrt to US in the book
+    dUsSigma_S = grad(dD_S)*(2*mu_S*E_S + lmbda_S*tr(E_S)*I) + F_S*(2*mu_S*dE_S + lmbda_S*tr(dE_S)*I)
 
     J_SS = inner(dotc_S, rho_S*dotdP_S)*dxS + inner(grad(c_S), dUsSigma_S)*dxS \
-           + inner(dotq_S, dotdU_S - dP_S)*dxS   
+           + inner(dotv_S, dotdD_S - dP_S)*dxS   
     return J_SS
 
-def J_BlockSFbound(dU_F,dP_F,U_M,c_S,mu_F,N_F,dFSI,innerbound):
+def J_BlockSFbound(dU_F,dP_F,U_M,c_S,mu_F,N_F,dFSI):
     "Structure fluid coupling"
     Sigma_F = PiolaTransform(_Sigma_F(dU_F, dP_F, U_M, mu_F), U_M)
-    if innerbound == False:
-        A_SF = -(inner(dot(Sigma_F,N_F),c_S))*dFSI
-    else:
-        A_SF = -(inner(dot(Sigma_F('+'),N_F('-')),c_S('-')))*dFSI
+    A_SF = -(inner(dot(Sigma_F('+'),N_F('-')),c_S('-')))*dFSI
     return A_SF
 
-def J_blockSMbound(U_M,dU_M,U_F,P_F,mu_F,c_S,N_S,dFSI,innerbound):
+def J_blockSMbound(U_M,dD_F,U_F,P_F,mu_F,c_S,N_S,dFSI):
     """Structure mesh coupling"""
-    if innerbound == False:
-        A_SM = -inner(c_S,dot(dU_MSigmaF(U_M,dU_M,U_F,P_F,mu_F),N_S))*dFSI
-    else:
-        A_SM = -inner(c_S('-'),dot(dU_MSigmaF(U_M,dU_M,U_F,P_F,mu_F)('+'),N_S('-')))*dFSI
+    A_SM = -inner(c_S('-'),dot(dD_FSigmaF(U_M,dD_F,U_F,P_F,mu_F)('+'),N_S('-')))*dFSI
     return A_SM
 
-def J_BlockMM(dUdot_M,dU_M,v_M,dotv_M,mu_M,lmbda_M,dx_F):
+def J_BlockMM(dUdot_FD,dU_FD,c_F,dotc_F,mu_FD,lmbda_FD,dx_F):
     """Mesh diagonal block"""
-    Sigma_M = _Sigma_M(dU_M, mu_M, lmbda_M)
-    R_M = inner(dotv_M, dUdot_M)*dx_F + inner(sym(grad(v_M)), Sigma_M)*dx_F
+    Sigma_FD = _Sigma_M(dU_FD, mu_FD, lmbda_FD)
+    R_M = inner(dotc_F, dUdot_FD)*dx_F + inner(sym(grad(c_F)), Sigma_FD)*dx_F
     return R_M
 
-def J_BlockMMbound(dU_M,dL_M,v_M,m_M,d_FSI,innerbound):
+def J_BlockMMbound(dD_F,dL_D,c_F,m_D,d_FSI):
     """Mesh diagonal block""" 
-    if innerbound == False:
-        C_MM = inner(m_M, dU_M)*d_FSI 
-        C_MM += inner(v_M, dL_M)*d_FSI #Lagrange Multiplier
-    else:
-        C_MM = inner(m_M, dU_M)('+')*d_FSI 
-        C_MM += inner(v_M, dL_M)('+')*d_FSI #Lagrange Multiplier
+    C_MM = inner(m_D, dD_F)('+')*d_FSI 
+    C_MM += inner(c_F, dL_D)('+')*d_FSI #Lagrange Multiplier
     return C_MM
 
-def J_BlockMSbound(dU_S,m_M,d_FSI,innerbound):
+def J_BlockMSbound(dD_S,m_D,d_FSI):
     """Mesh structure coupling"""
-    if innerbound == False:
-        C_MS = -inner(m_M,dU_S)*d_FSI
-    else:
-        C_MS = -inner(m_M('+'),dU_S('+'))*d_FSI
+    C_MS = -inner(m_D('+'),dD_S('+'))*d_FSI
     return C_MS
