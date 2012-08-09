@@ -14,18 +14,18 @@ from cbc.swing.operators import F, J, I
 
 ##Throughout this module the following notation is used.
 
-##u_F Fluid Velocity
-##p_F Fluid Pressure
-##l_F Fluid lagrange multiplier that enforces kinematic continuity of fluid and structure
+##U_F Fluid Velocity
+##P_F Fluid Pressure
+##L_U Fluid Lagrange multiplier that enforces kinematic continuity of fluid and structure
 
-##u_S Structure displacement
-##p_S Structure Velocity
+##D_S Structure displacement
+##U_S Structure Velocity
 
-##u_M Mesh Displacement
-##l_M Mesh lagrange multiplier that enforces displacement matching with structure on FSI boundary
+##D_F Fluid Domain (Mesh) Displacement
+##L_D Fluid Domain (Mesh) lagrange multiplier that enforces displacement matching with structure on FSI boundary
 
 ##Test functions are related to their trial functions by the following letter substitution.
-## u-> v , p-> q, l-> m
+## u-> v , p-> q, l-> m , d -> c
 
 def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normals,solver_params):
     """"
@@ -33,13 +33,13 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
     including the fluid, structure and mesh equations
 
     U1list   - List of current fsi variables
-             - u1_F,p1_F,l1_F,u1_S,p1_S,u1_M,l1_M
+             - U1_F,P1_F,L1_U,D1_S,U1_S,D1_F,L1_D
 
-    Umidlist - List of time approximated fsi variables.
-             - u_Fmid,p_Fmid,l_Fmid,u_Smid,p_Smid,u_Mmid,l_Mmid
+    Umidlist - List of time approximated fsi variables, mid here is from the point of view of cG(1)
+             - U_Fmid,P_Fmid,L_Umid,D_Smid,U_Smid,D_Fmid,L_Dmid
 
     V        - List of Test functions
-             - v_F,q_F,m_F,v_S,q_S,v_M,m_M
+             - v_F,q_F,m_U,c_S,v_S,c_F,m_D
                
     matparams - Dictionary of material parameters
               - mu_F,rho_F,mu_S,lmbda_S,rho_S
@@ -69,8 +69,10 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
     mu_S = matparams["mu_S"]
     lmbda_S = matparams["lmbda_S"]
     rho_S = matparams["rho_S"]
-    mu_M = matparams["mu_M"]
-    lmbda_M = matparams["lmbda_M"]
+    #The user interface referes here to "mesh-M", wheras interally
+    #these parameters refer to "fluid domain-FD"
+    mu_FD = matparams["mu_M"]
+    lmbda_FD = matparams["lmbda_M"]
 
     #Unpack Measures
     dxF = measures["dxF"]
@@ -85,7 +87,8 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
     #Unpack forces
     F_F = forces["F_F"]
     F_S = forces["F_S"]
-    F_M = forces["F_M"]
+    #Here "Mesh" is internally "fluid domain"
+    F_FD = forces["F_M"]
     G_S = forces["G_S"]
     G_F = forces["G_F"]
     G_F_FSI = forces["G_F_FSI"]
@@ -106,7 +109,7 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
     r_S = struc_residual(D_Sdot,U_Sdot,D_Smid,U_Smid,c_S,v_S,mu_S,lmbda_S,rho_S,dxS,dsS,F_S)
 
     #Fluid Domain Residual
-    r_FD = fluid_domain_residual(D_Fdot,D_Fmid,c_F,mu_M,lmbda_M,dxM,F_M)
+    r_FD = fluid_domain_residual(D_Fdot,D_Fmid,c_F,mu_FD,lmbda_FD,dxM,F_FD)
 
     #Interface residual
     r_FSI = interface_residual(U1_F,U_Fmid,P_Fmid,D1_S,U1_S,D1_F,D_Fmid,L1_U,L1_D,v_F,c_S,
@@ -164,17 +167,17 @@ def struc_residual(Ddot_S,Udot_S,D_S, U_S,c_S,v_S,mu_S,lmbda_S,rho_S,dx_S,ds_S,F
         R_S += -inner(c_S,F_S)*dx_S
     return R_S
 
-def fluid_domain_residual(Ddot_F,D_F,c_F,mu_M,lmbda_M,dx_F,F_M):
-    #Mesh stress tensor
-    Sigma_FD = _Sigma_M(D_F, mu_M, lmbda_M)
+def fluid_domain_residual(Ddot_F,D_F,c_F,mu_FD,lmbda_FD,dx_F,F_FD):
+    #Fluid Domain (Mesh) stress tensor
+    Sigma_FD = _Sigma_M(D_F, mu_FD, lmbda_FD)
 
-    #Mesh equation
-    R_M = inner(c_F, Ddot_F)*dx_F + inner(sym(grad(c_F)), Sigma_FD)*dx_F
+    #Fluid Domain equation
+    R_FD = inner(c_F, Ddot_F)*dx_F + inner(sym(grad(c_F)), Sigma_FD)*dx_F
     #Right hand side mesh (Body Force)
-    if F_M is not None and F_M != []:
+    if F_FD is not None and F_FD != []:
         info("Using fluid domain body force")
-        R_M += -inner(c_F,F_M)*dx_F
-    return R_M
+        R_FD += -inner(c_F,F_FD)*dx_F
+    return R_FD
 
 def interface_residual(U_F,U_Fmid,P_Fmid,D_S,U_S,D_F,D_Fmid,L_U,L_D,v_F,c_S,
                        c_F,m_D,m_U,mu_F,N_F,dFSI,Exact_SigmaF,G_S):
