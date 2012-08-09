@@ -2,6 +2,11 @@
 A set of tests to insure that the manually computed jacobian is correct.
 Testing is done against an automatically derived jacobian
 using dolfin.derivative()
+
+
+Fluid Block variables     U_F,P_F,L_U
+Structure Block variables D_S,U_S
+Mesh Block Variables      D_F,L_D
 """
 
 __author__ = "Gabriel Balaban"
@@ -95,13 +100,18 @@ class TestJacobians(object):
                         mf.diffmatrix_report(blocks[t1][i],blocks[t2][i],self.TOL)
                         diff = blocks[t1][i] - blocks[t2][i]
                         print  np.all(diff < self.TOL)
-                      #  assert np.all(diff < self.TOL),\
-                      #     "Error in jacobian '%s' '%s' comparison. Block %s doesn't match at TOL = %f"%(t1,t2,blockname,self.TOL)
+                        assert np.all(diff < self.TOL),\
+                           "Error in jacobian '%s' '%s' comparison. Block %s doesn't match at TOL = %f"%(t1,t2,blockname,self.TOL)
                     newtonsolvers[t1].step(newtonsolvers[t1].tol)
                     newtonsolvers[t2].step(newtonsolvers[t2].tol)
                 
     def fsiblocks(self,J,sl):
-        "Divide the jacobian matrix into blocks according to the subspace locator sl"
+        """
+        Divide the jacobian matrix into blocks according to the subspace locator sl
+        Fluid Block variables     U_F,P_F,L_U
+        Structure Block variables D_S,U_S
+        Mesh Block Variables      D_F,L_D
+        """
         sl.fluidend = sl.spaceends["L_U"]
         sl.strucend = sl.spaceends["U_S"]
         

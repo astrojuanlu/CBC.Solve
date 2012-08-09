@@ -104,7 +104,7 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     #Unpack forces
     F_F = forces["F_F"]
     F_S = forces["F_S"]
-    F_M = forces["F_M"]
+    F_FD = forces["F_M"]
     G_S = forces["G_S"]
     G_F = forces["G_F"]
 
@@ -125,7 +125,7 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     
     #Interface Block
     j_FSI = J_FSI(IU_F,IU_Fmid,IP_Fmid,ID_F,ID_Fmid,ID_S,IU_S,IL_D,IL_U,U_Fmid,P_Fmid,
-                  D_Fmid,v_F,c_S,c_F,m_D,m_U,mu_F,N_S,N_F,dFSI)
+                  D_Fmid,v_F,c_S,c_F,m_D,m_U,mu_F,N_F,dFSI)
 
     #Fluid-Fluid Domain Block
     j_FFD = J_BlockFFD(U_Fmid, u_Fdot,P1_F, D1_F, ID_F, u_Mdot, ID_Fdot, v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsF,G_F,F_F)
@@ -216,7 +216,7 @@ def J_BlockFD(dD_Fdot,dD_F,c_F,dotc_F,mu_FD,lmbda_FD,dx_F):
     return J_FD
 
 def J_FSI(dU_F,dU_Fmid,dP_Fmid,dD_F,dD_Fmid,dD_S,dU_S,dL_D,dL_U,U_Fmid,P_Fmid,D_Fmid,
-          v_F,c_S,c_F,m_D,m_U,mu_F,N_S,N_F,dFSI):
+          v_F,c_S,c_F,m_D,m_U,mu_F,N_F,dFSI):
     """Derivative of the Interface Residual"""
 
     J_FSI = inner(m_D, dD_F - dD_S)('+')*dFSI 
@@ -226,7 +226,7 @@ def J_FSI(dU_F,dU_Fmid,dP_Fmid,dD_F,dD_Fmid,dD_S,dU_S,dL_D,dL_U,U_Fmid,P_Fmid,D_
     J_FSI += inner(v_F,dL_U)('+')*dFSI #Lagrange Multiplier
 
     Sigma_F = PiolaTransform(_Sigma_F(dU_Fmid, dP_Fmid, D_Fmid, mu_F), D_Fmid)
-    J_FSI += -(inner(dot(Sigma_F('+'),N_F('-')),c_S('-')))*dFSI
+    J_FSI += -(inner(c_S('-'),dot(Sigma_F('+'),N_F('-'))))*dFSI
     
-    J_FSI += -inner(c_S('-'),dot(dD_FSigmaF(D_Fmid,dD_Fmid,U_Fmid,P_Fmid,mu_F)('+'),N_S('-')))*dFSI
+    J_FSI += -inner(c_S('-'),dot(dD_FSigmaF(D_Fmid,dD_Fmid,U_Fmid,P_Fmid,mu_F)('+'),N_F('-')))*dFSI
     return J_FSI
