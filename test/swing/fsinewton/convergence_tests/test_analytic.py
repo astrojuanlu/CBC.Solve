@@ -118,6 +118,7 @@ class zTestAnalytic(object):
         fsinewton_params["linear_solve"] = "PETSc"
         fsinewton_params["bigblue"]= False
         fsinewton_params["stress_coupling"] = "forward"
+        fsinewton_params["jacobian"] = "manual"
 ##        fsinewton_params["M_U"]["elem"] = "CG"
 ##        fsinewton_params["M_U"]["deg"] = 1
 ##        fsinewton_params["M_D"]["elem"] = "CG"
@@ -137,6 +138,7 @@ class zTestAnalytic(object):
             store = folderpath + storefolder + "refinement" + str(i)
             fsinewton_params["store"] = store
             fsinewton_params["reuse_jacobian"] = True
+            
             
             if solve != False:
                 fsinewton_params["runtimedata"]["fsisolver"] = store

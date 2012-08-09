@@ -27,7 +27,8 @@ from cbc.swing.operators import F, J, I
 ##Test functions are related to their trial functions by the following letter substitution.
 ## u-> v , p-> q, l-> m, d -> c
 
-def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVlist,matparams,measures,forces,normals):
+def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
+                 dotVlist,matparams,measures,forces,normals,params):
     """"
     Build the jacobian forms for the full FSI problem
     including the fluid, structure and mesh equations
@@ -128,7 +129,14 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
                   D_Fmid,v_F,c_S,c_F,m_D,m_U,mu_F,N_F,dFSI)
 
     #Fluid-Fluid Domain Block
-    j_FFD = J_BlockFFD(U_Fmid, u_Fdot,P1_F, D1_F, ID_F, u_Mdot, ID_Fdot, v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsF,G_F,F_F)
+    if params["optimization"]["simplify_jacobian"] == True:
+        #Effect of D_F on U_F is restricted to the interface since
+        #nodes far away from the interface are almost uneffected by D_F.
+        j_FFD = J_BlockFFD_simplified(U_Fmid, u_Fdot,P1_F, D1_F, ID_F, u_Mdot, ID_Fdot,
+                                      v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsF,dFSI,G_F,F_F)
+    else:
+        j_FFD = J_BlockFFD(U_Fmid, u_Fdot,P1_F, D1_F, ID_F, u_Mdot, ID_Fdot,
+                           v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsF,G_F,F_F)
 
     j = j_F + j_S + j_FD + j_FFD + j_FSI
 
@@ -182,6 +190,40 @@ def J_BlockFFD(U, dotU, P, U_M, dD_F,dotU_M, dotdD_F, v_F,dotv, q, rho, mu,N_F, 
     J_FM +=  inner(q, div(J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dot(inv(F(U_M)), U)))*dxF
     J_FM += -inner(q, div(J(U_M)*dot(dot(inv(F(U_M)), grad(dD_F)), dot(inv(F(U_M)), U))))*dxF
 
+    ##Add the terms for the Do nothing boundary if necessary
+    if g_F is None:
+         #Derivative of do nothing tensor with J factored out
+        dSigma  =  tr(grad(dD_F)*inv(F(U_M)))*(mu*inv(F(U_M)).T*grad(U).T - P*I)*inv(F(U_M)).T
+        dSigma += -mu*inv(F(U_M)).T*grad(dD_F).T*inv(F(U_M)).T*grad(U).T*inv(F(U_M)).T
+        dSigma += -(mu*inv(F(U_M)).T*grad(U).T - P*I)*inv(F(U_M)).T*grad(dD_F).T*inv(F(U_M)).T
+
+        #Add the J                           
+        dSigma = J(U_M)*dSigma        
+        J_FM += -inner(v_F,dot(dSigma,N_F))*ds_F
+
+    #If a fluid body force has been specified, it will end up here. 
+    if F_F is not None:
+        J_FM += -inner(v_F,J(U_M)*tr(dot(grad(dD_F),inv(F(U_M))))*F_F)*dxF
+    return J_FM
+
+def J_BlockFFD_simplified(U, dotU, P, U_M, dD_F,dotU_M, dotdD_F, v_F,dotv, q,
+                          rho, mu,N_F, dxF,ds_F,dFSI,g_F = None,F_F = None):
+    """Fluid-Fluid Domain coupling"""
+    
+    #DT  
+    J_FM =  inner(v_F, rho*J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dotU)('+')*dFSI
+    J_FM +=  inner(v_F, rho*J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dot(grad(U), dot(inv(F(U_M)),\
+                                                                                     U - dotU_M)))('+')*dFSI
+    J_FM += -inner(v_F,rho*J(U_M)*dot((dot(grad(U), dot(inv(F(U_M)), \
+             dot(grad(dD_F), inv(F(U_M)))))), U - dotU_M ))('+')*dFSI
+    J_FM += -inner(v_F, rho*J(U_M)*dot(grad(U), dot(inv(F(U_M)),dotdD_F)))('+')*dFSI
+
+    #SigmaF
+    J_FM += inner(grad(v_F),dD_FSigmaF(U_M,dD_F,U,P,mu))('+')*dFSI
+
+    #Div U_F (incompressibility)
+    J_FM +=  inner(q, div(J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dot(inv(F(U_M)), U)))('+')*dFSI
+    J_FM += -inner(q, div(J(U_M)*dot(dot(inv(F(U_M)), grad(dD_F)), dot(inv(F(U_M)), U))))('+')*dFSI
     ##Add the terms for the Do nothing boundary if necessary
     if g_F is None:
          #Derivative of do nothing tensor with J factored out

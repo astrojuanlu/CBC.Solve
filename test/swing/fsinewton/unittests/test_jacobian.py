@@ -38,7 +38,8 @@ class TestJacobians(object):
         "Test the manual FSI Jacobian against the analytic Jacobian"
         #Todo continue the test into a few Newton iterations        
         #Change the default solver params
-        fsinewton_params["reuse_jacobian"] = False
+        fsinewton_params["optimization"]["reuse_jacobian"] = False
+        fsinewton_params["optimization"]["simplify_jacobian"] = False
         fsinewton_params["plot"] = False
         
         for prob in self.problems:

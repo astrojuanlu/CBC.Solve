@@ -86,8 +86,8 @@ class FSINewtonSolver(ccom.CBCSolver):
         #Create a Newton Solver object
         self.newtonsolver = MyNewtonSolver(self.nonlinearproblem,
                                            itrmax = self.params["newtonitrmax"],
-                                           reuse_jacobian = self.params["reuse_jacobian"],
-                                           max_reuse_jacobian = self.params["max_reuse_jacobian"],
+                                           reuse_jacobian = self.params["optimization"]["reuse_jacobian"],
+                                           max_reuse_jacobian = self.params["optimization"]["max_reuse_jacobian"],
                                            runtimedata = self.params["runtimedata"]["newtonsolver"],
                                            tol = self.params["newtonsoltol"])
          
@@ -122,7 +122,7 @@ class FSINewtonSolver(ccom.CBCSolver):
             self.nonlinearproblem.J_buff = self.assemble_J_buff()
         
         #Prebuild step jacobian if necessary
-        if self.params["reuse_jacobian"] == True:
+        if self.params["optimization"]["reuse_jacobian"] == True:
             self.newtonsolver.build_jacobian()
 
     def __set_solve_behaviour(self):
@@ -278,7 +278,7 @@ class FSINewtonSolver(ccom.CBCSolver):
                 info("Using Manual Jacobian")
                 j =  jfor.fsi_jacobian(self.IU,self.IUdot,self.IUmid,self.U1list,
                                         self.Umid,self.Udot,self.V,self.V,
-                                        matparams,measures,forces,normals)
+                                        matparams,measures,forces,normals,self.params)
             else:
                 raise Exception("only auto, buff, and manual are possible jacobian parameters")
         return r,j,j_buff

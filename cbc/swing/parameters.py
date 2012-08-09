@@ -87,20 +87,23 @@ def default_fsinewtonsolver_parameters():
     md.add("elem","DG")
     p.add(md)
     
-#    p.add("stress_coupling","forward")
     p.add("solve",True)
     p.add("store",False)
     p.add("plot",False)
-#    p.add("linear_solve","PETSc")
     
     rndata = Parameters("runtimedata")
     rndata.add("fsisolver",False)
     rndata.add("newtonsolver",False)
     p.add(rndata)
+
+    #Run time optimization
+    opt = Parameters("optimization")
+    opt.add("reuse_jacobian",True)
+    opt.add("simplify_jacobian",True)
+    opt.add("max_reuse_jacobian",20)
+    p.add(opt)
     
-    p.add("jacobian","auto")
-    p.add("reuse_jacobian",True)
-    p.add("max_reuse_jacobian",20)
+    p.add("jacobian","auto") #or "manual"
     p.add("newtonitrmax",100)
     p.add("newtonsoltol",1.0e-13)
     p.add("bigblue",False)
