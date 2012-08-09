@@ -27,7 +27,7 @@ class TestJacobians(object):
 
         #Fixme The tolerance should actually be 1.0e-14 but for some reason the the buffered jacobian
         #doesn't match at the higher tolerance level. From experience it seems to have good convergence though.
-        self.TOL = 1.0e-10
+        self.TOL = 1.0e-14
 
     def test_jacobians(self):
         "Test the manual FSI Jacobian against the analytic Jacobian"
@@ -97,7 +97,7 @@ class TestJacobians(object):
                         print  np.all(diff < self.TOL)
                       #  assert np.all(diff < self.TOL),\
                       #     "Error in jacobian '%s' '%s' comparison. Block %s doesn't match at TOL = %f"%(t1,t2,blockname,self.TOL)
-                    newtonsolvers[t1].step(tol = newtonsolvers[t1].tol)
+                    newtonsolvers[t1].step(newtonsolvers[t1].tol)
                     newtonsolvers[t2].step(newtonsolvers[t2].tol)
                 
     def fsiblocks(self,J,sl):
