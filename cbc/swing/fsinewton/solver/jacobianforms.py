@@ -14,18 +14,18 @@ from cbc.swing.operators import F, J, I
 
 ##Throughout this module the following notation is used.
 
-##u_F Fluid Velocity
-##p_F Fluid Pressure
-##l_F Fluid lagrange multiplier that enforces kinematic continuity of fluid and structure
+##U_F Fluid Velocity
+##P_F Fluid Pressure
+##L_U Fluid lagrange multiplier that enforces kinematic continuity of fluid and structure
 
-##u_S Structure displacement
-##p_S Structure Velocity
+##D_S Structure displacement
+##U_S Structure Velocity
 
-##u_M Mesh Displacement
-##l_M Mesh lagrange multiplier that enforces displacement matching with structure on FSI boundary
+##D_F Mesh Displacement
+##L_D Mesh lagrange multiplier that enforces displacement matching with structure on FSI boundary
 
 ##Test functions are related to their trial functions by the following letter substitution.
-## u-> v , p-> q, l-> m
+## u-> v , p-> q, l-> m, d -> c
 
 def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVlist,matparams,measures,forces,normals):
     """"
@@ -106,6 +106,12 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     F_M = forces["F_M"]
     G_S = forces["G_S"]
     G_F = forces["G_F"]
+
+    #Unpack the time approximated functions 
+    Iu_Fmid,Ip_Fmid,Il_Fmid,Iu_Smid,Ip_Smid,Iu_Mmid,Il_Mmid = Iumidlist
+    Iu_Fdot,Ip_Fdot,Il_Fdot,Iu_Sdot,Ip_Sdot,Iu_Mdot,Il_Mdot = Iudotlist
+    u_Fmid,p_Fmid,l_Fmid,u_Smid,p_Smid,u_Mmid,l_Mmid = Umidlist
+    u_Fdot,p_Fdot,l_Fdot,u_Sdot,p_Sdot,u_Mdot,l_Mdot = Udotlist
     
     #FSI Interface conditions, should only apply to current variables.
     #################################################################
@@ -115,17 +121,10 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
 
     #Off Diagonal blocks
     j_FS = J_BlockFSbound(Ip_S,m_F,dFSI,innerbound = True)
-    j_SF = J_BlockSFbound(Iu_F,Ip_F,u1_M,v_S,mu_F,N_S,dFSI,innerbound = True)
+    j_SF = J_BlockSFbound(Iu_F,Ip_F,u_Mmid,v_S,mu_F,N_S,dFSI,innerbound = True)
     j_SM = J_blockSMbound(u1_M,Iu_M,u1_F,p1_F,mu_F,v_S,N_S,dFSI,innerbound = True)
     j_MS = J_BlockMSbound(Iu_S,m_M,dFSI,innerbound = True)
     #################################################################
-
-    #Unpack the time approximated functions that should not appear in
-    #the interface conditions
-    Iu_Fmid,Ip_Fmid,Il_Fmid,Iu_Smid,Ip_Smid,Iu_Mmid,Il_Mmid = Iumidlist
-    Iu_Fdot,Ip_Fdot,Il_Fdot,Iu_Sdot,Ip_Sdot,Iu_Mdot,Il_Mdot = Iudotlist
-    u_Fmid,p_Fmid,l_Fmid,u_Smid,p_Smid,u_Mmid,l_Mmid = Umidlist
-    u_Fdot,p_Fdot,l_Fdot,u_Sdot,p_Sdot,u_Mdot,l_Mdot = Udotlist
 
     #Decoupled equations (Diagonal block), should contain time discretized variables.
     #################################################################
@@ -151,16 +150,9 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,dotVl
     #Mesh row
     j_M =         j_MS + j_MM
 
-    #Define Full FSI Jacobian 
     j = j_F + j_S + j_M
 
-    #blocks and rows of the jacobian can be used for testing
-    rows = {"j_F":j_F,"j_S":j_S,"j_M":j_M}
-
-    blocks = {"j_FF":j_FF,"j_FS":j_FS,"j_FM":j_FM,
-              "j_SF":j_SF,"j_SS":j_SS,"j_SM":j_SM,
-                          "j_MS":j_MS,"j_MM":j_MM}
-    return j, blocks,rows
+    return j
 
 def dU_MSigmaF(U_M,dU_M,U_F,P_F,mu_F):
     """Derivative of Sigma_F with respect to Mesh variables"""
@@ -198,7 +190,8 @@ def J_BlockFF(dotdU,dU,dP,U,dotU_M,v,dotv,q,U_M,rho,mu,N_F,dxF,dsF,g_F=None):
 
     return A_FF
 
-def J_BlockFFbound(dU_F,m_F,dFSI,innerbound):
+def J_BlockFFbound(dU_F,dL_F,v_F,m_F,dFSI,innerbound):
+
     """Fluid diagonal block FSI interface"""
     if innerbound == False:
         LM_F = inner(m_F,dU_F)*dFSI       #U_F =P_S on dFSI boundary

@@ -276,9 +276,9 @@ class FSINewtonSolver(ccom.CBCSolver):
                 j = j_step
             elif self.params["jacobian"] == "manual":
                 info("Using Manual Jacobian")
-                j,self.blockjacobians,self.rowjacobians =  jfor.fsi_jacobian(self.IU,self.IUdot,self.IUmid,self.U1list,
-                                                                        self.Umid,self.Udot,self.V,self.V,
-                                                                        matparams,measures,forces,normals)
+                j =  jfor.fsi_jacobian(self.IU,self.IUdot,self.IUmid,self.U1list,
+                                        self.Umid,self.Udot,self.V,self.V,
+                                        matparams,measures,forces,normals)
             else:
                 raise Exception("only auto, buff, and manual are possible jacobian parameters")
         return r,j,j_buff

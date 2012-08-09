@@ -12,16 +12,15 @@ import numpy as np
 import demo.swing.minimal.minimalproblem as pm
 import cbc.swing.fsinewton.solver.solver_fsinewton as sfn
 import cbc.swing.fsinewton.utils.misc_func as mf
-import demo.swing.meshproblem.meshproblem as mp
 
 class TestMeshSetup(object):
     """A test class to see if the Mesh for FSI problem is set up properly"""
     def setup_class(self):
         """New problems to be quality controlled can be added here"""
-        self.problems = [pm.FSIMini(),mp.MeshProblem(),mp.FSIMeshProblem()]
+        self.problems = [pm.FSIMini()]
         #The actual lengths (in edges) are read from the problem modules
-        self.fsiboundfacets = [pm.nx,mp.ny,mp.ny]
-        self.fsiboundlengths = [pm.meshlength,mp.meshheight,mp.meshheight]
+        self.fsiboundfacets = [pm.nx]
+        self.fsiboundlengths = [pm.meshlength]
         self.fluidspaces = [FunctionSpace(problem.fluidmesh,"CG",1) for problem in self.problems]
         self.strucspaces = [FunctionSpace(problem.strucmesh,"CG",1) for problem in self.problems]
         
@@ -91,7 +90,6 @@ class TestMeshSetup(object):
             print " ".join(["Problem",problem.__str__(),"passed the initial conditions test"])
         print
                 
-
 if __name__ == "__main__":
     t = TestMeshSetup()
     t.setup_class()
