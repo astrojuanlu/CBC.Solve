@@ -8,6 +8,16 @@ from cbc.swing.fsiproblem import FSI
 from cbc.swing.fsinewton.solver.solver_fsinewton import FSINewtonSolver
 from cbc.swing.parameters import read_parameters
 
+application_parameters = read_parameters()
+application_parameters["solve_dual"] = False
+application_parameters["estimate_error"] = False
+application_parameters["uniform_timestep"] = True
+application_parameters["plot_solution"] = True
+application_parameters["FSINewtonSolver_parameters"]["optimization"]["max_reuse_jacobian"] = 60
+application_parameters["FSINewtonSolver_parameters"]["optimization"]["simplify_jacobian"] = False
+application_parameters["FSINewtonSolver_parameters"]["newtonitrmax"] = 180
+application_parameters["FSINewtonSolver_parameters"]["newtonsoltol"] = 1.0e-6
+
 # Constants related to the geometry of the problem
 vessel_length  = 6.0
 vessel_height  = 1.0
@@ -114,14 +124,14 @@ class BothBoundary(SubDomain):
     def inside (self,x,on_boundary):
         return FluidDN().inside(x,on_boundary) or FluidNeumann().inside(x,on_boundary)
 
-class BloodVesselFSI):
+class BloodVessel(FSI):
     def __init__(self):
         mesh = Rectangle(0.0, 0.0, vessel_length, vessel_height, nx, ny, "crossed")
         self.G_F = Expression(cpp_G_F)
         self.P_F = Expression(cpp_P_F)
         self.G_F.C = C
         self.P_F.C = C
-        NewtonFSI.__init__(self,mesh,Structure())
+        FSI.__init__(self,mesh,application_parameters)
         
     def update(self, t0, t1, dt):
         self.P_F.t = t1
@@ -159,11 +169,15 @@ class BloodVesselFSI):
         return 100.76
 
     #--- Fluid problem BC---
+    def fluid_velocity_initial_condition(self):
+        return (0.0, 0.0)
+
+    def fluid_pressure_initial_condition(self):
+        return (0.0)
+
     def fluid_pressure_dirichlet_boundaries(self):
         return [inflow,outflow]
-##    
-##    def fluid_pressure_dirichlet_values(self):
-##        return [1.0,0.0]
+
     def fluid_pressure_dirichlet_values(self):
         return [self.P_F,0.0]
     
@@ -197,19 +211,5 @@ class BloodVesselFSI):
 # Define and solve problem
 if __name__ == "__main__":
     problem = BloodVessel()
-    from fsinewton.solver.default_params import solver_params
-    storefolder = "fastresults"
-    solver_params["plot"]= True
-    solver_params["store"] = storefolder
-    solver_params["runtimedata"]["newtonsolver"] = storefolder
-    solver_params["runtimedata"]["fsisolver"] = storefolder
-    solver_params["reuse_jacobian"] = True
-    solver_params["jacobian"] = "auto"
-    solver_params["max_reuse_jacobian"] = 60
-#    solver_params["solve"] = False
-    solver_params["newtonitrmax"] = 180
-    
-    solver_params["newtonsoltol"] = 1.0e-6
-    
-    solver = FSINewtonSolver(problem,solver_params)
-    solver.solve()
+    problem.solve(application_parameters)
+    interactive()

@@ -184,7 +184,8 @@ def J_BlockF(dotdU,dU,dP,U,dotD_F,v,dotv,q,D_F,rho,mu,N_F,dxF,dsDN,dsF,g_F=None)
 
     return J_FF
 
-def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F, dxF,dsDN,ds_F,g_F = None,F_F = None):
+def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F,
+               dxF,dsDN,ds_F,g_F = None,F_F = None):
     """Fluid-Fluid Domain coupling"""
     
     #DT  
@@ -210,7 +211,7 @@ def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F, 
 
         #Add the J                           
         dSigma = J(D_F)*dSigma        
-        J_FM += -inner(v_F,dot(dSigma,N_F))*ds_DN
+        J_FM += -inner(v_F,dot(dSigma,N_F))*dsDN
 
     #If a fluid body force has been specified, it will end up here. 
     if F_F is not None and F_F != []:

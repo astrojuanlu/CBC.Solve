@@ -316,6 +316,9 @@ class FSINewtonSolver(ccom.CBCSolver):
             fail = "Warning, could not create initial condition for "+funcname+ " default value is 0"
             try:
                 ini_data[funcname] = ini_data[funcname]()
+                #Try the CBCSolver initial function method
+                ini_data[funcname] = self.create_initial_condition(ini_data[funcname],spaces[funcname])
+                
                 #Try to strings into expressions and interpolate them
                 if isinstance(ini_data[funcname], basestring):
                     ini_data[funcname] = interpolate(Expression(ini_data[funcname]),spaces[funcname])
@@ -351,7 +354,9 @@ class FSINewtonSolver(ccom.CBCSolver):
         #insert the data into U0
         for funcname in ini_data.keys():
             if ini_data[funcname] is not None:
-                U0.vector()[self.spaces.subloc.spacebegins[funcname]:self.spaces.subloc.spaceends[funcname]] = \
+                print funcname
+                U0.vector()[self.spaces.subloc.spacebegins[funcname]: \
+                            self.spaces.subloc.spaceends[funcname]] = \
                 ini_data[funcname].vector()[:]
             
         fsi_dofs = self.spaces.fsidofs["fsispace"]

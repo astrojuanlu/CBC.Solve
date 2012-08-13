@@ -269,6 +269,10 @@ class FixedPointFSI(CBCProblem):
     def exact_solution(self):
         return None
 
+    #Goal Functional
+    def evaluate_functional(self, u_F, p_F, U_S, P_S, U_M, dx_F, dx_S, dx_M):
+        return inner(u_F,u_F)*dx
+
 def _map_to_facet(facet_index, Omega, Omega_X, vertex_map):
     "Map facet index in Omega to facet index in Omega_X"
 
@@ -414,10 +418,18 @@ class NewtonFSI():
         return []
     def structure_velocity_dirichlet_values(self):
         return []
+    def structure_neumann_boundaries(self):
+        return "on_boundary"
+    def structure_neumann_values(self):
+        return []
     def mesh_dirichlet_boundaries(self):
         return []
     def mesh_dirichlet_values(self):
         return []
+    
+    #Some wierd parameter
+    def mesh_alpha(self):
+        return 1.0
     
     #this can be used to prescribe a fluid stress on the structure
     def fluid_fsi_stress(self):
@@ -434,7 +446,6 @@ class NewtonFSI():
         return []
     def fluid_boundary_traction(self):
         return []
-
 
 class FSI(FixedPointFSI,NewtonFSI):
     "Base class for all FSI problems"

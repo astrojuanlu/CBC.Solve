@@ -308,7 +308,9 @@ def newton_solve(F,S,M,U0_S,dt,parameters,itertol,problem,fsinewtonsolver):
 
     #Input data
     fsinewtonsolver.dt = dt
-    fsinewtonsolver.newtonsolver.tol = itertol
+
+    #For now the tolerance is set by the parameter ["FSINewtonSolver_parameters"]["newtonsoltol"]
+    #fsinewtonsolver.newtonsolver.tol = itertol
     
     #Save U0_S
     U0_S.vector()[:] = mf.extract_subfunction(fsinewtonsolver.U0_S).vector()[dofmaps["U_S"]]

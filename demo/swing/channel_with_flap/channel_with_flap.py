@@ -22,9 +22,9 @@ if test:
     application_parameters["uniform_timestep"] = True
     application_parameters["plot_solution"] = True
     application_parameters["max_num_refinements"] = 0
-    application_parameters["initial_timestep"] = 0.05 / 8.0
-    application_parameters["primal_solver"] = "fixpoint"
-
+    application_parameters["initial_timestep"] = 0.02 / 8.0
+    application_parameters["primal_solver"] = "Newton"
+    application_parameters["FSINewtonSolver_parameters"]["newtonsoltol"] = 1.0e-5
 # Constants related to the geometry of the problem
 channel_length  = 4.0
 channel_height  = 1.0
@@ -100,7 +100,7 @@ class ChannelWithFlap(FSI):
         return 1.0
 
     def fluid_viscosity(self):
-        return 0.01
+        return 0.001
 
     def fluid_velocity_dirichlet_values(self):
         return [(0.0, 0.0)]
@@ -109,7 +109,7 @@ class ChannelWithFlap(FSI):
        return [noslip]
 
     def fluid_pressure_dirichlet_values(self):
-        return 1.0, 0.0
+        return 10.0, 0.0
 
     def fluid_pressure_dirichlet_boundaries(self):
         return inflow, outflow
