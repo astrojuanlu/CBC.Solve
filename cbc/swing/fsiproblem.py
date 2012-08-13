@@ -326,18 +326,16 @@ class NewtonFSI():
         self.extboundfunc = FacetFunction("uint",mesh)
         self.extboundfunc.set_all(0)
         StructureBound().mark(self.extboundfunc,STRUCBOUND)
-##        print self.fluid_donothing_boundaries()
 
-        if self.fluid_donothing_boundaries() != []:
-##            print "This should not be none"
-##            print self.fluid_donothing_boundaries()
-##            exit()
+        #Fluid Do nothing
+        if self.fluid_donothing_boundaries() == []:
             self.dsDN = None
         else:
             for bound in self.fluid_donothing_boundaries(): 
                 bound.mark(self.extboundfunc,DONOTHINGBOUND)
             self.dsDN = ds(DONOTHINGBOUND)
-            
+        
+        #Fluid velocity Neumann
         if self.fluid_velocity_neumann_boundaries() != []:
             self.fluid_velocity_neumann_boundaries().mark(self.extboundfunc,FLUIDNEUMANNBOUND)
             self.dsF = ds(FLUIDNEUMANNBOUND)

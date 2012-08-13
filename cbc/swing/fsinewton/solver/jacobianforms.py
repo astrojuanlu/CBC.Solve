@@ -96,6 +96,7 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
     dsS = measures["dsS"]
     #dsM = measures["dsM"] (not in use at the moment)
     dFSI = measures["dFSI"]
+    dsDN = measures["dsDN"] #do nothing fluid boundary
 
     #Unpack Normals
     N_F = normals["N_F"]
@@ -127,7 +128,7 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
 
     #Diagonal Blocks
     j_F = J_BlockF(IU_Fdot,IU_Fmid,IP_F,U_Fmid,D_Fdot,v_F,dotv_F,q_F,D_Fstar,
-                   rho_F,mu_F,N_F,dxF,dsF,G_F)
+                   rho_F,mu_F,N_F,dxF,dsDN,dsF,G_F)
     
     j_S = J_BlockS(ID_Sdot,IU_Sdot,ID_Smid,IU_Smid,D_Smid,U_Smid,c_S,dotc_S,
                    v_S,dotv_S,mu_S,lmbda_S,rho_S,dxS)
@@ -143,10 +144,10 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
         #Effect of D_F on U_F is restricted to the interface since
         #nodes far away from the interface are almost uneffected by D_F.
         j_FFD = J_BlockFFD_simplified(U_Fmid, U_Fdot,P1_F, D_Fstar, ID_Fstar, D_Fdot, ID_Fdot,
-                                      v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsF,dFSI,G_F,F_F)
+                                      v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsDN,dsF,dFSI,G_F,F_F)
     else:
         j_FFD = J_BlockFFD(U_Fmid, U_Fdot,P1_F, D_Fstar, ID_Fstar, D_Fdot, ID_Fdot,
-                           v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsF,G_F,F_F)
+                           v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsDN,dsF,G_F,F_F)
 
     j = j_F + j_S + j_FD + j_FFD + j_FSI
 
@@ -160,7 +161,7 @@ def dD_FSigmaF(D_F,dD_F,U_F,P_F,mu_F):
     ret += - J(D_F)*dot(dot(Sigma_F(U_F, P_F, D_F, mu_F), inv(F(D_F)).T), dot(grad(dD_F).T, inv(F(D_F)).T))
     return ret
 
-def J_BlockF(dotdU,dU,dP,U,dotD_F,v,dotv,q,D_F,rho,mu,N_F,dxF,dsF,g_F=None):
+def J_BlockF(dotdU,dU,dP,U,dotD_F,v,dotv,q,D_F,rho,mu,N_F,dxF,dsDN,dsF,g_F=None):
     """Fluid Diagonal Block, Fluid Domain """
     
     #DT (without ALE term)
@@ -177,15 +178,13 @@ def J_BlockF(dotdU,dU,dP,U,dotD_F,v,dotv,q,D_F,rho,mu,N_F,dxF,dsF,g_F=None):
     J_FF +=  inner(q, div(J(D_F)*dot(inv(F(D_F)), dU)))*dxF
 
     #Do nothing BC if in use.
-    if g_F is None or g_F == []:
-##        print dsF
-##        exit()
-        J_FF  += -inner(v, dot(J(D_F)*mu*dot(inv(F(D_F)).T, dot(grad(dU).T, inv(F(D_F)).T)), N_F))*dsF
-        J_FF  +=  inner(v, J(D_F)*dP*dot(I, dot(inv(F(D_F)).T, N_F)))*dsF
+    if dsDN is not None:
+        J_FF  += -inner(v, dot(J(D_F)*mu*dot(inv(F(D_F)).T, dot(grad(dU).T, inv(F(D_F)).T)), N_F))*dsDN
+        J_FF  +=  inner(v, J(D_F)*dP*dot(I, dot(inv(F(D_F)).T, N_F)))*dsDN
 
     return J_FF
 
-def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F, dxF,ds_F,g_F = None,F_F = None):
+def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F, dxF,dsDN,ds_F,g_F = None,F_F = None):
     """Fluid-Fluid Domain coupling"""
     
     #DT  
@@ -203,7 +202,7 @@ def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F, 
     J_FM += -inner(q, div(J(D_F)*dot(dot(inv(F(D_F)), grad(dD_F)), dot(inv(F(D_F)), U))))*dxF
 
     ##Add the terms for the Do nothing boundary if necessary
-    if g_F is None or g_F == []:
+    if dsDN is not None:
          #Derivative of do nothing tensor with J factored out
         dSigma  =  tr(grad(dD_F)*inv(F(D_F)))*(mu*inv(F(D_F)).T*grad(U).T - P*I)*inv(F(D_F)).T
         dSigma += -mu*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T*grad(U).T*inv(F(D_F)).T
@@ -211,7 +210,7 @@ def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F, 
 
         #Add the J                           
         dSigma = J(D_F)*dSigma        
-        J_FM += -inner(v_F,dot(dSigma,N_F))*ds_F
+        J_FM += -inner(v_F,dot(dSigma,N_F))*ds_DN
 
     #If a fluid body force has been specified, it will end up here. 
     if F_F is not None and F_F != []:
@@ -219,7 +218,7 @@ def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F, 
     return J_FM
 
 def J_BlockFFD_simplified(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q,
-                          rho, mu,N_F, dxF,ds_F,dFSI,g_F = None,F_F = None):
+                          rho, mu,N_F, dxF,dsDN,ds_F,dFSI,g_F = None,F_F = None):
     """Fluid-Fluid Domain coupling"""
     
     #DT  
@@ -237,7 +236,7 @@ def J_BlockFFD_simplified(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q,
     J_FM +=  inner(q, div(J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(inv(F(D_F)), U)))('+')*dFSI
     J_FM += -inner(q, div(J(D_F)*dot(dot(inv(F(D_F)), grad(dD_F)), dot(inv(F(D_F)), U))))('+')*dFSI
     ##Add the terms for the Do nothing boundary if necessary
-    if g_F is None or g_F == []:
+    if dsDN is not None:
          #Derivative of do nothing tensor with J factored out
         dSigma  =  tr(grad(dD_F)*inv(F(D_F)))*(mu*inv(F(D_F)).T*grad(U).T - P*I)*inv(F(D_F)).T
         dSigma += -mu*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T*grad(U).T*inv(F(D_F)).T
@@ -245,7 +244,7 @@ def J_BlockFFD_simplified(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q,
 
         #Add the J                           
         dSigma = J(D_F)*dSigma        
-        J_FM += -inner(v_F,dot(dSigma,N_F))*ds_F
+        J_FM += -inner(v_F,dot(dSigma,N_F))*dsDN
 
     #If a fluid body force has been specified, it will end up here. 
     if F_F is not None and F_F != []:

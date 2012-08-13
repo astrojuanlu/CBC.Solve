@@ -86,8 +86,9 @@ def default_fsinewtonsolver_parameters():
     md.add("deg",0)
     md.add("elem","DG")
     p.add(md)
-    
+
     p.add("solve",True)
+    #Local plotting and storage by the FSINewtonSolver
     p.add("store",False)
     p.add("plot",False)
     

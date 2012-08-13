@@ -17,13 +17,13 @@ test = True
 if test:
     application_parameters["output_directory"] = "results_channel_with_flap_test"
     application_parameters["solve_primal"] = True
-    application_parameters["solve_dual"] = True
-    application_parameters["estimate_error"] = True
+    application_parameters["solve_dual"] = False
+    application_parameters["estimate_error"] = False
     application_parameters["uniform_timestep"] = True
     application_parameters["plot_solution"] = True
     application_parameters["max_num_refinements"] = 0
     application_parameters["initial_timestep"] = 0.05 / 8.0
-    application_parameters["primal_solver"] = "Newton"
+    application_parameters["primal_solver"] = "fixpoint"
 
 # Constants related to the geometry of the problem
 channel_length  = 4.0
@@ -51,6 +51,14 @@ class Structure(SubDomain):
             x[0] > structure_left  - DOLFIN_EPS and \
             x[0] < structure_right + DOLFIN_EPS and \
             x[1] < structure_top   + DOLFIN_EPS
+
+class DoNothing(SubDomain):
+    def inside(self, x ,on_boundary):
+        return \
+           x[0] < DOLFIN_EPS or \
+           x[0] > channel_length - DOLFIN_EPS and \
+           x[1] > DOLFIN_EPS and \
+           x[1] <  channel_height - DOLFIN_EPS           
 
 class ChannelWithFlap(FSI):
 
@@ -111,6 +119,8 @@ class ChannelWithFlap(FSI):
 
     def fluid_pressure_initial_condition(self):
         return "1.0 - 0.25*x[0]"
+    def fluid_donothing_boundaries(self):
+        return [DoNothing()]
 
     #--- Structure problem ---
 

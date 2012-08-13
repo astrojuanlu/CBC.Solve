@@ -319,9 +319,10 @@ def newton_solve(F,S,M,U0_S,dt,parameters,itertol,problem,fsinewtonsolver):
     #map the data back into the local functions
     Uloc = extract_solution(F, S, M)
     Uloc = {"U_F":Uloc[0],"P_F":Uloc[1],"U_S":Uloc[2],"P_S":Uloc[3],"U_M":Uloc[4]}
+    #Warning! changed notation
     U1glob = {"U_F":fsinewtonsolver.U1_F,"P_F":fsinewtonsolver.P1_F, \
-              "U_S":fsinewtonsolver.U1_S,"P_S":fsinewtonsolver.P1_S, \
-              "U_M":fsinewtonsolver.U1_M}
+              "U_S":fsinewtonsolver.D1_S,"P_S":fsinewtonsolver.U1_S, \
+              "U_M":fsinewtonsolver.D1_F}
     
     subloc = fsinewtonsolver.spaces.subloc
     for funcname in Uloc:

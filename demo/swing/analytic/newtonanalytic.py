@@ -122,7 +122,6 @@ class NewtonAnalytic(ana.Analytic):
     def struc_velocity_initial_condition(self):
         return self.P_S
 
-    #get rid of V argument
     def fluid_velocity_initial_condition(self):
         return self.U_F
     
