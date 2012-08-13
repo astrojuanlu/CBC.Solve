@@ -152,102 +152,104 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
 
     return j
 
-def dD_FSigmaF(U_M,dD_F,U_F,P_F,mu_F):
+def dD_FSigmaF(D_F,dD_F,U_F,P_F,mu_F):
     """Derivative of Sigma_F with respect to D_F"""
-    ret =   J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dot(Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T)
-    ret += - J(U_M)*dot(mu_F*(dot(grad(U_F), dot(inv(F(U_M)), dot(grad(dD_F), inv(F(U_M)))))), inv(F(U_M)).T)
-    ret += - J(U_M)*dot(mu_F*(dot(inv(F(U_M)).T, dot(grad(dD_F).T, dot(inv(F(U_M)).T, grad(U_F).T )))), inv(F(U_M)).T)
-    ret += - J(U_M)*dot(dot(Sigma_F(U_F, P_F, U_M, mu_F), inv(F(U_M)).T), dot(grad(dD_F).T, inv(F(U_M)).T))
+    ret =   J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(Sigma_F(U_F, P_F, D_F, mu_F), inv(F(D_F)).T)
+    ret += - J(D_F)*dot(mu_F*(dot(grad(U_F), dot(inv(F(D_F)), dot(grad(dD_F), inv(F(D_F)))))), inv(F(D_F)).T)
+    ret += - J(D_F)*dot(mu_F*(dot(inv(F(D_F)).T, dot(grad(dD_F).T, dot(inv(F(D_F)).T, grad(U_F).T )))), inv(F(D_F)).T)
+    ret += - J(D_F)*dot(dot(Sigma_F(U_F, P_F, D_F, mu_F), inv(F(D_F)).T), dot(grad(dD_F).T, inv(F(D_F)).T))
     return ret
 
-def J_BlockF(dotdU,dU,dP,U,dotU_M,v,dotv,q,U_M,rho,mu,N_F,dxF,dsF,g_F=None):
+def J_BlockF(dotdU,dU,dP,U,dotD_F,v,dotv,q,D_F,rho,mu,N_F,dxF,dsF,g_F=None):
     """Fluid Diagonal Block, Fluid Domain """
     
     #DT (without ALE term)
-    J_FF =  inner(dotv, rho*J(U_M)*dotdU)*dxF                              
-    J_FF +=  inner(v, rho*J(U_M)*dot(dot(grad(dU), inv(F(U_M))), U - dotU_M))*dxF  
-    J_FF +=  inner(v, rho*J(U_M)*dot(grad(U), dot(inv(F(U_M)), dU)))*dxF
+    J_FF =  inner(dotv, rho*J(D_F)*dotdU)*dxF                              
+    J_FF +=  inner(v, rho*J(D_F)*dot(dot(grad(dU), inv(F(D_F))), U - dotD_F))*dxF  
+    J_FF +=  inner(v, rho*J(D_F)*dot(grad(U), dot(inv(F(D_F)), dU)))*dxF
 
     #div Sigma_F
-    J_FF +=  inner(grad(v), J(U_M)*mu*dot(grad(dU), dot(inv(F(U_M)), inv(F(U_M)).T)))*dxF     
-    J_FF +=  inner(grad(v), J(U_M)*mu*dot(inv(F(U_M)).T, dot(grad(dU).T, inv(F(U_M)).T)))*dxF 
-    J_FF += -inner(grad(v), J(U_M)*dP*inv(F(U_M)).T)*dxF                                       
+    J_FF +=  inner(grad(v), J(D_F)*mu*dot(grad(dU), dot(inv(F(D_F)), inv(F(D_F)).T)))*dxF     
+    J_FF +=  inner(grad(v), J(D_F)*mu*dot(inv(F(D_F)).T, dot(grad(dU).T, inv(F(D_F)).T)))*dxF 
+    J_FF += -inner(grad(v), J(D_F)*dP*inv(F(D_F)).T)*dxF                                       
 
     #div U_F (incompressibility)
-    J_FF +=  inner(q, div(J(U_M)*dot(inv(F(U_M)), dU)))*dxF
+    J_FF +=  inner(q, div(J(D_F)*dot(inv(F(D_F)), dU)))*dxF
 
     #Do nothing BC if in use.
     if g_F is None or g_F == []:
-        J_FF  += -inner(v, dot(J(U_M)*mu*dot(inv(F(U_M)).T, dot(grad(dU).T, inv(F(U_M)).T)), N_F))*dsF
-        J_FF  +=  inner(v, J(U_M)*dP*dot(I, dot(inv(F(U_M)).T, N_F)))*dsF
+##        print dsF
+##        exit()
+        J_FF  += -inner(v, dot(J(D_F)*mu*dot(inv(F(D_F)).T, dot(grad(dU).T, inv(F(D_F)).T)), N_F))*dsF
+        J_FF  +=  inner(v, J(D_F)*dP*dot(I, dot(inv(F(D_F)).T, N_F)))*dsF
 
     return J_FF
 
-def J_BlockFFD(U, dotU, P, U_M, dD_F,dotU_M, dotdD_F, v_F,dotv, q, rho, mu,N_F, dxF,ds_F,g_F = None,F_F = None):
+def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F, dxF,ds_F,g_F = None,F_F = None):
     """Fluid-Fluid Domain coupling"""
     
     #DT  
-    J_FM =  inner(v_F, rho*J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dotU)*dxF
-    J_FM +=  inner(v_F, rho*J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dot(grad(U), dot(inv(F(U_M)), U - dotU_M)))*dxF
-    J_FM += -inner(v_F,rho*J(U_M)*dot((dot(grad(U), dot(inv(F(U_M)), \
-             dot(grad(dD_F), inv(F(U_M)))))), U - dotU_M ))*dxF
-    J_FM += -inner(v_F, rho*J(U_M)*dot(grad(U), dot(inv(F(U_M)),dotdD_F)))*dxF
+    J_FM =  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dotU)*dxF
+    J_FM +=  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(grad(U), dot(inv(F(D_F)), U - dotD_F)))*dxF
+    J_FM += -inner(v_F,rho*J(D_F)*dot((dot(grad(U), dot(inv(F(D_F)), \
+             dot(grad(dD_F), inv(F(D_F)))))), U - dotD_F ))*dxF
+    J_FM += -inner(v_F, rho*J(D_F)*dot(grad(U), dot(inv(F(D_F)),dotdD_F)))*dxF
 
     #SigmaF
-    J_FM += inner(grad(v_F),dD_FSigmaF(U_M,dD_F,U,P,mu))*dxF
+    J_FM += inner(grad(v_F),dD_FSigmaF(D_F,dD_F,U,P,mu))*dxF
 
     #Div U_F (incompressibility)
-    J_FM +=  inner(q, div(J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dot(inv(F(U_M)), U)))*dxF
-    J_FM += -inner(q, div(J(U_M)*dot(dot(inv(F(U_M)), grad(dD_F)), dot(inv(F(U_M)), U))))*dxF
+    J_FM +=  inner(q, div(J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(inv(F(D_F)), U)))*dxF
+    J_FM += -inner(q, div(J(D_F)*dot(dot(inv(F(D_F)), grad(dD_F)), dot(inv(F(D_F)), U))))*dxF
 
     ##Add the terms for the Do nothing boundary if necessary
-    if g_F is None:
+    if g_F is None or g_F == []:
          #Derivative of do nothing tensor with J factored out
-        dSigma  =  tr(grad(dD_F)*inv(F(U_M)))*(mu*inv(F(U_M)).T*grad(U).T - P*I)*inv(F(U_M)).T
-        dSigma += -mu*inv(F(U_M)).T*grad(dD_F).T*inv(F(U_M)).T*grad(U).T*inv(F(U_M)).T
-        dSigma += -(mu*inv(F(U_M)).T*grad(U).T - P*I)*inv(F(U_M)).T*grad(dD_F).T*inv(F(U_M)).T
+        dSigma  =  tr(grad(dD_F)*inv(F(D_F)))*(mu*inv(F(D_F)).T*grad(U).T - P*I)*inv(F(D_F)).T
+        dSigma += -mu*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T*grad(U).T*inv(F(D_F)).T
+        dSigma += -(mu*inv(F(D_F)).T*grad(U).T - P*I)*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T
 
         #Add the J                           
-        dSigma = J(U_M)*dSigma        
+        dSigma = J(D_F)*dSigma        
         J_FM += -inner(v_F,dot(dSigma,N_F))*ds_F
 
     #If a fluid body force has been specified, it will end up here. 
-    if F_F is not None:
-        J_FM += -inner(v_F,J(U_M)*tr(dot(grad(dD_F),inv(F(U_M))))*F_F)*dxF
+    if F_F is not None and F_F != []:
+        J_FM += -inner(v_F,J(D_F)*tr(dot(grad(dD_F),inv(F(D_F))))*F_F)*dxF
     return J_FM
 
-def J_BlockFFD_simplified(U, dotU, P, U_M, dD_F,dotU_M, dotdD_F, v_F,dotv, q,
+def J_BlockFFD_simplified(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q,
                           rho, mu,N_F, dxF,ds_F,dFSI,g_F = None,F_F = None):
     """Fluid-Fluid Domain coupling"""
     
     #DT  
-    J_FM =  inner(v_F, rho*J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dotU)('+')*dFSI
-    J_FM +=  inner(v_F, rho*J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dot(grad(U), dot(inv(F(U_M)),\
-                                                                                     U - dotU_M)))('+')*dFSI
-    J_FM += -inner(v_F,rho*J(U_M)*dot((dot(grad(U), dot(inv(F(U_M)), \
-             dot(grad(dD_F), inv(F(U_M)))))), U - dotU_M ))('+')*dFSI
-    J_FM += -inner(v_F, rho*J(U_M)*dot(grad(U), dot(inv(F(U_M)),dotdD_F)))('+')*dFSI
+    J_FM =  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dotU)('+')*dFSI
+    J_FM +=  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(grad(U), dot(inv(F(D_F)),\
+                                                                                     U - dotD_F)))('+')*dFSI
+    J_FM += -inner(v_F,rho*J(D_F)*dot((dot(grad(U), dot(inv(F(D_F)), \
+             dot(grad(dD_F), inv(F(D_F)))))), U - dotD_F ))('+')*dFSI
+    J_FM += -inner(v_F, rho*J(D_F)*dot(grad(U), dot(inv(F(D_F)),dotdD_F)))('+')*dFSI
 
     #SigmaF
-    J_FM += inner(grad(v_F),dD_FSigmaF(U_M,dD_F,U,P,mu))('+')*dFSI
+    J_FM += inner(grad(v_F),dD_FSigmaF(D_F,dD_F,U,P,mu))('+')*dFSI
 
     #Div U_F (incompressibility)
-    J_FM +=  inner(q, div(J(U_M)*tr(dot(grad(dD_F), inv(F(U_M))))*dot(inv(F(U_M)), U)))('+')*dFSI
-    J_FM += -inner(q, div(J(U_M)*dot(dot(inv(F(U_M)), grad(dD_F)), dot(inv(F(U_M)), U))))('+')*dFSI
+    J_FM +=  inner(q, div(J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(inv(F(D_F)), U)))('+')*dFSI
+    J_FM += -inner(q, div(J(D_F)*dot(dot(inv(F(D_F)), grad(dD_F)), dot(inv(F(D_F)), U))))('+')*dFSI
     ##Add the terms for the Do nothing boundary if necessary
-    if g_F is None:
+    if g_F is None or g_F == []:
          #Derivative of do nothing tensor with J factored out
-        dSigma  =  tr(grad(dD_F)*inv(F(U_M)))*(mu*inv(F(U_M)).T*grad(U).T - P*I)*inv(F(U_M)).T
-        dSigma += -mu*inv(F(U_M)).T*grad(dD_F).T*inv(F(U_M)).T*grad(U).T*inv(F(U_M)).T
-        dSigma += -(mu*inv(F(U_M)).T*grad(U).T - P*I)*inv(F(U_M)).T*grad(dD_F).T*inv(F(U_M)).T
+        dSigma  =  tr(grad(dD_F)*inv(F(D_F)))*(mu*inv(F(D_F)).T*grad(U).T - P*I)*inv(F(D_F)).T
+        dSigma += -mu*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T*grad(U).T*inv(F(D_F)).T
+        dSigma += -(mu*inv(F(D_F)).T*grad(U).T - P*I)*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T
 
         #Add the J                           
-        dSigma = J(U_M)*dSigma        
+        dSigma = J(D_F)*dSigma        
         J_FM += -inner(v_F,dot(dSigma,N_F))*ds_F
 
     #If a fluid body force has been specified, it will end up here. 
-    if F_F is not None:
-        J_FM += -inner(v_F,J(U_M)*tr(dot(grad(dD_F),inv(F(U_M))))*F_F)*dxF
+    if F_F is not None and F_F != []:
+        J_FM += -inner(v_F,J(D_F)*tr(dot(grad(dD_F),inv(F(D_F))))*F_F)*dxF
     return J_FM
 
 def J_BlockS(dotdD_S, dotdU_S, dD_S, dU_S, D_S, U_S, c_S,dotc_S, v_S, dotv_S, mu_S, lmbda_S, rho_S, dxS): 

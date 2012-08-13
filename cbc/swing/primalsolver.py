@@ -107,6 +107,10 @@ def solve_primal(problem, parameters):
         reference_value = None
 
     if parameters["primal_solver"] == "Newton":
+        #If no initial_step function try to generate one
+        if not hasattr(problem,"initial_step"):
+            problem.initial_step = lambda :parameters["initial_timestep"]
+        
         # Initialize an FSINewtonsolver Object
         fsinewtonsolver = FSINewtonSolver(problem,\
                             params = parameters["FSINewtonSolver_parameters"].to_dict())

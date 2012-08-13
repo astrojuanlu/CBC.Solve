@@ -196,7 +196,7 @@ def interface_residual(U_F,U_Fmid,P_Fmid,D_S,U_S,D_F,D_Fmid,L_U,L_D,v_F,c_S,
     R_FSI += inner(v_F,L_U)('+')*dFSI
 
     #Stress Continuity
-    if Exact_SigmaF is None:
+    if Exact_SigmaF is None or Exact_SigmaF == []:
         #Calculated fluid traction on structure
         Sigma_F = PiolaTransform(_Sigma_F(U_Fmid, P_Fmid, D_Fmid, mu_F), D_Fmid)
         R_FSI += -(inner(dot(Sigma_F('+'),N_F('-')),c_S('-')))*dFSI
