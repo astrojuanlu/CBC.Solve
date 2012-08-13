@@ -68,7 +68,6 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
 
     #Unpack Functions
     U1_F,P1_F,L1_U,D1_S,U1_S,D1_F,L1_D = U1list
-    u_Fdot,p_Fdot,l_Fdot,u_Sdot,p_Sdot,u_Mdot,l_Mdot = Udotlist
 
     #Unpack Trial Functions
     IU_F,IP_F,IL_U,ID_S,IU_S,ID_F,IL_D = Iulist
@@ -113,10 +112,21 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
     IU_Fmid,IP_Fmid,IL_Umid,ID_Smid,IU_Smid,ID_Fmid,IL_Dmid = Iumidlist
     IU_Fdot,IP_Fdot,IL_Udot,ID_Sdot,IU_Sdot,ID_Fdot,IL_Ddot = Iudotlist
     U_Fmid,P_Fmid,L_Umid,D_Smid,U_Smid,D_Fmid,L_Dmid = Umidlist
-    u_Fdot,p_Fdot,l_Fdot,u_Sdot,p_Sdot,u_Mdot,l_Mdot = Udotlist    
+    U_Fdot,P_Fdot,L_Udot,D_Sdot,U_Sdot,D_Fdot,L_Ddot = Udotlist    
+
+    #Fluid Residual
+    if params["fluid_domain_time_discretization"] == "end-point":
+        D_Fstar = D1_F
+        ID_Fstar = ID_F
+    elif params["fluid_domain_time_discretization"] == "mid-point":
+        D_Fstar = D_Fmid
+        ID_Fstar = ID_Fmid
+    else: raise Exception("Only mid-point and end-point are possible \
+                          fluid_domain_time_discretization parameter values \
+                          current value is %s"%solver_params["fluid_domain_time_discretization"])
 
     #Diagonal Blocks
-    j_F = J_BlockF(IU_Fdot,IU_Fmid,IP_F,U_Fmid,u_Mdot,v_F,dotv_F,q_F,D1_F,
+    j_F = J_BlockF(IU_Fdot,IU_Fmid,IP_F,U_Fmid,D_Fdot,v_F,dotv_F,q_F,D_Fstar,
                    rho_F,mu_F,N_F,dxF,dsF,G_F)
     
     j_S = J_BlockS(ID_Sdot,IU_Sdot,ID_Smid,IU_Smid,D_Smid,U_Smid,c_S,dotc_S,
@@ -132,10 +142,10 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
     if params["optimization"]["simplify_jacobian"] == True:
         #Effect of D_F on U_F is restricted to the interface since
         #nodes far away from the interface are almost uneffected by D_F.
-        j_FFD = J_BlockFFD_simplified(U_Fmid, u_Fdot,P1_F, D1_F, ID_F, u_Mdot, ID_Fdot,
+        j_FFD = J_BlockFFD_simplified(U_Fmid, U_Fdot,P1_F, D_Fstar, ID_Fstar, D_Fdot, ID_Fdot,
                                       v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsF,dFSI,G_F,F_F)
     else:
-        j_FFD = J_BlockFFD(U_Fmid, u_Fdot,P1_F, D1_F, ID_F, u_Mdot, ID_Fdot,
+        j_FFD = J_BlockFFD(U_Fmid, U_Fdot,P1_F, D_Fstar, ID_Fstar, D_Fdot, ID_Fdot,
                            v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsF,G_F,F_F)
 
     j = j_F + j_S + j_FD + j_FFD + j_FSI

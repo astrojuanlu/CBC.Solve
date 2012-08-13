@@ -6,6 +6,7 @@ import io
 from dolfin import *
 from cbc.swing.fsiproblem import FSI
 from cbc.swing.fsinewton.solver.solver_fsinewton import FSINewtonSolver
+from cbc.swing.parameters import read_parameters
 
 # Constants related to the geometry of the problem
 vessel_length  = 6.0

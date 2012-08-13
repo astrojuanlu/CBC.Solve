@@ -48,11 +48,11 @@ class NavierStokesSolver(CBCSolver):
         w = problem.mesh_velocity(V1)
 
         # If no body forces are specified, assume it is 0
-        if f == []:
+        if f == [] or f is None:
             f = Constant((0,)*V1.mesh().geometry().dim())
 
         # If no boundary forces are specified, assume it is 0
-        if g is None:
+        if g is None or g == []:
             g = Constant((0,)*V1.mesh().geometry().dim())
 
         # Create boundary conditions

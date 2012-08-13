@@ -4,6 +4,7 @@ __author__ = "Gabriel Balaban"
 __copyright__ = "Copyright (C) 2012 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
+from dolfin import *
 import matplotlib.pyplot as plt
 import numpy as np
 import cPickle
@@ -18,7 +19,8 @@ CONDFILE = "jacobian_cond"
 
 class FsiRunTimeData(object):
     """Runtime data handeling and plot generation for the fsi newton solver"""
-    def __init__(self):
+    def __init__(self,solver):
+        self.solver = solver
         self.times = []
         #number of newton iterations
         self.newtonitr = []
@@ -33,19 +35,30 @@ class FsiRunTimeData(object):
         #Data regarding the performance of the MyNewtonsolver
         self.newtonsolverdata = []
         
-    def store_fluid_lm(self,U_F,P_S,fsicoord):
+    def store_fluid_lm(self,U_F,U_S,fsicoord):
         """
         Stores the maximum relative difference of U_F and P_S evaluated
         at the fsi interface mesh coordinates
         """
-        self.fluidlm.append(self.relative_error(U_F,P_S,fsicoord))
+        #L2 Norm
+##        dFSI = self.solver.problem.dFSI
+##        domains = self.solver.problem.fsiboundfunc
+##        self.fluidlm.append(assemble(inner(U_F-U_S,U_F-U_S)('+')*dFSI,interior_facet_domains = domains ))
 
-    def store_mesh_lm(self,U_S,U_M,fsicoord):
+        #Relative Error
+        self.fluidlm.append(self.relative_error(U_F,U_S,fsicoord))
+
+    def store_mesh_lm(self,D_S,D_F,fsicoord):
         """
         Stores the maximum relative difference of U_M and U_S evaluated
         at the fsi interface mesh coordinates
         """
-        self.meshlm.append(self.relative_error(U_S,U_M,fsicoord))                           
+        #L2 Norm
+##        dFSI = self.solver.problem.dFSI
+##        domains = self.solver.problem.fsiboundfunc
+##        self.meshlm.append(assemble(inner(D_S-D_F,D_S-D_F)('+')*dFSI,interior_facet_domains = domains ))
+        #Relative Error
+        self.meshlm.append(self.relative_error(D_S,D_F,fsicoord))                           
 
     def store_cond_numbers(self,timestep,itrs,condnums):
         """Store the jacobian condition numbers"""
@@ -55,10 +68,11 @@ class FsiRunTimeData(object):
         """calculate the max relative error of f1 and f2 at the coordinates"""
         v1 = [f1(coord) for coord in coords]
         v2 = [f2(coord) for coord in coords]
-        diff = [np.linalg.norm(x - y,2) for x,y in zip(v1,v2)]
+        diffs = [np.linalg.norm(x - y,2) for x,y in zip(v1,v2)]
         lengths1 = [np.linalg.norm(v,2) for v in v1]
         lengths2 = [np.linalg.norm(v,2) for v in v2]
-        return max(diff)/max(lengths1 + lengths2)
+        relativediffs = [d / max(l1,l2) for d,l1,l2 in zip(diffs,lengths1,lengths2)]
+        return sum(relativediffs)/len(relativediffs)
 
     def plot_newtonitr(self,filepath):
         """Output the newtoniterations data"""

@@ -103,7 +103,12 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
     U_Fdot,P_Fdot,L_Udot,D_Sdot,U_Sdot,D_Fdot,L_Ddot = Udotlist
 
     #Fluid Residual
-    r_F = fluid_residual(U_Fdot,U_Fmid,U1_F,P1_F,v_F,q_F,mu_F,rho_F,D1_F,N_F,dxF,dsDN,dsF,F_F,D_Fdot,G_F)
+    if solver_params["fluid_domain_time_discretization"] == "end-point": D_F = D1_F
+    elif solver_params["fluid_domain_time_discretization"] =="mid-point":D_F = D_Fmid
+    else: raise Exception("Only mid-point and end-point are possible \
+                          fluid_domain_time_discretization parameter values \
+                          current value is %s"%solver_params["fluid_domain_time_discretization"])
+    r_F = fluid_residual(U_Fdot,U_Fmid,U1_F,P1_F,v_F,q_F,mu_F,rho_F,D_F,N_F,dxF,dsDN,dsF,F_F,D_Fdot,G_F)
 
     #Structure Residual
     r_S = struc_residual(D_Sdot,U_Sdot,D_Smid,U_Smid,c_S,v_S,mu_S,lmbda_S,rho_S,dxS,dsS,F_S)

@@ -41,6 +41,7 @@ class TestJacobians(object):
         fsinewton_params["optimization"]["reuse_jacobian"] = False
         fsinewton_params["optimization"]["simplify_jacobian"] = False
         fsinewton_params["plot"] = False
+        fsinewton_params["fluid_domain_time_discretization"] = "mid-point"
         
         for prob in self.problems:
             print "Testing Jacobian with problem", prob.__str__()

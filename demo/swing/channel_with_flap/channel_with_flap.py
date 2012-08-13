@@ -4,7 +4,10 @@ __license__  = "GNU GPL Version 3 or any later version"
 
 # Last changed: 2012-04-08
 
+from dolfin import *
 from cbc.swing import *
+from cbc.swing.parameters import read_parameters
+from cbc.swing.fsiproblem import FSI
 
 # Read parameters
 application_parameters = read_parameters()
@@ -93,9 +96,9 @@ class ChannelWithFlap(FSI):
 
     def fluid_velocity_dirichlet_values(self):
         return [(0.0, 0.0)]
-
+    
     def fluid_velocity_dirichlet_boundaries(self):
-        return [noslip]
+       return [noslip]
 
     def fluid_pressure_dirichlet_values(self):
         return 1.0, 0.0

@@ -252,7 +252,7 @@ class FixedPointFSI(CBCProblem):
     #--- Optional functions ---
 
     def update(self, t0, t1, dt):
-        pass
+        return []
 
     def fluid_body_force(self):
         return []
@@ -328,7 +328,7 @@ class NewtonFSI():
         StructureBound().mark(self.extboundfunc,STRUCBOUND)
 ##        print self.fluid_donothing_boundaries()
 
-        if self.fluid_donothing_boundaries() is None:
+        if self.fluid_donothing_boundaries() != []:
 ##            print "This should not be none"
 ##            print self.fluid_donothing_boundaries()
 ##            exit()
@@ -338,7 +338,7 @@ class NewtonFSI():
                 bound.mark(self.extboundfunc,DONOTHINGBOUND)
             self.dsDN = ds(DONOTHINGBOUND)
             
-        if self.fluid_velocity_neumann_boundaries() is not None:
+        if self.fluid_velocity_neumann_boundaries() != []:
             self.fluid_velocity_neumann_boundaries().mark(self.extboundfunc,FLUIDNEUMANNBOUND)
             self.dsF = ds(FLUIDNEUMANNBOUND)
         else:
@@ -383,61 +383,59 @@ class NewtonFSI():
 
     #Initial Conditions
     def fluid_velocity_initial_condition(self):
-        pass
+        return []
     def fluid_pressure_initial_condition(self):
-        pass
+        return []
     def struc_displacement_initial_condition(self):
-        pass
+        return []
     def struc_velocity_initial_condition(self):
-        pass
+        return []
     def mesh_displacement_initial_condition(self):
-        pass
+        return []
 
     #Boundary conditions
     def fluid_velocity_dirichlet_values(self):
-        pass
+        return []
     def fluid_velocity_dirichlet_boundaries(self):
-        pass
+        return []
     def fluid_velocity_neumann_boundaries(self):
-        pass
+        return []
     def fluid_velocity_neumann_values(self):
-        pass
+        return []
     def fluid_donothing_boundaries(self):
-        pass
+        return []
     def fluid_pressure_dirichlet_values(self):
-        pass
+        return []
     def fluid_pressure_dirichlet_boundaries(self):
-        pass
+        return []
     def structure_dirichlet_values(self):
-        pass
+        return []
     def structure_dirichlet_boundaries(self):
-        pass
+        return []
     def structure_velocity_dirichlet_boundaries(self):
-        pass
+        return []
     def structure_velocity_dirichlet_values(self):
-        pass
+        return []
     def mesh_dirichlet_boundaries(self):
-        pass
+        return []
     def mesh_dirichlet_values(self):
-        pass
+        return []
     
     #this can be used to prescribe a fluid stress on the structure
     def fluid_fsi_stress(self):
-        pass
+        return []
 
     #Body Forces
     def fluid_body_force(self):
-        pass
+        return []
     def structure_body_force(self):
-        pass
+        return []
     def mesh_right_hand_side(self):
-        pass
-
+        return []
     def structure_boundary_traction_extra(self):
-        pass
-
+        return []
     def fluid_boundary_traction(self):
-        pass
+        return []
 
 
 class FSI(FixedPointFSI,NewtonFSI):

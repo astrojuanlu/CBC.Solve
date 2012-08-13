@@ -172,7 +172,8 @@ class zTestAnalytic(object):
                                  start_refine, i)
          
             #Output slopes of the loglog plots relative to the previous points
-            save_loglogdata(L2errorsperfunc,folderpath + storefolder + test,xaxis)
+            functions = ["U_F","P_F","D_S","D_F"]
+            save_loglogdata(L2errorsperfunc,folderpath + storefolder + test,xaxis,functions)
 
             #Plot the loglog convergence plot
             create_convergenceplots(filepath, integrated_L2errors, L2errorsperfunc,title,xaxis)
@@ -181,10 +182,13 @@ class zTestAnalytic(object):
             newlmerrors = self.__lagrangemult_errors(solver)
             for k in Lagrangemult_error:
                 Lagrangemult_error[k].append(newlmerrors[k])
+            functions = ["L_U","L_D"]
             save_lmerror(Lagrangemult_error,folderpath + storefolder + test,start_refine,i)    
+            save_loglogdata(Lagrangemult_error,folderpath + storefolder + test + "lm",xaxis,functions)
             
             #Plot Lagrange Multiplier data
-            plot_lmerror(folderpath + storefolder + "/LMerrors",Lagrangemult_error,"No Title",xaxis)
+            title = "FSI Interface Continuity, p = %i"%elem_order
+            plot_lmerror(folderpath + storefolder + "/LMerrors",Lagrangemult_error,"No Title",xaxis,title)
                 
     def __solution_error(self,solver):
         "Return the L2 error for solutions compared to the analytic fsi"

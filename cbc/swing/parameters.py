@@ -48,7 +48,7 @@ def default_parameters():
     p.add("fluid_solver", "ipcs")
     return p
 
-
+#These are relevant if p["primal_solver"] = Newton
 def default_fsinewtonsolver_parameters():
     p = Parameters("FSINewtonSolver_parameters")
     
@@ -96,6 +96,11 @@ def default_fsinewtonsolver_parameters():
     rndata.add("newtonsolver",False)
     p.add(rndata)
 
+    #Time scheme
+    #This parameter refers to how the fluid domain mapping is
+    #time discretized in the Navier Stokes equation
+    p.add("fluid_domain_time_discretization","end-point") #Alternative is "mid-point"
+
     #Run time optimization
     opt = Parameters("optimization")
     opt.add("reuse_jacobian",True)
@@ -103,7 +108,7 @@ def default_fsinewtonsolver_parameters():
     opt.add("max_reuse_jacobian",20)
     p.add(opt)
     
-    p.add("jacobian","auto") #or "manual"
+    p.add("jacobian","manual") #or "manual"
     p.add("newtonitrmax",100)
     p.add("newtonsoltol",1.0e-13)
     p.add("bigblue",False)

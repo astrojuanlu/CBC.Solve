@@ -46,7 +46,7 @@ def generate_plots(test,elem_order,bctype,start_refine,end_refine,solve):
         L2errorsperfunc[k] = [allerrors[i][k] for i in range(len(allerrors))]
     
     #save loglogdata
-    save_loglogdata(L2errorsperfunc,datapath + test,xaxis)
+    save_loglogdata(L2errorsperfunc, datapath + test, xaxis)
 
     #Save convergencedata
     save_convergencedata(L2errorsperfunc,datapath + test,start_refine,end_refine)
@@ -93,7 +93,7 @@ def create_convergenceplots(store,allerrors,L2errorsperfunc,plottitle,xaxis):
         plt.savefig(pdf, format ='pdf')
         pdf.close()
 
-def plot_lmerror(store,lmerrors,plottitle,xaxis):
+def plot_lmerror(store,lmerrors,plottitle,xaxis,title):
     """Plot the convergence of Lagrange multiplier
        condition errors"""
 
@@ -101,14 +101,17 @@ def plot_lmerror(store,lmerrors,plottitle,xaxis):
     plt.figure()
     plt.xlabel("mesh size hmin")
     pdf = PdfPages(store)
+
+    labels = {"L_U":"U_F - U_S","L_D":"D_F - D_S"}
+    
     for f in lmerrors:
-        plt.loglog(xaxis, lmerrors[f],
-                   label = f, linestyle = '-')
+        plt.loglog(xaxis, lmerrors[f],PLOTSTYLES[f],
+                   label = labels[f], linestyle = '-')
     ax = plt.gca()
     ax.set_xlim(ax.get_xlim()[::-1])
     ax.grid()
-    plt.ylabel("Relative error")
-    #plt.title(plottitle)
+    plt.ylabel("L2 error")
+    plt.title(title)
     plt.legend(loc=0)
     plt.savefig(pdf, format ='pdf')
     pdf.close()
@@ -132,12 +135,12 @@ def save_convergencedata(L2errorsperfunc,path,start_refine,stop_refine):
         convergencedata.write("L2 errors of %s \n %s \n"%(k,str(L2errorsperfunc[k])))
     convergencedata.close()
 
-def save_loglogdata(L2errorsperfunc,path,xaxis):
+def save_loglogdata(L2errorsperfunc,path,xaxis,functions):
     """Create a file for the slopes of the loglog plots relative to the previous points"""
                              
     loglogdata = open(path + "_loglogdata.txt","w")
     loglogdata.write("Slopes between succesive log log points \n \n")
-    conv_rates = {"U_F":[],"P_F":[],"D_S":[],"D_F":[]}
+    conv_rates = {f:[] for f in functions}
     for k in L2errorsperfunc.keys():
         for j in range(len(L2errorsperfunc[k]) - 1):
             rise = ln(L2errorsperfunc[k][j+1]) - ln(L2errorsperfunc[k][j])

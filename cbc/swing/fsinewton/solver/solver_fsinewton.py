@@ -67,7 +67,7 @@ class FSINewtonSolver(ccom.CBCSolver):
     
         #Define Forms and buffered part of the jacobian matrix.
         self.r,self.j,self.j_buff = self.create_forms()
-        self.runtimedata = FsiRunTimeData()
+        self.runtimedata = FsiRunTimeData(self)
         timings.stop("Fsi Newton Solver init")
 
     def solve(self,single_step = False):
@@ -321,7 +321,7 @@ class FSINewtonSolver(ccom.CBCSolver):
                     ini_data[funcname] = interpolate(Expression(ini_data[funcname]),spaces[funcname])
                     info(success)
 
-                #If a tuple or string
+                #If a list or tuple
                 elif type(ini_data[funcname]) == type([]) or type(ini_data[funcname]) == type(()):
                     #First assume there are strings in the tuple already
                     try:
