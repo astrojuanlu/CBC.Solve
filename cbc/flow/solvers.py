@@ -83,7 +83,7 @@ class NavierStokesSolver(CBCSolver):
 
         # Define symmetric gradient
         def epsilon(v):
-            return  0.5*(grad(v) + grad(v).T)t
+            return  0.5*(grad(v) + grad(v).T)
 
         # Tentative velocity step (sigma formulation)
         U = 0.5*(u0 + u)
