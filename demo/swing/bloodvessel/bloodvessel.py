@@ -9,17 +9,21 @@ from cbc.swing.fsinewton.solver.solver_fsinewton import FSINewtonSolver
 from cbc.swing.parameters import read_parameters
 
 application_parameters = read_parameters()
+application_parameters["primal_solver"] = "Newton"
+
 application_parameters["output_directory"] = "results_bloodvessel"
 application_parameters["global_storage"] = True
 application_parameters["solve_dual"] = False
 application_parameters["estimate_error"] = False
 application_parameters["uniform_timestep"] = True
-application_parameters["initial_timestep"] = 0.5
-application_parameters["plot_solution"] = False
+application_parameters["initial_timestep"] = 0.5 #Newton Solver
+application_parameters["plot_solution"] = True
 application_parameters["iteration_tolerance"] = 1.0e-6
 application_parameters["FSINewtonSolver_parameters"]["optimization"]["max_reuse_jacobian"] = 40
 application_parameters["FSINewtonSolver_parameters"]["optimization"]["simplify_jacobian"] = False
 application_parameters["FSINewtonSolver_parameters"]["newtonitrmax"] = 180
+#Fixpoint parameters
+application_parameters["fluid_solver"] = "taylor-hood"
 
 # Constants related to the geometry of the problem
 vessel_length  = 6.0
@@ -43,36 +47,7 @@ struc_left = "x[0] <= DOLFIN_EPS"
 struc_right = "x[0] >= %g - DOLFIN_EPS" %(vessel_length)
 
 meshbc = "on_boundary &&" + influid
-
-#Time variable pressure on the left boundary
-cpp_P_F = """
-class P_F : public Expression
-{
-public:
-
-  P_F() : Expression(), C(0), t(0) {}
-
-  void eval(Array<double>& values, const Array<double>& xx,
-            const ufc::cell& cell) const
-  {
-    const double x = xx[0];
-
-    if (t < 5.0 ){
-        values[0] = C;
-    }
-    else if (t < 9.5){ 
-        values[0] = C - C*(10.0 - t)/10.0;
-    }
-    else {
-        values[0] = C*0.5/10.0;
-          }
-  }
-
-  double C;
-  double t;
-
-};
-"""
+noslip = "on_boundary && !(%s) && !(%s)" % (inflow,outflow)
 
 #Presure Wave
 cpp_P_Fwave = """
@@ -133,14 +108,11 @@ class BothBoundary(SubDomain):
 class BloodVessel(FSI):
     def __init__(self):
         mesh = Rectangle(0.0, 0.0, vessel_length, vessel_height, nx, ny, "crossed")
-        self.P_F = Expression(cpp_P_F)
         self.P_Fwave = Expression(cpp_P_Fwave)
-        self.P_F.C = C
         self.P_Fwave.C = C
         FSI.__init__(self,mesh,application_parameters)
         
     def update(self, t0, t1, dt):
-        self.P_F.t = t1
         self.P_Fwave.t = t1
 
     #--- Common ---
@@ -157,9 +129,9 @@ class BloodVessel(FSI):
     def fluid_viscosity(self):
         return 0.002
     
-    def structure_density(self):
+    def structure_density(self):  
         return 4.0
-
+    
     def structure_mu(self):
         return 5.0
 
@@ -178,15 +150,10 @@ class BloodVessel(FSI):
 
     def fluid_pressure_initial_condition(self):
        return (0.0)
-##
-##    def fluid_pressure_dirichlet_boundaries(self):
-##        return [inflow,outflow]
-##
-##    def fluid_pressure_dirichlet_values(self):
-##        return [self.P_F,0.0]
     
     def fluid_pressure_dirichlet_boundaries(self):
-        return ["GammaFSI"]
+        if application_parameters["primal_solver"] == "Newton": return ["GammaFSI"]
+        else: return [noslip]
 
     def fluid_pressure_dirichlet_values(self):
         return [self.P_Fwave]

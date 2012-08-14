@@ -15,6 +15,7 @@ application_parameters = read_parameters()
 # Used for testing
 test = True
 if test:
+    application_parameters["primal_solver"] = "fixpoint"
     application_parameters["output_directory"] = "results_channel_with_flap_test"
     application_parameters["global_storage"] = True
     application_parameters["solve_primal"] = True
@@ -24,8 +25,8 @@ if test:
     application_parameters["plot_solution"] = True
     application_parameters["max_num_refinements"] = 0
     application_parameters["initial_timestep"] = 0.02 / 8.0
-    application_parameters["primal_solver"] = "Newton"
     application_parameters["iteration_tolerance"] = 1.0e-6
+    application_parameters["fluid_solver"] = "ipcs"
 # Constants related to the geometry of the problem
 channel_length  = 4.0
 channel_height  = 1.0
@@ -43,7 +44,11 @@ outflow = "x[0] > %g - DOLFIN_EPS && \
            x[1] > DOLFIN_EPS && \
            x[1] < %g - DOLFIN_EPS" % (channel_length, channel_height)
 fixed = "x[1] < DOLFIN_EPS && x[0] > %g - DOLFIN_EPS && x[0] < %g + DOLFIN_EPS" % (structure_left, structure_right)
-noslip = "on_boundary && !(%s) && !(%s) && !(%s)" % (inflow, outflow,fixed)
+
+if application_parameters["primal_solver"] == "fixpoint":
+    noslip = "on_boundary && !(%s) && !(%s) && !(%s)" % (inflow, outflow,fixed)
+else:
+    noslip = "on_boundary && !(%s) && !(%s)" % (inflow, outflow)
 
 # Define structure subdomain
 class Structure(SubDomain):
@@ -120,6 +125,7 @@ class ChannelWithFlap(FSI):
 
     def fluid_pressure_initial_condition(self):
         return "1.0 - 0.25*x[0]"
+    
     def fluid_donothing_boundaries(self):
         return [DoNothing()]
 
