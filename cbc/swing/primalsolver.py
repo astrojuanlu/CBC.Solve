@@ -1,4 +1,4 @@
-This module implements the primal FSI solver."
+"This module implements the primal FSI solver."
 
 __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
