@@ -15,7 +15,7 @@ application_parameters = read_parameters()
 # Used for testing
 test = True
 if test:
-    application_parameters["primal_solver"] = "Newton"
+    application_parameters["primal_solver"] = "fixpoint"
     application_parameters["output_directory"] = "results_channel_with_flap_test"
     application_parameters["global_storage"] = True
     application_parameters["solve_primal"] = True
@@ -27,6 +27,7 @@ if test:
     application_parameters["initial_timestep"] = 0.02 / 8.0
     application_parameters["iteration_tolerance"] = 1.0e-6
     application_parameters["fluid_solver"] = "ipcs" #"taylor-hood"
+
 # Constants related to the geometry of the problem
 channel_length  = 4.0
 channel_height  = 1.0
@@ -35,14 +36,15 @@ structure_right = 1.8
 structure_top   = 0.6
 
 # Define boundaries
-influid = ""
-
-inflow  = "x[0] < DOLFIN_EPS && \
-           x[1] > DOLFIN_EPS && \
-           x[1] < %g - DOLFIN_EPS" % channel_height
-outflow = "x[0] > %g - DOLFIN_EPS && \
-           x[1] > DOLFIN_EPS && \
-           x[1] < %g - DOLFIN_EPS" % (channel_length, channel_height)
+<<<<<<< TREE
+inflow = "on_boundary && near(x[0],0.0)"
+outflow = "on_boundary && near(x[0],%g)"%channel_length
+##inflow  = "x[0] < DOLFIN_EPS && \
+##           x[1] > DOLFIN_EPS && \
+##           x[1] < %g - DOLFIN_EPS" % channel_height
+##outflow = "x[0] > %g - DOLFIN_EPS && \
+##           x[1] > DOLFIN_EPS && \
+##           x[1] < %g - DOLFIN_EPS" % (channel_length, channel_height)
 fixed = "x[1] < DOLFIN_EPS && x[0] > %g - DOLFIN_EPS && x[0] < %g + DOLFIN_EPS" % (structure_left, structure_right)
 
 if application_parameters["primal_solver"] == "fixpoint":
@@ -105,28 +107,63 @@ class ChannelWithFlap(FSI):
         return 1.0
 
     def fluid_viscosity(self):
+<<<<<<< TREE
+        return 0.001
+    
+    def fluid_velocity_initial_condition(self):
+        return (0.0, 0.0)
+    
+=======
         return 0.001
 
+>>>>>>> MERGE-SOURCE
     def fluid_velocity_dirichlet_values(self):
         return [(0.0, 0.0)]
     
     def fluid_velocity_dirichlet_boundaries(self):
+<<<<<<< TREE
        return [noslip]
 
+##    def fluid_pressure_dirichlet_values(self):
+##        return [10.0, 0.0]
+
+##    def fluid_pressure_dirichlet_boundaries(self):
+##        return [inflow, outflow]
+##
+=======
+       return [noslip]
+
+>>>>>>> MERGE-SOURCE
     def fluid_pressure_dirichlet_values(self):
+<<<<<<< TREE
+        return [10.0,0.0]
+    
+=======
         return [10.0, 0.0]
 
+>>>>>>> MERGE-SOURCE
     def fluid_pressure_dirichlet_boundaries(self):
+<<<<<<< TREE
+        return [inflow,outflow]
+=======
         return [inflow, outflow]
 
     def fluid_velocity_initial_condition(self):
         return (0.0, 0.0)
+>>>>>>> MERGE-SOURCE
 
     def fluid_pressure_initial_condition(self):
+<<<<<<< TREE
+        return "10.0*(1.0 - x[0]/%f)"%channel_length
+    
+    def fluid_donothing_boundaries(self):
+        return [DoNothing()]
+=======
         return "1.0 - 0.25*x[0]"
     
     def fluid_donothing_boundaries(self):
         return [DoNothing()]
+>>>>>>> MERGE-SOURCE
 
     #--- Structure problem ---
 

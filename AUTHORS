@@ -5,6 +5,7 @@ Anders Logg
 Harish Narayanan
 Marie E. Rognes
 Aron Wahlberg
+Gabriel Balaban
 
 [1] bzr log -n0 | grep committer | sed -e 's/^.*committer: //g' | \
     sed -e 's/<.*>//g' | sed -s 's/selim/Kristoffer Selim/g' | \

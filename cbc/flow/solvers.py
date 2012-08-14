@@ -83,7 +83,7 @@ class NavierStokesSolver(CBCSolver):
 
         # Define symmetric gradient
         def epsilon(v):
-            return  0.5*(grad(v) + grad(v).T)
+            return  0.5*(grad(v) + grad(v).T)t
 
         # Tentative velocity step (sigma formulation)
         U = 0.5*(u0 + u)
@@ -92,9 +92,14 @@ class NavierStokesSolver(CBCSolver):
             + inner(epsilon(v), sigma(U, p0))*dx \
             - inner(v, g)*ds \
             - inner(v, f)*dx \
-            # MER: I don't like these. Yes, I know about the swirl.
-            #+ inner(v, p0*n)*ds \
-            #- mu*inner(grad(U).T*n, v)*ds \
+            + inner(v, p0*n)*ds \
+            - mu*inner(grad(U).T*n, v)*ds
+        # MER: I don't like these. Yes, I know about the swirl.
+        # GB: They seem to be necessary for the channel with the flap so the two terms
+##                    + inner(v, p0*n)*ds \
+##            - mu*inner(grad(U).T*n, v)*ds
+##            have been added i again.
+
         a1 = lhs(F1)
         L1 = rhs(F1)
 
