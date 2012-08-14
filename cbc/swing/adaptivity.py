@@ -516,7 +516,7 @@ def compute_itertol(problem, w_c, TOL, dt, t1, parameters):
     "Compute tolerance for FSI iterations"
 
     if parameters["uniform_timestep"]:
-        tol = parameters["fixedpoint_tolerance"]
+        tol = parameters["iteration_tolerance"]
         info("")
         if parameters["primal_solver"] == "fixpoint":itertype = "(f)-(S)-(M)"
         else:itertype = "Newton"

@@ -18,9 +18,9 @@ import cbc.swing.fsinewton.utils.misc_func as mf
 ana.application_parameters["primal_solver"] = "Newton"
 ana.application_parameters["save_solution"] = True
 ana.application_parameters["solve_primal"] = True
-ana.application_parameters["solve_dual"] = True
-ana.application_parameters["estimate_error"] = True
-ana.application_parameters["plot_solution"] = True
+ana.application_parameters["solve_dual"] = False
+ana.application_parameters["estimate_error"] = False
+ana.application_parameters["plot_solution"] = False
 
 #Exclude FSI Nodes
 influid = "x[0] < 1.0 - DOLFIN_EPS"

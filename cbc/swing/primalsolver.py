@@ -1,4 +1,4 @@
-"This module implements the primal FSI solver."
+This module implements the primal FSI solver."
 
 __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
@@ -308,9 +308,7 @@ def newton_solve(F,S,M,U0_S,dt,parameters,itertol,problem,fsinewtonsolver):
 
     #Input data
     fsinewtonsolver.dt = dt
-
-    #For now the tolerance is set by the parameter ["FSINewtonSolver_parameters"]["newtonsoltol"]
-    #fsinewtonsolver.newtonsolver.tol = itertol
+    fsinewtonsolver.newtonsolver.tol = itertol
     
     #Save U0_S
     U0_S.vector()[:] = mf.extract_subfunction(fsinewtonsolver.U0_S).vector()[dofmaps["U_S"]]
@@ -334,12 +332,23 @@ def newton_solve(F,S,M,U0_S,dt,parameters,itertol,problem,fsinewtonsolver):
     #Gather together the information to be returned
     U1_S = Uloc["U_S"]
     P1_S = Uloc["P_S"]
+    U1_M = Uloc["U_M"]
     numiter = len(fsinewtonsolver.last_itr)
     
     # Compute increment of displacement vector
     U0_S.vector().axpy(-1, U1_S.vector())
     increment = norm(U0_S.vector())
     U0_S.vector()[:] = U1_S.vector()[:]
+    
+    #Transfer mesh displacement to fluid
+    begin("* Transferring mesh displacement to fluid (M --> F)")
+    F.update_mesh_displacement(U1_M, dt, 2)
+    end()
+    
+    #Update Structure
+    velocityoffset = Uloc["P_S"].function_space().dim()
+    S.solver.U.vector()[:velocityoffset] = Uloc["U_S"].vector()
+    S.solver.U.vector()[velocityoffset:] = Uloc["P_S"].vector()
     return (U1_S,U0_S,P1_S,increment,numiter)
 
 def update_exactsol(u_F1,p_F1,U_S1,U_M1,F,problem,t1):

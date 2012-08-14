@@ -131,7 +131,8 @@ class Hyperelasticity(StaticHyperelasticity):
 
     def solution(self):
         "Return current solution values"
-        self._create_solver()
+        if self.solver is None:
+            self._create_solver()
         return self.solver.solution()
 
     def end_time(self):

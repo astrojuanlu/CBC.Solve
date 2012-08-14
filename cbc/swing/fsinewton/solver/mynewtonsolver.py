@@ -69,7 +69,7 @@ class MyNewtonSolver:
             self.subloc = sp.FSISubSpaceLocator(self.fsispace)
             self.runtimedata = MyNewtonSolverRunTimeData(t)
         self.itr = 0
-        self.E = self.tol + 1
+        self.E = self.tol + 100
         self.jacobian_itr = 0
         self.res = [] 
         
@@ -87,6 +87,7 @@ class MyNewtonSolver:
         #Check for convergence, F(u) should be close to 0.
         #Get the discrete 2 norm of the increment
 ##        self.E = np.max(self.F.array())
+        self.lastresidual = self.E
         self.E = np.linalg.norm(self.F.array(),ord = 2)
         info(str((self.itr,self.E)))
 
@@ -101,8 +102,10 @@ class MyNewtonSolver:
         if self.E < tol:
             return
 
-        #Rebuild jacobian if neccessary
-        if self.reuse_jacobian == False or self.jacobian_itr == self.max_reuse_jacobian:
+        #Rebuild jacobian if neccessary (for example as a blow up starts)
+        if self.reuse_jacobian == False or \
+        self.jacobian_itr == self.max_reuse_jacobian or\
+        self.E > self.lastresidual:
             self.build_jacobian()
             self.jacobian_itr = 0
 

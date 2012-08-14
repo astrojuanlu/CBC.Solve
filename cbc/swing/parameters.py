@@ -28,7 +28,7 @@ def default_parameters():
     p.add("mesh_element_degree", 1)
     p.add("max_num_refinements", 100)
     p.add("tolerance", 0.001)
-    p.add("fixedpoint_tolerance", 1e-12)
+    p.add("iteration_tolerance", 1e-12)
     p.add("initial_timestep", 0.05)
     p.add("num_initial_refinements", 0)
     p.add("maximum_iterations", 1000)
@@ -97,7 +97,7 @@ def default_fsinewtonsolver_parameters():
     rndata.add("newtonsolver",False)
     p.add(rndata)
 
-    #Time scheme
+    #Time schemes
     #This parameter refers to how the fluid domain mapping is
     #time discretized in the Navier Stokes equation
     p.add("fluid_domain_time_discretization","end-point") #Alternative is "mid-point"
@@ -111,7 +111,11 @@ def default_fsinewtonsolver_parameters():
     
     p.add("jacobian","manual") #or "manual"
     p.add("newtonitrmax",100)
+    
+    ##################################
+    #This parameter is only necessary for the problem class NewtonFSI
     p.add("newtonsoltol",1.0e-13)
+    ##################################
     p.add("bigblue",False)
     return p
 fsinewton_params = default_fsinewtonsolver_parameters().to_dict()

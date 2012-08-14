@@ -9,14 +9,17 @@ from cbc.swing.fsinewton.solver.solver_fsinewton import FSINewtonSolver
 from cbc.swing.parameters import read_parameters
 
 application_parameters = read_parameters()
+application_parameters["output_directory"] = "results_bloodvessel"
+application_parameters["global_storage"] = True
 application_parameters["solve_dual"] = False
 application_parameters["estimate_error"] = False
 application_parameters["uniform_timestep"] = True
-application_parameters["plot_solution"] = True
-application_parameters["FSINewtonSolver_parameters"]["optimization"]["max_reuse_jacobian"] = 60
+application_parameters["initial_timestep"] = 0.5
+application_parameters["plot_solution"] = False
+application_parameters["iteration_tolerance"] = 1.0e-6
+application_parameters["FSINewtonSolver_parameters"]["optimization"]["max_reuse_jacobian"] = 40
 application_parameters["FSINewtonSolver_parameters"]["optimization"]["simplify_jacobian"] = False
 application_parameters["FSINewtonSolver_parameters"]["newtonitrmax"] = 180
-application_parameters["FSINewtonSolver_parameters"]["newtonsoltol"] = 1.0e-6
 
 # Constants related to the geometry of the problem
 vessel_length  = 6.0
@@ -26,7 +29,7 @@ fineness = 1
 ny = int(vessel_height*10*fineness)
 nx = int(vessel_length *10*fineness)
 
-C = 10.0
+C = 0.05
 # Define boundaries
 #Exclude FSI Nodes
 influid =  "x[1] >  %g + DOLFIN_EPS && \
@@ -40,33 +43,6 @@ struc_left = "x[0] <= DOLFIN_EPS"
 struc_right = "x[0] >= %g - DOLFIN_EPS" %(vessel_length)
 
 meshbc = "on_boundary &&" + influid
-
-cpp_G_F =  """
-class G_F : public Expression
-{
-public:
-
-  G_F() : Expression(2), C(0), t(0) {}
-
-  void eval(Array<double>& values, const Array<double>& xx,
-            const ufc::cell& cell) const
-  {
-    const double X = xx[0];
-    const double Y = xx[1];
-
-    if (t < 1.0 ){
-        values[0] = C*(Y - 0.1)*(0.9 - Y)*sin(2.0*t/3.14);
-        values[1] = 0.0;
-    }
-    else {
-        values[0] = 1.0;
-        values[1] = 0.0;
-    }
-  }
-  double C;
-  double t;
-};
-"""
 
 #Time variable pressure on the left boundary
 cpp_P_F = """
@@ -82,13 +58,43 @@ public:
     const double x = xx[0];
 
     if (t < 5.0 ){
-        values[0] = 1.0;
+        values[0] = C;
     }
-    else if (t < 15.0){ 
-        values[0] = 1.0 - (t - 5.0)/11.0;
+    else if (t < 9.5){ 
+        values[0] = C - C*(10.0 - t)/10.0;
     }
     else {
-        values[0] = 1.0/11.0;
+        values[0] = C*0.5/10.0;
+          }
+  }
+
+  double C;
+  double t;
+
+};
+"""
+
+#Presure Wave
+cpp_P_Fwave = """
+class P_F : public Expression
+{
+public:
+
+  P_F() : Expression(), C(0), t(0) {}
+
+  void eval(Array<double>& values, const Array<double>& xx,
+            const ufc::cell& cell) const
+  {
+    const double x = xx[0];
+
+    if (x < 0.25*t - 0.2 ){
+        values[0] = 0;
+    }
+    else if (x < 0.25*t + 0.2){ 
+        values[0] = C*cos((x - 0.25*t)*3.141519*0.5*0.2);
+    }
+    else {
+        values[0] = 0;
           }
   }
 
@@ -127,37 +133,35 @@ class BothBoundary(SubDomain):
 class BloodVessel(FSI):
     def __init__(self):
         mesh = Rectangle(0.0, 0.0, vessel_length, vessel_height, nx, ny, "crossed")
-        self.G_F = Expression(cpp_G_F)
         self.P_F = Expression(cpp_P_F)
-        self.G_F.C = C
+        self.P_Fwave = Expression(cpp_P_Fwave)
         self.P_F.C = C
+        self.P_Fwave.C = C
         FSI.__init__(self,mesh,application_parameters)
         
     def update(self, t0, t1, dt):
         self.P_F.t = t1
+        self.P_Fwave.t = t1
 
     #--- Common ---
-    def initial_step(self):
-        return 0.5
-
     def end_time(self):
-        return 20.0
-
+        return 70.00
+    
     def __str__(self):
         return "Blood Vessel"
 
-#--- Material Parameters ---
+#--- Material Parameters---
     def fluid_density(self):
         return 1.0
 
     def fluid_viscosity(self):
-        return 0.2
+        return 0.002
     
     def structure_density(self):
-        return 20.0
+        return 4.0
 
     def structure_mu(self):
-        return 40.0
+        return 5.0
 
     def structure_lmbda(self):
         return 2.0
@@ -173,27 +177,22 @@ class BloodVessel(FSI):
         return (0.0, 0.0)
 
     def fluid_pressure_initial_condition(self):
-        return (0.0)
-
+       return (0.0)
+##
+##    def fluid_pressure_dirichlet_boundaries(self):
+##        return [inflow,outflow]
+##
+##    def fluid_pressure_dirichlet_values(self):
+##        return [self.P_F,0.0]
+    
     def fluid_pressure_dirichlet_boundaries(self):
-        return [inflow,outflow]
+        return ["GammaFSI"]
 
     def fluid_pressure_dirichlet_values(self):
-        return [self.P_F,0.0]
-    
+        return [self.P_Fwave]
+
     def fluid_donothing_boundaries(self):
         return [BothBoundary()]
-
-##    def fluid_velocity_neumann_boundaries(self):
-##        return FluidNeumann()
-##
-##    def fluid_velocity_neumann_values(self):
-##        return self.G_F
-##        
-##    def fluid_donothing_boundaries(self):
-##        return FluidDN()
-
-    #--- Structure problem BC---
 
     def structure(self):
         return Structure()
@@ -204,9 +203,9 @@ class BloodVessel(FSI):
     def structure_dirichlet_boundaries(self):
         return [struc_left,struc_right]
 
-    #--- Mesh problem BC---
-    def mesh_dirichlet_boundaries(self):
-        return [meshbc]
+##    #--- Mesh problem BC---
+##    def mesh_dirichlet_boundaries(self):
+##        return [meshbc]
     
 # Define and solve problem
 if __name__ == "__main__":

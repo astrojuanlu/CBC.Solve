@@ -614,4 +614,4 @@ class CG1MomentumBalanceSolver(CBCSolver):
 
     def solution(self):
         "Return current solution values"
-        return self.U.split(True)
+        return self.U.split(True) 

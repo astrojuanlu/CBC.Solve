@@ -16,6 +16,7 @@ application_parameters = read_parameters()
 test = True
 if test:
     application_parameters["output_directory"] = "results_channel_with_flap_test"
+    application_parameters["global_storage"] = True
     application_parameters["solve_primal"] = True
     application_parameters["solve_dual"] = False
     application_parameters["estimate_error"] = False
@@ -24,7 +25,7 @@ if test:
     application_parameters["max_num_refinements"] = 0
     application_parameters["initial_timestep"] = 0.02 / 8.0
     application_parameters["primal_solver"] = "Newton"
-    application_parameters["FSINewtonSolver_parameters"]["newtonsoltol"] = 1.0e-5
+    application_parameters["iteration_tolerance"] = 1.0e-6
 # Constants related to the geometry of the problem
 channel_length  = 4.0
 channel_height  = 1.0

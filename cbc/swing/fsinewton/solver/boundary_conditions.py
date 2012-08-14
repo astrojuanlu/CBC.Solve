@@ -45,7 +45,11 @@ class FSIBC(object):
         bcs = []
         try:
             for boundary,value in zip(boundaries,values):
-                bcs += [DirichletBC(space, value, boundary)]
+                if boundary == 'GammaFSI':
+                    from cbc.swing.fsiproblem import FSI_BOUND
+                    bcs += [DirichletBC(space, value, self.problem.fsiboundfunc,FSI_BOUND)]
+                else:
+                    bcs += [DirichletBC(space, value, boundary)]
             info("Created bc %s"%bcname)
         except:
             info("No Dirichlet bc created for %s"%bcname)

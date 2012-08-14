@@ -221,7 +221,7 @@ def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F,
 def J_BlockFFD_simplified(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q,
                           rho, mu,N_F, dxF,dsDN,ds_F,dFSI,g_F = None,F_F = None):
     """Fluid-Fluid Domain coupling"""
-    
+    info("Jacobian Simplified")
     #DT  
     J_FM =  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dotU)('+')*dFSI
     J_FM +=  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(grad(U), dot(inv(F(D_F)),\
