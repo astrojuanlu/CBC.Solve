@@ -34,7 +34,7 @@ class FSIBC(object):
 
     def create_bc(self,space,boundaries,values,bcname):
         #If Boundaries specified without values assume homogeneous 
-        if boundaries is not None and values != [] and values is None:
+        if boundaries is not None and (values == [] or values is None):
             dim = space.num_sub_spaces()
             #A Function Space returns dim 0 but really has dim 1.
             if dim == 0:
