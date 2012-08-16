@@ -112,7 +112,7 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
                           fluid_domain_time_discretization parameter values \
                           current value is %s"%solver_params["fluid_domain_time_discretization"])
     r_F = fluid_residual(U_Fdot,U_Fmid,U1_F,P1_F,v_F,q_F,mu_F,rho_F,D_F,N_F,dxF,dsDN,dsF,F_F,D_Fdot,G_F)
-
+    
     #Structure Residual
     r_S = struc_residual(D_Sdot,U_Sdot,D_Smid,U_Smid,c_S,v_S,mu_S,lmbda_S,rho_S,dxS,dsS,F_S)
 
@@ -195,7 +195,7 @@ def fluid_domain_residual(Ddot_F,D_F,c_F,mu_FD,lmbda_FD,dx_Flist,F_FD):
         if F_FD is not None and F_FD != []:
             info("Using fluid domain body force")
             R_FD += -inner(c_F,F_FD)*dx_F
-            forms.append(R_FD)
+        forms.append(R_FD)
     return sum(forms)
 
 def interface_residual(U_F,U_Fmid,P_Fmid,D_S,U_S,D_F,D_Fmid,L_U,L_D,v_F,c_S,
