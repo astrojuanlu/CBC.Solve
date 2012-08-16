@@ -334,7 +334,7 @@ class NewtonFSI():
                 return on_boundary and strucdomain.inside(x,on_boundary)
         self.extboundfunc = FacetFunction("uint",mesh)
         self.extboundfunc.set_all(0)
-        StructureBound().mark(self.extboundfunc,self.exteriorboundarynums["strucbound"])
+        StructureBound().mark(self.extboundfunc,self.exteriorboundarynums["strucbound"][0])
 
         #Generate fsi interface boundary
         self.fsibound = intb.InteriorBoundary(mesh)
@@ -359,17 +359,17 @@ class NewtonFSI():
         """If optional boundaries do not exist replace their measures with "None" """
         #Fluid Do nothing
         if self.fluid_donothing_boundaries() == []:
-            measures["donothingbound"] = None
+            measures["donothingbound"] = []
         else:
             for bound in self.fluid_donothing_boundaries(): 
                 bound.mark(self.extboundfunc,exteriorboundarynums["donothingbound"])
         
         #Fluid velocity Neumann
         if self.fluid_velocity_neumann_boundaries() == []:
-            measures["fluidneumannbound"] = None
+            measures["fluidneumannbound"] = []
         else:
             self.fluid_velocity_neumann_boundaries().mark(
-                self.extboundfunc,exteriorboundarynums["fluidneumannbound"])
+                self.extboundfunc,exteriorboundarynums["fluidneumannbound"][0])
         
 
     #Defualt parameters

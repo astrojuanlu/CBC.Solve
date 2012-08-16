@@ -11,6 +11,7 @@ from cbc.swing.operators import Sigma_F as _Sigma_F
 from cbc.swing.operators import Sigma_S as _Sigma_S
 from cbc.swing.operators import Sigma_M as _Sigma_M
 from cbc.swing.operators import F, J, I
+from residualforms import sum
 
 ##Throughout this module the following notation is used.
 
@@ -170,7 +171,7 @@ def J_BlockF(dotdU,dU,dP,U,dotD_F,v,dotv,q,D_F,rho,mu,N_F,dxFlist,dsDNlist,dsF,g
 
         #div U_F (incompressibility)
         J_FF +=  inner(q, div(J(D_F)*dot(inv(F(D_F)), dU)))*dxF
-        form.append(J_FF)
+        forms.append(J_FF)
 
     #Do nothing BC
     for dsDN in dsDNlist:
@@ -242,7 +243,7 @@ def J_BlockFD(dD_Fdot,dD_F,c_F,dotc_F,mu_FD,lmbda_FD,dx_Flist):
     for dx_F in dx_Flist:
         J_FD = inner(dotc_F, dD_Fdot)*dx_F + inner(sym(grad(c_F)), Sigma_FD)*dx_F
         forms.append(J_FD)
-    return sum(Forms)
+    return sum(forms)
 
 def J_FSI(dU_F,dU_Fmid,dP_Fmid,dD_F,dD_Fmid,dD_S,dU_S,dL_D,dL_U,U_Fmid,P_Fmid,D_Fmid,
           v_F,c_S,c_F,m_D,m_U,mu_F,N_F,dFSIlist):

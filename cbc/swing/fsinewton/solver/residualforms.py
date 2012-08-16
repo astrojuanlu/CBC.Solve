@@ -27,6 +27,13 @@ from cbc.swing.operators import F, J, I
 ##Test functions are related to their trial functions by the following letter substitution.
 ## u-> v , p-> q, l-> m , d -> c
 
+def sum(somelist):
+    res = somelist[0]
+    for elem in somelist[1:]:
+        res += elem
+    return res
+        
+    
 def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normals,solver_params):
     """"
     Build the residual forms for the full FSI problem
@@ -128,7 +135,7 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
 def fluid_residual(U_Fdot,U_F,U1_F,P_F,v_F,q_F,mu,rho,D_F,N_F,dx_Flist,ds_DNlist,ds_Flist,F_F,D_Fdot, G_F=None):
     #Fluid equation in the Domain
     forms = []
-    for ds_F in ds_Flist:
+    for dx_F in dx_Flist:
         Dt_U = rho*J(D_F)*(U_Fdot + dot(grad(U_F),dot(inv(F(D_F)),U_F - D_Fdot)))
             
         Sigma_F = PiolaTransform(_Sigma_F(U_F, P_F, D_F, mu), D_F)
@@ -164,7 +171,7 @@ def fluid_residual(U_Fdot,U_F,U1_F,P_F,v_F,q_F,mu,rho,D_F,N_F,dx_Flist,ds_DNlist
 def struc_residual(Ddot_S,Udot_S,D_S, U_S,c_S,v_S,mu_S,lmbda_S,rho_S,dx_Slist,ds_Slist,F_S):                  
     Sigma_S = _Sigma_S(D_S, mu_S, lmbda_S)
     forms = []
-    for dx_S in dxSlist:
+    for dx_S in dx_Slist:
         #Hyperelasticity equations St. Venant Kirchoff
         R_S = inner(c_S, rho_S*Udot_S)*dx_S + inner(grad(c_S), Sigma_S)*dx_S + inner(v_S, Ddot_S -U_S)*dx_S
         #Right hand side Structure (Body force)
@@ -189,7 +196,7 @@ def fluid_domain_residual(Ddot_F,D_F,c_F,mu_FD,lmbda_FD,dx_Flist,F_FD):
             info("Using fluid domain body force")
             R_FD += -inner(c_F,F_FD)*dx_F
             forms.append(R_FD)
-    return sum(Forms)
+    return sum(forms)
 
 def interface_residual(U_F,U_Fmid,P_Fmid,D_S,U_S,D_F,D_Fmid,L_U,L_D,v_F,c_S,
                        c_F,m_D,m_U,mu_F,N_F,dFSIlist,Exact_SigmaF,G_S):
@@ -218,5 +225,5 @@ def interface_residual(U_F,U_Fmid,P_Fmid,D_S,U_S,D_F,D_Fmid,L_U,L_D,v_F,c_S,
         if G_S is not None and G_S != []:
             info("Using additional fsi boundary traction term")
             R_FSI += inner(G_S('-'),c_S('-'))*dFSI
-        forms.append[R_FSI]
+        forms.append(R_FSI)
     return sum(forms)

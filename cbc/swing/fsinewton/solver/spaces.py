@@ -51,12 +51,6 @@ class FSISpaces(object):
                                "L_D":self.fsidofs["L_D"]}
 
         self.usefuldofs = []
-        #add the fsi dofs back to the fluid domain equations and make a list of all
-        #useful dofs
-##        print "FSi dofs VF"
-##        print len(self.fsidofs["V_F"])
-##        print
-##        exit()
         
         for space in ["U_F","P_F","D_F"]:
             self.restricteddofs[space] += self.fsidofs[space]
@@ -140,18 +134,12 @@ class FSISpaces(object):
         except RuntimeError:
             #Maybe the space just needs to be collapsed
             zero = Function(fspace.collapse())
-        FSI_BOUND = self.problem.interiorboundarynums["FSI_bound"]
-
-        BC = DirichletBC(fspace,zero,self.problem.fsiboundfunc,FSI_BOUND)
-
-##        #Plot the BC
-##        newfunc = Function(fspace.collapse())
-##        BC.apply(newfunc.vector())
-##        plot(newfunc,mode = "displacement")
-##        interactive()
-##        exit()
+        dofs = []
+        for bound in self.problem.interiorboundarynums["FSI_bound"]: 
+            BC = DirichletBC(fspace,zero,self.problem.fsiboundfunc,bound)
+            dofs += BC.get_boundary_values().keys()
         
-        return BC.get_boundary_values().keys()
+        return dofs
 
 class SubSpaceLocator(object):
     """Give the subspace of a given DOF in a mixed space"""
