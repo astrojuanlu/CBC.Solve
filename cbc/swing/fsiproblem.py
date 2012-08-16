@@ -321,21 +321,17 @@ class NewtonFSI():
                 return not strucdomain.inside(x,on_boundary)
         self.fluiddomain = FluidDomain()
 
-        #Generate External boundaries
+        #Default Boundary Numberings
+        self.domainnums = {"fluid":[0],"structure":[1]}
+        self.interiorboundarynums = {"FSI_bound":[2]}
+        self.exteriorboundarynums = {"strucbound":[1],
+                                     "donothingbound":[2],
+                                     "fluidneumannbound":[3]}
+        
+        #Generate structure neumann boundary
         class StructureBound(SubDomain):
             def inside(self,x, on_boundary):
                 return on_boundary and strucdomain.inside(x,on_boundary)
-
-        #Default Boundary Numberings
-        self.domainnums = {"fluid":0,"structure":1}
-        
-        self.interiorboundarynums = {"FSI_bound":2}
-
-        self.exteriorboundarynums = {"strucbound":1,
-                                     "donothingbound":2,
-                                     "fluidneumannbound":3}
-        
-        #Generate structure neumann boundary
         self.extboundfunc = FacetFunction("uint",mesh)
         self.extboundfunc.set_all(0)
         StructureBound().mark(self.extboundfunc,self.exteriorboundarynums["strucbound"])
@@ -346,12 +342,19 @@ class NewtonFSI():
         self.fsiboundfunc = self.fsibound.boundaries[0]
         
         #dictionary of measures
-        self.measures = {k:dx(v) for k,v in self.domainnums.iteritems()}
-        self.measures.update({k:dS(v) for k,v in self.interiorboundarynums.iteritems()})
-        self.measures.update({k:ds(v) for k,v in self.exteriorboundarynums.iteritems()})
-        
+        self.measures = self.generate_measures(self.domainnums,self.interiorboundarynums,self.exteriorboundarynums)        
         self.filter_optional_boundaries(self.exteriorboundarynums,self.measures)
-        
+
+    def generate_measures(self,domainnums,interiorboundarynums,exteriorboundarynums):
+        """Create a dictionary which contains region name as key and a list of measures as value"""       
+        measures = self.__measuredic(dx,domainnums)
+        measures.update(self.__measuredic(dS,interiorboundarynums))
+        measures.update(self.__measuredic(ds,exteriorboundarynums))          
+        return measures
+    
+    def __measuredic(self,measure,domain):
+         return {name:[measure(i) for i in numbers] for name,numbers in domain.iteritems()}
+
     def filter_optional_boundaries(self,exteriorboundarynums,measures):
         """If optional boundaries do not exist replace their measures with "None" """
         #Fluid Do nothing
@@ -448,6 +451,28 @@ class NewtonFSI():
         return []
     def fluid_boundary_traction(self):
         return []
+
+class MeshLoadFSI(NewtonFSI):
+    """
+    This class should be used for FSI problems whose boundaries are already
+    defined over a custom made mesh which is loaded into dolfin. Currently only
+    the Newton solver is possible, later the whole addaptive framework will be
+    included.
+    Optional boundaries should be marked with "None" if they are not present in the mesh
+    """
+    def __init__(self,mesh,meshdomains):
+        self.singlemesh = mesh
+        
+        #Boundary and Domain Numberings
+        self.domainnums = {"fluid":meshdomains["fluid"],
+                           "structure":meshdomains["structure"]}
+        self.interiorboundarynums = {"FSI_bound":meshdomains["FSI_bound"]}
+        self.exteriorboundarynums = {"strucbound":meshdomains["strucbound"],
+                                     "donothingbound":meshdomains["donothingbound"],
+                                     "fluidneumannbound":meshdomains["fluidneumannbound"]}
+        #Measures
+        self.measures = self.generate_measures(self.domainnums,self.interiorboundarynums,
+                                               self.exteriorboundarynums)
 
 class FSI(FixedPointFSI,NewtonFSI):
     "Base class for all FSI problems"

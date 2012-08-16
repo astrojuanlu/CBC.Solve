@@ -104,7 +104,7 @@ class BothBoundary(SubDomain):
     def inside (self,x,on_boundary):
         return FluidDN().inside(x,on_boundary) or FluidNeumann().inside(x,on_boundary)
 
-class BloodVessel(FSI):
+class BloodVessel2D(FSI):
     def __init__(self):
         mesh = Rectangle(0.0, 0.0, vessel_length, vessel_height, nx, ny, "crossed")
         self.P_Fwave = Expression(cpp_P_Fwave)
@@ -175,6 +175,6 @@ class BloodVessel(FSI):
     
 # Define and solve problem
 if __name__ == "__main__":
-    problem = BloodVessel()
+    problem = BloodVessel2D()
     problem.solve(application_parameters)
     interactive()

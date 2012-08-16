@@ -87,7 +87,7 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
     mu_FD = matparams["mu_M"]
     lmbda_FD = matparams["lmbda_M"]
 
-    #Unpack Measures
+    #Unpack lists of Measures
     dxF = measures["fluid"]
     dxS = measures["structure"]
     dsF = measures["fluidneumannbound"]
@@ -137,14 +137,10 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
                   D_Fmid,v_F,c_S,c_F,m_D,m_U,mu_F,N_F,dFSI)
 
     #Fluid-Fluid Domain Block
-    if params["optimization"]["simplify_jacobian"] == True:
-        #Effect of D_F on U_F is restricted to the interface since
-        #nodes far away from the interface are almost uneffected by D_F.
-        j_FFD = J_BlockFFD_simplified(U_Fmid, U_Fdot,P1_F, D_Fstar, ID_Fstar, D_Fdot, ID_Fdot,
-                                      v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsDN,dsF,dFSI,G_F,F_F)
-    else:
-        j_FFD = J_BlockFFD(U_Fmid, U_Fdot,P1_F, D_Fstar, ID_Fstar, D_Fdot, ID_Fdot,
-                           v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsDN,dsF,G_F,F_F)
+    if params["optimization"]["simplify_jacobian"] == True: simplify = dFSI
+    else:simplify = None
+    j_FFD = J_BlockFFD(U_Fmid, U_Fdot,P1_F, D_Fstar, ID_Fstar, D_Fdot, ID_Fdot,
+                           v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsDN,dsF, simplify, G_F,F_F)
 
     j = j_F + j_S + j_FD + j_FFD + j_FSI
 
@@ -158,126 +154,110 @@ def dD_FSigmaF(D_F,dD_F,U_F,P_F,mu_F):
     ret += - J(D_F)*dot(dot(Sigma_F(U_F, P_F, D_F, mu_F), inv(F(D_F)).T), dot(grad(dD_F).T, inv(F(D_F)).T))
     return ret
 
-def J_BlockF(dotdU,dU,dP,U,dotD_F,v,dotv,q,D_F,rho,mu,N_F,dxF,dsDN,dsF,g_F=None):
+def J_BlockF(dotdU,dU,dP,U,dotD_F,v,dotv,q,D_F,rho,mu,N_F,dxFlist,dsDNlist,dsF,g_F=None):
     """Fluid Diagonal Block, Fluid Domain """
-    
-    #DT (without ALE term)
-    J_FF =  inner(dotv, rho*J(D_F)*dotdU)*dxF                              
-    J_FF +=  inner(v, rho*J(D_F)*dot(dot(grad(dU), inv(F(D_F))), U - dotD_F))*dxF  
-    J_FF +=  inner(v, rho*J(D_F)*dot(grad(U), dot(inv(F(D_F)), dU)))*dxF
+    forms = []
+    for dxF in dxFlist:
+        #DT (without ALE term)
+        J_FF =  inner(dotv, rho*J(D_F)*dotdU)*dxF                              
+        J_FF +=  inner(v, rho*J(D_F)*dot(dot(grad(dU), inv(F(D_F))), U - dotD_F))*dxF  
+        J_FF +=  inner(v, rho*J(D_F)*dot(grad(U), dot(inv(F(D_F)), dU)))*dxF
 
-    #div Sigma_F
-    J_FF +=  inner(grad(v), J(D_F)*mu*dot(grad(dU), dot(inv(F(D_F)), inv(F(D_F)).T)))*dxF     
-    J_FF +=  inner(grad(v), J(D_F)*mu*dot(inv(F(D_F)).T, dot(grad(dU).T, inv(F(D_F)).T)))*dxF 
-    J_FF += -inner(grad(v), J(D_F)*dP*inv(F(D_F)).T)*dxF                                       
+        #div Sigma_F
+        J_FF +=  inner(grad(v), J(D_F)*mu*dot(grad(dU), dot(inv(F(D_F)), inv(F(D_F)).T)))*dxF     
+        J_FF +=  inner(grad(v), J(D_F)*mu*dot(inv(F(D_F)).T, dot(grad(dU).T, inv(F(D_F)).T)))*dxF 
+        J_FF += -inner(grad(v), J(D_F)*dP*inv(F(D_F)).T)*dxF                                       
 
-    #div U_F (incompressibility)
-    J_FF +=  inner(q, div(J(D_F)*dot(inv(F(D_F)), dU)))*dxF
+        #div U_F (incompressibility)
+        J_FF +=  inner(q, div(J(D_F)*dot(inv(F(D_F)), dU)))*dxF
+        form.append(J_FF)
 
-    #Do nothing BC if in use.
-    if dsDN is not None:
-        J_FF  += -inner(v, dot(J(D_F)*mu*dot(inv(F(D_F)).T, dot(grad(dU).T, inv(F(D_F)).T)), N_F))*dsDN
-        J_FF  +=  inner(v, J(D_F)*dP*dot(I, dot(inv(F(D_F)).T, N_F)))*dsDN
-
-    return J_FF
+    #Do nothing BC
+    for dsDN in dsDNlist:
+        DN_FF =  -inner(v, dot(J(D_F)*mu*dot(inv(F(D_F)).T, dot(grad(dU).T, inv(F(D_F)).T)), N_F))*dsDN
+        DN_FF += inner(v, J(D_F)*dP*dot(I, dot(inv(F(D_F)).T, N_F)))*dsDN
+        forms.append(DN_FF)
+    return sum(forms)
 
 def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F,
-               dxF,dsDN,ds_F,g_F = None,F_F = None):
+               dxFlist,dsDNlist,dFSIlist,ds_F,g_F = None,F_F = None):
     """Fluid-Fluid Domain coupling"""
-    
-    #DT  
-    J_FM =  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dotU)*dxF
-    J_FM +=  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(grad(U), dot(inv(F(D_F)), U - dotD_F)))*dxF
-    J_FM += -inner(v_F,rho*J(D_F)*dot((dot(grad(U), dot(inv(F(D_F)), \
-             dot(grad(dD_F), inv(F(D_F)))))), U - dotD_F ))*dxF
-    J_FM += -inner(v_F, rho*J(D_F)*dot(grad(U), dot(inv(F(D_F)),dotdD_F)))*dxF
+    forms = []
+    for dxF in dxFlist:
+        #If a fluid body force has been specified, it will end up here. 
+        if F_F is not None and F_F != []:
+            B_F = -inner(v_F,J(D_F)*tr(dot(grad(dD_F),inv(F(D_F))))*F_F)*dxF
+            forms.append(B_F)
+        
+    #Simplify the remaining terms if an FSI interface measure provided    
+    if dFSIlist is not None:
+        dxFlist = dFSIlist
+        
+    for dxF in dxFlist:
+        #DT  
+        J_FM =  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dotU)*dxF
+        J_FM +=  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(grad(U), dot(inv(F(D_F)), U - dotD_F)))*dxF
+        J_FM += -inner(v_F,rho*J(D_F)*dot((dot(grad(U), dot(inv(F(D_F)), \
+                 dot(grad(dD_F), inv(F(D_F)))))), U - dotD_F ))*dxF
+        J_FM += -inner(v_F, rho*J(D_F)*dot(grad(U), dot(inv(F(D_F)),dotdD_F)))*dxF
 
-    #SigmaF
-    J_FM += inner(grad(v_F),dD_FSigmaF(D_F,dD_F,U,P,mu))*dxF
+        #SigmaF
+        J_FM += inner(grad(v_F),dD_FSigmaF(D_F,dD_F,U,P,mu))*dxF
 
-    #Div U_F (incompressibility)
-    J_FM +=  inner(q, div(J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(inv(F(D_F)), U)))*dxF
-    J_FM += -inner(q, div(J(D_F)*dot(dot(inv(F(D_F)), grad(dD_F)), dot(inv(F(D_F)), U))))*dxF
+        #Div U_F (incompressibility)
+        J_FM +=  inner(q, div(J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(inv(F(D_F)), U)))*dxF
+        J_FM += -inner(q, div(J(D_F)*dot(dot(inv(F(D_F)), grad(dD_F)), dot(inv(F(D_F)), U))))*dxF
+        forms.append(J_FM)
 
     ##Add the terms for the Do nothing boundary if necessary
-    if dsDN is not None:
-         #Derivative of do nothing tensor with J factored out
+    for dsDN in dsDNlist:
+        #Derivative of do nothing tensor with J factored out
         dSigma  =  tr(grad(dD_F)*inv(F(D_F)))*(mu*inv(F(D_F)).T*grad(U).T - P*I)*inv(F(D_F)).T
         dSigma += -mu*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T*grad(U).T*inv(F(D_F)).T
         dSigma += -(mu*inv(F(D_F)).T*grad(U).T - P*I)*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T
+        #J added
+        dSigma = J(D_F)*dSigma
+        DN_FM += -inner(v_F,dot(dSigma,N_F))*dsDN
+        forms.append(DN_FM)
+    return sum(forms)
 
-        #Add the J                           
-        dSigma = J(D_F)*dSigma        
-        J_FM += -inner(v_F,dot(dSigma,N_F))*dsDN
-
-    #If a fluid body force has been specified, it will end up here. 
-    if F_F is not None and F_F != []:
-        J_FM += -inner(v_F,J(D_F)*tr(dot(grad(dD_F),inv(F(D_F))))*F_F)*dxF
-    return J_FM
-
-def J_BlockFFD_simplified(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q,
-                          rho, mu,N_F, dxF,dsDN,ds_F,dFSI,g_F = None,F_F = None):
-    """Fluid-Fluid Domain coupling"""
-    info("Jacobian Simplified")
-    #DT  
-    J_FM =  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dotU)('+')*dFSI
-    J_FM +=  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(grad(U), dot(inv(F(D_F)),\
-                                                                                     U - dotD_F)))('+')*dFSI
-    J_FM += -inner(v_F,rho*J(D_F)*dot((dot(grad(U), dot(inv(F(D_F)), \
-             dot(grad(dD_F), inv(F(D_F)))))), U - dotD_F ))('+')*dFSI
-    J_FM += -inner(v_F, rho*J(D_F)*dot(grad(U), dot(inv(F(D_F)),dotdD_F)))('+')*dFSI
-
-    #SigmaF
-    J_FM += inner(grad(v_F),dD_FSigmaF(D_F,dD_F,U,P,mu))('+')*dFSI
-
-    #Div U_F (incompressibility)
-    J_FM +=  inner(q, div(J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(inv(F(D_F)), U)))('+')*dFSI
-    J_FM += -inner(q, div(J(D_F)*dot(dot(inv(F(D_F)), grad(dD_F)), dot(inv(F(D_F)), U))))('+')*dFSI
-    ##Add the terms for the Do nothing boundary if necessary
-    if dsDN is not None:
-         #Derivative of do nothing tensor with J factored out
-        dSigma  =  tr(grad(dD_F)*inv(F(D_F)))*(mu*inv(F(D_F)).T*grad(U).T - P*I)*inv(F(D_F)).T
-        dSigma += -mu*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T*grad(U).T*inv(F(D_F)).T
-        dSigma += -(mu*inv(F(D_F)).T*grad(U).T - P*I)*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T
-
-        #Add the J                           
-        dSigma = J(D_F)*dSigma        
-        J_FM += -inner(v_F,dot(dSigma,N_F))*dsDN
-
-    #If a fluid body force has been specified, it will end up here. 
-    if F_F is not None and F_F != []:
-        J_FM += -inner(v_F,J(D_F)*tr(dot(grad(dD_F),inv(F(D_F))))*F_F)*dxF
-    return J_FM
-
-def J_BlockS(dotdD_S, dotdU_S, dD_S, dU_S, D_S, U_S, c_S,dotc_S, v_S, dotv_S, mu_S, lmbda_S, rho_S, dxS): 
+def J_BlockS(dotdD_S, dotdU_S, dD_S, dU_S, D_S, U_S, c_S,dotc_S, v_S, dotv_S, mu_S, lmbda_S, rho_S, dxSlist): 
     "Structure diagonal block"
     F_S = grad(D_S) + I                 #I + grad U_s
     E_S = 0.5*(F_S.T*F_S - I)           #Es in the book
     dE_S = 0.5*(grad(dD_S).T*F_S + F_S.T*grad(dD_S))#Derivative of Es wrt to US in the book
     dUsSigma_S = grad(dD_S)*(2*mu_S*E_S + lmbda_S*tr(E_S)*I) + F_S*(2*mu_S*dE_S + lmbda_S*tr(dE_S)*I)
 
-    J_S = inner(dotc_S, rho_S*dotdU_S)*dxS + inner(grad(c_S), dUsSigma_S)*dxS \
-           + inner(dotv_S, dotdD_S - dU_S)*dxS   
-    return J_S
+    forms = []
+    for dxS in dxSlist:
+        J_S = inner(dotc_S, rho_S*dotdU_S)*dxS + inner(grad(c_S), dUsSigma_S)*dxS \
+               + inner(dotv_S, dotdD_S - dU_S)*dxS
+        forms.append(J_S)
+    return sum(forms)
 
-def J_BlockFD(dD_Fdot,dD_F,c_F,dotc_F,mu_FD,lmbda_FD,dx_F):
+def J_BlockFD(dD_Fdot,dD_F,c_F,dotc_F,mu_FD,lmbda_FD,dx_Flist):
     """Fluid Domain diagonal block"""
+    forms = []
     Sigma_FD = _Sigma_M(dD_F, mu_FD, lmbda_FD)
-    J_FD = inner(dotc_F, dD_Fdot)*dx_F + inner(sym(grad(c_F)), Sigma_FD)*dx_F
-    return J_FD
+    for dx_F in dx_Flist:
+        J_FD = inner(dotc_F, dD_Fdot)*dx_F + inner(sym(grad(c_F)), Sigma_FD)*dx_F
+        forms.append(J_FD)
+    return sum(Forms)
 
 def J_FSI(dU_F,dU_Fmid,dP_Fmid,dD_F,dD_Fmid,dD_S,dU_S,dL_D,dL_U,U_Fmid,P_Fmid,D_Fmid,
-          v_F,c_S,c_F,m_D,m_U,mu_F,N_F,dFSI):
+          v_F,c_S,c_F,m_D,m_U,mu_F,N_F,dFSIlist):
     """Derivative of the Interface Residual"""
+    forms = []
+    for dFSI in dFSIlist:
+        J_FSI = inner(m_D, dD_F - dD_S)('+')*dFSI 
+        J_FSI += inner(c_F, dL_D)('+')*dFSI #Lagrange Multiplier
+        
+        J_FSI += inner(m_U,dU_F - dU_S)('+')*dFSI
+        J_FSI += inner(v_F,dL_U)('+')*dFSI #Lagrange Multiplier
 
-    J_FSI = inner(m_D, dD_F - dD_S)('+')*dFSI 
-    J_FSI += inner(c_F, dL_D)('+')*dFSI #Lagrange Multiplier
-    
-    J_FSI += inner(m_U,dU_F - dU_S)('+')*dFSI
-    J_FSI += inner(v_F,dL_U)('+')*dFSI #Lagrange Multiplier
-
-    Sigma_F = PiolaTransform(_Sigma_F(dU_Fmid, dP_Fmid, D_Fmid, mu_F), D_Fmid)
-    J_FSI += -(inner(c_S('-'),dot(Sigma_F('+'),N_F('-'))))*dFSI
-    
-    J_FSI += -inner(c_S('-'),dot(dD_FSigmaF(D_Fmid,dD_Fmid,U_Fmid,P_Fmid,mu_F)('+'),N_F('-')))*dFSI
-    return J_FSI
+        Sigma_F = PiolaTransform(_Sigma_F(dU_Fmid, dP_Fmid, D_Fmid, mu_F), D_Fmid)
+        J_FSI += -(inner(c_S('-'),dot(Sigma_F('+'),N_F('-'))))*dFSI
+        
+        J_FSI += -inner(c_S('-'),dot(dD_FSigmaF(D_Fmid,dD_Fmid,U_Fmid,P_Fmid,mu_F)('+'),N_F('-')))*dFSI
+        forms.append(J_FSI)
+    return sum(forms)
