@@ -79,7 +79,6 @@ public:
 };
 """
 
-
 # Define structure subdomain
 class Structure(SubDomain):
     def inside(self, x, on_boundary):
@@ -139,10 +138,10 @@ class BloodVessel(FSI):
         return 2.0
 
     def mesh_mu(self):
-        return 100.8461
+        return 100.0
 
     def mesh_lmbda(self):
-        return 100.76
+        return 100.0
 
     #--- Fluid problem BC---
     def fluid_velocity_initial_condition(self):

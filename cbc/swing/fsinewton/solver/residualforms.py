@@ -45,8 +45,6 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
               - mu_F,rho_F,mu_S,lmbda_S,rho_S
 
     measures  - Dictionary of measures
-              - dxF,dxS,dxM,dsF,dsS,dFSI
-               (dx = interior, ds = exterior boundary, dFSI = FSI interface)
 
     forces - Dictionary of body and boundary forces
            - F_F,F_S,F_M,G_S,g_F
@@ -75,14 +73,12 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
     lmbda_FD = matparams["lmbda_M"]
 
     #Unpack Measures
-    dxF = measures["dxF"]
-    dxS = measures["dxS"]
-    dxM = measures["dxM"]
-    dsF = measures["dsF"]
-    dsS = measures["dsS"]
-    #dsM = measures["dsM"] (not in use at the moment)
-    dFSI = measures["dFSI"]
-    dsDN = measures["dsDN"] #do nothing fluid boundary
+    dxF = measures["fluid"]
+    dxS = measures["structure"]
+    dsF = measures["fluidneumannbound"]
+    dsS = measures["strucbound"]
+    dFSI = measures["FSI_bound"]
+    dsDN = measures["donothingbound"] #do nothing fluid boundary
 
     #Unpack forces
     F_F = forces["F_F"]
@@ -114,7 +110,7 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
     r_S = struc_residual(D_Sdot,U_Sdot,D_Smid,U_Smid,c_S,v_S,mu_S,lmbda_S,rho_S,dxS,dsS,F_S)
 
     #Fluid Domain Residual
-    r_FD = fluid_domain_residual(D_Fdot,D_Fmid,c_F,mu_FD,lmbda_FD,dxM,F_FD)
+    r_FD = fluid_domain_residual(D_Fdot,D_Fmid,c_F,mu_FD,lmbda_FD,dxF,F_FD)
 
     #Interface residual
     r_FSI = interface_residual(U1_F,U_Fmid,P_Fmid,D1_S,U1_S,D1_F,D_Fmid,L1_U,L1_D,v_F,c_S,

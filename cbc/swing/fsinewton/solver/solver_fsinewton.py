@@ -236,13 +236,7 @@ class FSINewtonSolver(ccom.CBCSolver):
                    "N_S":FacetNormal(self.problem.strucmesh)}
         
         #Measures dictionary
-        measures = {"dxF":self.problem.dxF,\
-                    "dxM":self.problem.dxF,\
-                    "dxS":self.problem.dxS,\
-                    "dsF":self.problem.dsF,\
-                    "dsS":self.problem.dsS,\
-                    "dFSI":self.problem.dFSI,\
-                    "dsDN":self.problem.dsDN}
+        measures = self.problem.measures
 
         #Forces dictionary
         forces = {"F_F":self.F_F,

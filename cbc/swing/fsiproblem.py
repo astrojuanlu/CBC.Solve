@@ -298,28 +298,23 @@ def _map_to_facet(facet_index, Omega, Omega_X, vertex_map):
 
     return int(list(common_facets)[0])
 
-#Boundary Numberings for NewtonFSI
-FSI_BOUND = 2
-STRUCBOUND = 1
-DONOTHINGBOUND = 2
-FLUIDNEUMANNBOUND = 3
 class NewtonFSI():
     """Basic problem class for Newton's method FSI"""
     def __init__(self,mesh):
-        #singlemesh choosen since mesh is used by class FixedPointFSI
+        """Generate boundaries, domains, meshes, and measures"""
+        #name singlemesh choosen since mesh is used by class FixedPointFSI
         self.singlemesh = mesh
         strucdomain = self.structure()
 
-        #Mesh Function
+        #mark structure with mesh function
         self.cellfunc = MeshFunction("uint", mesh, mesh.topology().dim())
         self.cellfunc.set_all(0)
         strucdomain.mark(self.cellfunc,1)
 
-        #Generate exterior boundaries 
-        class StructureBound(SubDomain):
-            def inside(self,x, on_boundary):
-                return on_boundary and strucdomain.inside(x,on_boundary)
-        
+        #Generate submeshs for the structure and fluid
+        self.strucmesh = SubMesh(mesh,self.cellfunc,1)
+        self.fluidmesh = SubMesh(mesh,self.cellfunc,0)      
+
         #Generate fluid Domain
         class FluidDomain(SubDomain):
             def inside(self,x,on_boundary):
@@ -327,45 +322,52 @@ class NewtonFSI():
         self.fluiddomain = FluidDomain()
 
         #Generate External boundaries
+        class StructureBound(SubDomain):
+            def inside(self,x, on_boundary):
+                return on_boundary and strucdomain.inside(x,on_boundary)
+
+        #Default Boundary Numberings
+        self.domainnums = {"fluid":0,"structure":1}
+        
+        self.interiorboundarynums = {"FSI_bound":2}
+
+        self.exteriorboundarynums = {"strucbound":1,
+                                     "donothingbound":2,
+                                     "fluidneumannbound":3}
+        
+        #Generate structure neumann boundary
         self.extboundfunc = FacetFunction("uint",mesh)
         self.extboundfunc.set_all(0)
-        StructureBound().mark(self.extboundfunc,STRUCBOUND)
+        StructureBound().mark(self.extboundfunc,self.exteriorboundarynums["strucbound"])
 
-        #Fluid Do nothing
-        if self.fluid_donothing_boundaries() == []:
-            self.dsDN = None
-        else:
-            for bound in self.fluid_donothing_boundaries(): 
-                bound.mark(self.extboundfunc,DONOTHINGBOUND)
-            self.dsDN = ds(DONOTHINGBOUND)
-        
-        #Fluid velocity Neumann
-        if self.fluid_velocity_neumann_boundaries() != []:
-            self.fluid_velocity_neumann_boundaries().mark(self.extboundfunc,FLUIDNEUMANNBOUND)
-            self.dsF = ds(FLUIDNEUMANNBOUND)
-        else:
-            self.dsF = None
-            
-        #Generate submeshs for the structure and fluid
-        self.strucmesh = SubMesh(mesh,self.cellfunc,1)
-        self.fluidmesh = SubMesh(mesh,self.cellfunc,0)
-
-##        plot(mesh,title = "Whole mesh")
-##        plot(self.strucmesh,title = "Structure mesh")
-##        plot(self.fluidmesh,title = "Fluid mesh")
-##        interactive()        
-        
-        #Generate interior boundary
+        #Generate fsi interface boundary
         self.fsibound = intb.InteriorBoundary(mesh)
         self.fsibound.create_boundary(self.strucmesh)
         self.fsiboundfunc = self.fsibound.boundaries[0]
-
-        #Generate Nonfluidboundary measures
-        self.dxS = dx(1)          #Structure
-        self.dxF = dx(0)          #Fluid
-        self.dFSI = dS(FSI_BOUND) #FSI Boundary
-        self.dsS = ds(0)          #Structure outer boundary
-        self.dxlist = [self.dxF,self.dxF,self.dFSI,self.dxS,self.dxS,self.dxF,self.dFSI]
+        
+        #dictionary of measures
+        self.measures = {k:dx(v) for k,v in self.domainnums.iteritems()}
+        self.measures.update({k:dS(v) for k,v in self.interiorboundarynums.iteritems()})
+        self.measures.update({k:ds(v) for k,v in self.exteriorboundarynums.iteritems()})
+        
+        self.filter_optional_boundaries(self.exteriorboundarynums,self.measures)
+        
+    def filter_optional_boundaries(self,exteriorboundarynums,measures):
+        """If optional boundaries do not exist replace their measures with "None" """
+        #Fluid Do nothing
+        if self.fluid_donothing_boundaries() == []:
+            measures["donothingbound"] = None
+        else:
+            for bound in self.fluid_donothing_boundaries(): 
+                bound.mark(self.extboundfunc,exteriorboundarynums["donothingbound"])
+        
+        #Fluid velocity Neumann
+        if self.fluid_velocity_neumann_boundaries() == []:
+            measures["fluidneumannbound"] = None
+        else:
+            self.fluid_velocity_neumann_boundaries().mark(
+                self.extboundfunc,exteriorboundarynums["fluidneumannbound"])
+        
 
     #Defualt parameters
     def fluid_density(self):
@@ -427,7 +429,7 @@ class NewtonFSI():
     def mesh_dirichlet_values(self):
         return []
     
-    #Some wierd parameter
+    #Some wierd parameter not used in NewtonFSI
     def mesh_alpha(self):
         return 1.0
     

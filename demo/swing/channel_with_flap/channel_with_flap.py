@@ -37,14 +37,12 @@ structure_right = 1.8
 structure_top   = 0.6
 
 # Define boundaries
-inflow = "on_boundary && near(x[0],0.0)"
-outflow = "on_boundary && near(x[0],%g)"%channel_length
-##inflow  = "x[0] < DOLFIN_EPS && \
-##           x[1] > DOLFIN_EPS && \
-##           x[1] < %g - DOLFIN_EPS" % channel_height
-##outflow = "x[0] > %g - DOLFIN_EPS && \
-##           x[1] > DOLFIN_EPS && \
-##           x[1] < %g - DOLFIN_EPS" % (channel_length, channel_height)
+inflow  = "x[0] < DOLFIN_EPS && \
+           x[1] > DOLFIN_EPS && \
+           x[1] < %g - DOLFIN_EPS" % channel_height
+outflow = "x[0] > %g - DOLFIN_EPS && \
+           x[1] > DOLFIN_EPS && \
+           x[1] < %g - DOLFIN_EPS" % (channel_length, channel_height)
 fixed = "x[1] < DOLFIN_EPS && x[0] > %g - DOLFIN_EPS && x[0] < %g + DOLFIN_EPS" % (structure_left, structure_right)
 
 if application_parameters["primal_solver"] == "fixpoint":

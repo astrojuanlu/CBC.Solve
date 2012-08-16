@@ -140,9 +140,8 @@ class FSISpaces(object):
         except RuntimeError:
             #Maybe the space just needs to be collapsed
             zero = Function(fspace.collapse())
-##            import numpy as np
-##            zero.vector()[:] = np.ones(len(zero.vector().array()))
-        from cbc.swing.fsiproblem import FSI_BOUND
+        FSI_BOUND = self.problem.interiorboundarynums["FSI_bound"]
+
         BC = DirichletBC(fspace,zero,self.problem.fsiboundfunc,FSI_BOUND)
 
 ##        #Plot the BC

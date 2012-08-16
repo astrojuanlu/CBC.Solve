@@ -58,7 +58,6 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
               - mu_F,rho_F,mu_S,lmbda_S,rho_S,mu_FD,lmbbda_M
 
     measures  - Dictionary of measures
-              - dxF,dxS,dxM,dsF,dsS,dFSI
                (dx = interior, ds = exterior boundary, dFSI = FSI interface)
 
     normals - Dictionary of outer normals
@@ -89,14 +88,12 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
     lmbda_FD = matparams["lmbda_M"]
 
     #Unpack Measures
-    dxF = measures["dxF"]
-    dxS = measures["dxS"]
-    dxM = measures["dxM"]
-    dsF = measures["dsF"]
-    dsS = measures["dsS"]
-    #dsM = measures["dsM"] (not in use at the moment)
-    dFSI = measures["dFSI"]
-    dsDN = measures["dsDN"] #do nothing fluid boundary
+    dxF = measures["fluid"]
+    dxS = measures["structure"]
+    dsF = measures["fluidneumannbound"]
+    dsS = measures["strucbound"]
+    dFSI = measures["FSI_bound"]
+    dsDN = measures["donothingbound"] #do nothing fluid boundary
 
     #Unpack Normals
     N_F = normals["N_F"]
@@ -133,7 +130,7 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
     j_S = J_BlockS(ID_Sdot,IU_Sdot,ID_Smid,IU_Smid,D_Smid,U_Smid,c_S,dotc_S,
                    v_S,dotv_S,mu_S,lmbda_S,rho_S,dxS)
     
-    j_FD = J_BlockFD(ID_Fdot,ID_Fmid,c_F,c_F,mu_FD,lmbda_FD,dxM)
+    j_FD = J_BlockFD(ID_Fdot,ID_Fmid,c_F,c_F,mu_FD,lmbda_FD,dxF)
     
     #Interface Block
     j_FSI = J_FSI(IU_F,IU_Fmid,IP_Fmid,ID_F,ID_Fmid,ID_S,IU_S,IL_D,IL_U,U_Fmid,P_Fmid,
