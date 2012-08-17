@@ -22,11 +22,13 @@ application_parameters["iteration_tolerance"] = 1.0e-6
 application_parameters["FSINewtonSolver_parameters"]["optimization"]["max_reuse_jacobian"] = 40
 application_parameters["FSINewtonSolver_parameters"]["optimization"]["simplify_jacobian"] = False
 application_parameters["FSINewtonSolver_parameters"]["newtonitrmax"] = 180
+application_parameters["FSINewtonSolver_parameters"]["plot"] = True
 #Fixpoint parameters
 application_parameters["fluid_solver"] = "taylor-hood"
 
 #Presure Wave
 from demo.swing.bloodvessel2d.bloodvessel2d import cpp_P_Fwave
+C = 1.0
 
 #Cell domains
 FLUIDDOMAIN = 0
@@ -40,7 +42,7 @@ LEFTINFLOW = 4
 LEFTSTRUC = 5
 RIGHTSTRUC = 6
 
-meshdomains = {"fluid":[FLUIDOMAIN],
+meshdomains = {"fluid":[FLUIDDOMAIN],
                "structure":[STRUCTUREDOMAIN],
                "FSI_bound":[FSIINTERFACE],
                "strucbound":[STRUCTUREOUTERWALL],
@@ -50,10 +52,18 @@ meshdomains = {"fluid":[FLUIDOMAIN],
 class BloodVessel3D(MeshLoadFSI):
     def __init__(self):
         mesh = Mesh("mesh.xml")
+        self.structure = self.__get_structure_domain(mesh)
+        exit()
         self.P_Fwave = Expression(cpp_P_Fwave)
         self.P_Fwave.C = C
         MeshLoadFSI.__init__(self,mesh,meshdomains)
-        
+
+    def __get_structure_domain(self,mesh):
+        domains = mesh.domains()
+        cell_domains = domains.cell_domains(mesh)
+        structure = SubDomain(mesh,cell_domains,STRUCTUREDOMAIN)
+        return structure
+                                   
     def update(self, t0, t1, dt):
         self.P_Fwave.t = t1
 
@@ -119,5 +129,6 @@ class BloodVessel3D(MeshLoadFSI):
 # Define and solve problem
 if __name__ == "__main__":
     problem = BloodVessel3D()
-##    problem.solve(application_parameters)
-##    interactive()
+    solver = FSINewtonSolver(problem,application_parameters["FSINewtonSolver_parameters"])
+    solver.solve()
+    interactive()

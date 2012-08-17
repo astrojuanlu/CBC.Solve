@@ -16,11 +16,6 @@ class FSISpaces(object):
 
         self.problem = problem
         self.params = params
-
-        #Fluid and structure domains, it is assumed that the structure includes fsidofs,
-        #while the fluid does not
-        self.fluid = problem.fluiddomain
-        self.structure = problem.structure()
         
         self.fsispace,(self.V_F,self.Q_F,self.M_U,self.C_S,self.V_S,self.C_F,self.M_D), \
         (self.V_FC,self.Q_FC,self.M_UC,self.C_SC,self.V_SC,self.C_FC,self.M_DC) = self.__create_fsi_functionspace()
@@ -40,26 +35,29 @@ class FSISpaces(object):
         doftionary = mf.build_doftionary(self.fsispace)
         self.fsimeshcoord = [doftionary[k] for k in self.fsidofs["P_F"]]
 
-
-        #Restricted dof's
-        self.restricteddofs = {"U_F":self.__removedofs("U_F",self.structure),
-                               "P_F":self.__removedofs("P_F",self.structure),
-                               "L_U":self.fsidofs["L_U"],
-                               "D_S":self.__restrict(self.C_S,self.structure),
-                               "U_S":self.__restrict(self.V_S,self.structure),
-                               "D_F":self.__removedofs("D_F",self.structure),
-                               "L_D":self.fsidofs["L_D"]}
-
-        self.usefuldofs = []
-        
-        for space in ["U_F","P_F","D_F"]:
-            self.restricteddofs[space] += self.fsidofs[space]
-            
-        for space in self.restricteddofs.keys():
-            self.usefuldofs += self.restricteddofs[space]
-        
-        assert len(self.usefuldofs) == len(set(self.usefuldofs)),\
-               "error in usefuldof creation,some dofs are double counted" 
+##
+##        #Restricted dof's
+##        cellfunc = self.problem.meshfunctions["cell"]
+##        strucdomains = self.problem.domainnums["structure"]
+##        
+##        self.restricteddofs = {"U_F":self.__removedofs("U_F",cellfunc,strucdomains),
+##                               "P_F":self.__removedofs("P_F",cellfunc,strucdomains),
+##                               "L_U":self.fsidofs["L_U"],
+##                               "D_S":self.__restrict(self.C_S,cellfunc,strucdomains),
+##                               "U_S":self.__restrict(self.V_S,cellfunc,strucdomains),
+##                               "D_F":self.__removedofs("D_F",cellfunc,strucdomains),
+##                               "L_D":self.fsidofs["L_D"]}
+##
+##        self.usefuldofs = []
+##        
+##        for space in ["U_F","P_F","D_F"]:
+##            self.restricteddofs[space] += self.fsidofs[space]
+##            
+##        for space in self.restricteddofs.keys():
+##            self.usefuldofs += self.restricteddofs[space]
+##        
+##        assert len(self.usefuldofs) == len(set(self.usefuldofs)),\
+##               "error in usefuldof creation,some dofs are double counted" 
         
         #Get a subspace locator object
         self.subloc = FSISubSpaceLocator(self.fsispace)
@@ -73,40 +71,41 @@ class FSISpaces(object):
                                       as_vector((f[7],f[8])),as_vector((f[9],f[10])),as_vector((f[11],f[12]))]
         return [U_F,P_F,L_U,D_S,U_S,D_F,L_D]
     
-    def __restrict(self,space,domain):
+    def __restrict(self,space,cellfunc,strucdomains):
         """Returns the dofs of the function space over the domain"""
         try:
             zero = Function(space)
         except RuntimeError:
             #Maybe the space just needs to be collapsed
             zero = Function(space.collapse())
-            
-        bc = DirichletBC(space,zero,domain)
-        return bc.get_boundary_values().keys()
+        doflist = []
+        for domain in strucdomains:
+            bc = DirichletBC(space,zero,cellfunc,domain)
+            doflist += bc.get_boundary_values().keys()
+        return doflist
 
-    def __removedofs(self,spacename,domain):
+    def __removedofs(self,spacename,cellfunc,strucdomains):
         """Removes the dofs of the given domain from the function space"""
         dofs = range(self.subloc.spacebegins[spacename],self.subloc.spaceends[spacename])
 
-        remove = self.__restrict(self.subloc.spaces[spacename],domain)
+        remove = self.__restrict(self.subloc.spaces[spacename],cellfunc,strucdomains)
         offset = self.subloc.spacebegins[spacename]
         remove = [r + offset for r in remove]
 
         for d in remove:
             dofs.remove(d)
-
         return dofs
         
     def __create_fsi_functionspace(self):
         """Return the mixed function space of all variables"""
         mesh = self.problem.singlemesh
             
-        V_F = VectorFunctionSpace(mesh, self.params["V_F"]["elem"], self.params["V_F"]["deg"]) #Ana ord 2
-        Q_F = FunctionSpace(mesh, self.params["Q_F"]["elem"], self.params["Q_F"]["deg"])       #Ana ord 3
+        V_F = VectorFunctionSpace(mesh, self.params["V_F"]["elem"], self.params["V_F"]["deg"])
+        Q_F = FunctionSpace(mesh, self.params["Q_F"]["elem"], self.params["Q_F"]["deg"])      
         M_U = VectorFunctionSpace(mesh, self.params["M_U"]["elem"], self.params["M_U"]["deg"]) 
-        C_S = VectorFunctionSpace(mesh, self.params["C_S"]["elem"], self.params["C_S"]["deg"]) #Ana ord 2
-        V_S = VectorFunctionSpace(mesh, self.params["V_S"]["elem"], self.params["V_S"]["deg"]) #Ana ord 2
-        C_F = VectorFunctionSpace(mesh, self.params["C_F"]["elem"], self.params["C_F"]["deg"]) #Ana ord 3ll
+        C_S = VectorFunctionSpace(mesh, self.params["C_S"]["elem"], self.params["C_S"]["deg"]) 
+        V_S = VectorFunctionSpace(mesh, self.params["V_S"]["elem"], self.params["V_S"]["deg"]) 
+        C_F = VectorFunctionSpace(mesh, self.params["C_F"]["elem"], self.params["C_F"]["deg"]) 
         M_D = VectorFunctionSpace(mesh, self.params["M_D"]["elem"], self.params["M_D"]["deg"])
         
         fsispace = MixedFunctionSpace([V_F,Q_F,M_U,C_S,V_S,C_F,M_D])
@@ -136,9 +135,9 @@ class FSISpaces(object):
             zero = Function(fspace.collapse())
         dofs = []
         for bound in self.problem.interiorboundarynums["FSI_bound"]: 
-            BC = DirichletBC(fspace,zero,self.problem.fsiboundfunc,bound)
+            BC = DirichletBC(fspace,zero,
+                             self.problem.meshfunctions["interiorfacet"],bound)
             dofs += BC.get_boundary_values().keys()
-        
         return dofs
 
 class SubSpaceLocator(object):

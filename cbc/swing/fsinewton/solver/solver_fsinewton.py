@@ -78,9 +78,9 @@ class FSINewtonSolver(ccom.CBCSolver):
         self.nonlinearproblem = \
         MyNonlinearProblem(self.r, self.U1, self.fsibc.bcallI,
                            self.j,J_buff = None,
-                           cell_domains = self.problem.cellfunc,
-                           interior_facet_domains = self.problem.fsiboundfunc,
-                           exterior_facet_domains= self.problem.extboundfunc,
+                           cell_domains = self.problem.meshfunctions["cell"],
+                           interior_facet_domains = self.problem.meshfunctions["interiorfacet"],
+                           exterior_facet_domains= self.problem.meshfunctions["exteriorfacet"],
                            spaces = self.spaces)
         
         #Create a Newton Solver object
@@ -354,15 +354,18 @@ class FSINewtonSolver(ccom.CBCSolver):
                 ini_data[funcname].vector()[:]
             
         fsi_dofs = self.spaces.fsidofs["fsispace"]
+        cellfunc = self.problem.meshfunctions["cell"]
+        strucdomains = self.problem.domainnums["structure"]
+        fluiddomains = self.problem.domainnums["fluid"]
         
         #Zero out fluid variables outside of their domain.
-        mf.assign_to_region(U0,zerovec,self.problem.structure(),V = self.spaces.V_F,exclude = fsi_dofs)
-        mf.assign_to_region(U0,"0.0",self.problem.structure(),V = self.spaces.Q_F,exclude = fsi_dofs)
-        mf.assign_to_region(U0,zerovec,self.problem.structure(),V = self.spaces.C_F,exclude = fsi_dofs)
+        mf.assign_to_region(U0,zerovec,cellfunc,strucdomains,V = self.spaces.V_F,exclude = fsi_dofs)
+        mf.assign_to_region(U0,"0.0",cellfunc,strucdomains,V = self.spaces.Q_F,exclude = fsi_dofs)
+        mf.assign_to_region(U0,zerovec,cellfunc,strucdomains,V = self.spaces.C_F,exclude = fsi_dofs)
 
         #Zero out structure variables outside of their domain
-        mf.assign_to_region(U0,zerovec,self.problem.fluiddomain,V = self.spaces.C_S,exclude = fsi_dofs)
-        mf.assign_to_region(U0,zerovec,self.problem.fluiddomain,V = self.spaces.V_S,exclude = fsi_dofs)
+        mf.assign_to_region(U0,zerovec,cellfunc,fluiddomains,V = self.spaces.C_S,exclude = fsi_dofs)
+        mf.assign_to_region(U0,zerovec,cellfunc,fluiddomains,V = self.spaces.V_S,exclude = fsi_dofs)
         return U0
         
     def time_discreteU(self,U1,U0,kn):

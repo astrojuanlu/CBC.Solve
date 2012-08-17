@@ -18,14 +18,15 @@ def extract_subfunction(f):
     except:
         raise Exception("misc_func.extract_subfunction failure")
 
-def assign_to_region(f,value,subdomain,V = None,exclude = None):
+def assign_to_region(f,value,meshfunc,domainnums,V = None,exclude = None):
     """Give the function f the value over the subdomain, excluding the DOFS exclude"""
     if V is None:
         V = f.function_space()
     if value is None:
         value = Function(V)
-    bc = DirichletBC(V,value,subdomain)
-    apply_to(bc,f,exclude = exclude)
+    for domain in domainnums:
+        bc = DirichletBC(V,value,meshfunc,domain)
+        apply_to(bc,f,exclude = exclude)
     
 def apply_to(bc,f,exclude = None):
     """Apply a DirichletBC to a Function, exluding the DOFs exclude"""
