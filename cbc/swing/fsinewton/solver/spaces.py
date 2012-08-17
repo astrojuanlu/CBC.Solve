@@ -67,9 +67,11 @@ class FSISpaces(object):
         unpack a function f in FSI space into a list of subfunctions using components []
         in order to avoid the problems associated with Function.split()
         """
-        [U_F,P_F,L_U,D_S,U_S,D_F,L_D] = [as_vector((f[0],f[1])),f[2], as_vector((f[3],f[4])),as_vector((f[5],f[6])),
-                                      as_vector((f[7],f[8])),as_vector((f[9],f[10])),as_vector((f[11],f[12]))]
-        return [U_F,P_F,L_U,D_S,U_S,D_F,L_D]
+        #[U_F,P_F,L_U,D_S,U_S,D_F,L_D] = [as_vector((f[0],f[1])),f[2], as_vector((f[3],f[4])),as_vector((f[5],f[6])),
+        #                              as_vector((f[7],f[8])),as_vector((f[9],f[10])),as_vector((f[11],f[12]))]
+        #return [U_F,P_F,L_U,D_S,U_S,D_F,L_D]
+        return split(f)
+        
     
     def __restrict(self,space,cellfunc,strucdomains):
         """Returns the dofs of the function space over the domain"""

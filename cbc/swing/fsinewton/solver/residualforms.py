@@ -10,7 +10,9 @@ from cbc.twist import PiolaTransform
 from cbc.swing.operators import Sigma_F as _Sigma_F
 from cbc.swing.operators import Sigma_S as _Sigma_S
 from cbc.swing.operators import Sigma_M as _Sigma_M
-from cbc.swing.operators import F, J, I
+from cbc.swing.operators import F, J
+from cbc.twist.kinematics import SecondOrderIdentity as I
+
 
 ##Throughout this module the following notation is used.
 
@@ -33,7 +35,6 @@ def sum(somelist):
         res += elem
     return res
         
-    
 def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normals,solver_params):
     """"
     Build the residual forms for the full FSI problem
@@ -158,7 +159,7 @@ def fluid_residual(U_Fdot,U_F,U1_F,P_F,v_F,q_F,mu,rho,D_F,N_F,dx_Flist,ds_DNlist
     #Use do nothing BC if specified
     for ds_DN in ds_DNlist:
         info("Using Do nothing Fluid BC")
-        DN_F = -inner(v_F, J(D_F)*dot((mu*inv(F(D_F)).T*grad(U_F).T - P_F*I)*inv(F(D_F)).T, N_F))*ds_DN
+        DN_F = -inner(v_F, J(D_F)*dot((mu*inv(F(D_F)).T*grad(U_F).T - P_F*I(U_F))*inv(F(D_F)).T, N_F))*ds_DN
         forms.append(DN_F)
                        
     #Add boundary traction (sigma dot n) to fluid boundary if specified.

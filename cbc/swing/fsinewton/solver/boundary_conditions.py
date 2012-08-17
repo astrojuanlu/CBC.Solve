@@ -46,8 +46,10 @@ class FSIBC(object):
         try:
             for boundary,value in zip(boundaries,values):
                 if boundary == 'GammaFSI':
-                    from cbc.swing.fsiproblem import FSI_BOUND
-                    bcs += [DirichletBC(space, value, self.problem.fsiboundfunc,FSI_BOUND)]
+                    fsibounds = self.problem.interiorboundarynums = ["FSI_bound"]
+                    interiormeshfunc = self.problem.meshfunctions["interiorfacet"]
+                    for fsibound in fsibounds:
+                        bcs += [DirichletBC(space, value,interiormeshfunc,fsibound)]
                 else:
                     bcs += [DirichletBC(space, value, boundary)]
             info("Created bc %s"%bcname)

@@ -361,17 +361,16 @@ class NewtonFSI():
         if self.fluid_donothing_boundaries() == []:
             measures["donothingbound"] = []
         else:
-            for bound in self.fluid_donothing_boundaries(): 
-                bound.mark(meshfuncs["exteriorfacet"],exteriorboundarynums["donothingbound"])
+            for bound in self.fluid_donothing_boundaries():
+                bound.mark(meshfuncs["exteriorfacet"], exteriorboundarynums["donothingbound"][0])
         
         #Fluid velocity Neumann
         if self.fluid_velocity_neumann_boundaries() == []:
             measures["fluidneumannbound"] = []
         else:
             self.fluid_velocity_neumann_boundaries().mark(
-                meshfuncs["exteriorfacet"],exteriorboundarynums["fluidneumannbound"][0])
+                meshfuncs["exteriorfacet"], exteriorboundarynums["fluidneumannbound"][0])
         
-
     #Defualt parameters
     def fluid_density(self):
         return 1.0
@@ -461,7 +460,7 @@ class MeshLoadFSI(NewtonFSI):
     Optional boundaries should be marked with "None" if they are not present in the mesh
     """
     def __init__(self,mesh,meshdomains):
-        self.singlemesh = mesh
+        self.singlemesh = mesh           
         
         #Boundary and Domain Numberings
         self.domainnums = {"fluid":meshdomains["fluid"],
@@ -474,8 +473,27 @@ class MeshLoadFSI(NewtonFSI):
         self.measures = self.generate_measures(self.domainnums,self.interiorboundarynums,
                                                self.exteriorboundarynums)
 
-        #Structure Domain
-        #FluidDomain
+        #MeshFunctions
+        domains = mesh.domains()
+        cell_domains = domains.cell_domains(mesh)
+        facet_domains = domains.facet_domains(mesh)
+        self.meshfunctions = {"interiorfacet":cell_domains,
+                              "exteriorfacet":facet_domains,
+                              "cell":facet_domains}
+        #SubMeshes, FIXME works only for one domain at the moment
+        self.strucmesh = SubMesh(mesh,cell_domains,meshdomains["fluid"][0])
+        self.fluidmesh = SubMesh(mesh,cell_domains,meshdomains["structure"][0])  
+
+    def domaincheck(self,meshdomains):
+        """ """
+        mess = "Sorry only one %s domain supported at the moment, \
+                some way to generate a single submesh from multiple domains \
+                must be found first"
+
+
+        assert len(meshdomains["fluid"]) ==1,mess%"fluid"
+        assert len(meshdomains["structure"]) ==1,mess%"structure"                          
+        
 class FSI(FixedPointFSI,NewtonFSI):
     "Base class for all FSI problems"
     def __init__(self,mesh,parameters = default_parameters()):

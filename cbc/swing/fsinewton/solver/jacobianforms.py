@@ -10,7 +10,8 @@ from cbc.twist import PiolaTransform
 from cbc.swing.operators import Sigma_F as _Sigma_F
 from cbc.swing.operators import Sigma_S as _Sigma_S
 from cbc.swing.operators import Sigma_M as _Sigma_M
-from cbc.swing.operators import F, J, I
+from cbc.swing.operators import F, J
+from cbc.twist.kinematics import SecondOrderIdentity as I
 from residualforms import sum
 
 ##Throughout this module the following notation is used.
@@ -157,6 +158,7 @@ def dD_FSigmaF(D_F,dD_F,U_F,P_F,mu_F):
 
 def J_BlockF(dotdU,dU,dP,U,dotD_F,v,dotv,q,D_F,rho,mu,N_F,dxFlist,dsDNlist,dsF,g_F=None):
     """Fluid Diagonal Block, Fluid Domain """
+    Id = I(U)
     forms = []
     for dxF in dxFlist:
         #DT (without ALE term)
@@ -176,13 +178,14 @@ def J_BlockF(dotdU,dU,dP,U,dotD_F,v,dotv,q,D_F,rho,mu,N_F,dxFlist,dsDNlist,dsF,g
     #Do nothing BC
     for dsDN in dsDNlist:
         DN_FF =  -inner(v, dot(J(D_F)*mu*dot(inv(F(D_F)).T, dot(grad(dU).T, inv(F(D_F)).T)), N_F))*dsDN
-        DN_FF += inner(v, J(D_F)*dP*dot(I, dot(inv(F(D_F)).T, N_F)))*dsDN
+        DN_FF += inner(v, J(D_F)*dP*dot(Id, dot(inv(F(D_F)).T, N_F)))*dsDN
         forms.append(DN_FF)
     return sum(forms)
 
 def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F,
                dxFlist,dsDNlist,dFSIlist,ds_F,g_F = None,F_F = None):
     """Fluid-Fluid Domain coupling"""
+    Id = I(D_F)
     forms = []
     for dxF in dxFlist:
         #If a fluid body force has been specified, it will end up here. 
@@ -213,21 +216,22 @@ def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F,
     ##Add the terms for the Do nothing boundary if necessary
     for dsDN in dsDNlist:
         #Derivative of do nothing tensor with J factored out
-        dSigma  =  tr(grad(dD_F)*inv(F(D_F)))*(mu*inv(F(D_F)).T*grad(U).T - P*I)*inv(F(D_F)).T
+        dSigma  =  tr(grad(dD_F)*inv(F(D_F)))*(mu*inv(F(D_F)).T*grad(U).T - P*Id)*inv(F(D_F)).T
         dSigma += -mu*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T*grad(U).T*inv(F(D_F)).T
-        dSigma += -(mu*inv(F(D_F)).T*grad(U).T - P*I)*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T
+        dSigma += -(mu*inv(F(D_F)).T*grad(U).T - P*Id)*inv(F(D_F)).T*grad(dD_F).T*inv(F(D_F)).T
         #J added
         dSigma = J(D_F)*dSigma
-        DN_FM += -inner(v_F,dot(dSigma,N_F))*dsDN
+        DN_FM = -inner(v_F,dot(dSigma,N_F))*dsDN
         forms.append(DN_FM)
     return sum(forms)
 
 def J_BlockS(dotdD_S, dotdU_S, dD_S, dU_S, D_S, U_S, c_S,dotc_S, v_S, dotv_S, mu_S, lmbda_S, rho_S, dxSlist): 
     "Structure diagonal block"
-    F_S = grad(D_S) + I                 #I + grad U_s
-    E_S = 0.5*(F_S.T*F_S - I)           #Es in the book
+    Id = I(D_S)
+    F_S = grad(D_S) + I(D_S)                 #I + grad U_s
+    E_S = 0.5*(F_S.T*F_S - Id)           #Es in the book
     dE_S = 0.5*(grad(dD_S).T*F_S + F_S.T*grad(dD_S))#Derivative of Es wrt to US in the book
-    dUsSigma_S = grad(dD_S)*(2*mu_S*E_S + lmbda_S*tr(E_S)*I) + F_S*(2*mu_S*dE_S + lmbda_S*tr(dE_S)*I)
+    dUsSigma_S = grad(dD_S)*(2*mu_S*E_S + lmbda_S*tr(E_S)*Id) + F_S*(2*mu_S*dE_S + lmbda_S*tr(dE_S)*Id)
 
     forms = []
     for dxS in dxSlist:

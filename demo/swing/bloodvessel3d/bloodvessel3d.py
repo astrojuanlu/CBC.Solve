@@ -16,7 +16,7 @@ application_parameters["global_storage"] = True
 application_parameters["solve_dual"] = False
 application_parameters["estimate_error"] = False
 application_parameters["uniform_timestep"] = True
-application_parameters["initial_timestep"] = 0.5 #Newton Solver
+application_parameters["initial_timestep"] = 0.5
 application_parameters["plot_solution"] = True
 application_parameters["iteration_tolerance"] = 1.0e-6
 application_parameters["FSINewtonSolver_parameters"]["optimization"]["max_reuse_jacobian"] = 40
@@ -26,7 +26,7 @@ application_parameters["FSINewtonSolver_parameters"]["plot"] = True
 #Fixpoint parameters
 application_parameters["fluid_solver"] = "taylor-hood"
 
-#Presure Wave
+#Pressure Wave
 from demo.swing.bloodvessel2d.bloodvessel2d import cpp_P_Fwave
 C = 1.0
 
@@ -52,17 +52,9 @@ meshdomains = {"fluid":[FLUIDDOMAIN],
 class BloodVessel3D(MeshLoadFSI):
     def __init__(self):
         mesh = Mesh("mesh.xml")
-        self.structure = self.__get_structure_domain(mesh)
-        exit()
         self.P_Fwave = Expression(cpp_P_Fwave)
         self.P_Fwave.C = C
         MeshLoadFSI.__init__(self,mesh,meshdomains)
-
-    def __get_structure_domain(self,mesh):
-        domains = mesh.domains()
-        cell_domains = domains.cell_domains(mesh)
-        structure = SubDomain(mesh,cell_domains,STRUCTUREDOMAIN)
-        return structure
                                    
     def update(self, t0, t1, dt):
         self.P_Fwave.t = t1
@@ -73,6 +65,10 @@ class BloodVessel3D(MeshLoadFSI):
     
     def __str__(self):
         return "Blood Vessel"
+    
+    #This can be done by the class FixedPointFSI after integration
+    def initial_step(self):
+        return application_parameters["initial_timestep"]
 
 #--- Material Parameters---
     def fluid_density(self):
@@ -104,28 +100,23 @@ class BloodVessel3D(MeshLoadFSI):
        return (0.0)
     
     def fluid_pressure_dirichlet_boundaries(self):
-        if application_parameters["primal_solver"] == "Newton": return ["GammaFSI"]
-        else: return [noslip]
-
+       return [FSIINTERFACE]
+    
     def fluid_pressure_dirichlet_values(self):
         return [self.P_Fwave]
 
-    def fluid_donothing_boundaries(self):
-        return [BothBoundary()]
+##    def fluid_donothing_boundaries(self):
+##        return [LEFTINFLOW,RIGHTINFLOW]
 
-    def structure(self):
-        return Structure()
+##    def structure(self):
+##        return Structure()
 
     def structure_dirichlet_values(self):
         return [(0,0),(0,0)]
     
     def structure_dirichlet_boundaries(self):
-        return [struc_left,struc_right]
+        return [LEFTSTRUC,RIGHTSTRUC]
 
-##    #--- Mesh problem BC---
-##    def mesh_dirichlet_boundaries(self):
-##        return [meshbc]
-    
 # Define and solve problem
 if __name__ == "__main__":
     problem = BloodVessel3D()
