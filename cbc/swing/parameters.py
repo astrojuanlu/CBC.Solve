@@ -51,37 +51,51 @@ def default_parameters():
 #These are relevant if p["primal_solver"] = Newton
 def default_fsinewtonsolver_parameters():
     p = Parameters("FSINewtonSolver_parameters")
-    
+
+    #Fluid velocity
     vf = Parameters("V_F")
     vf.add("deg",2)
     vf.add("elem","CG")
     p.add(vf)
-    
+
+    #Optional fluid velocity enrichment space for mini element
+    #In two dimension use Bubble 3 element, in 3 dimensions Bubble 4.
+    bf = Parameters("B_F")
+    bf.add("deg","None")
+    bf.add("elem","None")
+    p.add(bf)
+
+    #Fluid pressure
     qf = Parameters("Q_F")
     qf.add("deg",1)
     qf.add("elem","CG")
     p.add(qf)
-    
+
+    #Velocity Lagrange multiplier
     mu = Parameters("M_U")
     mu.add("deg",0)
     mu.add("elem","DG")
     p.add(mu)
-    
+
+    #Structure displacement
     cs = Parameters("C_S")
     cs.add("deg",1)
     cs.add("elem","CG")
     p.add(cs)
-    
+
+    #Structure velocity
     vs = Parameters("V_S")
     vs.add("deg",1)
     vs.add("elem","CG")
     p.add(vs)
-    
+
+    #Fluid domain displacement
     cf = Parameters("C_F")
     cf.add("deg",1)
     cf.add("elem","CG")
     p.add(cf)
-    
+
+    #Displacement Lagrange Multiplier
     md = Parameters("M_D")
     md.add("deg",0)
     md.add("elem","DG")
@@ -151,7 +165,7 @@ def read_parameters():
 
     # Set output directory
     if p["output_directory"] == "unspecified":
-        p["output_directory"] = "results-%s" % date()
+        p["output_directory"] = "results-%s"%date()
 
     return p
 

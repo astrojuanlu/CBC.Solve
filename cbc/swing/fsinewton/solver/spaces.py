@@ -67,9 +67,9 @@ class FSISpaces(object):
         unpack a function f in FSI space into a list of subfunctions using components []
         in order to avoid the problems associated with Function.split()
         """
-        #[U_F,P_F,L_U,D_S,U_S,D_F,L_D] = [as_vector((f[0],f[1])),f[2], as_vector((f[3],f[4])),as_vector((f[5],f[6])),
-        #                              as_vector((f[7],f[8])),as_vector((f[9],f[10])),as_vector((f[11],f[12]))]
-        #return [U_F,P_F,L_U,D_S,U_S,D_F,L_D]
+##        [U_F,P_F,L_U,D_S,U_S,D_F,L_D] = [as_vector((f[0],f[1])),f[2], as_vector((f[3],f[4])),as_vector((f[5],f[6])),
+##                                      as_vector((f[7],f[8])),as_vector((f[9],f[10])),as_vector((f[11],f[12]))]
+##        return [U_F,P_F,L_U,D_S,U_S,D_F,L_D]
         return split(f)
         
     
@@ -101,8 +101,11 @@ class FSISpaces(object):
     def __create_fsi_functionspace(self):
         """Return the mixed function space of all variables"""
         mesh = self.problem.singlemesh
-            
+        d = mesh.topology().dim()   
+
         V_F = VectorFunctionSpace(mesh, self.params["V_F"]["elem"], self.params["V_F"]["deg"])
+        if self.params["B_F"]["elem"] != "None":
+            V_F = V_F + VectorFunctionSpace(mesh,self.params["B_F"]["elem"], self.params["B_F"]["deg"])
         Q_F = FunctionSpace(mesh, self.params["Q_F"]["elem"], self.params["Q_F"]["deg"])      
         M_U = VectorFunctionSpace(mesh, self.params["M_U"]["elem"], self.params["M_U"]["deg"]) 
         C_S = VectorFunctionSpace(mesh, self.params["C_S"]["elem"], self.params["C_S"]["deg"]) 

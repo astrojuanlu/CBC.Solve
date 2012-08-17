@@ -74,6 +74,12 @@ class zTestAnalytic(object):
         fsinewton_params["C_S"]["deg"] = elem_order
         fsinewton_params["V_S"]["deg"] = elem_order
         fsinewton_params["C_F"]["deg"] = elem_order
+        #Mini element
+        fsinewton_params["V_F"]["deg"] = 1
+##        fsinewton_params["B_F"]["deg"] = 3
+##        fsinewton_params["B_F"]["elem"] = "Bubble"
+        
+        
         
         if test == "fsi":
             problemclass = nana.NewtonAnalytic
