@@ -14,6 +14,8 @@ from cbc.swing.fsinewton.utils.timings import timings
 from cbc.swing.fsinewton.utils.newtonsolveruntimedata import MyNewtonSolverRunTimeData
 import copy
 
+            
+ffc_opt = {"quadrature_degree": 2, "representation": "quadrature"}
 class MyNonlinearProblem:
     def __init__(self,f,w,bc,j, J_buff = None,cell_domains = None,
                  interior_facet_domains = None,exterior_facet_domains = None,
@@ -22,7 +24,7 @@ class MyNonlinearProblem:
             w = Initial guess function THIS SHOULD MATCH DIRICHLET BC exactly
             bc = list of boundary conditions
             j = Jacobian forms of F
-            J_buff = A buffered part of the jacobian matrix.
+            J_buff = A buffered part of the jacobian matrix. 
         """
         info("Creating Nonlinear Problem")
         self.f = f
@@ -160,14 +162,15 @@ class MyNewtonSolver:
         if self.problem.J_buff is not None:
             timings.startnext("Copy Buffered Jacobian")
             self.J = self.problem.J_buff.copy()
-            
+
             timings.startnext("Jacobian Assembly")
             self.J = assemble(self.problem.j, tensor = self.J,
                               cell_domains = self.problem.cell_domains,
                               interior_facet_domains = self.problem.interior_facet_domains,
                               exterior_facet_domains = self.problem.exterior_facet_domains,
                               reset_sparsity=False,
-                              add_values=True)
+                              add_values=True,
+                              form_compiler_parameters=ffc_opt)
             timings.stop("Jacobian Assembly")
         else:
             #No buffering just assemble
@@ -175,7 +178,8 @@ class MyNewtonSolver:
             self.J = assemble(self.problem.j, tensor = self.J,
                               cell_domains = self.problem.cell_domains,
                               interior_facet_domains = self.problem.interior_facet_domains,
-                              exterior_facet_domains = self.problem.exterior_facet_domains)
+                              exterior_facet_domains = self.problem.exterior_facet_domains,
+                              form_compiler_parameters=ffc_opt)
             timings.stop("Jacobian Assembly")
         #Give the Jacobian it's BC.
         self.apply_ident_bc()

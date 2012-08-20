@@ -26,9 +26,36 @@ application_parameters["FSINewtonSolver_parameters"]["plot"] = True
 #Fixpoint parameters
 application_parameters["fluid_solver"] = "taylor-hood"
 
-#Pressure Wave
-from demo.swing.bloodvessel2d.bloodvessel2d import cpp_P_Fwave
 C = 1.0
+#Presure Wave
+cpp_P_Fwave = """
+class P_F : public Expression
+{
+public:
+
+  P_F() : Expression(), C(0), t(0) {}
+
+  void eval(Array<double>& values, const Array<double>& xx,
+            const ufc::cell& cell) const
+  {
+    const double x = xx[0];
+
+    if (x < 0.25*t - 0.2 ){
+        values[0] = 0;
+    }
+    else if (x < 0.25*t + 0.2){ 
+        values[0] = C*cos((x - 0.25*t)*3.141519*0.5*0.2);
+    }
+    else {
+        values[0] = 0;
+          }
+  }
+
+  double C;
+  double t;
+
+};
+"""
 
 #Cell domains
 FLUIDDOMAIN = 0
@@ -52,7 +79,7 @@ meshdomains = {"fluid":[FLUIDDOMAIN],
 class BloodVessel3D(MeshLoadFSI):
     def __init__(self):
         mesh = Mesh("mesh.xml")
-        self.P_Fwave = Expression(cpp_P_Fwave)
+        self.P_Fwave = Expression(cpp_P_Fwave,mesh = mesh)
         self.P_Fwave.C = C
         MeshLoadFSI.__init__(self,mesh,meshdomains)
                                    
@@ -100,16 +127,13 @@ class BloodVessel3D(MeshLoadFSI):
        return (0.0)
     
     def fluid_pressure_dirichlet_boundaries(self):
-       return [FSIINTERFACE]
+       return ["GammaFSI"]
     
     def fluid_pressure_dirichlet_values(self):
         return [self.P_Fwave]
 
-##    def fluid_donothing_boundaries(self):
-##        return [LEFTINFLOW,RIGHTINFLOW]
-
-##    def structure(self):
-##        return Structure()
+    def fluid_donothing_boundaries(self):
+        return [LEFTINFLOW,RIGHTINFLOW]
 
     def structure_dirichlet_values(self):
         return [(0,0),(0,0)]

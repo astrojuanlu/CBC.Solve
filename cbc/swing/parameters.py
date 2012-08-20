@@ -2,10 +2,17 @@ __author__ = "Kristoffer Selim and Anders Logg"
 __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __author__
 __license__  = "GNU GPL Version 3 or any later version"
 
-from dolfin import Parameters, File, info
+from dolfin import parameters,Parameters, File, info
 from utils import date
 import os
 
+
+# Set DOLFIN parameters
+parameters["form_compiler"]["cpp_optimize"] = True
+#parameters["form_compiler"]["log_level"] = DEBUG
+parameters["form_compiler"]["representation"] = "quadrature"
+##parameters["form_compiler"]["optimize"] = True
+##parameters["form_compiler"]["quadrature_degree"] = 2
 
 def default_parameters():
     "Return default values for solver parameters."

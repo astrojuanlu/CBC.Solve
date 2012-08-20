@@ -210,7 +210,10 @@ def solve_primal(problem, parameters):
             (dt, at_end) = compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters)
             t0 = t1
             t1 = t1 + dt
-
+    #End of Time loop
+    #Call post processing for the Newton Solver if necessary.
+    if parameters["primal_solver"] == "Newton":
+        fsinewtonsolver.post_processing()
     # Save final value of goal functional
     save_goal_functional_final(goal_functional, integrated_goal_functional, reference_value, parameters)
 

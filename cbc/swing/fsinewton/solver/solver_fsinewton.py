@@ -32,7 +32,6 @@ class FSINewtonSolver(ccom.CBCSolver):
         ccom.CBCSolver.__init__(self)
         self.problem = problem
         self.params = params
-
         #Define the various helper objects of the fsinewton solver
         self.spaces = FSISpaces(problem,params)
         self.fsibc = FSIBC(problem,self.spaces)
@@ -64,7 +63,7 @@ class FSINewtonSolver(ccom.CBCSolver):
         
         #Initialize any Body forces if present
         self.__init_forces()
-    
+
         #Define Forms and buffered part of the jacobian matrix.
         self.r,self.j,self.j_buff = self.create_forms()
         self.runtimedata = FsiRunTimeData(self)
@@ -112,7 +111,6 @@ class FSINewtonSolver(ccom.CBCSolver):
                 ret = self.time_step()
                 if self.params["store"] != False:
                     self.storage.store_solution(self.U1,self.t)
-            info(timings.report_str())
         self.post_processing()
 
     def prebuild_jacobians(self):
@@ -379,6 +377,9 @@ class FSINewtonSolver(ccom.CBCSolver):
         return IUmid,IUdot
 
     def post_processing(self):
+        #Write a report of the timings
+        info(timings.report_str())
+        
         if self.params["runtimedata"]["fsisolver"] != False:
             if  self.params["bigblue"] == False:
                 

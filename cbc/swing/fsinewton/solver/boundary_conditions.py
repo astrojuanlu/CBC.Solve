@@ -33,6 +33,7 @@ class FSIBC(object):
                self.create_mesh_bc()
 
     def create_bc(self,space,boundaries,values,bcname):
+        
         #If Boundaries specified without values assume homogeneous 
         if boundaries is not None and (values == [] or values is None):
             dim = space.num_sub_spaces()
@@ -43,18 +44,19 @@ class FSIBC(object):
             values = [zeros for i in range(len(boundaries))]
         #Try to generate the BC
         bcs = []
-        try:
-            for boundary,value in zip(boundaries,values):
-                if boundary == 'GammaFSI':
-                    fsibounds = self.problem.interiorboundarynums = ["FSI_bound"]
-                    interiormeshfunc = self.problem.meshfunctions["interiorfacet"]
-                    for fsibound in fsibounds:
-                        bcs += [DirichletBC(space, value,interiormeshfunc,fsibound)]
-                else:
-                    bcs += [DirichletBC(space, value, boundary)]
-            info("Created bc %s"%bcname)
-        except:
-            info("No Dirichlet bc created for %s"%bcname)
+##         try:
+        for boundary,value in zip(boundaries,values):
+            if boundary == 'GammaFSI':
+                fsibounds = self.problem.interiorboundarynums["FSI_bound"]
+                interiormeshfunc = self.problem.meshfunctions["interiorfacet"]
+                for fsibound in fsibounds:
+                    print fsibound
+                    bcs += [DirichletBC(space, value,interiormeshfunc,fsibound)]
+            else:
+                bcs += [DirichletBC(space, value, boundary)]
+        info("Created bc %s"%bcname)
+##        except:
+##            info("No Dirichlet bc created for %s"%bcname)
         return bcs
 
     def create_fluid_bc(self):

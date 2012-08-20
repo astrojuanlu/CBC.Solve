@@ -75,12 +75,10 @@ class zTestAnalytic(object):
         fsinewton_params["V_S"]["deg"] = elem_order
         fsinewton_params["C_F"]["deg"] = elem_order
         #Mini element
-        fsinewton_params["V_F"]["deg"] = 1
+##        fsinewton_params["V_F"]["deg"] = 1
 ##        fsinewton_params["B_F"]["deg"] = 3
 ##        fsinewton_params["B_F"]["elem"] = "Bubble"
-        
-        
-        
+                
         if test == "fsi":
             problemclass = nana.NewtonAnalytic
             poplist = []
@@ -125,11 +123,7 @@ class zTestAnalytic(object):
         fsinewton_params["bigblue"]= False
         fsinewton_params["stress_coupling"] = "forward"
         fsinewton_params["jacobian"] = "manual"
-##        fsinewton_params["M_U"]["elem"] = "CG"
-##        fsinewton_params["M_U"]["deg"] = 1
-##        fsinewton_params["M_D"]["elem"] = "CG"
-##        fsinewton_params["M_D"]["deg"] = 1         
-##        
+
         #initialize lists and dictionaries
         integrated_L2errors = []
         xaxis = []

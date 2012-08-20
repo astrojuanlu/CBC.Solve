@@ -16,11 +16,10 @@ class FSISpaces(object):
 
         self.problem = problem
         self.params = params
-        
+
         self.fsispace,(self.V_F,self.Q_F,self.M_U,self.C_S,self.V_S,self.C_F,self.M_D), \
         (self.V_FC,self.Q_FC,self.M_UC,self.C_SC,self.V_SC,self.C_FC,self.M_DC) = self.__create_fsi_functionspace()
         self.subloc = FSISubSpaceLocator(self.fsispace)
-
         #Dofs that lie on the fsi boundary
         self.fsidofs = {"U_F":self.__fsi_dofs(self.V_F),
                         "P_F":self.__fsi_dofs(self.Q_F),
@@ -105,16 +104,15 @@ class FSISpaces(object):
 
         V_F = VectorFunctionSpace(mesh, self.params["V_F"]["elem"], self.params["V_F"]["deg"])
         if self.params["B_F"]["elem"] != "None":
-            V_F = V_F + VectorFunctionSpace(mesh,self.params["B_F"]["elem"], self.params["B_F"]["deg"])
+            V_F = V_F + VectorFunctionSpace(mesh,self.params["B_F"]["elem"], self.params["B_F"]["deg"])   
         Q_F = FunctionSpace(mesh, self.params["Q_F"]["elem"], self.params["Q_F"]["deg"])      
         M_U = VectorFunctionSpace(mesh, self.params["M_U"]["elem"], self.params["M_U"]["deg"]) 
         C_S = VectorFunctionSpace(mesh, self.params["C_S"]["elem"], self.params["C_S"]["deg"]) 
         V_S = VectorFunctionSpace(mesh, self.params["V_S"]["elem"], self.params["V_S"]["deg"]) 
         C_F = VectorFunctionSpace(mesh, self.params["C_F"]["elem"], self.params["C_F"]["deg"]) 
         M_D = VectorFunctionSpace(mesh, self.params["M_D"]["elem"], self.params["M_D"]["deg"])
-        
-        fsispace = MixedFunctionSpace([V_F,Q_F,M_U,C_S,V_S,C_F,M_D])
-        
+
+        fsispace = MixedFunctionSpace([V_F,Q_F,M_U,C_S,V_S,C_F,M_D])        
         return fsispace, tuple([fsispace.sub(i) for i in range(NUM_SPACES)]), \
                (V_F,Q_F,M_U,C_S,V_S,C_F,M_D)
 
