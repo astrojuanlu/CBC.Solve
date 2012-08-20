@@ -116,8 +116,7 @@ def solve_primal(problem, parameters):
                             params = parameters["FSINewtonSolver_parameters"].to_dict())
 
         #initialize the solve settings
-        fsinewtonsolver.params["solve"] = False
-        fsinewtonsolver.solve()
+        fsinewtonsolver.prepare_solve()
         
     #def solve_primal()
     while True:

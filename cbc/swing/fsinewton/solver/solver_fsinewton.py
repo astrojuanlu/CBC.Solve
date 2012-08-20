@@ -69,10 +69,16 @@ class FSINewtonSolver(ccom.CBCSolver):
         self.runtimedata = FsiRunTimeData(self)
         timings.stop("Fsi Newton Solver init")
 
-    def solve(self,single_step = False):
-        """Solve the FSI problem over time"""
-        self.__set_solve_behaviour()
-
+    def prepare_solve(self):
+        """Setup helper objects for a solve"""        
+        
+        #Init the plotter if necessary
+        if self.params["plot"]:
+            self.plotter = FSIPlotter(self.U1)
+        #Init Storage
+        if self.params["store"] != False:
+            self.storage = FSIStorer(self.params["store"])
+        
         #Define nonlinear problem for newton solver.
         self.nonlinearproblem = \
         MyNonlinearProblem(self.r, self.U1, self.fsibc.bcallI,
@@ -92,11 +98,9 @@ class FSINewtonSolver(ccom.CBCSolver):
          
         info_blue("Newton Solver Tolerance is %s"%self.newtonsolver.tol)
 
-        #Set the end time
-        if single_step == True:
-            end_time = self.dt
-        else:
-            end_time = self.problem.end_time()
+    def solve(self):
+        """Solve the FSI problem over time"""
+        self.prepare_solve()
         
         #Time Loop
         info(" ".join(["\n Solving FSI problem",self.problem.__str__() ,"with Newton's method \n"]))
@@ -122,16 +126,6 @@ class FSINewtonSolver(ccom.CBCSolver):
         #Prebuild step jacobian if necessary
         if self.params["optimization"]["reuse_jacobian"] == True:
             self.newtonsolver.build_jacobian()
-
-    def __set_solve_behaviour(self):
-        """Set the plotting and storage setting during a solve"""        
-        
-        #Init the plotter if necessary
-        if self.params["plot"]:
-            self.plotter = FSIPlotter(self.U1)
-        #Init Storage
-        if self.params["store"] != False:
-            self.storage = FSIStorer(self.params["store"])
 
     def time_step(self):
         """Newton solve for the values of the FSI system at the next time level"""
