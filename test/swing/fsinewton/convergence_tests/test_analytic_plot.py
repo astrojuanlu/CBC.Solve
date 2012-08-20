@@ -149,6 +149,26 @@ def save_loglogdata(L2errorsperfunc,path,xaxis,functions):
         loglogdata.write("%s \n %s \n"%(k, str(conv_rates[k])))
     loglogdata.close()
 
+def plot_timings(timingdata,xaxis,path):
+    """
+    Plot the runtime of assembly and solve in graph vs. num vertices
+    """
+    #Plot the various data points                                                               
+    plt.figure()
+    plt.xlabel("Number of vertices")
+    pdf = PdfPages(path + "timings")
+    for op in timingdata.keys():
+        plt.loglog(xaxis, timingdata[op],'D',
+                   label = op, linestyle = '-')
+    ax = plt.gca()
+##        ax.set_xlim(ax.get_xlim()[::-1])
+    ax.grid()
+    plt.ylabel("Runtime (s)")
+    #plt.title(plottitle)
+    plt.legend(loc=0)
+    plt.savefig(pdf, format ='pdf')
+    pdf.close()                 
+
 if __name__ == "__main__":
     print "Type of test all,fluid,struc,mesh,fluidstruc,strucmesh,meshfluid, order, \
            bc, refinements start, refinements end"

@@ -12,7 +12,6 @@ parameters["form_compiler"]["cpp_optimize"] = True
 #parameters["form_compiler"]["log_level"] = DEBUG
 parameters["form_compiler"]["representation"] = "quadrature"
 ##parameters["form_compiler"]["optimize"] = True
-##parameters["form_compiler"]["quadrature_degree"] = 2
 
 def default_parameters():
     "Return default values for solver parameters."
@@ -128,6 +127,7 @@ def default_fsinewtonsolver_parameters():
     opt.add("reuse_jacobian",True)
     opt.add("simplify_jacobian",True)
     opt.add("max_reuse_jacobian",20)
+    opt.add("reduce_quadrature",0) #0 means no reduction, i >0 means reduce to order i.
     p.add(opt)
     
     p.add("jacobian","manual") #or "manual"

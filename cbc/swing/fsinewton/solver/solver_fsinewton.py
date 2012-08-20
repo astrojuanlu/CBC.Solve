@@ -94,24 +94,25 @@ class FSINewtonSolver(ccom.CBCSolver):
                                            reuse_jacobian = self.params["optimization"]["reuse_jacobian"],
                                            max_reuse_jacobian = self.params["optimization"]["max_reuse_jacobian"],
                                            runtimedata = self.params["runtimedata"]["newtonsolver"],
-                                           tol = self.params["newtonsoltol"])
+                                           tol = self.params["newtonsoltol"],
+                                           reduce_quadrature =  self.params["optimization"]["reduce_quadrature"] )
          
         info_blue("Newton Solver Tolerance is %s"%self.newtonsolver.tol)
-
+        self.prebuild_jacobians()
+        
     def solve(self):
         """Solve the FSI problem over time"""
         self.prepare_solve()
         
         #Time Loop
         info(" ".join(["\n Solving FSI problem",self.problem.__str__() ,"with Newton's method \n"]))
-        self.prebuild_jacobians()
         if self.params["solve"] != False:
             
             #Store the initial value if necessary
             if self.params["store"] != False:
                 self.storage.store_solution(self.U0,self.t)
                 
-            while self.t < end_time - DOLFIN_EPS:
+            while self.t < self.problem.end_time() - DOLFIN_EPS:
                 ret = self.time_step()
                 if self.params["store"] != False:
                     self.storage.store_solution(self.U1,self.t)

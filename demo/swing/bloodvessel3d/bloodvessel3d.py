@@ -21,6 +21,7 @@ application_parameters["plot_solution"] = True
 application_parameters["iteration_tolerance"] = 1.0e-6
 application_parameters["FSINewtonSolver_parameters"]["optimization"]["max_reuse_jacobian"] = 40
 application_parameters["FSINewtonSolver_parameters"]["optimization"]["simplify_jacobian"] = False
+application_parameters["FSINewtonSolver_parameters"]["optimization"]["reduce_quadrature"] = 2
 application_parameters["FSINewtonSolver_parameters"]["newtonitrmax"] = 180
 application_parameters["FSINewtonSolver_parameters"]["plot"] = True
 #Fixpoint parameters
@@ -79,8 +80,9 @@ meshdomains = {"fluid":[FLUIDDOMAIN],
 class BloodVessel3D(MeshLoadFSI):
     def __init__(self):
         mesh = Mesh("mesh.xml")
-        self.P_Fwave = Expression(cpp_P_Fwave,mesh = mesh)
+        self.P_Fwave = Expression(cpp_P_Fwave,C=C, t=0)
         self.P_Fwave.C = C
+        
         MeshLoadFSI.__init__(self,mesh,meshdomains)
                                    
     def update(self, t0, t1, dt):
@@ -121,7 +123,8 @@ class BloodVessel3D(MeshLoadFSI):
 
     #--- Fluid problem BC---
     def fluid_velocity_initial_condition(self):
-        return (0.0, 0.0)
+        #return (0.0,)*spatial_dimension
+        return (0.0, 0.0, 0.0)
 
     def fluid_pressure_initial_condition(self):
        return (0.0)
@@ -136,7 +139,7 @@ class BloodVessel3D(MeshLoadFSI):
         return [LEFTINFLOW,RIGHTINFLOW]
 
     def structure_dirichlet_values(self):
-        return [(0,0),(0,0)]
+        return [(0,0,0),(0,0,0)]
     
     def structure_dirichlet_boundaries(self):
         return [LEFTSTRUC,RIGHTSTRUC]

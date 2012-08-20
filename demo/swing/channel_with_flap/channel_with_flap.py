@@ -27,7 +27,8 @@ if test:
     application_parameters["initial_timestep"] = 0.02 / 8.0
     application_parameters["iteration_tolerance"] = 1.0e-6
     application_parameters["fluid_solver"] = "ipcs" #"taylor-hood"
-##application_parameters["FSINewtonSolver_parameters"]["optimization"]["reuse_jacobian"] = False
+     
+application_parameters["FSINewtonSolver_parameters"]["optimization"]["reuse_jacobian"] = False
 application_parameters["FSINewtonSolver_parameters"]["optimization"]["simplify_jacobian"] = False
     
 # Constants related to the geometry of the problem

@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 from cbc.swing.parameters import fsinewton_params
 from cbc.swing.fsinewton.utils.timings import timings
 from test_analytic_plot import create_convergenceplots,plot_L2_errors,save_loglogdata, \
-                                save_convergencedata,plot_lmerror,save_lmerror
+                                save_convergencedata,plot_lmerror,save_lmerror,plot_timings
 
 class AnalyticFSISolution(object):
     "Contains the fsi analytical solution data"
@@ -123,12 +123,16 @@ class zTestAnalytic(object):
         fsinewton_params["bigblue"]= False
         fsinewton_params["stress_coupling"] = "forward"
         fsinewton_params["jacobian"] = "manual"
-
+        fsinewton_params["optimization"]["simplify_jacobian"] = False
+        fsinewton_params["optimization"]["reuse_jacobian"] = False
+        
         #initialize lists and dictionaries
         integrated_L2errors = []
         xaxis = []
         L2errorsperfunc = {}
         Lagrangemult_error = {"L_U":[],"L_D":[]}
+        timingdata = {"Jacobian assembly":[],"Residual assembly":[],"Linear solve":[]}
+        numvertex = []
         
         #Create output file
         if not os.path.exists(folderpath + storefolder): os.makedirs(folderpath + storefolder)
@@ -148,7 +152,6 @@ class zTestAnalytic(object):
 
             solver = sfsi.FSINewtonSolver(problem,fsinewton_params)
             solver.solve()
-            timings.reset()
             xaxis.append(solver.problem.singlemesh.hmin())     
 
             #Generate L2 error and L2 error integrated in time.
@@ -189,6 +192,16 @@ class zTestAnalytic(object):
             #Plot Lagrange Multiplier data
             title = "FSI Interface Continuity, p = %i"%elem_order
             plot_lmerror(folderpath + storefolder + "/LMerrors",Lagrangemult_error,"No Title",xaxis,title)
+
+            #save timings data
+            timingdata["Jacobian assembly"].append(timings.gettime("Jacobian assembly"))
+            timingdata["Residual assembly"].append(timings.gettime("Residual assembly"))
+            timingdata["Linear solve"].append(timings.gettime("PETSc linear solve"))
+            numvertex.append(solver.problem.singlemesh.num_vertices())
+            #plot timings data
+            plot_timings(timingdata,numvertex,folderpath + storefolder + test)
+
+            timings.reset()
                 
     def __solution_error(self,solver):
         "Return the L2 error for solutions compared to the analytic fsi"
