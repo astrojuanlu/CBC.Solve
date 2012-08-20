@@ -99,7 +99,7 @@ class NewtonAnalytic(ana.Analytic):
         #Space refinement
         ana.ref += 1
         #Time refinement
-        self.inistep *= 0.5
+        #self.inistep *= 0.5
 
     def update(self, t0, t1, dt):
         ana.Analytic.update(self,t0,t1,dt)

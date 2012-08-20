@@ -171,6 +171,7 @@ class ChannelWithFlap(FSI):
         return 1.0
 
 # Define and solve problem
-problem = ChannelWithFlap()
-problem.solve(application_parameters)
-interactive()
+if __name__ == "__main__":
+    problem = ChannelWithFlap()
+    problem.solve(application_parameters)
+    interactive()

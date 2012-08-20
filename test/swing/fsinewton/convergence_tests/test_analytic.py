@@ -25,10 +25,6 @@ import demo.swing.analytic.newtonanalytic as nana
 import demo.swing.analytic.right_hand_sides as rhs
 PROBLEMFOLDER = "convergence"
 
-##import fsinewton.problems.analytic_new.right_hand_sides_new as rhs
-##import fsinewton.problems.analytic_new.newtonanalytic_new as nana
-##PROBLEMFOLDER = "convergence_new"
-
 import demo.swing.analytic.analytic as ana
 import cbc.swing.fsinewton.solver.solver_fsinewton as sfsi
 import cbc.swing.fsinewton.solver.solver_fsinewton as fnew
@@ -199,7 +195,7 @@ class zTestAnalytic(object):
             timingdata["Linear solve"].append(timings.gettime("PETSc linear solve"))
             numvertex.append(solver.problem.singlemesh.num_vertices())
             #plot timings data
-            plot_timings(timingdata,numvertex,folderpath + storefolder + test)
+            plot_timings(timingdata,numvertex,folderpath + storefolder)
 
             timings.reset()
                 

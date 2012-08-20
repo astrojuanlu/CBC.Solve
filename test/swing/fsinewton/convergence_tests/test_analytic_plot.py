@@ -155,7 +155,7 @@ def plot_timings(timingdata,xaxis,path):
     """
     #Plot the various data points                                                               
     plt.figure()
-    plt.xlabel("Number of vertices")
+    plt.xlabel("Number of mesh vertices")
     pdf = PdfPages(path + "timings")
     for op in timingdata.keys():
         plt.loglog(xaxis, timingdata[op],'D',
@@ -167,7 +167,20 @@ def plot_timings(timingdata,xaxis,path):
     #plt.title(plottitle)
     plt.legend(loc=0)
     plt.savefig(pdf, format ='pdf')
-    pdf.close()                 
+    pdf.close()
+
+    #estimate slopes
+    loglogdata = open(path + "timing_slopes.txt","w")
+    loglogdata.write("Slopes between succesive log log timings \n \n")
+    conv_rates = {op:[] for op in timingdata.keys()}
+    for op in timingdata.keys():
+        for j in range(len(timingdata[op]) - 1):
+            rise = ln(timingdata[op][j+1]) - ln(timingdata[op][j])
+            run = ln(xaxis[j+1]) - ln(xaxis[j])
+            conv_rates[op].append(rise/run)                                        
+        loglogdata.write("%s \n %s \n"%(op, str(conv_rates[op])))
+    loglogdata.close()
+
 
 if __name__ == "__main__":
     print "Type of test all,fluid,struc,mesh,fluidstruc,strucmesh,meshfluid, order, \
