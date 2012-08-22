@@ -14,6 +14,7 @@ from cbc.swing.fsinewton.utils.timings import timings
 from cbc.swing.fsinewton.utils.newtonsolveruntimedata import MyNewtonSolverRunTimeData
 import copy
 
+#ffc_opt = {"representation": "quadrature","quadrature_degree": 2}
 class MyNonlinearProblem:
     def __init__(self,f,w,bc,j, J_buff = None,cell_domains = None,
                  interior_facet_domains = None,exterior_facet_domains = None,
@@ -55,9 +56,8 @@ class MyNewtonSolver:
         if self.problem.bc != None:
             [bc.homogenize() for bc in self.problem.bc]
         if reduce_quadrature != 0:
-            self.ffc_opt = {"quadrature_degree": reduce_quadrature, "representation": "quadrature"}
-        else:
-            self.ffc_opt = {}   
+            ffc_opt = {"quadrature_degree": reduce_quadrature, "representation": "quadrature"}
+            
     def plot_current(self):
         plot = Function(self.problem.w.function_space())
         
@@ -172,8 +172,7 @@ class MyNewtonSolver:
                               interior_facet_domains = self.problem.interior_facet_domains,
                               exterior_facet_domains = self.problem.exterior_facet_domains,
                               reset_sparsity=False,
-                              add_values=True,
-                              form_compiler_parameters=self.ffc_opt)
+                              add_values=True)
             timings.stop("Jacobian assembly")
         else:
             #No buffering just assemble
@@ -181,8 +180,7 @@ class MyNewtonSolver:
             self.J = assemble(self.problem.j, tensor = self.J,
                               cell_domains = self.problem.cell_domains,
                               interior_facet_domains = self.problem.interior_facet_domains,
-                              exterior_facet_domains = self.problem.exterior_facet_domains,
-                              form_compiler_parameters=self.ffc_opt)
+                              exterior_facet_domains = self.problem.exterior_facet_domains)
             timings.stop("Jacobian assembly")
         #Give the Jacobian its BC.
         self.apply_ident_bc()
