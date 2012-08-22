@@ -40,7 +40,7 @@ class MyNonlinearProblem:
 class MyNewtonSolver:
     """General purpose Python Newton Solver"""
     def __init__(self,problem, tol = 1.0e-13, itrmax = 30,reuse_jacobian = False,
-                 max_reuse_jacobian = 5, runtimedata = False):
+                 max_reuse_jacobian = 5, runtimedata = "False"):
         self.tol = tol
         self.itrmax = itrmax
         self.itr = 0
@@ -93,7 +93,7 @@ class MyNewtonSolver:
         self.E = np.linalg.norm(self.F.array(),ord = 2)
         info(str((self.itr,self.E)))
 
-        if self.runtimedata:
+        if self.runtimedata != "False":
             #get the L2 norm and max norm for each residual function
             for s in self.subloc.spaces.keys():
                 vec = self.F.array()[self.subloc.spacebegins[s]:self.subloc.spaceends[s]]
