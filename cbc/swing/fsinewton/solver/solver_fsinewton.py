@@ -20,7 +20,6 @@ from cbc.swing.fsinewton.utils.output import FSIPlotter, FSIStorer
 from cbc.swing.parameters import fsinewton_params
 from cbc.swing.fsinewton.utils.runtimedata import FsiRunTimeData
 from cbc.swing.fsinewton.utils.timings import timings
-import jacobianforms_buff as jfor_buff
 
 class FSINewtonSolver(ccom.CBCSolver):
     """A Monolithic Newton Solver for FSI problems"""
@@ -260,20 +259,19 @@ class FSINewtonSolver(ccom.CBCSolver):
             info("Using Automatic Jacobian")
             j_buff = None
             j = derivative(r,self.U1)
-        elif self.params["jacobian"] == "buff":
-            info("Using Buffered Jacobian")
-            j_buff = jfor_buff.fsi_jacobian_buffered(self.IU,self.IUdot,self.IUmid,self.V,
-                                                    self.V,matparams,measures,forces,normals)  
-            j =  jfor.fsi_jacobian(self.IU,self.IUdot,self.IUmid,self.U1list,
-                                    self.Umid,self.Udot,self.V,self.V,
-                                     matparams,measures,forces,normals,self.params)
-        elif self.params["jacobian"] == "manual":
-            j =  jfor.fsi_jacobian(self.IU,self.IUdot,self.IUmid,self.U1list,
-                                    self.Umid,self.Udot,self.V,self.V,
-                                     matparams,measures,forces,normals,self.params)
-            j_buff = None
         else:
-            raise Exception("only auto, buff, and manual are possible jacobian parameters")
+        #Not Automatic so manual calculation
+            j,j_buff =  jfor.fsi_jacobian(self.IU,self.IUdot,self.IUmid,self.U1list,
+                        self.Umid,self.Udot,self.V,self.V,
+                         matparams,measures,forces,normals,self.params)
+            if self.params["jacobian"] == "buff":
+                info("Using Buffered Jacobian")
+            elif self.params["jacobian"] == "manual":
+                info("Using Manual Jacobian")
+                j += j_buff 
+                j_buff = None
+            else:
+                raise Exception("only auto, buff, and manual are possible jacobian parameters")
         return r,j,j_buff
 
     def assemble_J_buff(self):
@@ -282,7 +280,7 @@ class FSINewtonSolver(ccom.CBCSolver):
         timings.startnext("Buffered Jacobian assembly")
         J_buff = assemble(self.j_buff,
                           cell_domains = self.problem.meshfunctions["cell"],
-                          interior_facet_domains = self.problem.meshfunctions["interiorfcet"],
+                          interior_facet_domains = self.problem.meshfunctions["interiorfacet"],
                           exterior_facet_domains = self.problem.meshfunctions["exteriorfacet"]  )
         timings.stop("Buffered Jacobian assembly")
         return J_buff
@@ -381,7 +379,7 @@ class FSINewtonSolver(ccom.CBCSolver):
         #Write a report of the timings
         info(timings.report_str())
         
-        if self.params["runtimedata"]["fsisolver"] != False:
+        if self.params["runtimedata"]["fsisolver"] != "False":
             if  self.params["bigblue"] == False:
                 
                 #Create plots with matplotlibs
@@ -393,7 +391,7 @@ class FSINewtonSolver(ccom.CBCSolver):
                 #cPickle data for later plotting 
                 self.runtimedata.pickle(self.params["runtimedata"]["fsisolver"])
 
-        if self.params["runtimedata"]["newtonsolver"] != False:
+        if self.params["runtimedata"]["newtonsolver"] != "False":
             if self.params["bigblue"] == False: mode = "plot"
             else:mode = "store"
             

@@ -76,6 +76,7 @@ class FsiRunTimeData(object):
 
     def plot_newtonitr(self,filepath):
         """Output the newtoniterations data"""
+        if not os.path.exists(filepath): os.makedirs(filepath)
         newitr = open(filepath + "/newtonitr.txt","w")
         newitr.write("Times %s\n\n Newton Iterations %s"
                      %(str(self.times),str(self.newtonitr)))
@@ -93,7 +94,7 @@ class FsiRunTimeData(object):
 
     def plot_lm(self,filepath):
         """Plot the lagrange multiplier runtime data and write it to file"""
-
+        if not os.path.exists(filepath): os.makedirs(filepath)
         lmdata = open(filepath + "/lmprecision.txt","w")
         lmdata.write("Times %s\n\n Velocity LM %s \n\n Displacement LM %s \n\n"
                      %(str(self.times),str(self.fluidlm),str(self.meshlm)))

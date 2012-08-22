@@ -113,8 +113,8 @@ def default_fsinewtonsolver_parameters():
     p.add("plot",False)
     
     rndata = Parameters("runtimedata")
-    rndata.add("fsisolver",False)
-    rndata.add("newtonsolver",False)
+    rndata.add("fsisolver","False")
+    rndata.add("newtonsolver","False")
     p.add(rndata)
 
     #Time schemes

@@ -132,8 +132,7 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
     j += J_BlockS(ID_S,D_Smid,c_S,mu_S,lmbda_S,rho_S,dxS)
 
     #Bufferable constant terms, including Fluid Domain Block
-    if params["jacobian"] != "buff":
-        j += J_Bufferable(IU_F,ID_Sdot,ID_S,IU_Sdot,IU_S,ID_Fdot,ID_F,IL_U,IL_D,v_F,dotv_S,
+    j_buff = J_Bufferable(IU_F,ID_Sdot,ID_S,IU_Sdot,IU_S,ID_Fdot,ID_F,IL_U,IL_D,v_F,dotv_S,
                      dotc_S,dotc_F,c_F,m_D,m_U,rho_S,mu_FD,lmbda_FD,dxF,dFSI,dxS)
     
     #Interface Block
@@ -144,7 +143,7 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
     else:simplify = None
     j += J_BlockFFD(U_Fmid, U_Fdot,P1_F, D_Fstar, ID_Fstar, D_Fdot, ID_Fdot,
                            v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsDN,dsF, simplify, G_F,F_F)
-    return j
+    return j,j_buff
 
 def dD_FSigmaF(D_F,dD_F,U_F,P_F,mu_F):
     """Derivative of Sigma_F with respect to D_F"""
