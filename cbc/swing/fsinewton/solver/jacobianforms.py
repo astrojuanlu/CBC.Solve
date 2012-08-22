@@ -129,11 +129,9 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
     j = J_BlockF(IU_Fdot,IU_Fmid,IP_F,U_Fmid,D_Fdot,v_F,dotv_F,q_F,D_Fstar,
                    rho_F,mu_F,N_F,dxF,dsDN,dsF,G_F)
     
-    j += J_BlockS(ID_S,D_Smid,c_S,mu_S,lmbda_S,rho_S,dxS)
-
+    j += J_BlockS(ID_Smid,D_Smid,c_S,mu_S,lmbda_S,rho_S,dxS)
     #Bufferable constant terms, including Fluid Domain Block
-    j_buff = J_Bufferable(IU_F,ID_Sdot,ID_S,IU_Sdot,IU_S,ID_Fdot,ID_F,IL_U,IL_D,v_F,dotv_S,
-                     dotc_S,dotc_F,c_F,m_D,m_U,rho_S,mu_FD,lmbda_FD,dxF,dFSI,dxS)
+    j_buff = J_Bufferable(IU_F,ID_Sdot,ID_S, IU_Sdot,IU_S,IU_Smid,ID_Fdot,ID_F,IL_U,IL_D,v_F,dotv_S,dotc_S,dotc_F,c_F,m_D,m_U,rho_S,mu_FD,lmbda_FD,dxF,dFSI,dxS)
     
     #Interface Block
     j += J_FSI(IU_F,IU_Fmid,IP_Fmid,ID_Fmid,U_Fmid,P_Fmid,D_Fmid,c_S,mu_F,N_F,dFSI)
@@ -245,7 +243,7 @@ def J_FSI(dU_F,dU_Fmid,dP_Fmid,dD_Fmid,U_Fmid,P_Fmid,D_Fmid,c_S,mu_F,N_F,dFSIlis
         forms.append(J_FSI)
     return sum(forms)
 
-def J_Bufferable(dU_F,dotdD_S,dD_S, dotdU_S,dU_S,dD_Fdot,dD_F,dL_U,dL_D,v_F,dotv_S,
+def J_Bufferable(dU_F,dotdD_S,dD_S, dotdU_S,dU_S,dU_Smid,dD_Fdot,dD_F,dL_U,dL_D,v_F,dotv_S,
                  dotc_S,dotc_F,c_F,m_D,m_U,rho_S,mu_FD,lmbda_FD,dx_Flist,dFSIlist,dxSlist):
     """Linear forms that only need to be assembled once"""
     #Fluid Domain diagonal block
@@ -263,6 +261,6 @@ def J_Bufferable(dU_F,dotdD_S,dD_S, dotdU_S,dU_S,dD_Fdot,dD_F,dL_U,dL_D,v_F,dotv
         forms.append(J_FSI)
     #Structure Dt terms
     for dxS in dxSlist:
-        J_S = inner(dotc_S, rho_S*dotdU_S)*dxS + inner(dotv_S, dotdD_S - dU_S)*dxS
+        J_S = inner(dotc_S, rho_S*dotdU_S)*dxS + inner(dotv_S, dotdD_S - dU_Smid)*dxS
         forms.append(J_S)
     return sum(forms)

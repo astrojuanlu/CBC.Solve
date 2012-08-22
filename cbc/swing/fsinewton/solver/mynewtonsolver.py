@@ -14,7 +14,8 @@ from cbc.swing.fsinewton.utils.timings import timings
 from cbc.swing.fsinewton.utils.newtonsolveruntimedata import MyNewtonSolverRunTimeData
 import copy
 
-#ffc_opt = {"representation": "quadrature","quadrature_degree": 2}
+            
+ffc_opt = {"quadrature_degree": 2, "representation": "quadrature"}
 class MyNonlinearProblem:
     def __init__(self,f,w,bc,j, J_buff = None,cell_domains = None,
                  interior_facet_domains = None,exterior_facet_domains = None,
@@ -39,7 +40,7 @@ class MyNonlinearProblem:
 class MyNewtonSolver:
     """General purpose Python Newton Solver"""
     def __init__(self,problem, tol = 1.0e-13, itrmax = 30,reuse_jacobian = False,
-                 max_reuse_jacobian = 5, runtimedata = False, reduce_quadrature = False):
+                 max_reuse_jacobian = 5, runtimedata = False):
         self.tol = tol
         self.itrmax = itrmax
         self.itr = 0
@@ -55,9 +56,7 @@ class MyNewtonSolver:
         (self.F,self.J) = (None,None)
         if self.problem.bc != None:
             [bc.homogenize() for bc in self.problem.bc]
-        if reduce_quadrature != 0:
-            ffc_opt = {"quadrature_degree": reduce_quadrature, "representation": "quadrature"}
-            
+                
     def plot_current(self):
         plot = Function(self.problem.w.function_space())
         
@@ -149,9 +148,7 @@ class MyNewtonSolver:
     def apply_ident_bc(self):
         """Use ident_zeros and apply BC"""
         #Deactivate dead DOFS
-        timings.startnext("Ident zeros")
         self.J.ident_zeros()
-        timings.stop("Ident zeros")
         #Apply BC
         if self.problem.bc != None:
             [bc.apply(self.J) for bc in self.problem.bc]
@@ -166,23 +163,25 @@ class MyNewtonSolver:
             timings.startnext("Copy Buffered Jacobian")
             self.J = self.problem.J_buff.copy()
 
-            timings.startnext("Jacobian assembly")
+            timings.startnext("Jacobian Assembly")
             self.J = assemble(self.problem.j, tensor = self.J,
                               cell_domains = self.problem.cell_domains,
                               interior_facet_domains = self.problem.interior_facet_domains,
                               exterior_facet_domains = self.problem.exterior_facet_domains,
                               reset_sparsity=False,
-                              add_values=True)
-            timings.stop("Jacobian assembly")
+                              add_values=True,
+                              form_compiler_parameters=ffc_opt)
+            timings.stop("Jacobian Assembly")
         else:
             #No buffering just assemble
-            timings.startnext("Jacobian assembly")
+            timings.startnext("Jacobian Assembly")
             self.J = assemble(self.problem.j, tensor = self.J,
                               cell_domains = self.problem.cell_domains,
                               interior_facet_domains = self.problem.interior_facet_domains,
-                              exterior_facet_domains = self.problem.exterior_facet_domains)
-            timings.stop("Jacobian assembly")
-        #Give the Jacobian its BC.
+                              exterior_facet_domains = self.problem.exterior_facet_domains,
+                              form_compiler_parameters=ffc_opt)
+            timings.stop("Jacobian Assembly")
+        #Give the Jacobian it's BC.
         self.apply_ident_bc()
         #Create an LU Solver
         # Create linear solver and factorize matrix
@@ -199,6 +198,11 @@ class MyNewtonSolver:
              exterior_facet_domains = self.problem.exterior_facet_domains)
         [bc.apply(self.F) for bc in self.problem.bc]
         timings.stop("Residual assembly")
+        
+##        dofs = self.problem.spaces.restricteddofs["U_S"] + self.problem.spaces.restricteddofs["P_S"]
+##        print self.F.array()[dofs]
+####        print self.F.array()
+##        exit()
 
 class MyNewtonSolverNumpy(MyNewtonSolver):
     """Newton Solver using numpy linear algebra and fsi space restriction"""
