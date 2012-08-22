@@ -67,7 +67,7 @@ class MyNewtonSolver:
         """
         
         #Do the whole solve and return result
-        if self.runtimedata:
+        if self.runtimedata != "False":
             self.subloc = sp.FSISubSpaceLocator(self.fsispace)
             self.runtimedata = MyNewtonSolverRunTimeData(t)
         self.itr = 0
