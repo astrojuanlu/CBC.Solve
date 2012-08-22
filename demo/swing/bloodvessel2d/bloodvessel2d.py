@@ -19,10 +19,11 @@ application_parameters["uniform_timestep"] = True
 application_parameters["initial_timestep"] = 0.5 #Newton Solver
 application_parameters["plot_solution"] = True
 application_parameters["iteration_tolerance"] = 1.0e-6
-application_parameters["FSINewtonSolver_parameters"]["optimization"]["max_reuse_jacobian"] = 40
-application_parameters["FSINewtonSolver_parameters"]["optimization"]["reuse_jacobian"] = False
-application_parameters["FSINewtonSolver_parameters"]["optimization"]["simplify_jacobian"] = False
-application_parameters["FSINewtonSolver_parameters"]["newtonitrmax"] = 180
+application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = False
+application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = True
+application_parameters["FSINewtonSolver"]["runtimedata"]["fsisolver"] = False
+application_parameters["FSINewtonSolver"]["runtimedata"]["newtonsolver"] = False
+application_parameters["FSINewtonSolver"]["newtonitrmax"] = 180
 #Fixpoint parameters
 application_parameters["fluid_solver"] = "taylor-hood"
 

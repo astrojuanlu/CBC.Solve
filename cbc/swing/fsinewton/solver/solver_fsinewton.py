@@ -20,6 +20,7 @@ from cbc.swing.fsinewton.utils.output import FSIPlotter, FSIStorer
 from cbc.swing.parameters import fsinewton_params
 from cbc.swing.fsinewton.utils.runtimedata import FsiRunTimeData
 from cbc.swing.fsinewton.utils.timings import timings
+import jacobianforms_buff as jfor_buff
 
 class FSINewtonSolver(ccom.CBCSolver):
     """A Monolithic Newton Solver for FSI problems"""
@@ -82,7 +83,7 @@ class FSINewtonSolver(ccom.CBCSolver):
         #Define nonlinear problem for newton solver.
         self.nonlinearproblem = \
         MyNonlinearProblem(self.r, self.U1, self.fsibc.bcallI,
-                           self.j,J_buff = None,
+                           self.j,J_buff = self.j_buff,
                            cell_domains = self.problem.meshfunctions["cell"],
                            interior_facet_domains = self.problem.meshfunctions["interiorfacet"],
                            exterior_facet_domains= self.problem.meshfunctions["exteriorfacet"],
@@ -127,6 +128,17 @@ class FSINewtonSolver(ccom.CBCSolver):
         #Prebuild step jacobian if necessary
         if self.params["optimization"]["reuse_jacobian"] == True:
             self.newtonsolver.build_jacobian()
+
+    def assemble_J_buff(self):
+        """Assembles the buffered jacobian"""
+        info("Assembling Buffered Jacobian")
+        timings.startnext("Buffered Jacobian assembly")
+        J_buff = assemble(self.j_buff,
+                          cell_domains = self.problem.cellfunc,
+                          interior_facet_domains = self.problem.fsiboundfunc,
+                          exterior_facet_domains = self.problem.extboundfunc)
+        timings.stop("Buffered Jacobian assembly")
+        return J_buff
 
     def time_step(self):
         """Newton solve for the values of the FSI system at the next time level"""
@@ -243,31 +255,25 @@ class FSINewtonSolver(ccom.CBCSolver):
         r,self.blockresiduals = rf.fsi_residual(self.U1list,self.Umid,self.Udot, 
                                                 self.V,matparams,measures,forces,
                                                 normals,self.params)
-
-
+        #Calculcate Jacobian forms
         if self.params["jacobian"] == "auto":
             info("Using Automatic Jacobian")
+            j_buff = None
             j = derivative(r,self.U1)
+        elif self.params["jacobian"] == "buff":
+            info("Using Buffered Jacobian")
+            j_buff = jfor_buff.fsi_jacobian_buffered(self.IU,self.IUdot,self.IUmid,self.V,
+                                                    self.V,matparams,measures,forces,normals)  
+            j =  jfor.fsi_jacobian(self.IU,self.IUdot,self.IUmid,self.U1list,
+                                    self.Umid,self.Udot,self.V,self.V,
+                                     matparams,measures,forces,normals,self.params)
+        elif self.params["jacobian"] == "manual":
+            j =  jfor.fsi_jacobian(self.IU,self.IUdot,self.IUmid,self.U1list,
+                                    self.Umid,self.Udot,self.V,self.V,
+                                     matparams,measures,forces,normals,self.params)
             j_buff = None
         else:
-##            j_buff = jfor_buff.fsi_jacobian_buffered(self.IU,self.IUdot,self.IUmid,self.V,
-##                                                     self.V,matparams,measures,forces,normals)
-##
-##            j_step = jfor_step.fsi_jacobian_step(self.IU,self.IUdot,self.IUmid,self.U1list,
-##                                            self.Umid,self.Udot,self.V,self.V,matparams,
-##                                            measures,forces,normals)
-            j_buff = None
-            if self.params["jacobian"] == "buff":
-                info("Using Buffered Jacobian")
-                raise Exception("Buffering of Jacobian not yet implemented")
-                j = j_step
-            elif self.params["jacobian"] == "manual":
-                info("Using Manual Jacobian")
-                j =  jfor.fsi_jacobian(self.IU,self.IUdot,self.IUmid,self.U1list,
-                                        self.Umid,self.Udot,self.V,self.V,
-                                        matparams,measures,forces,normals,self.params)
-            else:
-                raise Exception("only auto, buff, and manual are possible jacobian parameters")
+            raise Exception("only auto, buff, and manual are possible jacobian parameters")
         return r,j,j_buff
 
     def assemble_J_buff(self):
@@ -275,9 +281,9 @@ class FSINewtonSolver(ccom.CBCSolver):
         info("Assembling Buffered Jacobian")
         timings.startnext("Buffered Jacobian assembly")
         J_buff = assemble(self.j_buff,
-                          cell_domains = self.problem.cellfunc,
-                          interior_facet_domains = self.problem.fsiboundfunc,
-                          exterior_facet_domains = self.problem.extboundfunc  )
+                          cell_domains = self.problem.meshfunctions["cell"],
+                          interior_facet_domains = self.problem.meshfunctions["interiorfcet"],
+                          exterior_facet_domains = self.problem.meshfunctions["exteriorfacet"]  )
         timings.stop("Buffered Jacobian assembly")
         return J_buff
 

@@ -56,7 +56,7 @@ def default_parameters():
 
 #These are relevant if p["primal_solver"] = Newton
 def default_fsinewtonsolver_parameters():
-    p = Parameters("FSINewtonSolver_parameters")
+    p = Parameters("FSINewtonSolver")
 
     #Fluid velocity
     vf = Parameters("V_F")
@@ -126,11 +126,11 @@ def default_fsinewtonsolver_parameters():
     opt = Parameters("optimization")
     opt.add("reuse_jacobian",True)
     opt.add("simplify_jacobian",True)
-    opt.add("max_reuse_jacobian",20)
+    opt.add("max_reuse_jacobian",30)
     opt.add("reduce_quadrature",0) #0 means no reduction, i >0 means reduce to order i.
     p.add(opt)
     
-    p.add("jacobian","manual") #or "manual"
+    p.add("jacobian","manual") # "manual", "auto"
     p.add("newtonitrmax",100)
     
     ##################################

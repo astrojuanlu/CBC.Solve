@@ -21,8 +21,8 @@ ana.application_parameters["solve_primal"] = True
 ana.application_parameters["solve_dual"] = False
 ana.application_parameters["estimate_error"] = False
 ana.application_parameters["plot_solution"] = True
-ana.application_parameters["FSINewtonSolver_parameters"]["optimization"]["reuse_jacobian"] = False
-ana.application_parameters["FSINewtonSolver_parameters"]["optimization"]["simplify_jacobian"] = False
+ana.application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = False
+ana.application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = True
 
 
 #Exclude FSI Nodes
@@ -93,13 +93,14 @@ class NewtonAnalytic(ana.Analytic):
             f.C = ana.C
             f.t = 0.0
             
-    def refine(self):
+    def refine(self,timerefine = True):
         """Refine mesh and time step"""
         info_blue("Refining mesh and time step")
         #Space refinement
         ana.ref += 1
-        #Time refinement
-        #self.inistep *= 0.5
+        if timerefine:
+            #Time refinement
+            self.inistep *= 0.5
 
     def update(self, t0, t1, dt):
         ana.Analytic.update(self,t0,t1,dt)

@@ -52,16 +52,16 @@ class TestJacobians(object):
             blocks= {}
 
             #Check the jacobians and residuals pairwise
-            pairs = [  ("manual","auto")]
-##                        ("auto","buff"),
-##                        ("buff","manual") ]
+            pairs = [("buff","manual")]
+##                   ("auto","buff"),
+##                   ("manual","auto")]
 
             blocknames = ["J_FF","J_FS","J_FM","J_SF","J_SS","J_SM","J_MF","J_MS","J_MM"]
 
             t = "buff"
             fsinewton_params["solve"] = False
             fsisolvers[t] = sfsi.FSINewtonSolver(prob,fsinewton_params)
-            fsisolvers[t].solve()
+            fsisolvers[t].prepare_solve()
             newtonsolvers[t] = fsisolvers[t].newtonsolver
             newtonsolvers[t].build_residual()
             newtonsolvers[t].build_jacobian()
@@ -73,7 +73,7 @@ class TestJacobians(object):
                     fsinewton_params["jacobian"] = t
                     #Create a fresh solver
                     fsisolvers[t] = sfsi.FSINewtonSolver(prob,fsinewton_params)
-                    fsisolvers[t].solve()
+                    fsisolvers[t].prepare_solve()
                     newtonsolvers[t] = fsisolvers[t].newtonsolver
                     newtonsolvers[t].build_residual()
                     newtonsolvers[t].build_jacobian()

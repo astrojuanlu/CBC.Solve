@@ -95,7 +95,7 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
     dsF = measures["fluidneumannbound"]
     dsS = measures["strucbound"]
     dFSI = measures["FSI_bound"]
-    dsDN = measures["donothingbound"] #do nothing fluid boundary
+    dsDN = measures["donothingbound"] 
 
     #Unpack Normals
     N_F = normals["N_F"]
@@ -126,26 +126,24 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
                           current value is %s"%solver_params["fluid_domain_time_discretization"])
 
     #Diagonal Blocks
-    j_F = J_BlockF(IU_Fdot,IU_Fmid,IP_F,U_Fmid,D_Fdot,v_F,dotv_F,q_F,D_Fstar,
+    j = J_BlockF(IU_Fdot,IU_Fmid,IP_F,U_Fmid,D_Fdot,v_F,dotv_F,q_F,D_Fstar,
                    rho_F,mu_F,N_F,dxF,dsDN,dsF,G_F)
     
-    j_S = J_BlockS(ID_Sdot,IU_Sdot,ID_Smid,IU_Smid,D_Smid,U_Smid,c_S,dotc_S,
-                   v_S,dotv_S,mu_S,lmbda_S,rho_S,dxS)
-    
-    j_FD = J_BlockFD(ID_Fdot,ID_Fmid,c_F,c_F,mu_FD,lmbda_FD,dxF)
+    j += J_BlockS(ID_S,D_Smid,c_S,mu_S,lmbda_S,rho_S,dxS)
+
+    #Bufferable constant terms, including Fluid Domain Block
+    if params["jacobian"] != "buff":
+        j += J_Bufferable(IU_F,ID_Sdot,ID_S,IU_Sdot,IU_S,ID_Fdot,ID_F,IL_U,IL_D,v_F,dotv_S,
+                     dotc_S,dotc_F,c_F,m_D,m_U,rho_S,mu_FD,lmbda_FD,dxF,dFSI,dxS)
     
     #Interface Block
-    j_FSI = J_FSI(IU_F,IU_Fmid,IP_Fmid,ID_F,ID_Fmid,ID_S,IU_S,IL_D,IL_U,U_Fmid,P_Fmid,
-                  D_Fmid,v_F,c_S,c_F,m_D,m_U,mu_F,N_F,dFSI)
+    j += J_FSI(IU_F,IU_Fmid,IP_Fmid,ID_Fmid,U_Fmid,P_Fmid,D_Fmid,c_S,mu_F,N_F,dFSI)
 
     #Fluid-Fluid Domain Block
     if params["optimization"]["simplify_jacobian"] == True: simplify = dFSI
     else:simplify = None
-    j_FFD = J_BlockFFD(U_Fmid, U_Fdot,P1_F, D_Fstar, ID_Fstar, D_Fdot, ID_Fdot,
+    j += J_BlockFFD(U_Fmid, U_Fdot,P1_F, D_Fstar, ID_Fstar, D_Fdot, ID_Fdot,
                            v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsDN,dsF, simplify, G_F,F_F)
-
-    j = j_F + j_S + j_FD + j_FFD + j_FSI
-
     return j
 
 def dD_FSigmaF(D_F,dD_F,U_F,P_F,mu_F):
@@ -225,7 +223,7 @@ def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F,
         forms.append(DN_FM)
     return sum(forms)
 
-def J_BlockS(dotdD_S, dotdU_S, dD_S, dU_S, D_S, U_S, c_S,dotc_S, v_S, dotv_S, mu_S, lmbda_S, rho_S, dxSlist): 
+def J_BlockS(dD_S, D_S, c_S, mu_S, lmbda_S, rho_S, dxSlist): 
     "Structure diagonal block"
     Id = I(D_S)
     F_S = grad(D_S) + I(D_S)                 #I + grad U_s
@@ -235,34 +233,37 @@ def J_BlockS(dotdD_S, dotdU_S, dD_S, dU_S, D_S, U_S, c_S,dotc_S, v_S, dotv_S, mu
 
     forms = []
     for dxS in dxSlist:
-        J_S = inner(dotc_S, rho_S*dotdU_S)*dxS + inner(grad(c_S), dUsSigma_S)*dxS \
-               + inner(dotv_S, dotdD_S - dU_S)*dxS
-        forms.append(J_S)
+        forms.append(inner(grad(c_S), dUsSigma_S)*dxS)
     return sum(forms)
 
-def J_BlockFD(dD_Fdot,dD_F,c_F,dotc_F,mu_FD,lmbda_FD,dx_Flist):
-    """Fluid Domain diagonal block"""
+def J_FSI(dU_F,dU_Fmid,dP_Fmid,dD_Fmid,U_Fmid,P_Fmid,D_Fmid,c_S,mu_F,N_F,dFSIlist):
+    """Derivative of the Interface Residual"""
+    forms = []
+    Sigma_F = PiolaTransform(_Sigma_F(dU_Fmid, dP_Fmid, D_Fmid, mu_F), D_Fmid)
+    for dFSI in dFSIlist:   
+        J_FSI = -(inner(c_S('-'),dot(Sigma_F('+'),N_F('-'))))*dFSI       
+        J_FSI += -inner(c_S('-'),dot(dD_FSigmaF(D_Fmid,dD_Fmid,U_Fmid,P_Fmid,mu_F)('+'),N_F('-')))*dFSI
+        forms.append(J_FSI)
+    return sum(forms)
+
+def J_Bufferable(dU_F,dotdD_S,dD_S, dotdU_S,dU_S,dD_Fdot,dD_F,dL_U,dL_D,v_F,dotv_S,
+                 dotc_S,dotc_F,c_F,m_D,m_U,rho_S,mu_FD,lmbda_FD,dx_Flist,dFSIlist,dxSlist):
+    """Linear forms that only need to be assembled once"""
+    #Fluid Domain diagonal block
     forms = []
     Sigma_FD = _Sigma_M(dD_F, mu_FD, lmbda_FD)
     for dx_F in dx_Flist:
         J_FD = inner(dotc_F, dD_Fdot)*dx_F + inner(sym(grad(c_F)), Sigma_FD)*dx_F
         forms.append(J_FD)
-    return sum(forms)
-
-def J_FSI(dU_F,dU_Fmid,dP_Fmid,dD_F,dD_Fmid,dD_S,dU_S,dL_D,dL_U,U_Fmid,P_Fmid,D_Fmid,
-          v_F,c_S,c_F,m_D,m_U,mu_F,N_F,dFSIlist):
-    """Derivative of the Interface Residual"""
-    forms = []
+    #Lagrange Multiplier conditions
     for dFSI in dFSIlist:
         J_FSI = inner(m_D, dD_F - dD_S)('+')*dFSI 
         J_FSI += inner(c_F, dL_D)('+')*dFSI #Lagrange Multiplier
-        
-        J_FSI += inner(m_U,dU_F - dU_S)('+')*dFSI
-        J_FSI += inner(v_F,dL_U)('+')*dFSI #Lagrange Multiplier
-
-        Sigma_F = PiolaTransform(_Sigma_F(dU_Fmid, dP_Fmid, D_Fmid, mu_F), D_Fmid)
-        J_FSI += -(inner(c_S('-'),dot(Sigma_F('+'),N_F('-'))))*dFSI
-        
-        J_FSI += -inner(c_S('-'),dot(dD_FSigmaF(D_Fmid,dD_Fmid,U_Fmid,P_Fmid,mu_F)('+'),N_F('-')))*dFSI
+        J_FSI += inner(m_U, dU_F - dU_S)('+')*dFSI
+        J_FSI += inner(v_F, dL_U)('+')*dFSI #Lagrange Multiplier
         forms.append(J_FSI)
+    #Structure Dt terms
+    for dxS in dxSlist:
+        J_S = inner(dotc_S, rho_S*dotdU_S)*dxS + inner(dotv_S, dotdD_S - dU_S)*dxS
+        forms.append(J_S)
     return sum(forms)

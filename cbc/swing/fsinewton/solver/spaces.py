@@ -18,7 +18,7 @@ class FSISpaces(object):
         self.params = params
 
         self.fsispace,(self.V_F,self.Q_F,self.M_U,self.C_S,self.V_S,self.C_F,self.M_D), \
-        (self.V_FC,self.Q_FC,self.M_UC,self.C_SC,self.V_SC,self.C_FC,self.M_DC) = self.__create_fsi_functionspace()
+        (self.V_FC,self.Q_FC,self.M_UC,self.C_SC,self.V_SC,self.C_FC,self.M_DC) = self.__create_fsi_functionspace(problem.singlemesh)
         self.subloc = FSISubSpaceLocator(self.fsispace)
         #Dofs that lie on the fsi boundary
         self.fsidofs = {"U_F":self.__fsi_dofs(self.V_F),
@@ -34,41 +34,71 @@ class FSISpaces(object):
         doftionary = mf.build_doftionary(self.fsispace)
         self.fsimeshcoord = [doftionary[k] for k in self.fsidofs["P_F"]]
 
-##
-##        #Restricted dof's
-##        cellfunc = self.problem.meshfunctions["cell"]
-##        strucdomains = self.problem.domainnums["structure"]
-##        
-##        self.restricteddofs = {"U_F":self.__removedofs("U_F",cellfunc,strucdomains),
-##                               "P_F":self.__removedofs("P_F",cellfunc,strucdomains),
-##                               "L_U":self.fsidofs["L_U"],
-##                               "D_S":self.__restrict(self.C_S,cellfunc,strucdomains),
-##                               "U_S":self.__restrict(self.V_S,cellfunc,strucdomains),
-##                               "D_F":self.__removedofs("D_F",cellfunc,strucdomains),
-##                               "L_D":self.fsidofs["L_D"]}
-##
-##        self.usefuldofs = []
-##        
+        #Restricted dof's
+        cellfunc = self.problem.meshfunctions["cell"]
+        strucdomains = self.problem.domainnums["structure"]
+        fluiddomains = self.problem.domainnums["fluid"]
+        
+        self.restricteddofs = {"U_F":self.__removedofs("U_F",cellfunc,strucdomains),
+                               "P_F":self.__removedofs("P_F",cellfunc,strucdomains),
+                               "L_U":self.fsidofs["L_U"],
+                               "D_S":self.__restrict(self.C_S,cellfunc,strucdomains),
+                               "U_S":self.__restrict(self.V_S,cellfunc,strucdomains),
+                               "D_F":self.__removedofs("D_F",cellfunc,strucdomains),
+                               "L_D":self.fsidofs["L_D"]}
+        self.usefuldofs = []
+        
 ##        for space in ["U_F","P_F","D_F"]:
 ##            self.restricteddofs[space] += self.fsidofs[space]
-##            
-##        for space in self.restricteddofs.keys():
-##            self.usefuldofs += self.restricteddofs[space]
-##        
-##        assert len(self.usefuldofs) == len(set(self.usefuldofs)),\
-##               "error in usefuldof creation,some dofs are double counted" 
         
+        for space in self.restricteddofs.keys():
+            self.usefuldofs += self.restricteddofs[space]
+        
+        assert len(self.usefuldofs) == len(set(self.usefuldofs)),\
+               "error in usefuldof creation,some dofs are double counted"
         #Get a subspace locator object
         self.subloc = FSISubSpaceLocator(self.fsispace)
+        #Report on the composition
+        self.system_composition_report(self.fsidofs)
 
+    def system_composition_report(self,fsidofs):
+        """Report on the number and type of DOF's """
+        
+        #Fluid dimension
+        blah, blah,(V_F,Q_F,M_U,C_S,V_S,C_F,M_D)=  self.__create_fsi_functionspace(self.problem.fluidmesh)
+        fluiddofcount = V_F.dim() + Q_F.dim() + C_F.dim() - len(fsidofs["U_F"]) - len(fsidofs["P_F"]) - len(fsidofs["D_F"])
+
+        #Struc dimension
+        blah, blah,(V_F,Q_F,M_U,C_S,V_S,C_F,M_D)=  self.__create_fsi_functionspace(self.problem.strucmesh)
+        structuredofcount = V_S.dim() + C_F.dim() - len(fsidofs["U_S"]) - len(fsidofs["D_S"])
+
+        #Get the number of FSI dofs
+        fsidofcount= len(fsidofs["fsispace"])
+
+        #Add the missing lagrange multiplier Dofs for a DG0 formulation
+        if self.params["M_D"]["deg"] == 0:
+            if self.params["Q_F"]["deg"] != 1:
+                warning("Pressure space degree must equal 1 to get the correct system composition")
+            fsidofcount += 2*(len(fsidofs["P_F"]) - 1)
+        if self.params["M_U"]["deg"] == 0:
+            if self.params["Q_F"]["deg"] != 1:
+                warning("Pressure space degree must equal 1 to get the correct system composition")
+            fsidofcount += 2*(len(fsidofs["P_F"]) - 1)
+
+        doftotal = float(fluiddofcount + structuredofcount + fsidofcount)
+            
+        info_blue("FSI System Composition")
+        info("Total dofs = %i"%doftotal)
+        info("Fluid Struc Interface")
+        info("%i \t %i \t %i"%(fluiddofcount,structuredofcount,fsidofcount))
+        info("%f %% \t %f %% \t %f %%"%(fluiddofcount*100.0/doftotal,structuredofcount*100.0/doftotal, \
+                                        fsidofcount*100.0/doftotal))
+        
     def unpack_function(self,f):
         """
         unpack a function f in FSI space into a list of subfunctions using components []
         in order to avoid the problems associated with Function.split()
         """
-##        [U_F,P_F,L_U,D_S,U_S,D_F,L_D] = [as_vector((f[0],f[1])),f[2], as_vector((f[3],f[4])),as_vector((f[5],f[6])),
-##                                      as_vector((f[7],f[8])),as_vector((f[9],f[10])),as_vector((f[11],f[12]))]
-##        return [U_F,P_F,L_U,D_S,U_S,D_F,L_D]
         return split(f)
         
     
@@ -97,9 +127,8 @@ class FSISpaces(object):
             dofs.remove(d)
         return dofs
         
-    def __create_fsi_functionspace(self):
+    def __create_fsi_functionspace(self,mesh):
         """Return the mixed function space of all variables"""
-        mesh = self.problem.singlemesh
         d = mesh.topology().dim()   
 
         V_F = VectorFunctionSpace(mesh, self.params["V_F"]["elem"], self.params["V_F"]["deg"])
