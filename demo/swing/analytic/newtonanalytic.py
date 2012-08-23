@@ -23,7 +23,8 @@ ana.application_parameters["estimate_error"] = False
 ana.application_parameters["plot_solution"] = False
 ana.application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = False
 ana.application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = False
-ana.application_parameters["FSINewtonSolver"]["jacobian"] = "buff"
+ana.application_parameters["FSINewtonSolver"]["optimization"]["reduce_quadrature"] = 2
+ana.application_parameters["FSINewtonSolver"]["jacobian"] = "manual"
 
 #Exclude FSI Nodes
 influid = "x[0] < 1.0 - DOLFIN_EPS"
@@ -246,6 +247,6 @@ class NewtonAnalyticMeshFluid(SetStruc,NewtonAnalytic):
         NewtonAnalytic.__init__(self,num_refine,bctype = bctype,endtime = endtime)
     
 if __name__ == "__main__":
-    problem = NewtonAnalytic()
+    problem = NewtonAnalytic(num_refine = 2)
     goal = problem.solve(ana.application_parameters)
     interactive()

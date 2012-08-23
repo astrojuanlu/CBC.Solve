@@ -137,10 +137,12 @@ def fsi_jacobian(Iulist,Iudotlist,Iumidlist,U1list,Umidlist,Udotlist,Vlist,
     j += J_FSI(IU_F,IU_Fmid,IP_Fmid,ID_Fmid,U_Fmid,P_Fmid,D_Fmid,c_S,mu_F,N_F,dFSI)
 
     #Fluid-Fluid Domain Block
-    if params["optimization"]["simplify_jacobian"] == True: simplify = dFSI
+    if params["optimization"]["simplify_jacobian"] == True:
+        simplify = dFSI
+        info("Using Simplified Jacobian")
     else:simplify = None
     j += J_BlockFFD(U_Fmid, U_Fdot,P1_F, D_Fstar, ID_Fstar, D_Fdot, ID_Fdot,
-                           v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsDN,dsF, simplify, G_F,F_F)
+                           v_F, dotv_F, q_F, rho_F, mu_F,N_F, dxF,dsDN,simplify,dsF, G_F,F_F)
     return j,j_buff
 
 def dD_FSigmaF(D_F,dD_F,U_F,P_F,mu_F):
@@ -187,7 +189,6 @@ def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F,
         if F_F is not None and F_F != []:
             B_F = -inner(v_F,J(D_F)*tr(dot(grad(dD_F),inv(F(D_F))))*F_F)*dxF
             forms.append(B_F)
-        
     #Simplify the remaining terms if an FSI interface measure provided    
     if dFSIlist is not None:
         dxFlist = dFSIlist
@@ -207,6 +208,7 @@ def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F,
         J_FM +=  inner(q, div(J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(inv(F(D_F)), U)))*dxF
         J_FM += -inner(q, div(J(D_F)*dot(dot(inv(F(D_F)), grad(dD_F)), dot(inv(F(D_F)), U))))*dxF
         forms.append(J_FM)
+    return sum(forms)
 
     ##Add the terms for the Do nothing boundary if necessary
     for dsDN in dsDNlist:

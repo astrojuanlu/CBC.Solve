@@ -14,10 +14,9 @@ from cbc.swing.fsinewton.utils.timings import timings
 from cbc.swing.fsinewton.utils.newtonsolveruntimedata import MyNewtonSolverRunTimeData
 import copy
 
-#ffc_opt = {"quadrature_degree": 2, "representation": "quadrature"}
 class MyNonlinearProblem:
-    def __init__(self,f,w,bc,j, J_buff = None,cell_domains = None,
-                 interior_facet_domains = None,exterior_facet_domains = None,
+    def __init__(self,f,w,bc,j, J_buff = None, cell_domains = None,
+                 interior_facet_domains = None, exterior_facet_domains = None,
                  spaces = None):
         """ F = Nonlinear form 
             w = Initial guess function THIS SHOULD MATCH DIRICHLET BC exactly
@@ -55,8 +54,10 @@ class MyNewtonSolver:
         (self.F,self.J) = (None,None)
         if self.problem.bc != None:
             [bc.homogenize() for bc in self.problem.bc]
-        self.ffc_opt = {"quadrature_degree": reduce_quadrature, "representation": "quadrature"}
-            
+        self.ffc_opt = {"representation": "quadrature"}
+        if reduce_quadrature != 0:
+            self.ffc_opt["quadrature_degree"] = reduce_quadrature
+                
     def plot_current(self):
         plot = Function(self.problem.w.function_space())
         
@@ -67,7 +68,7 @@ class MyNewtonSolver:
         """
         
         #Do the whole solve and return result
-        if self.runtimedata != "False":
+        if self.runtimedata:
             self.subloc = sp.FSISubSpaceLocator(self.fsispace)
             self.runtimedata = MyNewtonSolverRunTimeData(t)
         self.itr = 0
@@ -104,7 +105,7 @@ class MyNewtonSolver:
         if self.E < tol:
             return
 
-        #Rebuild jacobian if neccessary (for example as a blow up starts)
+        #Rebuild jacobian if neccessary (for example if a blow up starts)
         if self.reuse_jacobian == False or \
         self.jacobian_itr == self.max_reuse_jacobian or\
         self.E > self.lastresidual:
@@ -155,47 +156,31 @@ class MyNewtonSolver:
     
     def build_jacobian(self):
         """Assemble Jacobian"""
+        timings.startnext("Copying buffered jacobian")
         info("Assembling Jacobian")
+        
         #If buffered matrix add the variable part to the buffered part.
         if self.problem.J_buff is not None:
             timings.startnext("Copy Buffered Jacobian")
-            self.Jcopy = self.problem.J_buff.copy()
-            timings.startnext("Jacobian Assembly")
+            self.J = self.problem.J_buff.copy()
 
-            if self.ffc_opt["quadrature_degree"] == 0:
-                #assemble with out passing ffc_opt as it can wreak the jacobian unit test.
-                self.J = assemble(self.problem.j, tensor = self.Jcopy,
-                                  cell_domains = self.problem.cell_domains,
-                                  interior_facet_domains = self.problem.interior_facet_domains,
-                                  exterior_facet_domains = self.problem.exterior_facet_domains,
-                                  reset_sparsity=False,
-                                  add_values=True)
-            else:
-                exit()
-                self.J = assemble(self.problem.j, tensor = self.Jcopy,
-                                  cell_domains = self.problem.cell_domains,
-                                  interior_facet_domains = self.problem.interior_facet_domains,
-                                  exterior_facet_domains = self.problem.exterior_facet_domains,
-                                  reset_sparsity=False,
-                                  add_values=True,
-                                  ffc_opt = self.ffc_opt) 
+            timings.startnext("Jacobian Assembly")
+            self.J = assemble(self.problem.j, tensor = self.J,
+                              cell_domains = self.problem.cell_domains,
+                              interior_facet_domains = self.problem.interior_facet_domains,
+                              exterior_facet_domains = self.problem.exterior_facet_domains,
+                              reset_sparsity = False,
+                              add_values = True,
+                              form_compiler_parameters = self.ffc_opt)
             timings.stop("Jacobian Assembly")
         else:
             #No buffering just assemble
             timings.startnext("Jacobian Assembly")
-            if self.ffc_opt["quadrature_degree"] == 0:
-                #assemble with out passing ffc_opt as it can wreak the jacobian unit test.
-                self.J = assemble(self.problem.j, tensor = self.J,
-                                  cell_domains = self.problem.cell_domains,
-                                  interior_facet_domains = self.problem.interior_facet_domains,
-                                  exterior_facet_domains = self.problem.exterior_facet_domains)
-            else:
-                exit()
-                self.J = assemble(self.problem.j, tensor = self.J,
-                                  cell_domains = self.problem.cell_domains,
-                                  interior_facet_domains = self.problem.interior_facet_domains,
-                                  exterior_facet_domains = self.problem.exterior_facet_domains,
-                                  ffc_opt = self.ffc_opt)                
+            self.J = assemble(self.problem.j, tensor = self.J,
+                              cell_domains = self.problem.cell_domains,
+                              interior_facet_domains = self.problem.interior_facet_domains,
+                              exterior_facet_domains = self.problem.exterior_facet_domains,
+                              form_compiler_parameters = self.ffc_opt)
             timings.stop("Jacobian Assembly")
         #Give the Jacobian it's BC.
         self.apply_ident_bc()
