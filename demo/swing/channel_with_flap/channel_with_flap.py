@@ -29,7 +29,9 @@ if test:
     application_parameters["fluid_solver"] = "ipcs" #"taylor-hood"
      
 application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = False
-application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = True
+application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = False
+application_parameters["FSINewtonSolver"]["jacobian"]= "buff"
+
     
 # Constants related to the geometry of the problem
 channel_length  = 4.0

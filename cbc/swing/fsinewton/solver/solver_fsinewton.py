@@ -94,8 +94,8 @@ class FSINewtonSolver(ccom.CBCSolver):
                                            reuse_jacobian = self.params["optimization"]["reuse_jacobian"],
                                            max_reuse_jacobian = self.params["optimization"]["max_reuse_jacobian"],
                                            runtimedata = self.params["runtimedata"]["newtonsolver"],
-                                           tol = self.params["newtonsoltol"])
-                                           #reduce_quadrature =  self.params["optimization"]["reduce_quadrature"] )
+                                           tol = self.params["newtonsoltol"],
+                                           reduce_quadrature =  self.params["optimization"]["reduce_quadrature"] )
          
         info_blue("Newton Solver Tolerance is %s"%self.newtonsolver.tol)
         self.prebuild_jacobians()

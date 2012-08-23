@@ -20,10 +20,10 @@ ana.application_parameters["save_solution"] = True
 ana.application_parameters["solve_primal"] = True
 ana.application_parameters["solve_dual"] = False
 ana.application_parameters["estimate_error"] = False
-ana.application_parameters["plot_solution"] = True
+ana.application_parameters["plot_solution"] = False
 ana.application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = False
-ana.application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = True
-
+ana.application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = False
+ana.application_parameters["FSINewtonSolver"]["jacobian"] = "buff"
 
 #Exclude FSI Nodes
 influid = "x[0] < 1.0 - DOLFIN_EPS"
