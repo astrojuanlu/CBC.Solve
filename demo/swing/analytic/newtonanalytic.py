@@ -102,7 +102,8 @@ class NewtonAnalytic(ana.Analytic):
         #Space refinement
         ana.ref += 1
 ##        #Time refinement
-        ana.application_parameters["initial_timestep"] *= 0.5
+        self.inistep *= 0.5
+##        ana.application_parameters["initial_timestep"] *= 0.5
 
     def update(self, t0, t1, dt):
         ana.Analytic.update(self,t0,t1,dt)
@@ -248,8 +249,8 @@ class NewtonAnalyticMeshFluid(SetStruc,NewtonAnalytic):
         NewtonAnalytic.__init__(self,num_refine,bctype = bctype,endtime = endtime)
     
 if __name__ == "__main__":
-    problem = NewtonAnalytic(num_refine = 0)
-    solver = sfsi.FSINewtonSolver(problem,params = ana.application_parameters["FSINewtonSolver"].to_dict())
-    solver.solve()
-##    goal = problem.solve(ana.application_parameters)
+    problem = NewtonAnalytic(num_refine = 2)
+##    solver = sfsi.FSINewtonSolver(problem,params = ana.application_parameters["FSINewtonSolver"].to_dict())
+##    solver.solve()
+    goal = problem.solve(ana.application_parameters)
     interactive()
