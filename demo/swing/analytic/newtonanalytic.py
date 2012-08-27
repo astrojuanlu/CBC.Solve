@@ -101,7 +101,7 @@ class NewtonAnalytic(ana.Analytic):
         info_blue("Refining mesh and time step")
         #Space refinement
         ana.ref += 1
-        #Time refinement
+##        #Time refinement
         ana.application_parameters["initial_timestep"] *= 0.5
 
     def update(self, t0, t1, dt):
