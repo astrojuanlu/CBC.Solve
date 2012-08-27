@@ -138,6 +138,7 @@ def solve_primal(problem, parameters):
 
         if parameters["primal_solver"] == "Newton":
             #Newtonsolver has it's own timings
+            assert save_solution,"Parameter save_solution must be true to use the Newton Solver"
             U_S1,U_S0,P_S1,increment,numiter = newton_solve(F,S,M,U_S0,dt,parameters,itertol,problem,fsinewtonsolver)
         elif parameters["primal_solver"] == "fixpoint":
             timings.startnext("FixpointSolve")
