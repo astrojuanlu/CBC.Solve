@@ -22,7 +22,7 @@ ana.application_parameters["solve_dual"] = False
 ana.application_parameters["estimate_error"] = False
 ana.application_parameters["plot_solution"] = True
 ana.application_parameters["FSINewtonSolver"]["solve"] = True
-ana.application_parameters["FSINewtonSolver"]["plot"] = True
+ana.application_parameters["FSINewtonSolver"]["plot"] = False
 ana.application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = True
 ana.application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = False
 ana.application_parameters["FSINewtonSolver"]["optimization"]["reduce_quadrature"] = 0
@@ -64,7 +64,6 @@ class NewtonAnalytic(ana.Analytic):
 
         #Default space and time refinement levels
         ana.ref = 0
-        self.inistep = ana.application_parameters["initial_timestep"]
 
         #Additional refinement
         for i in range(num_refine):
@@ -73,6 +72,8 @@ class NewtonAnalytic(ana.Analytic):
         #Initialize the analytic problem first
         ana.Analytic.__init__(self)
 
+        self.inistep = 0.02/(2**ana.ref)
+        ana.application_parameters["initial_timestep"] = self.inistep
         #Save Data
         self.endtime = endtime
         self.singlemesh = self._original_mesh
@@ -102,7 +103,6 @@ class NewtonAnalytic(ana.Analytic):
         #Space refinement
         ana.ref += 1
 ##        #Time refinement
-        self.inistep *= 0.5
 ##        ana.application_parameters["initial_timestep"] *= 0.5
 
     def update(self, t0, t1, dt):
@@ -111,11 +111,11 @@ class NewtonAnalytic(ana.Analytic):
         
         self.F_F.t = t
         self.G_F.t = t
-        self.G_F_FSI.t = t
 
         self.U_F.t = t1
         self.P_F.t = t1
         self.U_S.t = t1
+        self.G_F_FSI.t = t1
         
     def initial_step(self):
         return self.inistep
