@@ -16,7 +16,7 @@ import cbc.swing.fsinewton.solver.solver_fsinewton as sfsi
 import cbc.swing.fsinewton.utils.misc_func as mf
 
 ana.application_parameters["primal_solver"] = "Newton"
-ana.application_parameters["save_solution"] = False
+ana.application_parameters["save_solution"] = True
 ana.application_parameters["solve_primal"] = True
 ana.application_parameters["solve_dual"] = False
 ana.application_parameters["estimate_error"] = False
@@ -134,12 +134,12 @@ class NewtonAnalytic(ana.Analytic):
     def fluid_pressure_initial_condition(self):
         return self.P_F
 
-##    def fluid_velocity_neumann_boundaries(self):
-##        return FluidNeumann()
-##    
-##    def fluid_velocity_neumann_values(self):
-##        return self.G_F
-##    
+    def fluid_velocity_neumann_boundaries(self):
+        return FluidNeumann()
+    
+    def fluid_velocity_neumann_values(self):
+        return self.G_F
+   
     def fluid_body_force(self):
         return self.F_F
 
@@ -148,10 +148,10 @@ class NewtonAnalytic(ana.Analytic):
     ####################################################
 
     def fluid_velocity_dirichlet_values(self):
-        return [self.U_F,self.U_F]
+        return [self.U_F]
     
     def fluid_velocity_dirichlet_boundaries(self):
-            return [ana.noslip,FluidNeumann()]
+            return [ana.noslip]
 
     def structure_dirichlet_boundaries(self):
         if self.bctype == "dirichlet":
@@ -248,7 +248,7 @@ class NewtonAnalyticMeshFluid(SetStruc,NewtonAnalytic):
         NewtonAnalytic.__init__(self,num_refine,bctype = bctype,endtime = endtime)
     
 if __name__ == "__main__":
-    problem = NewtonAnalytic(num_refine = 1)
+    problem = NewtonAnalytic(num_refine = 0)
     solver = sfsi.FSINewtonSolver(problem,params = ana.application_parameters["FSINewtonSolver"].to_dict())
     solver.solve()
 ##    goal = problem.solve(ana.application_parameters)
