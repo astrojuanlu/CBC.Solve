@@ -10,23 +10,24 @@ from cbc.swing.parameters import read_parameters
 
 application_parameters = read_parameters()
 application_parameters["primal_solver"] = "Newton"
-
 application_parameters["output_directory"] = "results_bloodvessel"
 application_parameters["global_storage"] = True
 application_parameters["solve_dual"] = False
 application_parameters["estimate_error"] = False
 application_parameters["uniform_timestep"] = True
-application_parameters["initial_timestep"] = 0.5 #Newton Solver
-application_parameters["plot_solution"] = True
+application_parameters["initial_timestep"] = 4.0#0.5
+application_parameters["plot_solution"] = False
 application_parameters["iteration_tolerance"] = 1.0e-6
-application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = False
+application_parameters["max_num_refinements"] = 0
+application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = True
 application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = False
-application_parameters["FSINewtonSolver"]["optimization"]["reduce_quadrature"] = 2
+application_parameters["FSINewtonSolver"]["optimization"]["reduce_quadrature"] = 0
 application_parameters["FSINewtonSolver"]["jacobian"] = "manual"
 
 
 #Fixpoint parameters
 application_parameters["fluid_solver"] = "taylor-hood"
+##application_parameters["fluid_solver"] = "ipcs" #GB this one fails to converge at some point.
 
 # Constants related to the geometry of the problem
 vessel_length  = 6.0
@@ -112,6 +113,8 @@ class BloodVessel2D(FSI):
         mesh = Rectangle(0.0, 0.0, vessel_length, vessel_height, nx, ny, "crossed")
         self.P_Fwave = Expression(cpp_P_Fwave)
         self.P_Fwave.C = C
+        self.endtime = 70.0
+        self.rho_S =  4.0
         FSI.__init__(self,mesh,application_parameters)
         
     def update(self, t0, t1, dt):
@@ -119,7 +122,7 @@ class BloodVessel2D(FSI):
 
     #--- Common ---
     def end_time(self):
-        return 70.00
+        return self.endtime
     
     def __str__(self):
         return "Blood Vessel"
@@ -132,7 +135,7 @@ class BloodVessel2D(FSI):
         return 0.002
     
     def structure_density(self):  
-        return 4.0
+        return self.rho_S
     
     def structure_mu(self):
         return 5.0
@@ -171,13 +174,75 @@ class BloodVessel2D(FSI):
     
     def structure_dirichlet_boundaries(self):
         return [struc_left,struc_right]
-
-##    #--- Mesh problem BC---
-##    def mesh_dirichlet_boundaries(self):
-##        return [meshbc]
-    
+ 
 # Define and solve problem
+mode = "stresstest"
+##mode = "normal"
 if __name__ == "__main__":
-    problem = BloodVessel2D()
-    problem.solve(application_parameters)
-    interactive()
+    if mode == "normal":
+        problem = BloodVessel2D()
+        problem.solve(application_parameters)
+        interactive()
+    elif mode == "stresstest":
+        #Init plotting
+        import matplotlib.pyplot as plt
+        from matplotlib.backends.backend_pdf import PdfPages
+
+        num_steps = 7
+        iterations = {"fixpoint":[],"Newton":[]}
+        stepsizes = []
+        densities = []
+        rho_S = 4.0
+        test = "density" #density or time_step
+        for i in range(num_steps):
+            #solve problem with fixpoint method
+#            problem = BloodVessel2D()
+##            problem.endtime = application_parameters["initial_timestep"]
+##            problem.rho_S = rho_S
+##            application_parameters["primal_solver"] = "fixpoint"
+##            problem.solve(application_parameters) 
+##
+##            #extract the number of iterations
+##            g_numiter = problem.solver.primalsolver.g_numiter
+##            iterations["fixpoint"].append(g_numiter)
+
+##            #solve problem with Newton method
+            application_parameters["primal_solver"] = "Newton"
+            problem = BloodVessel2D()
+            problem.endtime = application_parameters["initial_timestep"]
+            problem.rho_S = rho_S
+            problem.solve(application_parameters) 
+            #extract the number of iterations
+            g_numiter = problem.solver.primalsolver.g_numiter
+            iterations["Newton"].append(g_numiter) 
+
+            stepsizes.append(application_parameters["initial_timestep"])
+            densities.append(rho_S)
+                
+            #Plotting
+            plt.figure()
+            pdf = PdfPages("Itervsstep")
+            if test == "time_step":
+                plt.xlabel("Time Step  Size")
+            elif test == "density":
+                plt.xlabel("Densities")
+            ax = plt.gca()
+            ax.grid()
+            plt.ylabel("Number of iterations")
+
+            if test == "density":
+                ax.set_xlim(ax.get_xlim()[::-1]) #reverse axis
+##                plt.plot(densities,iterations["fixpoint"],'bD',label = "Fixpoint",linestyle = '-')
+                plt.plot(densities,iterations["Newton"],'gp',label = "Newton",linestyle = '-')
+            elif test == "time_step":
+##                plt.plot(stepsizes,iterations["fixpoint"],'bD',label = "Fixpoint",linestyle = '-')
+                plt.plot(stepsizes,iterations["Newton"],'gp',label = "Newton",linestyle = '-')
+            plt.title("Iterations vs. Time Step Size")
+            plt.legend(loc=0)
+            plt.savefig(pdf, format ='pdf')
+            pdf.close()
+
+            if test == "time_step":
+                application_parameters["initial_timestep"] += 0.5          
+            elif test == "density":
+                rho_S = rho_S - 0.5

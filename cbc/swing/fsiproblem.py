@@ -43,10 +43,10 @@ class FixedPointFSI(CBCProblem):
             self.init_meshes(mesh, parameters)
 
         # Create solver
-        solver = FSISolver(self)
+        self.solver = FSISolver(self)
 
         # Solve
-        return solver.solve(parameters)
+        return self.solver.solve(parameters)
 
     def init_meshes(self, Omega, parameters):
         "Create mappings between submeshes"

@@ -24,211 +24,214 @@ import copy
 #GB time
 from cbc.swing.fsinewton.utils.timings import timings
 
-#class primalsolver
-def solve_primal(problem, parameters):
-    "Solve primal FSI problem"
-    #def __init__()
-    # Get parameters
-    T = problem.end_time()
-    dt = initial_timestep(problem, parameters)
-    TOL = parameters["tolerance"]
-    w_k = parameters["w_k"]
-    w_c = parameters["w_c"]
-    save_solution = parameters["save_solution"] 
-    uniform_timestep = parameters["uniform_timestep"]
-    plot_solution = parameters["plot_solution"]
 
-
-    # Create files for saving to VTK
-    level = refinement_level()
-    if save_solution:
-        files = (File("%s/pvd/level_%d/u_F.pvd" % (parameters["output_directory"], level)),
-                 File("%s/pvd/level_%d/p_F.pvd" % (parameters["output_directory"], level)),
-                 File("%s/pvd/level_%d/U_S.pvd" % (parameters["output_directory"], level)),
-                 File("%s/pvd/level_%d/P_S.pvd" % (parameters["output_directory"], level)),
-                 File("%s/pvd/level_%d/U_M.pvd" % (parameters["output_directory"], level)))
-
-    # Create time series for storing solution
-    primal_series = create_primal_series(parameters)
-
-    # Create time series for dual solution
-    if level > 0:
-        dual_series = create_dual_series(parameters)
-    else:
-        dual_series = None
-
-    # Record CPU time
-    cpu_time = python_time()
-
-    # Record number of time steps
-    timestep_counter = 0
-
-    # Update of user problem at t = 0 (important for initial conditions)
-    problem.update(0.0, 0.0, dt)
-
-    # Define the three subproblems
-    F = FluidProblem(problem, solver_type=parameters["fluid_solver"])
-    S = StructureProblem(problem, parameters)
-    M = MeshProblem(problem, parameters)
-
-    # Get solution values
-    u_F0, u_F1, p_F0, p_F1 = F.solution_values()
-    U_M0, U_M1 = M.solution_values()
-
-    # Extract number of dofs
-    num_dofs_FSM = extract_num_dofs(F, S, M)
-    info("FSI problem has %d dofs (%d + %d + %d)" % \
-        (num_dofs_FSM, F.num_dofs, S.num_dofs, M.num_dofs))
-
-    # Get initial structure displacement (used for plotting and checking convergence)
-    structure_element_degree = parameters["structure_element_degree"]
-    V_S = VectorFunctionSpace(problem.structure_mesh(), "CG", structure_element_degree)
-    U_S0 = Function(V_S)
-
-    # Save initial solution to file and series
-    U = extract_solution(F, S, M)
-    if save_solution:
-        _save_solution(U, files)
-        write_primal_data(U, 0, primal_series)
-
-    # Initialize adaptive data
-    init_adaptive_data(problem, parameters)
-
-    # Initialize time-stepping
-    t0 = 0.0
-    t1 = dt
-    at_end = False
-
-    # Initialize integration of goal functional (assuming M(u) = 0 at t = 0)
-    integrated_goal_functional = 0.0
-    old_goal_functional = 0.0
-
-    # Get reference value of goal functional
-    if hasattr(problem, "reference_value"):
-        reference_value = problem.reference_value()
-    else:
-        reference_value = None
-
-    if parameters["primal_solver"] == "Newton":
-        #If no initial_step function try to generate one
-        if not hasattr(problem,"initial_step"):
-            problem.initial_step = lambda :parameters["initial_timestep"]
+class PrimalSolver(object):
+    def __init__(self):
+        self.g_numiter = 0
         
-        # Initialize an FSINewtonsolver Object
-        fsinewtonsolver = FSINewtonSolver(problem,\
-                            params = parameters["FSINewtonSolver"].to_dict())
+    def solve_primal(self,problem, parameters):
+        "Solve primal FSI problem"
+        #def __init__()
+        # Get parameters
+        T = problem.end_time()
+        dt = initial_timestep(problem, parameters)
+        TOL = parameters["tolerance"]
+        w_k = parameters["w_k"]
+        w_c = parameters["w_c"]
+        save_solution = parameters["save_solution"] 
+        uniform_timestep = parameters["uniform_timestep"]
+        plot_solution = parameters["plot_solution"]
 
-        #initialize the solve settings
-        fsinewtonsolver.prepare_solve()
-        
-    #def solve_primal()
-    while True:
+        # Create files for saving to VTK
+        level = refinement_level()
+        if save_solution:
+            files = (File("%s/pvd/level_%d/u_F.pvd" % (parameters["output_directory"], level)),
+                     File("%s/pvd/level_%d/p_F.pvd" % (parameters["output_directory"], level)),
+                     File("%s/pvd/level_%d/U_S.pvd" % (parameters["output_directory"], level)),
+                     File("%s/pvd/level_%d/P_S.pvd" % (parameters["output_directory"], level)),
+                     File("%s/pvd/level_%d/U_M.pvd" % (parameters["output_directory"], level)))
 
-        # Display progress
-        info("")
-        info("-"*80)
-        begin("* Starting new time step")
-        info_blue("  * t = %g (T = %g, dt = %g)" % (t1, T, dt))
+        # Create time series for storing solution
+        primal_series = create_primal_series(parameters)
 
-        # Update of user problem
-        problem.update(t0, t1, dt)
-
-        # Compute tolerance for FSI iterations
-        itertol = compute_itertol(problem, w_c, TOL, dt, t1, parameters)
-
-        if parameters["primal_solver"] == "Newton":
-            #Newtonsolver has it's own timings
-            assert save_solution,"Parameter save_solution must be true to use the Newton Solver"
-            U_S1,U_S0,P_S1,increment,numiter = newton_solve(F,S,M,U_S0,dt,parameters,itertol,problem,fsinewtonsolver)
-        elif parameters["primal_solver"] == "fixpoint":
-            timings.startnext("FixpointSolve")
-            U_S0,U_S1,P_S1,increment,numiter = fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem)
-            timings.stop("FixpointSolve")
+        # Create time series for dual solution
+        if level > 0:
+            dual_series = create_dual_series(parameters)
         else:
-            raise Exception("Only 'fixpoint' and 'Newton' are possible values \
-                            for the parameter 'primal_solver'")
-        
-    #####################################################
-    #The primal solve worked so now go to post processing
-    #####################################################
-    #def postprocessing():
-        # Plot solution
-        if plot_solution:
-            _plot_solution(u_F1, p_F1, U_S0, U_M1)
-        if problem.exact_solution() is not None:
-            update_exactsol(u_F1,p_F1,U_S1,U_M1,F,problem,t1)      
+            dual_series = None
 
-        info("")
-        info_green("Increment = %g (tolerance = %g), converged after %d iterations" % (increment, itertol, numiter + 1))
-        info("")
-        end()
+        # Record CPU time
+        cpu_time = python_time()
 
-        # Saving number of FSI iterations
-        save_no_FSI_iter(t1, numiter + 1, parameters)
+        # Record number of time steps
+        timestep_counter = 0
 
-        # Evaluate user goal functional
-        goal_functional = assemble(problem.evaluate_functional(u_F1, p_F1, U_S1, P_S1, U_M1, dx, dx, dx))
+        # Update of user problem at t = 0 (important for initial conditions)
+        problem.update(0.0, 0.0, dt)
 
-        # Integrate goal functional
-        integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)
-        old_goal_functional = goal_functional
+        # Define the three subproblems
+        F = FluidProblem(problem, solver_type=parameters["fluid_solver"])
+        S = StructureProblem(problem, parameters)
+        M = MeshProblem(problem, parameters)
 
-        # Save goal functional
-        save_goal_functional(t1, goal_functional, integrated_goal_functional, parameters)
+        # Get solution values
+        u_F0, u_F1, p_F0, p_F1 = F.solution_values()
+        U_M0, U_M1 = M.solution_values()
 
+        # Extract number of dofs
+        num_dofs_FSM = extract_num_dofs(F, S, M)
+        info("FSI problem has %d dofs (%d + %d + %d)" % \
+            (num_dofs_FSM, F.num_dofs, S.num_dofs, M.num_dofs))
 
-        # Save solution and time series to file
+        # Get initial structure displacement (used for plotting and checking convergence)
+        structure_element_degree = parameters["structure_element_degree"]
+        V_S = VectorFunctionSpace(problem.structure_mesh(), "CG", structure_element_degree)
+        U_S0 = Function(V_S)
+
+        # Save initial solution to file and series
         U = extract_solution(F, S, M)
         if save_solution:
             _save_solution(U, files)
-            write_primal_data(U, t1, primal_series)
+            write_primal_data(U, 0, primal_series)
 
-        # Move to next time step
-        F.update(t1)
-        S.update()
-        M.update(t1)
+        # Initialize adaptive data
+        init_adaptive_data(problem, parameters)
 
-        # Update time step counter
-        timestep_counter += 1
+        # Initialize time-stepping
+        t0 = 0.0
+        t1 = dt
+        at_end = abs(t1 - T) / T < 100.0*DOLFIN_EPS
 
-        # FIXME: This should be done automatically by the solver
-        F.update_extra()
+        # Initialize integration of goal functional (assuming M(u) = 0 at t = 0)
+        integrated_goal_functional = 0.0
+        old_goal_functional = 0.0
 
-        # Check if we have reached the end time
-        if at_end:
-            info("")
-            info_green("Finished time-stepping")
-            save_dofs(num_dofs_FSM, timestep_counter, parameters)
-            end()
-            break
-
-        # Use constant time step
-        if uniform_timestep:
-            t0 = t1
-            t1 = min(t1 + dt, T)
-            dt = t1 - t0
-            at_end = abs(t1 - T) / T < 100.0*DOLFIN_EPS
-
-        # Compute new adaptive time step
+        # Get reference value of goal functional
+        if hasattr(problem, "reference_value"):
+            reference_value = problem.reference_value()
         else:
-            Rk = compute_time_residual(primal_series, dual_series, t0, t1, problem, parameters)
-            (dt, at_end) = compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters)
-            t0 = t1
-            t1 = t1 + dt
-    #End of Time loop
-    #Call post processing for the Newton Solver if necessary.
-    if parameters["primal_solver"] == "Newton":
-        fsinewtonsolver.post_processing()
-    # Save final value of goal functional
-    save_goal_functional_final(goal_functional, integrated_goal_functional, reference_value, parameters)
+            reference_value = None
 
-    # Report elapsed time
-    info_blue("Primal solution computed in %g seconds." % (python_time() - cpu_time))
-    info("")
+        if parameters["primal_solver"] == "Newton":
+            #If no initial_step function try to generate one
+            if not hasattr(problem,"initial_step"):
+                problem.initial_step = lambda :parameters["initial_timestep"]
+            
+            # Initialize an FSINewtonsolver Object
+            fsinewtonsolver = FSINewtonSolver(problem,\
+                                params = parameters["FSINewtonSolver"].to_dict())
 
-    # Return solution
-    info(timings.report_str())
-    return (goal_functional, integrated_goal_functional)
+            #initialize the solve settings
+            fsinewtonsolver.prepare_solve()
+            
+        #def solve_primal()
+        while True:
+
+            # Display progress
+            info("")
+            info("-"*80)
+            begin("* Starting new time step")
+            info_blue("  * t = %g (T = %g, dt = %g)" % (t1, T, dt))
+
+            # Update of user problem
+            problem.update(t0, t1, dt)
+
+            # Compute tolerance for FSI iterations
+            itertol = compute_itertol(problem, w_c, TOL, dt, t1, parameters)
+
+            if parameters["primal_solver"] == "Newton":
+                #Newtonsolver has it's own timings
+                assert save_solution,"Parameter save_solution must be true to use the Newton Solver"
+                U_S1,U_S0,P_S1,increment,numiter = newton_solve(F,S,M,U_S0,dt,parameters,itertol,problem,fsinewtonsolver)
+            elif parameters["primal_solver"] == "fixpoint":
+                timings.startnext("FixpointSolve")
+                U_S0,U_S1,P_S1,increment,numiter = fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem)
+                timings.stop("FixpointSolve")
+            else:
+                raise Exception("Only 'fixpoint' and 'Newton' are possible values \
+                                for the parameter 'primal_solver'")
+            self.g_numiter = numiter
+        #####################################################
+        #The primal solve worked so now go to post processing
+        #####################################################
+        #def postprocessing():
+            # Plot solution
+            if plot_solution:
+                _plot_solution(u_F1, p_F1, U_S0, U_M1)
+            if problem.exact_solution() is not None:
+                update_exactsol(u_F1,p_F1,U_S1,U_M1,F,problem,t1)      
+
+            info("")
+            info_green("Increment = %g (tolerance = %g), converged after %d iterations" % (increment, itertol, numiter + 1))
+            info("")
+            end()
+
+            # Saving number of FSI iterations
+            save_no_FSI_iter(t1, numiter + 1, parameters)
+
+            # Evaluate user goal functional
+            goal_functional = assemble(problem.evaluate_functional(u_F1, p_F1, U_S1, P_S1, U_M1, dx, dx, dx))
+
+            # Integrate goal functional
+            integrated_goal_functional += 0.5 * dt * (old_goal_functional + goal_functional)
+            old_goal_functional = goal_functional
+
+            # Save goal functional
+            save_goal_functional(t1, goal_functional, integrated_goal_functional, parameters)
+
+
+            # Save solution and time series to file
+            U = extract_solution(F, S, M)
+            if save_solution:
+                _save_solution(U, files)
+                write_primal_data(U, t1, primal_series)
+
+            # Move to next time step
+            F.update(t1)
+            S.update()
+            M.update(t1)
+
+            # Update time step counter
+            timestep_counter += 1
+
+            # FIXME: This should be done automatically by the solver
+            F.update_extra()
+
+            # Check if we have reached the end time
+            if at_end:
+                info("")
+                info_green("Finished time-stepping")
+                save_dofs(num_dofs_FSM, timestep_counter, parameters)
+                end()
+                break
+
+            # Use constant time step
+            if uniform_timestep:
+                t0 = t1
+                t1 = min(t1 + dt, T)
+                dt = t1 - t0
+                at_end = abs(t1 - T) / T < 100.0*DOLFIN_EPS
+
+            # Compute new adaptive time step
+            else:
+                Rk = compute_time_residual(primal_series, dual_series, t0, t1, problem, parameters)
+                (dt, at_end) = compute_time_step(problem, Rk, TOL, dt, t1, T, w_k, parameters)
+                t0 = t1
+                t1 = t1 + dt
+        #End of Time loop
+        #Call post processing for the Newton Solver if necessary.
+        if parameters["primal_solver"] == "Newton":
+            fsinewtonsolver.post_processing()
+        # Save final value of goal functional
+        save_goal_functional_final(goal_functional, integrated_goal_functional, reference_value, parameters)
+
+        # Report elapsed time
+        info_blue("Primal solution computed in %g seconds." % (python_time() - cpu_time))
+        info("")
+
+        # Return solution
+        info(timings.report_str())
+        return (goal_functional, integrated_goal_functional)
 
 def _plot_solution(u_F, p_F, U_S, U_M):
     "Plot solution"
@@ -298,6 +301,7 @@ def fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem):
         # Check convergence
         if increment < itertol and numiter > 2:            
             info_green("Increment is %g. Maybe plotting" % increment)
+            print "numiter = ",numiter
             return (U_S0, U_S1, P_S1, increment,numiter)
 
         # Check if we have reached the maximum number of iterations
@@ -308,7 +312,7 @@ def fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem):
         info("")
         info_red("Increment = %g (tolerance = %g), iteration %d" % (increment, itertol, numiter + 1))
         end()
-        
+    
 def newton_solve(F,S,M,U0_S,dt,parameters,itertol,problem,fsinewtonsolver):
     """Solve for the time step using Newton's method"""
     # Get mappings from local to global mesh

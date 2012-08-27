@@ -15,7 +15,7 @@ application_parameters = read_parameters()
 # Used for testing
 test = True
 if test:
-    application_parameters["primal_solver"] = "Newton"
+    application_parameters["primal_solver"] = "fixpoint"
     application_parameters["output_directory"] = "results_channel_with_flap_test"
     application_parameters["global_storage"] = True
     application_parameters["solve_primal"] = True
