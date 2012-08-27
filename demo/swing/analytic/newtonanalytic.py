@@ -49,7 +49,7 @@ from cbc.swing.operators import Sigma_F as _Sigma_F
 # Define Fluid Neumann BC subdomain
 class FluidNeumann(SubDomain):
     def inside(self, x, on_boundary):
-        return on_boundary and near(x[0],0.0) 
+        return near(x[0],0.0) and on_boundary
 
 class NewtonAnalytic(ana.Analytic):
     """
@@ -110,11 +110,11 @@ class NewtonAnalytic(ana.Analytic):
         
         self.F_F.t = t
         self.G_F.t = t
+        self.G_F_FSI.t = t
 
         self.U_F.t = t1
         self.P_F.t = t1
         self.U_S.t = t1
-        self.G_F_FSI.t = t1
         
     def initial_step(self):
         return self.inistep
@@ -134,12 +134,12 @@ class NewtonAnalytic(ana.Analytic):
     def fluid_pressure_initial_condition(self):
         return self.P_F
 
-    def fluid_velocity_neumann_boundaries(self):
-        return FluidNeumann()
-    
-    def fluid_velocity_neumann_values(self):
-        return self.G_F
-    
+##    def fluid_velocity_neumann_boundaries(self):
+##        return FluidNeumann()
+##    
+##    def fluid_velocity_neumann_values(self):
+##        return self.G_F
+##    
     def fluid_body_force(self):
         return self.F_F
 
@@ -148,10 +148,10 @@ class NewtonAnalytic(ana.Analytic):
     ####################################################
 
     def fluid_velocity_dirichlet_values(self):
-        return [self.U_F]
+        return [self.U_F,self.U_F]
     
     def fluid_velocity_dirichlet_boundaries(self):
-            return [ana.noslip]
+            return [ana.noslip,FluidNeumann()]
 
     def structure_dirichlet_boundaries(self):
         if self.bctype == "dirichlet":

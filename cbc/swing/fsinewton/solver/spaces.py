@@ -123,7 +123,7 @@ class FSISpaces(object):
         offset = self.subloc.spacebegins[spacename]
         remove = [r + offset for r in remove]
 
-        for d in remove:
+        for d in remove: 
             dofs.remove(d)
         return dofs
         
@@ -133,6 +133,7 @@ class FSISpaces(object):
 
         V_F = VectorFunctionSpace(mesh, self.params["V_F"]["elem"], self.params["V_F"]["deg"])
         if self.params["B_F"]["elem"] != "None":
+            info("Enriching Fluid Velocity space with element %s order %s"%(self.params["B_F"]["elem"],self.params["B_F"]["deg"]))
             V_F = V_F + VectorFunctionSpace(mesh,self.params["B_F"]["elem"], self.params["B_F"]["deg"])   
         Q_F = FunctionSpace(mesh, self.params["Q_F"]["elem"], self.params["Q_F"]["deg"])      
         M_U = VectorFunctionSpace(mesh, self.params["M_U"]["elem"], self.params["M_U"]["deg"]) 
