@@ -19,8 +19,8 @@ application_parameters["uniform_timestep"] = True
 application_parameters["initial_timestep"] = 0.5 #Newton Solver
 application_parameters["plot_solution"] = True
 application_parameters["iteration_tolerance"] = 1.0e-6
-application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = True
-application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = True
+application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = False
+application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = False
 application_parameters["FSINewtonSolver"]["optimization"]["reduce_quadrature"] = 2
 application_parameters["FSINewtonSolver"]["jacobian"] = "manual"
 
@@ -119,7 +119,7 @@ class BloodVessel2D(FSI):
 
     #--- Common ---
     def end_time(self):
-        return 5.0#70.00
+        return 70.00
     
     def __str__(self):
         return "Blood Vessel"

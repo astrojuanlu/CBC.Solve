@@ -13,10 +13,10 @@ from storage import *
 from adaptivity import *
 
 # Original implementation
-from dualproblem import *
+#from dualproblem import *
 
 # New implementation by Gabriel
-#from new_dualproblem import *
+from new_dualproblem import *
 
 def solve_dual(problem, parameters):
     "Solve dual FSI problem"
@@ -79,7 +79,7 @@ def solve_dual(problem, parameters):
                              Z_F,  Y_F,  X_F,  Z_S,  Y_S,  Z_M,  Y_M,
                              Z_F0, Y_F0, X_F0, Z_S0, Y_S0, Z_M0, Y_M0,
                              U_F0, P_F0, U_S0, P_S0, U_M0,
-                             U_F1, P_F1, U_S1, P_S1, U_M1)
+                             U_F1, P_F1, U_S1, P_S1, U_M1,parameters)
 
     # Create dual boundary conditions
     bcs = create_dual_bcs(problem, W)
@@ -108,6 +108,8 @@ def solve_dual(problem, parameters):
         read_primal_data(U0, t0, Omega, Omega_F, Omega_S, primal_series, parameters)
         read_primal_data(U1, t1, Omega, Omega_F, Omega_S, primal_series, parameters)
 
+        # GB: In the Analytic problem there are no do nothing fluid boundaries. I am not
+        # this is reflected here in the meshfunctions and their facet numberings.
         # Assemble matrix
         info("Assembling matrix")
         matrix = assemble(A,

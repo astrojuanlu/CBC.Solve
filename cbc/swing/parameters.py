@@ -125,12 +125,12 @@ def default_fsinewtonsolver_parameters():
     #Run time optimization
     opt = Parameters("optimization")
     opt.add("reuse_jacobian",True)
-    opt.add("simplify_jacobian",True)
+    opt.add("simplify_jacobian",False)
     opt.add("max_reuse_jacobian",30)
     opt.add("reduce_quadrature",0) #0 means no reduction, i >0 means reduce to order i.
     p.add(opt)
     
-    p.add("jacobian","manual") # "manual", "auto"
+    p.add("jacobian","buff") # "manual", "auto", "buff"
     p.add("newtonitrmax",100)
     
     ##################################

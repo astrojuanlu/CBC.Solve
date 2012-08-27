@@ -30,9 +30,9 @@ if test:
      
 application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = False
 application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = False
+application_parameters["FSINewtonSolver"]["optimization"]["reduce_quadrature"] = 0
 application_parameters["FSINewtonSolver"]["jacobian"]= "buff"
 
-    
 # Constants related to the geometry of the problem
 channel_length  = 4.0
 channel_height  = 1.0

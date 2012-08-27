@@ -87,7 +87,7 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
     dsS = measures["strucbound"]
     dFSI = measures["FSI_bound"]
     dsDN = measures["donothingbound"]
-
+    
     #Unpack forces
     F_F = forces["F_F"]
     F_S = forces["F_S"]
@@ -133,7 +133,8 @@ def fsi_residual(U1list,Umidlist,Udotlist,Vlist,matparams,measures,forces,normal
     #return the full residual and partial residuals (for testing)
     return r,blockresiduals
 
-def fluid_residual(U_Fdot,U_F,U1_F,P_F,v_F,q_F,mu,rho,D_F,N_F,dx_Flist,ds_DNlist,ds_Flist,F_F,D_Fdot, G_F=None):
+def fluid_residual(U_Fdot,U_F,U1_F,P_F,v_F,q_F,mu,rho,D_F,N_F,dx_Flist,ds_DNlist,ds_Flist,
+                   F_F,D_Fdot, G_F=None):
     #Fluid equation in the Domain
     forms = []
     for dx_F in dx_Flist:
@@ -165,7 +166,7 @@ def fluid_residual(U_Fdot,U_F,U1_F,P_F,v_F,q_F,mu,rho,D_F,N_F,dx_Flist,ds_DNlist
     #Add boundary traction (sigma dot n) to fluid boundary if specified.
     for ds_F in ds_Flist:
         info("Using Fluid boundary Traction (Neumann) BC")
-        B_F = - inner(G_F, v_F)*ds_F
+        B_F =  -inner(G_F, v_F)*ds_F
         forms.append(B_F)
     return sum(forms)
 
@@ -224,7 +225,7 @@ def interface_residual(U_F,U_Fmid,P_Fmid,D_S,U_S,D_F,D_Fmid,L_U,L_D,v_F,c_S,
             
         #Optional boundary traction term
         if G_S is not None and G_S != []:
-            info("Using additional fsi boundary traction term")
+            info("Using additional FSI boundary traction term")
             R_FSI += inner(G_S('-'),c_S('-'))*dFSI
         forms.append(R_FSI)
     return sum(forms)

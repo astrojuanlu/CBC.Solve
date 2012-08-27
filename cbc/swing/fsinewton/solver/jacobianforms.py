@@ -197,18 +197,22 @@ def J_BlockFFD(U, dotU, P, D_F, dD_F,dotD_F, dotdD_F, v_F,dotv, q, rho, mu,N_F,
         
     for dxF in dxFlist:
         #DT  
-        J_FM =  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dotU)*dxF
-        J_FM +=  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(grad(U), dot(inv(F(D_F)), U - dotD_F)))*dxF
+        J_FM =  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dotU)
+        J_FM +=  inner(v_F, rho*J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(grad(U), dot(inv(F(D_F)), U - dotD_F)))
         J_FM += -inner(v_F,rho*J(D_F)*dot((dot(grad(U), dot(inv(F(D_F)), \
-                 dot(grad(dD_F), inv(F(D_F)))))), U - dotD_F ))*dxF
-        J_FM += -inner(v_F, rho*J(D_F)*dot(grad(U), dot(inv(F(D_F)),dotdD_F)))*dxF
+                 dot(grad(dD_F), inv(F(D_F)))))), U - dotD_F ))
+        J_FM += -inner(v_F, rho*J(D_F)*dot(grad(U), dot(inv(F(D_F)),dotdD_F)))
 
         #SigmaF
-        J_FM += inner(grad(v_F),dD_FSigmaF(D_F,dD_F,U,P,mu))*dxF
+        J_FM += inner(grad(v_F),dD_FSigmaF(D_F,dD_F,U,P,mu))
 
         #Div U_F (incompressibility)
-        J_FM +=  inner(q, div(J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(inv(F(D_F)), U)))*dxF
-        J_FM += -inner(q, div(J(D_F)*dot(dot(inv(F(D_F)), grad(dD_F)), dot(inv(F(D_F)), U))))*dxF
+        J_FM +=  inner(q, div(J(D_F)*tr(dot(grad(dD_F), inv(F(D_F))))*dot(inv(F(D_F)), U)))
+        J_FM += -inner(q, div(J(D_F)*dot(dot(inv(F(D_F)), grad(dD_F)), dot(inv(F(D_F)), U))))
+        if dFSIlist is None:
+            J_FM = J_FM*dxF
+        else:
+            J_FM = J_FM('+')*dxF
         forms.append(J_FM)
     return sum(forms)
 

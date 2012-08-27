@@ -156,7 +156,6 @@ class MyNewtonSolver:
     
     def build_jacobian(self):
         """Assemble Jacobian"""
-        timings.startnext("Copying buffered jacobian")
         info("Assembling Jacobian")
         
         #If buffered matrix add the variable part to the buffered part.

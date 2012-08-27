@@ -15,7 +15,7 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
                       Z_F,  Y_F,  X_F,  Z_S,  Y_S,  Z_M,  Y_M,
                       Z_F0, Y_F0, X_F0, Z_S0, Y_S0, Z_M0, Y_M0,
                       U_F0, P_F0, U_S0, P_S0, U_M0,
-                      U_F1, P_F1, U_S1, P_S1, U_M1):
+                      U_F1, P_F1, U_S1, P_S1, U_M1,parameters):
     """
     Return bilinear and linear forms for a time step
     method - FE is forward Euler, BE is backward Euler, CG1 is midpoint rule
@@ -66,12 +66,12 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
                "N_S":FacetNormal(Omega_S)}
 
     #Measures dictionary
-    measures = {"dxF":dx(0),\
-                "dxM":dx(0),\
-                "dxS":dx(1),\
-                "dsF":ds(0),\
-                "dsS":None,\
-                "dFSI":dS(2)}
+    measures = {"fluid":dx(0),\
+                "structure":dx(1),\
+                "fluidneumannbound":ds(0),\
+                "strucbound":None,\
+                "FSI_bound":dS(2),
+                "donothingbound":None}
 
     #Forces dictionary
     try:
@@ -83,14 +83,14 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
               "F_S":None,
               "F_M":None,
               "G_S":None,
-              "g_F":g_F}
+              "G_F":g_F}
 
     #Todo
     #at the moment the other schemes are derived from
     #the perspective of the CG1 scheme. An abstract form
     #should be used to derive all three schemes.
 
-    A_system = jfor.fsi_jacobian(Iulist = Iulist,
+    A_system,A_buff = jfor.fsi_jacobian(Iulist = Iulist,
                                  Iudotlist = Iulist,
                                  Iumidlist = Iulist,
                                  U1list = U1list,
@@ -102,7 +102,10 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
                                  matparams = matparams,
                                  measures = measures,
                                  forces = forces,
-                                 normals = normals)
+                                 normals = normals,
+                                 params = parameters["FSINewtonSolver"].to_dict())
+    #Add back the buffered forms
+    A_system += A_buff
 
                               # Define goal funtional
     goal_functional = problem.evaluate_functional(v_F, q_F, v_S, q_S, v_M,

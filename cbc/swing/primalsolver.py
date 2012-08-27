@@ -21,6 +21,9 @@ from cbc.swing.fsinewton.solver.solver_fsinewton import FSINewtonSolver
 import fsinewton.utils.misc_func as mf
 import copy
 
+#GB time
+from cbc.swing.fsinewton.utils.timings import timings
+
 #class primalsolver
 def solve_primal(problem, parameters):
     "Solve primal FSI problem"
@@ -134,10 +137,12 @@ def solve_primal(problem, parameters):
         itertol = compute_itertol(problem, w_c, TOL, dt, t1, parameters)
 
         if parameters["primal_solver"] == "Newton":
-            assert save_solution,"Parameter save_solution must be true to use the Newton Solver"
+            #Newtonsolver has it's own timings
             U_S1,U_S0,P_S1,increment,numiter = newton_solve(F,S,M,U_S0,dt,parameters,itertol,problem,fsinewtonsolver)
         elif parameters["primal_solver"] == "fixpoint":
+            timings.startnext("FixpointSolve")
             U_S0,U_S1,P_S1,increment,numiter = fixpoint_solve(F,S,U_S0,M,dt,t1,parameters,itertol,problem)
+            timings.stop("FixpointSolve")
         else:
             raise Exception("Only 'fixpoint' and 'Newton' are possible values \
                             for the parameter 'primal_solver'")
@@ -221,6 +226,7 @@ def solve_primal(problem, parameters):
     info("")
 
     # Return solution
+    info(timings.report_str())
     return (goal_functional, integrated_goal_functional)
 
 def _plot_solution(u_F, p_F, U_S, U_M):
