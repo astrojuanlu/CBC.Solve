@@ -54,8 +54,9 @@ def default_parameters():
     p.add("fluid_solver", "ipcs")
     #
     q = Parameters("dualsolver")
-    q.add("timestepping","CG1") #CG1 BE or FE
-    q.add("","")
+    q.add("timestepping","FE") #CG1 BE or FE
+    q.add("fluid_domain_time_discretization","end-point")
+    p.add(q)
     return p
 
 #These are relevant if p["primal_solver"] = Newton

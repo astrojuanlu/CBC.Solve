@@ -24,9 +24,9 @@ if test:
     application_parameters["structure_element_degree"] = 1
     application_parameters["save_solution"] = False
     application_parameters["solve_primal"] = True
-    application_parameters["solve_dual"] = False
-    application_parameters["estimate_error"] = False
-    application_parameters["plot_solution"] = False
+    application_parameters["solve_dual"] = True
+    application_parameters["estimate_error"] = True
+    application_parameters["plot_solution"] = True
     application_parameters["uniform_timestep"] = True
     application_parameters["uniform_mesh"] = True
     application_parameters["tolerance"] = 1e-16
@@ -35,9 +35,13 @@ if test:
     application_parameters["output_directory"] = "results-analytic-test"
     application_parameters["global_storage"] = False
     application_parameters["max_num_refinements"] = 0
-##    application_parameters["fluid_solver"] = "taylor-hood"
+    application_parameters["fluid_solver"] = "taylor-hood"
     application_parameters["primal_solver"] ="fixpoint" #for newtonsolve use Newtonanalytic.py
-    application_parameters["fluid_solver"] = "ipcs"
+##    application_parameters["fluid_solver"] = "ipcs"
+
+    #Dual Solver settings
+    application_parameters["dualsolver"]["timestepping"] = "FE"
+    application_parameters["dualsolver"]["fluid_domain_time_discretization"] = "mid-point"
 else:
     ref = 0
 
