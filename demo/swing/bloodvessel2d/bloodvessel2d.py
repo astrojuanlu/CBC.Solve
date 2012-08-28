@@ -15,7 +15,7 @@ application_parameters["global_storage"] = True
 application_parameters["solve_dual"] = False
 application_parameters["estimate_error"] = False
 application_parameters["uniform_timestep"] = True
-application_parameters["initial_timestep"] = 4.0#0.5
+application_parameters["initial_timestep"] = 0.5
 application_parameters["plot_solution"] = False
 application_parameters["iteration_tolerance"] = 1.0e-6
 application_parameters["max_num_refinements"] = 0
@@ -189,36 +189,62 @@ if __name__ == "__main__":
         from matplotlib.backends.backend_pdf import PdfPages
 
         num_steps = 7
-        iterations = {"fixpoint":[],"Newton":[]}
+        iterations = {"fixpoint":[],"Full Newton":[],"Reuse Newton":[],"Simple Newton":[]}
         stepsizes = []
         densities = []
-        rho_S = 4.0
-        test = "density" #density or time_step
+        rho_S = 2.0
+        application_parameters["initial_timestep"] = 1.0
+        test = "time_step"
+##        test = "density"
         for i in range(num_steps):
             #solve problem with fixpoint method
-#            problem = BloodVessel2D()
-##            problem.endtime = application_parameters["initial_timestep"]
-##            problem.rho_S = rho_S
-##            application_parameters["primal_solver"] = "fixpoint"
-##            problem.solve(application_parameters) 
-##
-##            #extract the number of iterations
-##            g_numiter = problem.solver.primalsolver.g_numiter
-##            iterations["fixpoint"].append(g_numiter)
+            problem = BloodVessel2D()
+            problem.endtime = application_parameters["initial_timestep"]
+            problem.rho_S = rho_S
+            application_parameters["primal_solver"] = "fixpoint"
+            problem.solve(application_parameters) 
+            g_numiter = problem.solver.primalsolver.g_numiter
+            iterations["fixpoint"].append(g_numiter)
 
-##            #solve problem with Newton method
+####          #solve problem with Full Newton method
             application_parameters["primal_solver"] = "Newton"
+            application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = False
+            application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = False
             problem = BloodVessel2D()
             problem.endtime = application_parameters["initial_timestep"]
             problem.rho_S = rho_S
             problem.solve(application_parameters) 
             #extract the number of iterations
             g_numiter = problem.solver.primalsolver.g_numiter
-            iterations["Newton"].append(g_numiter) 
+            iterations["Full Newton"].append(g_numiter) 
+##
+####          #solve problem with Reuse Newton method
+            application_parameters["primal_solver"] = "Newton"
+            application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = True
+            application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = False
+            problem = BloodVessel2D()
+            problem.endtime = application_parameters["initial_timestep"]
+            problem.rho_S = rho_S
+            problem.solve(application_parameters) 
+            #extract the number of iterations
+            g_numiter = problem.solver.primalsolver.g_numiter
+            iterations["Reuse Newton"].append(g_numiter) 
+
+##          #solve problem with Simplify Newton method
+##            application_parameters["primal_solver"] = "Newton"
+##            application_parameters["FSINewtonSolver"]["optimization"]["reuse_jacobian"] = False
+##            application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = True
+##            problem = BloodVessel2D()
+##            problem.endtime = application_parameters["initial_timestep"]
+##            problem.rho_S = rho_S
+##            problem.solve(application_parameters) 
+##            #extract the number of iterations
+##            g_numiter = problem.solver.primalsolver.g_numiter
+##            iterations["Simple Newton"].append(g_numiter) 
 
             stepsizes.append(application_parameters["initial_timestep"])
             densities.append(rho_S)
-                
+##                
             #Plotting
             plt.figure()
             pdf = PdfPages("Itervsstep")
@@ -232,12 +258,15 @@ if __name__ == "__main__":
 
             if test == "density":
                 ax.set_xlim(ax.get_xlim()[::-1]) #reverse axis
-##                plt.plot(densities,iterations["fixpoint"],'bD',label = "Fixpoint",linestyle = '-')
-                plt.plot(densities,iterations["Newton"],'gp',label = "Newton",linestyle = '-')
+                plt.plot(densities,iterations["fixpoint"],'bD',label = "Fixpoint",linestyle = '-')
+                plt.plot(densities,iterations["Full Newton"],'gp',label = "Newton",linestyle = '-')
             elif test == "time_step":
-##                plt.plot(stepsizes,iterations["fixpoint"],'bD',label = "Fixpoint",linestyle = '-')
-                plt.plot(stepsizes,iterations["Newton"],'gp',label = "Newton",linestyle = '-')
-            plt.title("Iterations vs. Time Step Size")
+                plt.plot(stepsizes,iterations["fixpoint"],'bD',label = "Fixpoint",linestyle = '-')
+                plt.plot(stepsizes,iterations["Full Newton"],'gp',label = "Full Newton",linestyle = '-')
+                plt.plot(stepsizes,iterations["Reuse Newton"],'k2',label = "Reuse Newton",linestyle = '-')
+##                plt.plot(stepsizes,iterations["Simple Newton"],'r*',label = "Simplified Newton",linestyle = '-')
+                 
+            plt.title("2D Blood Vessel solver stress test, "+r'$\rho_S = 2$')
             plt.legend(loc=0)
             plt.savefig(pdf, format ='pdf')
             pdf.close()

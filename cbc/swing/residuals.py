@@ -92,9 +92,11 @@ def weak_residuals(U0, U1, U, w, kn, problem):
     Sigma_M = _Sigma_M(U_M, mu_M, lmbda_M)
 
     # Fluid residual
+    Id = I(U_F)
+    
     R_F = inner(v_F, Dt_U_F)*dx_F + inner(grad(v_F), Sigma_F)*dx_F \
         - inner(v_F, mu_F*J(U_M)*dot(dot(inv(F(U_M)).T, grad(U_F).T), dot(inv(F(U_M)).T, N_F)))*ds \
-        + inner(v_F, J(U_M)*P_F*dot(I, dot(inv(F(U_M)).T, N_F)))*ds \
+        + inner(v_F, J(U_M)*P_F*dot(Id, dot(inv(F(U_M)).T, N_F)))*ds \
         + inner(q_F, div(J(U_M)*dot(inv(F(U_M)), U_F)))*dx_F
 
     # Structure residual

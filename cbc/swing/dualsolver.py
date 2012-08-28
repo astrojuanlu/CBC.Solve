@@ -12,9 +12,11 @@ from spaces import *
 from storage import *
 from adaptivity import *
 
+#G.B. In this implementation dsF is the do nothing boundary
 # Original implementation
 #from dualproblem import *
 
+#G.B. In this implementation dsF is the fluid Neumann boundary
 # New implementation by Gabriel
 from new_dualproblem import *
 

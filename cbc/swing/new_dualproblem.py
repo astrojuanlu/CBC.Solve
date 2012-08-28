@@ -51,7 +51,6 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
     else:
         raise Exception("Only FE,BE,and CG1 methods are possible")
 
-
     #Material Parameters Dictionary
     matparams = {"mu_F":Constant(problem.fluid_viscosity()),
                  "rho_F":Constant(problem.fluid_density()),
@@ -66,12 +65,12 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
                "N_S":FacetNormal(Omega_S)}
 
     #Measures dictionary
-    measures = {"fluid":dx(0),\
-                "structure":dx(1),\
-                "fluidneumannbound":ds(0),\
-                "strucbound":None,\
-                "FSI_bound":dS(2),
-                "donothingbound":None}
+    measures = {"fluid":[dx(0)],\
+                "structure":[dx(1)],\
+                "fluidneumannbound":[ds(0)],\
+                "strucbound":[],\
+                "FSI_bound":[dS(2)],
+                "donothingbound":[]}
 
     #Forces dictionary
     try:
@@ -109,8 +108,9 @@ def create_dual_forms(Omega_F, Omega_S, k, problem,
 
                               # Define goal funtional
     goal_functional = problem.evaluate_functional(v_F, q_F, v_S, q_S, v_M,
-                                                  measures["dxF"], measures["dxS"],
-                                                  measures["dxM"])
+                                                  measures["fluidneumannbound"][0],
+                                                  measures["structure"][0],
+                                                  measures["fluid"][0])
 
     # Define the dual rhs and lhs
     A = lhs(A_system)

@@ -52,6 +52,10 @@ def default_parameters():
 
     # Hacks
     p.add("fluid_solver", "ipcs")
+    #
+    q = Parameters("dualsolver")
+    q.add("timestepping","CG1") #CG1 BE or FE
+    q.add("","")
     return p
 
 #These are relevant if p["primal_solver"] = Newton
