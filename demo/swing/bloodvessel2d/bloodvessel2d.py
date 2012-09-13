@@ -24,7 +24,6 @@ application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] =
 application_parameters["FSINewtonSolver"]["optimization"]["reduce_quadrature"] = 0
 application_parameters["FSINewtonSolver"]["jacobian"] = "manual"
 
-
 #Fixpoint parameters
 application_parameters["fluid_solver"] = "taylor-hood"
 ##application_parameters["fluid_solver"] = "ipcs" #GB this one fails to converge at some point.
@@ -176,7 +175,7 @@ class BloodVessel2D(FSI):
         return [struc_left,struc_right]
  
 # Define and solve problem
-mode = "stresstest"
+mode = "normal"
 ##mode = "normal"
 if __name__ == "__main__":
     if mode == "normal":

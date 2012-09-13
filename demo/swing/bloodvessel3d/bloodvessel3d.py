@@ -8,9 +8,10 @@ from cbc.swing.fsiproblem import MeshLoadFSI
 from cbc.swing.fsinewton.solver.solver_fsinewton import FSINewtonSolver
 from cbc.swing.parameters import read_parameters
 
+#parameters['form_compiler']["name"] ="sfc" 
+
 application_parameters = read_parameters()
 application_parameters["primal_solver"] = "Newton"
-
 application_parameters["output_directory"] = "results_3Dtube"
 application_parameters["global_storage"] = True
 application_parameters["solve_dual"] = False
@@ -19,11 +20,11 @@ application_parameters["uniform_timestep"] = True
 application_parameters["initial_timestep"] = 0.5
 application_parameters["plot_solution"] = True
 application_parameters["iteration_tolerance"] = 1.0e-6
-application_parameters["FSINewtonSolver_parameters"]["optimization"]["max_reuse_jacobian"] = 40
-application_parameters["FSINewtonSolver_parameters"]["optimization"]["simplify_jacobian"] = False
-application_parameters["FSINewtonSolver_parameters"]["optimization"]["reduce_quadrature"] = 2
-application_parameters["FSINewtonSolver_parameters"]["newtonitrmax"] = 180
-application_parameters["FSINewtonSolver_parameters"]["plot"] = True
+application_parameters["FSINewtonSolver"]["optimization"]["max_reuse_jacobian"] = 40
+application_parameters["FSINewtonSolver"]["optimization"]["simplify_jacobian"] = False
+application_parameters["FSINewtonSolver"]["optimization"]["reduce_quadrature"] = 2
+application_parameters["FSINewtonSolver"]["newtonitrmax"] = 180
+application_parameters["FSINewtonSolver"]["plot"] = True
 #Fixpoint parameters
 application_parameters["fluid_solver"] = "taylor-hood"
 
@@ -147,6 +148,6 @@ class BloodVessel3D(MeshLoadFSI):
 # Define and solve problem
 if __name__ == "__main__":
     problem = BloodVessel3D()
-    solver = FSINewtonSolver(problem,application_parameters["FSINewtonSolver_parameters"])
+    solver = FSINewtonSolver(problem,application_parameters["FSINewtonSolver"].to_dict())
     solver.solve()
     interactive()

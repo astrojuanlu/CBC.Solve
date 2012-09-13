@@ -117,7 +117,7 @@ class PrimalSolver(object):
             if not hasattr(problem,"initial_step"):
                 problem.initial_step = lambda :parameters["initial_timestep"]
             
-            # Initialize an FSINewtonsolver Object
+            # Initialize an FSINewtonSolver Object
             fsinewtonsolver = FSINewtonSolver(problem,\
                                 params = parameters["FSINewtonSolver"].to_dict())
 
@@ -138,7 +138,6 @@ class PrimalSolver(object):
 
             # Compute tolerance for FSI iterations
             itertol = compute_itertol(problem, w_c, TOL, dt, t1, parameters)
-
             if parameters["primal_solver"] == "Newton":
                 #Newtonsolver has it's own timings
                 assert save_solution,"Parameter save_solution must be true to use the Newton Solver"

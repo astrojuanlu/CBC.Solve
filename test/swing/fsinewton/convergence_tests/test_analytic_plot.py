@@ -66,7 +66,7 @@ def plot_L2_errors(L2_errors,times,path,title):
     ax = plt.gca()
     ax.set_yscale('log')
     for f in L2_errors.keys():
-        plt.plot(times,L2_errors[f],PLOTSTYLES[f],label = f, linestyle = '-')
+        plt.plot(times,L2_errors[f],PLOTSTYLES[f],label = latex_convert(f), linestyle = '-')
     plt.ylabel("Solution L2 error")
     plt.xlabel("Time")
 ##    plt.title(title)
@@ -83,7 +83,7 @@ def create_convergenceplots(store,allerrors,L2errorsperfunc,plottitle,xaxis):
         pdf = PdfPages(store)
         for f in L2errorsperfunc.keys(): 
             plt.loglog(xaxis, L2errorsperfunc[f], PLOTSTYLES[f],
-                       label = f, linestyle = '-')
+                       label = latex_convert(f), linestyle = '-')
         ax = plt.gca()
         ax.set_xlim(ax.get_xlim()[::-1])
         ax.grid()
@@ -106,7 +106,7 @@ def plot_lmerror(store,lmerrors,plottitle,xaxis,title):
     
     for f in lmerrors:
         plt.loglog(xaxis, lmerrors[f],PLOTSTYLES[f],
-                   label = labels[f], linestyle = '-')
+                   label = latex_convert(labels[f]), linestyle = '-')
     ax = plt.gca()
     ax.set_xlim(ax.get_xlim()[::-1])
     ax.grid()
@@ -181,6 +181,8 @@ def plot_timings(timingdata,xaxis,path):
         loglogdata.write("%s \n %s \n"%(op, str(conv_rates[op])))
     loglogdata.close()
 
+def latex_convert(input):
+    return "$" + input + "$"
 
 if __name__ == "__main__":
     print "Type of test all,fluid,struc,mesh,fluidstruc,strucmesh,meshfluid, order, \
