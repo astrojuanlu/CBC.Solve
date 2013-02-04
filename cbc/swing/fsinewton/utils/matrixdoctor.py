@@ -38,7 +38,7 @@ class MatrixDoctor(object):
         self.__diagnose_row_or_col(self.M,"rows")
         print
         #Create a contiguous view of the transpose matrix
-        Mt = np.array(M.transpose(), copy=True, order='C')
+        Mt = np.array(self.M.transpose(), copy=True, order='C')
         self.__diagnose_row_or_col(Mt,"columns")
 
     def __diagnose_row_or_col(self,M,rowcolstr):
