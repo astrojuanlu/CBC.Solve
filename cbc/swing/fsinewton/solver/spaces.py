@@ -5,7 +5,7 @@ __copyright__ = "Copyright (C) 2010 Simula Research Laboratory and %s" % __autho
 __license__  = "GNU GPL Version 3 or any later version"
 
 from dolfin import *
-import fsinewton.utils.misc_func as mf
+import cbc.swing.fsinewton.utils.misc_func as mf
 
 NUM_SPACES = 7  #The number of spaces in the FSI mixed formulation
 

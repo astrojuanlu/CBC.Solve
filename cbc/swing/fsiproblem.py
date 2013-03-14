@@ -17,6 +17,9 @@ class FixedPointFSI(CBCProblem):
 
     def __init__(self, mesh):
         "Create FSI problem"
+        if dolfin.__version__ > 1:
+            print "CBC Swing has not been updated beyond dolfin version 1.0.0, use at your own risk. Press any key to continue"
+            foo = raw_input()
 
         # Initialize base class
         CBCProblem.__init__(self)
